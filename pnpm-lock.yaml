@@ -96,6 +96,46 @@ importers:
                 specifier: 5.2.2
                 version: 5.2.2
 
+    apps/processor:
+        dependencies:
+            "@grants-stack-indexer/chain-providers":
+                specifier: workspace:*
+                version: link:../../packages/chain-providers
+            "@grants-stack-indexer/data-flow":
+                specifier: workspace:*
+                version: link:../../packages/data-flow
+            "@grants-stack-indexer/indexer-client":
+                specifier: workspace:*
+                version: link:../../packages/indexer-client
+            "@grants-stack-indexer/metadata":
+                specifier: workspace:*
+                version: link:../../packages/metadata
+            "@grants-stack-indexer/pricing":
+                specifier: workspace:*
+                version: link:../../packages/pricing
+            "@grants-stack-indexer/repository":
+                specifier: workspace:*
+                version: link:../../packages/repository
+            "@grants-stack-indexer/shared":
+                specifier: workspace:*
+                version: link:../../packages/shared
+            dotenv:
+                specifier: 16.4.5
+                version: 16.4.5
+            pg:
+                specifier: 8.13.0
+                version: 8.13.0
+            viem:
+                specifier: 2.19.6
+                version: 2.19.6(typescript@5.5.4)(zod@3.23.8)
+            zod:
+                specifier: 3.23.8
+                version: 3.23.8
+        devDependencies:
+            tsx:
+                specifier: 4.19.2
+                version: 4.19.2
+
     apps/scripts:
         dependencies:
             "@grants-stack-indexer/repository":

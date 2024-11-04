@@ -1,0 +1,35 @@
+{
+    "name": "@grants-stack-indexer/processor",
+    "version": "0.0.1",
+    "type": "module",
+    "main": "./dist/index.js",
+    "scripts": {
+        "build": "tsc -p tsconfig.build.json",
+        "check-types": "tsc --noEmit -p ./tsconfig.json",
+        "clean": "rm -rf dist",
+        "dev": "tsx watch src/index.ts",
+        "format": "prettier --check \"{src,test}/**/*.{js,ts,json}\"",
+        "format:fix": "prettier --write \"{src,test}/**/*.{js,ts,json}\"",
+        "lint": "eslint \"{src,test}/**/*.{js,ts,json}\"",
+        "lint:fix": "pnpm lint --fix",
+        "start": "node dist/index.js",
+        "test": "vitest run --config vitest.config.ts --passWithNoTests",
+        "test:cov": "vitest run --config vitest.config.ts --coverage"
+    },
+    "dependencies": {
+        "@grants-stack-indexer/chain-providers": "workspace:*",
+        "@grants-stack-indexer/data-flow": "workspace:*",
+        "@grants-stack-indexer/indexer-client": "workspace:*",
+        "@grants-stack-indexer/metadata": "workspace:*",
+        "@grants-stack-indexer/pricing": "workspace:*",
+        "@grants-stack-indexer/repository": "workspace:*",
+        "@grants-stack-indexer/shared": "workspace:*",
+        "dotenv": "16.4.5",
+        "pg": "8.13.0",
+        "viem": "2.19.6",
+        "zod": "3.23.8"
+    },
+    "devDependencies": {
+        "tsx": "4.19.2"
+    }
+}

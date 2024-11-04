@@ -142,6 +142,8 @@ export class Orchestrator {
                 }
             }
         }
+
+        console.log("Shutdown signal received. Exiting...");
     }
 
     /**
