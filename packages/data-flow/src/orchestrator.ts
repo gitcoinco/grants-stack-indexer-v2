@@ -105,11 +105,12 @@ export class Orchestrator {
                 if (event.contractName === "Strategy" && "strategyId" in event) {
                     if (!existsHandler(event.strategyId)) {
                         //TODO: save to registry as unsupported strategy, so when the strategy is handled it will be backwards compatible and process all of the events
-                        console.log(
-                            `No handler found for strategyId: ${event.strategyId}. Event: ${stringify(
-                                event,
-                            )}`,
-                        );
+                        //TODO: decide if we want to log this
+                        // console.log(
+                        //     `No handler found for strategyId: ${event.strategyId}. Event: ${stringify(
+                        //         event,
+                        //     )}`,
+                        // );
                         continue;
                     }
                 }
@@ -133,9 +134,9 @@ export class Orchestrator {
                     error instanceof InvalidEvent ||
                     error instanceof UnsupportedEventException
                 ) {
-                    console.error(
-                        `Current event cannot be handled. ${error.name}: ${error.message}. Event: ${stringify(event)}`,
-                    );
+                    // console.error(
+                    //     `Current event cannot be handled. ${error.name}: ${error.message}. Event: ${stringify(event)}`,
+                    // );
                 } else {
                     console.error(`Error processing event: ${stringify(event)}`, error);
                 }

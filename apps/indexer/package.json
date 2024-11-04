@@ -13,7 +13,7 @@
     },
     "dependencies": {
         "chai": "4.3.10",
-        "envio": "2.5.2",
+        "envio": "2.7.2",
         "ethers": "6.8.0",
         "yaml": "2.5.1"
     },
