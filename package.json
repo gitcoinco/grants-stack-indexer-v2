@@ -17,6 +17,8 @@
         "lint": "turbo run lint",
         "lint:fix": "turbo run lint:fix",
         "prepare": "husky",
+        "script:db:migrate": "pnpm run --filter @grants-stack-indexer/scripts script:db:migrate",
+        "script:db:reset": "pnpm run --filter @grants-stack-indexer/scripts script:db:reset",
         "start": "turbo run start",
         "test": "turbo run test",
         "test:cov": "turbo run test:cov",

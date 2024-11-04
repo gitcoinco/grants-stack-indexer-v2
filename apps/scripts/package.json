@@ -1,0 +1,36 @@
+{
+    "name": "@grants-stack-indexer/scripts",
+    "version": "0.0.1",
+    "private": true,
+    "description": "",
+    "license": "MIT",
+    "author": "Wonderland",
+    "type": "module",
+    "directories": {
+        "src": "src"
+    },
+    "files": [
+        "package.json"
+    ],
+    "scripts": {
+        "build": "tsc -p tsconfig.build.json",
+        "check-types": "tsc --noEmit -p ./tsconfig.json",
+        "clean": "rm -rf dist/",
+        "format": "prettier --check \"{src,test}/**/*.{js,ts,json}\"",
+        "format:fix": "prettier --write \"{src,test}/**/*.{js,ts,json}\"",
+        "lint": "eslint \"{src,test}/**/*.{js,ts,json}\"",
+        "lint:fix": "pnpm lint --fix",
+        "script:db:migrate": "tsx src/migrateDb.script.ts",
+        "script:db:reset": "tsx src/resetDb.script.ts",
+        "test": "vitest run --config vitest.config.ts --passWithNoTests",
+        "test:cov": "vitest run --config vitest.config.ts --coverage --passWithNoTests"
+    },
+    "dependencies": {
+        "@grants-stack-indexer/repository": "workspace:*",
+        "dotenv": "16.4.5",
+        "zod": "3.23.8"
+    },
+    "devDependencies": {
+        "tsx": "4.19.2"
+    }
+}
