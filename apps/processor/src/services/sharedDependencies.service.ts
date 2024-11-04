@@ -1,6 +1,3 @@
-import { optimism } from "viem/chains";
-
-import { EvmProvider } from "@grants-stack-indexer/chain-providers";
 import {
     CoreDependencies,
     InMemoryEventsRegistry,
@@ -15,24 +12,27 @@ import {
     KyselyProjectRepository,
     KyselyRoundRepository,
 } from "@grants-stack-indexer/repository";
-import { ILogger } from "@grants-stack-indexer/shared";
 
 import { Environment } from "../config/index.js";
 
-export type Dependencies = {
-    core: CoreDependencies;
+export type SharedDependencies = {
+    core: Omit<CoreDependencies, "evmProvider">;
     registries: {
         eventsRegistry: InMemoryEventsRegistry;
         strategyRegistry: InMemoryStrategyRegistry;
     };
     indexerClient: EnvioIndexerClient;
+    kyselyDatabase: ReturnType<typeof createKyselyDatabase>;
 };
 
-export class DependenciesService {
-    static initialize(env: Environment, logger: ILogger): Dependencies {
-        // Initialize EVM provider
-        const evmProvider = new EvmProvider(env.RPC_URLS, optimism, logger);
-
+/**
+ * Shared dependencies service
+ * - Initializes core dependencies (repositories, providers)
+ * - Initializes registries
+ * - Initializes indexer client
+ */
+export class SharedDependenciesService {
+    static initialize(env: Environment): SharedDependencies {
         // Initialize repositories
         const kyselyDatabase = createKyselyDatabase({
             connectionString: env.DATABASE_URL,
@@ -63,7 +63,6 @@ export class DependenciesService {
 
         return {
             core: {
-                evmProvider,
                 projectRepository,
                 roundRepository,
                 applicationRepository,
@@ -75,6 +74,7 @@ export class DependenciesService {
                 strategyRegistry,
             },
             indexerClient,
+            kyselyDatabase,
         };
     }
 }

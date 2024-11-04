@@ -10,7 +10,8 @@ export {
 
 export type { DeepPartial } from "./utils/testing.js";
 export { mergeDeep } from "./utils/testing.js";
-export type { ILogger, Logger } from "./internal.js";
+export type { ILogger } from "./logger/logger.interface.js";
+export { Logger } from "./logger/logger.js";
 
 export { BigNumber } from "./internal.js";
 export type { BigNumberType } from "./internal.js";
