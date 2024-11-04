@@ -2,12 +2,7 @@ import axios, { AxiosInstance } from "axios";
 import { z } from "zod";
 
 import type { IMetadataProvider } from "../internal.js";
-import {
-    EmptyGatewaysUrlsException,
-    InvalidCidException,
-    InvalidContentException,
-    isValidCid,
-} from "../internal.js";
+import { EmptyGatewaysUrlsException, InvalidContentException, isValidCid } from "../internal.js";
 
 export class IpfsProvider implements IMetadataProvider {
     private readonly axiosInstance: AxiosInstance;
@@ -26,8 +21,8 @@ export class IpfsProvider implements IMetadataProvider {
         ipfsCid: string,
         validateContent?: z.ZodSchema<T>,
     ): Promise<T | undefined> {
-        if (!isValidCid(ipfsCid)) {
-            throw new InvalidCidException(ipfsCid);
+        if (ipfsCid === "" || !isValidCid(ipfsCid)) {
+            return undefined;
         }
 
         for (const gateway of this.gateways) {

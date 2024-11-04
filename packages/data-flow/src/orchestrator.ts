@@ -124,9 +124,8 @@ export class Orchestrator {
                             event,
                         )}`,
                     );
-                } else {
-                    await this.eventsRegistry.saveLastProcessedEvent(event);
                 }
+                await this.eventsRegistry.saveLastProcessedEvent(event);
             } catch (error: unknown) {
                 // TODO: improve error handling, retries and notify
                 if (
