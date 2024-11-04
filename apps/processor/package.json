@@ -14,7 +14,7 @@
         "lint:fix": "pnpm lint --fix",
         "start": "node dist/index.js",
         "test": "vitest run --config vitest.config.ts --passWithNoTests",
-        "test:cov": "vitest run --config vitest.config.ts --coverage"
+        "test:cov": "vitest run --config vitest.config.ts --coverage --passWithNoTests"
     },
     "dependencies": {
         "@grants-stack-indexer/chain-providers": "workspace:*",

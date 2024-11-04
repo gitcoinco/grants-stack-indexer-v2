@@ -61,7 +61,7 @@ describe("CoingeckoProvider", () => {
 
             expect(result).toEqual(expectedPrice);
             expect(mock.get).toHaveBeenCalledWith(
-                "/coins/ethereum/market_chart/range?vs_currency=usd&from=1609459200&to=1609545600&precision=full",
+                "/coins/ethereum/market_chart/range?vs_currency=usd&from=1609459200000&to=1609545600000&precision=full",
             );
         });
 
