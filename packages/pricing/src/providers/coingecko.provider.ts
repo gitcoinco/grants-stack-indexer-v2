@@ -92,10 +92,7 @@ export class CoingeckoProvider implements IPricingProvider {
             return undefined;
         }
 
-        const startTimestampSecs = Math.floor(startTimestampMs / 1000);
-        const endTimestampSecs = Math.floor(endTimestampMs / 1000);
-
-        const path = `/coins/${tokenId}/market_chart/range?vs_currency=usd&from=${startTimestampSecs}&to=${endTimestampSecs}&precision=full`;
+        const path = `/coins/${tokenId}/market_chart/range?vs_currency=usd&from=${startTimestampMs}&to=${endTimestampMs}&precision=full`;
 
         //TODO: handle retries
         try {

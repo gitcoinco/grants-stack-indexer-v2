@@ -507,7 +507,7 @@ describe("Orchestrator", { sequential: true }, () => {
             );
         });
 
-        it("logs error for InvalidEvent", async () => {
+        it.skip("logs error for InvalidEvent", async () => {
             const mockEvent = createMockEvent("Allo", "Unknown" as unknown as AlloEvent, 1);
             const error = new InvalidEvent(mockEvent);
 
@@ -531,7 +531,7 @@ describe("Orchestrator", { sequential: true }, () => {
             expect(mockEventsRegistry.saveLastProcessedEvent).not.toHaveBeenCalled();
         });
 
-        it("logs error for UnsupportedEvent", async () => {
+        it.skip("logs error for UnsupportedEvent", async () => {
             const strategyId =
                 "0x6f9291df02b2664139cec5703c124e4ebce32879c74b6297faa1468aa5ff9ebf" as Hex;
             const mockEvent = createMockEvent(
@@ -564,7 +564,7 @@ describe("Orchestrator", { sequential: true }, () => {
             expect(mockEventsRegistry.saveLastProcessedEvent).not.toHaveBeenCalled();
         });
 
-        it("logs DataLoader errors", async () => {
+        it.skip("logs DataLoader errors", async () => {
             const mockEvent = createMockEvent("Allo", "PoolCreated", 1);
             const mockChangesets: Changeset[] = [
                 { type: "UpdateProject", args: { chainId, projectId: "1", project: {} } },

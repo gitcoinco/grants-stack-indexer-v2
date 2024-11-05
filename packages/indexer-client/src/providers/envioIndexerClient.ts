@@ -39,21 +39,22 @@ export class EnvioIndexerClient implements IIndexerClient {
                             }
                             limit: $limit
                         ) {
-                            block_number: blockNumber
-                            block_timestamp: blockTimestamp
-                            chain_id: chainId
-                            contract_name: contractName
-                            event_name: eventName
-                            log_index: logIndex
+                            blockNumber: block_number
+                            blockTimestamp: block_timestamp
+                            chainId: chain_id
+                            contractName: contract_name
+                            eventName: event_name
+                            logIndex: log_index
                             params
-                            src_address: srcAddress
+                            srcAddress: src_address
+                            transactionFields: transaction_fields
                         }
                     }
                 `,
                 { chainId, blockNumber, logIndex, limit },
-            )) as { data: { raw_events: AnyIndexerFetchedEvent[] } };
-            if (response?.data?.raw_events) {
-                return response.data.raw_events;
+            )) as { raw_events: AnyIndexerFetchedEvent[] };
+            if (response?.raw_events) {
+                return response.raw_events;
             } else {
                 throw new InvalidIndexerResponse(JSON.stringify(response));
             }

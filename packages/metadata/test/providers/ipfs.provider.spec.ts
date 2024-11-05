@@ -4,7 +4,6 @@ import { z } from "zod";
 
 import {
     EmptyGatewaysUrlsException,
-    InvalidCidException,
     InvalidContentException,
     IpfsProvider,
 } from "../../src/external.js";
@@ -31,10 +30,14 @@ describe("IpfsProvider", () => {
     });
 
     describe("getMetadata", () => {
-        it("throw InvalidCidException for invalid CID", async () => {
-            await expect(() => provider.getMetadata("invalid-cid")).rejects.toThrow(
-                InvalidCidException,
-            );
+        it("return undefined for invalid CID", async () => {
+            const result = await provider.getMetadata("invalid-cid");
+            expect(result).toBeUndefined();
+        });
+
+        it("return undefined for empty CID", async () => {
+            const result = await provider.getMetadata("");
+            expect(result).toBeUndefined();
         });
 
         it("fetch metadata successfully from the first working gateway", async () => {

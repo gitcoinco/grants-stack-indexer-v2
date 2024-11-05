@@ -63,9 +63,7 @@ describe("EnvioIndexerClient", () => {
             const mockedResponse = {
                 status: 200,
                 headers: {},
-                data: {
-                    raw_events: mockEvents,
-                },
+                raw_events: mockEvents,
             };
             graphqlClient.request.mockResolvedValue(mockedResponse);
 
@@ -106,9 +104,7 @@ describe("EnvioIndexerClient", () => {
             const mockedResponse = {
                 status: 200,
                 headers: {},
-                data: {
-                    raw_events: mockEvents,
-                },
+                raw_events: mockEvents,
             };
             graphqlClient.request.mockResolvedValue(mockedResponse);
 
@@ -135,9 +131,7 @@ describe("EnvioIndexerClient", () => {
             const mockedResponse = {
                 status: 200,
                 headers: {},
-                data: {
-                    raw_events: [],
-                },
+                raw_events: [],
             };
             graphqlClient.request.mockResolvedValue(mockedResponse);
 

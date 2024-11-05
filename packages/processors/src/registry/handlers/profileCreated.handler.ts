@@ -37,12 +37,12 @@ export class ProfileCreatedHandler implements IEventHandler<"Registry", "Profile
             metadataValue = parsedMetadata.data;
         } else {
             //TODO: Replace with logger
-            console.warn({
-                msg: `ProfileCreated: Failed to parse metadata for profile ${profileId}`,
-                event: this.event,
-                metadataCid,
-                metadata,
-            });
+            // console.warn({
+            //     msg: `ProfileCreated: Failed to parse metadata for profile ${profileId}`,
+            //     event: this.event,
+            //     metadataCid,
+            //     metadata,
+            // });
         }
 
         const createdBy =
