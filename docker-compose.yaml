@@ -23,7 +23,7 @@ services:
     api-hasura:
         image: hasura/graphql-engine:latest
         ports:
-            - "8082:8080"
+            - "${DATALAYER_HASURA_EXPOSED_PORT:-8082}:8080"
         restart: always
         env_file:
             - .env
