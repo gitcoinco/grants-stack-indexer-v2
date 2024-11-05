@@ -15,14 +15,14 @@ const stringToJSONSchema = z.string().transform((str, ctx): z.infer<ReturnType<t
 const validationSchema = z.object({
     RPC_URLS: stringToJSONSchema.pipe(z.array(z.string().url())),
     CHAIN_ID: z.coerce.number().int().positive(),
-    FETCH_LIMIT: z.coerce.number().int().positive().default(1000),
-    FETCH_DELAY_MS: z.coerce.number().int().positive().default(10000),
+    FETCH_LIMIT: z.coerce.number().int().positive().default(500),
+    FETCH_DELAY_MS: z.coerce.number().int().positive().default(1000),
     DATABASE_URL: z.string(),
     DATABASE_SCHEMA: z.string().default("public"),
     INDEXER_GRAPHQL_URL: z.string().url(),
     INDEXER_ADMIN_SECRET: z.string(),
     COINGECKO_API_KEY: z.string(),
-    COINGECKO_API_TYPE: z.enum(["demo", "pro"]).default("demo"),
+    COINGECKO_API_TYPE: z.enum(["demo", "pro"]).default("pro"),
     IPFS_GATEWAYS_URL: stringToJSONSchema
         .pipe(z.array(z.string().url()))
         .default('["https://ipfs.io"]'),

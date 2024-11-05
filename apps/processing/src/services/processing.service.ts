@@ -19,7 +19,7 @@ import { SharedDependencies, SharedDependenciesService } from "./index.js";
  *
  * TODO: support multichain
  */
-export class ProcessorService {
+export class ProcessingService {
     private readonly logger = Logger.getInstance();
     private readonly orchestrator: Orchestrator;
     private readonly kyselyDatabase: SharedDependencies["kyselyDatabase"];

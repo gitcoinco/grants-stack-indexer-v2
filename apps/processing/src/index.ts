@@ -1,12 +1,12 @@
 import { inspect } from "util";
 
 import { environment } from "./config/index.js";
-import { ProcessorService } from "./services/processor.service.js";
+import { ProcessingService } from "./services/processing.service.js";
 
-let processor: ProcessorService;
+let processor: ProcessingService;
 
 const main = async (): Promise<void> => {
-    processor = new ProcessorService(environment);
+    processor = new ProcessingService(environment);
     await processor.start();
 };
 
