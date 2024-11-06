@@ -21,7 +21,7 @@ services:
             retries: 5
 
     api-hasura:
-        image: hasura/graphql-engine:latest
+        image: hasura/graphql-engine:v2.44.0
         ports:
             - "${DATALAYER_HASURA_EXPOSED_PORT:-8082}:8080"
         restart: always
@@ -42,7 +42,7 @@ services:
             HASURA_GRAPHQL_DEV_MODE: ${DATALAYER_HASURA_DEV_MODE:-true}
             HASURA_GRAPHQL_ENABLED_LOG_TYPES: "startup, http-log, webhook-log, websocket-log, query-log"
             HASURA_GRAPHQL_ENABLED_APIS: "graphql,metrics"
-            HASURA_GRAPHQL_ADMIN_INTERNAL_ERRORS: "true"
+            HASURA_GRAPHQL_ADMIN_INTERNAL_ERRORS: ${DATALAYER_HASURA_ADMIN_INTERNAL_ERRORS:-true}
             ## uncomment next line to run console offline (i.e load console assets from server instead of CDN)
             # HASURA_GRAPHQL_CONSOLE_ASSETS_DIR: /srv/console-assets
         depends_on:
