@@ -34,8 +34,15 @@ export class EnvioIndexerClient implements IIndexerClient {
                         raw_events(
                             where: {
                                 chain_id: { _eq: $chainId }
-                                block_number: { _gte: $blockNumber }
-                                log_index: { _gt: $logIndex }
+                                _or: [
+                                    { block_number: { _gt: $blockNumber } }
+                                    {
+                                        _and: [
+                                            { block_number: { _eq: $blockNumber } }
+                                            { log_index: { _gt: $logIndex } }
+                                        ]
+                                    }
+                                ]
                             }
                             limit: $limit
                         ) {
