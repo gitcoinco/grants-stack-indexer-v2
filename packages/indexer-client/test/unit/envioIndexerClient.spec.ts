@@ -1,4 +1,4 @@
-import { GraphQLClient } from "graphql-request";
+import { GraphQLClient, RequestDocument, RequestOptions } from "graphql-request";
 import { afterEach, beforeEach, describe, expect, it, Mocked, vi } from "vitest";
 
 import { AnyIndexerFetchedEvent, ChainId } from "@grants-stack-indexer/shared";
@@ -22,9 +22,88 @@ describe("EnvioIndexerClient", () => {
     let envioIndexerClient: EnvioIndexerClient;
     let graphqlClient: Mocked<GraphQLClient>;
 
+    // Sample test data
+    const testEvents: AnyIndexerFetchedEvent[] = [
+        {
+            chainId: 1,
+            blockNumber: 100,
+            blockTimestamp: 123123123,
+            contractName: "Allo",
+            eventName: "PoolCreated",
+            srcAddress: "0x1234",
+            logIndex: 1,
+            params: { contractAddress: "0x1234", tokenAddress: "0x1234", amount: 1000 },
+            transactionFields: { hash: "0x123", transactionIndex: 1 },
+        },
+        {
+            chainId: 1,
+            blockNumber: 100,
+            blockTimestamp: 123123123,
+            contractName: "Allo",
+            eventName: "PoolCreated",
+            srcAddress: "0x1234",
+            logIndex: 3,
+            params: { contractAddress: "0x1234", tokenAddress: "0x1234", amount: 1000 },
+            transactionFields: { hash: "0x123", transactionIndex: 1 },
+        },
+        {
+            chainId: 1,
+            blockNumber: 101,
+            blockTimestamp: 123123124,
+            contractName: "Allo",
+            eventName: "PoolCreated",
+            srcAddress: "0x1234",
+            logIndex: 1,
+            params: { contractAddress: "0x1234", tokenAddress: "0x1234", amount: 1000 },
+            transactionFields: { hash: "0x123", transactionIndex: 1 },
+        },
+        {
+            chainId: 10,
+            blockNumber: 1200,
+            blockTimestamp: 123123123,
+            contractName: "Allo",
+            eventName: "PoolCreated",
+            srcAddress: "0x1234",
+            logIndex: 1,
+            params: { contractAddress: "0x1234", tokenAddress: "0x1234", amount: 1000 },
+            transactionFields: { hash: "0x123", transactionIndex: 1 },
+        },
+    ];
+
     beforeEach(() => {
         envioIndexerClient = new EnvioIndexerClient("http://example.com/graphql", "secret");
         graphqlClient = envioIndexerClient["client"] as unknown as Mocked<GraphQLClient>;
+
+        // Mock the request implementation to simulate database querying
+        graphqlClient.request.mockImplementation(
+            async (
+                _document: RequestDocument | RequestOptions<object, object>,
+                ...args: object[]
+            ) => {
+                const variables = args[0] as {
+                    chainId: ChainId;
+                    blockNumber: number;
+                    logIndex: number;
+                    limit: number;
+                };
+                const { chainId, blockNumber, logIndex, limit } = variables;
+
+                const filteredEvents = testEvents
+                    .filter((event) => {
+                        // Match chainId
+                        if (event.chainId !== chainId) return false;
+
+                        // Implement the _or condition from the GraphQL query
+                        return (
+                            event.blockNumber > blockNumber ||
+                            (event.blockNumber === blockNumber && event.logIndex > logIndex)
+                        );
+                    })
+                    .slice(0, limit); // Apply limit
+
+                return { raw_events: filteredEvents };
+            },
+        );
     });
 
     afterEach(() => {
@@ -42,38 +121,61 @@ describe("EnvioIndexerClient", () => {
     });
 
     describe("getEventsAfterBlockNumberAndLogIndex", () => {
-        const mockEvents: AnyIndexerFetchedEvent[] = [
-            {
-                chainId: 1,
-                blockNumber: 12345,
-                blockTimestamp: 123123123,
-                contractName: "Allo",
-                eventName: "PoolCreated",
-                srcAddress: "0x1234567890123456789012345678901234567890",
-                logIndex: 0,
-                params: { contractAddress: "0x1234", tokenAddress: "0x1234", amount: 1000 },
-                transactionFields: {
-                    hash: "0x123",
-                    transactionIndex: 1,
-                },
-            },
-        ];
-
-        it("returns events when the query is successful", async () => {
-            const mockedResponse = {
-                status: 200,
-                headers: {},
-                raw_events: mockEvents,
-            };
-            graphqlClient.request.mockResolvedValue(mockedResponse);
-
+        it("returns events after the specified block number", async () => {
             const result = await envioIndexerClient.getEventsAfterBlockNumberAndLogIndex(
                 1 as ChainId,
-                12345,
+                100,
                 0,
                 100,
             );
-            expect(result).toEqual(mockEvents);
+
+            expect(result).toHaveLength(3);
+            expect(result).toEqual(
+                expect.arrayContaining([
+                    expect.objectContaining({ blockNumber: 100, logIndex: 1 }),
+                    expect.objectContaining({ blockNumber: 100, logIndex: 3 }),
+                    expect.objectContaining({ blockNumber: 101, logIndex: 1 }),
+                ]),
+            );
+        });
+
+        it("returns only events after the specified log index within the same block", async () => {
+            const result = await envioIndexerClient.getEventsAfterBlockNumberAndLogIndex(
+                1 as ChainId,
+                100,
+                2,
+                100,
+            );
+
+            expect(result).toHaveLength(2);
+            expect(result).toEqual(
+                expect.arrayContaining([
+                    expect.objectContaining({ blockNumber: 100, logIndex: 3 }),
+                    expect.objectContaining({ blockNumber: 101, logIndex: 1 }),
+                ]),
+            );
+        });
+
+        it("respects the limit parameter", async () => {
+            const result = await envioIndexerClient.getEventsAfterBlockNumberAndLogIndex(
+                1 as ChainId,
+                100,
+                0,
+                2,
+            );
+
+            expect(result).toHaveLength(2);
+        });
+
+        it("returns empty array when no matching events found", async () => {
+            const result = await envioIndexerClient.getEventsAfterBlockNumberAndLogIndex(
+                1 as ChainId,
+                102,
+                0,
+                100,
+            );
+
+            expect(result).toHaveLength(0);
         });
 
         it("throws InvalidIndexerResponse when response structure is incorrect", async () => {
@@ -104,7 +206,7 @@ describe("EnvioIndexerClient", () => {
             const mockedResponse = {
                 status: 200,
                 headers: {},
-                raw_events: mockEvents,
+                raw_events: testEvents,
             };
             graphqlClient.request.mockResolvedValue(mockedResponse);
 
@@ -115,7 +217,7 @@ describe("EnvioIndexerClient", () => {
                 0,
             );
 
-            expect(result).toEqual(mockEvents);
+            expect(result).toEqual(testEvents);
             expect(graphqlClient.request).toHaveBeenCalledWith(
                 expect.any(String), // We can check the query string later if necessary
                 {
@@ -128,16 +230,9 @@ describe("EnvioIndexerClient", () => {
         });
 
         it("returns an empty array when no events are found", async () => {
-            const mockedResponse = {
-                status: 200,
-                headers: {},
-                raw_events: [],
-            };
-            graphqlClient.request.mockResolvedValue(mockedResponse);
-
             const result = await envioIndexerClient.getEventsAfterBlockNumberAndLogIndex(
                 1 as ChainId,
-                12345,
+                10_000,
                 0,
             );
             expect(result).toEqual([]);
