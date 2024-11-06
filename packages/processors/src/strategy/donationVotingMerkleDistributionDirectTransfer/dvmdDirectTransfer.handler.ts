@@ -46,15 +46,15 @@ export class DVMDDirectTransferStrategyHandler extends BaseStrategyHandler {
     /** @inheritdoc */
     async handle(event: ProcessorEvent<"Strategy", StrategyEvent>): Promise<Changeset[]> {
         switch (event.eventName) {
-            case "Registered":
+            case "RegisteredWithSender":
                 return new DVMDRegisteredHandler(
-                    event as ProcessorEvent<"Strategy", "Registered">,
+                    event as ProcessorEvent<"Strategy", "RegisteredWithSender">,
                     this.chainId,
                     this.dependencies,
                 ).handle();
-            case "Distributed":
+            case "DistributedWithRecipientAddress":
                 return new BaseDistributedHandler(
-                    event as ProcessorEvent<"Strategy", "Distributed">,
+                    event as ProcessorEvent<"Strategy", "DistributedWithRecipientAddress">,
                     this.chainId,
                     this.dependencies,
                 ).handle();

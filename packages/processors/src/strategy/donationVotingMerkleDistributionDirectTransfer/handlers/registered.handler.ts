@@ -27,9 +27,9 @@ type Dependencies = Pick<
  * - Links the application to both the project and round
  */
 
-export class DVMDRegisteredHandler implements IEventHandler<"Strategy", "Registered"> {
+export class DVMDRegisteredHandler implements IEventHandler<"Strategy", "RegisteredWithSender"> {
     constructor(
-        readonly event: ProcessorEvent<"Strategy", "Registered">,
+        readonly event: ProcessorEvent<"Strategy", "RegisteredWithSender">,
         private readonly chainId: ChainId,
         private readonly dependencies: Dependencies,
     ) {}

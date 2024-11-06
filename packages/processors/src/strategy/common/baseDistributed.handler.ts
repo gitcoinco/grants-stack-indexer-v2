@@ -19,9 +19,11 @@ type Dependencies = Pick<ProcessorDependencies, "roundRepository">;
  *
  */
 
-export class BaseDistributedHandler implements IEventHandler<"Strategy", "Distributed"> {
+export class BaseDistributedHandler
+    implements IEventHandler<"Strategy", "DistributedWithRecipientAddress">
+{
     constructor(
-        readonly event: ProcessorEvent<"Strategy", "Distributed">,
+        readonly event: ProcessorEvent<"Strategy", "DistributedWithRecipientAddress">,
         private readonly chainId: ChainId,
         private readonly dependencies: Dependencies,
     ) {}
@@ -46,7 +48,7 @@ export class BaseDistributedHandler implements IEventHandler<"Strategy", "Distri
                 args: {
                     chainId: this.chainId,
                     roundId: round.id,
-                    amount: BigInt(this.event.params.amount),
+                    amount: this.event.params.amount,
                 },
             },
         ];

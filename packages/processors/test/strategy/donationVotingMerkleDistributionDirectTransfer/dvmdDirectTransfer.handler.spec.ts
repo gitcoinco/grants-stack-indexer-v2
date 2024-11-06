@@ -82,8 +82,8 @@ describe("DVMDDirectTransferHandler", () => {
 
     it("calls RegisteredHandler for Registered event", async () => {
         const mockEvent = {
-            eventName: "Registered",
-        } as ProcessorEvent<"Strategy", "Registered">;
+            eventName: "RegisteredWithSender",
+        } as ProcessorEvent<"Strategy", "RegisteredWithSender">;
 
         vi.spyOn(DVMDRegisteredHandler.prototype, "handle").mockResolvedValue([]);
 
@@ -101,8 +101,8 @@ describe("DVMDDirectTransferHandler", () => {
 
     it("calls DistributedHandler for Distributed event", async () => {
         const mockEvent = {
-            eventName: "Distributed",
-        } as ProcessorEvent<"Strategy", "Distributed">;
+            eventName: "DistributedWithRecipientAddress",
+        } as ProcessorEvent<"Strategy", "DistributedWithRecipientAddress">;
 
         vi.spyOn(BaseDistributedHandler.prototype, "handle").mockResolvedValue([]);
 

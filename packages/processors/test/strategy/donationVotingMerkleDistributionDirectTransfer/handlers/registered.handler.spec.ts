@@ -14,15 +14,15 @@ import { ProjectNotFound, RoundNotFound } from "../../../../src/exceptions/index
 import { DVMDRegisteredHandler } from "../../../../src/strategy/donationVotingMerkleDistributionDirectTransfer/handlers/index.js";
 
 function createMockEvent(
-    overrides: DeepPartial<ProcessorEvent<"Strategy", "Registered">> = {},
-): ProcessorEvent<"Strategy", "Registered"> {
-    const defaultEvent: ProcessorEvent<"Strategy", "Registered"> = {
+    overrides: DeepPartial<ProcessorEvent<"Strategy", "RegisteredWithSender">> = {},
+): ProcessorEvent<"Strategy", "RegisteredWithSender"> {
+    const defaultEvent: ProcessorEvent<"Strategy", "RegisteredWithSender"> = {
         params: {
             recipientId: "0x1234567890123456789012345678901234567890",
             sender: "0x0987654321098765432109876543210987654321",
             data: "0x0000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000001000000000000000000000000002c7296a5ec0539f0a018c7176c97c92a9c44e2b4000000000000000000000000e7eb5d2b5b188777df902e89c54570e7ef4f59ce000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000003b6261666b72656967796334336366696e786c6e6168713561617773676869626574763675737273376b6b78663776786d7a626a79726f37366977790000000000",
         },
-        eventName: "Registered",
+        eventName: "RegisteredWithSender",
         srcAddress: "0x1234567890123456789012345678901234567890",
         blockNumber: 12345,
         blockTimestamp: 1000000000,
@@ -37,7 +37,7 @@ function createMockEvent(
         strategyId: "0x9fa6890423649187b1f0e8bf4265f0305ce99523c3d11aa36b35a54617bb0ec0",
     };
 
-    return mergeDeep(defaultEvent, overrides) as ProcessorEvent<"Strategy", "Registered">;
+    return mergeDeep(defaultEvent, overrides) as ProcessorEvent<"Strategy", "RegisteredWithSender">;
 }
 
 describe("DVMDRegisteredHandler", () => {
@@ -45,7 +45,7 @@ describe("DVMDRegisteredHandler", () => {
     let mockRoundRepository: IRoundReadRepository;
     let mockProjectRepository: IProjectReadRepository;
     let mockMetadataProvider: IMetadataProvider;
-    let mockEvent: ProcessorEvent<"Strategy", "Registered">;
+    let mockEvent: ProcessorEvent<"Strategy", "RegisteredWithSender">;
     const chainId = 10 as ChainId;
 
     beforeEach(() => {

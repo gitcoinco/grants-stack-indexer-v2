@@ -80,9 +80,9 @@ describe("EventsProcessor", () => {
         ];
         const mockEvent = {
             contractName: "Strategy",
-            eventName: "Distributed",
+            eventName: "DistributedWithRecipientAddress",
             args: {},
-        } as unknown as ProcessorEvent<"Strategy", "Distributed">;
+        } as unknown as ProcessorEvent<"Strategy", "DistributedWithRecipientAddress">;
 
         vi.spyOn(mockStrategyProcessor, "process").mockResolvedValue(mockChangeset);
 
@@ -105,7 +105,7 @@ describe("EventsProcessor", () => {
                 sender: "0x0",
                 recipientAddress: "0x0",
                 recipientId: "0x0",
-                amount: 1,
+                amount: 1n,
             },
             transactionFields: {
                 hash: "0x0",

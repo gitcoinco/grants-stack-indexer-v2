@@ -68,9 +68,9 @@ describe("InMemoryEventsRegistry", () => {
             },
         };
 
-        const secondEvent: ProcessorEvent<"Strategy", "Registered"> = {
+        const secondEvent: ProcessorEvent<"Strategy", "RegisteredWithSender"> = {
             contractName: "Strategy",
-            eventName: "Registered",
+            eventName: "RegisteredWithSender",
             blockNumber: 1,
             blockTimestamp: 1234567890,
             chainId: 1 as ChainId,

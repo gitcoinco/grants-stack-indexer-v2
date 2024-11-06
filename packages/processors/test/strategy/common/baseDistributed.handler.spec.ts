@@ -6,16 +6,16 @@ import { ChainId, ProcessorEvent } from "@grants-stack-indexer/shared";
 import { BaseDistributedHandler } from "../../../src/strategy/common/baseDistributed.handler.js";
 
 function createMockEvent(
-    overrides: Partial<ProcessorEvent<"Strategy", "Distributed">> = {},
-): ProcessorEvent<"Strategy", "Distributed"> {
-    const defaultEvent: ProcessorEvent<"Strategy", "Distributed"> = {
+    overrides: Partial<ProcessorEvent<"Strategy", "DistributedWithRecipientAddress">> = {},
+): ProcessorEvent<"Strategy", "DistributedWithRecipientAddress"> {
+    const defaultEvent: ProcessorEvent<"Strategy", "DistributedWithRecipientAddress"> = {
         params: {
-            amount: 1000,
+            amount: 1000n,
             recipientAddress: "0x1234567890123456789012345678901234567890",
             recipientId: "0x1234567890123456789012345678901234567890",
             sender: "0x1234567890123456789012345678901234567890",
         },
-        eventName: "Distributed",
+        eventName: "DistributedWithRecipientAddress",
         srcAddress: "0x1234567890123456789012345678901234567890",
         blockNumber: 12345,
         blockTimestamp: 1000000000,
@@ -36,7 +36,7 @@ function createMockEvent(
 describe("BaseDistributedHandler", () => {
     let handler: BaseDistributedHandler;
     let mockRoundRepository: IRoundReadRepository;
-    let mockEvent: ProcessorEvent<"Strategy", "Distributed">;
+    let mockEvent: ProcessorEvent<"Strategy", "DistributedWithRecipientAddress">;
     const chainId = 10 as ChainId;
 
     beforeEach(() => {

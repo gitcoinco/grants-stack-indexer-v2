@@ -6,8 +6,11 @@ import { Address, AnyEvent, ContractName, ProcessorEvent } from "../../internal.
  * This array is used to represent all Strategy events.
  */
 const StrategyEventArray = [
-    "Registered",
-    "Distributed",
+    "RegisteredWithSender",
+    "RegisteredWithData",
+    "DistributedWithRecipientAddress",
+    "DistributedWithData",
+    "DistributedWithFlowRate",
     "TimestampsUpdated",
     "AllocatedWithToken",
 ] as const;
@@ -20,37 +23,64 @@ export type StrategyEvent = (typeof StrategyEventArray)[number];
 /**
  * This type maps Strategy events to their respective parameters.
  */
-export type StrategyEventParams<T extends StrategyEvent> = T extends "Registered"
-    ? RegisteredParams
-    : T extends "Distributed"
-      ? DistributedParams
-      : T extends "TimestampsUpdated"
-        ? TimestampsUpdatedParams
-        : T extends "AllocatedWithToken"
-          ? AllocatedWithTokenParams
-          : never;
+export type StrategyEventParams<T extends StrategyEvent> = T extends "RegisteredWithSender"
+    ? RegisteredWithSenderParams
+    : T extends "RegisteredWithData"
+      ? RegisteredWithDataParams
+      : T extends "DistributedWithRecipientAddress"
+        ? DistributedWithRecipientAddressParams
+        : T extends "DistributedWithData"
+          ? DistributedWithDataParams
+          : T extends "DistributedWithFlowRate"
+            ? DistributedWithFlowRateParams
+            : T extends "TimestampsUpdated"
+              ? TimestampsUpdatedParams
+              : T extends "AllocatedWithToken"
+                ? AllocatedWithTokenParams
+                : never;
 
 // =============================================================================
 // =============================== Event Parameters ============================
 // =============================================================================
-export type RegisteredParams = {
+
+// ======================= Registered =======================
+export type RegisteredWithSenderParams = {
     recipientId: Address;
     data: Hex;
     sender: Address;
 };
 
-export type DistributedParams = {
+export type RegisteredWithDataParams = {
+    recipient: Address;
+    data: Hex;
+};
+
+// ======================= Distributed =======================
+export type DistributedWithRecipientAddressParams = {
     recipientAddress: Address;
     recipientId: Address;
     sender: Address;
-    amount: number;
+    amount: bigint;
 };
+
+export type DistributedWithDataParams = {
+    data: Hex;
+    sender: Address;
+};
+
+export type DistributedWithFlowRateParams = {
+    flowRate: bigint;
+    sender: Address;
+};
+
+// ======================= TimestampsUpdated =======================
 
 export type TimestampsUpdatedParams = {
     contractAddress: Address;
     timestamp: number;
 };
 
+// ======================= Allocated =======================
 export type AllocatedWithTokenParams = {
     contractAddress: Address;
     tokenAddress: Address;

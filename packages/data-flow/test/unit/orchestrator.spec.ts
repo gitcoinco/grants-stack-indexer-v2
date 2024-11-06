@@ -254,10 +254,13 @@ describe("Orchestrator", { sequential: true }, () => {
         });
 
         const strategyEvents: Record<StrategyEvent, string> = {
-            Registered: "",
-            Distributed: "",
+            RegisteredWithSender: "",
+            DistributedWithRecipientAddress: "",
             TimestampsUpdated: "",
             AllocatedWithToken: "",
+            RegisteredWithData: "",
+            DistributedWithData: "",
+            DistributedWithFlowRate: "",
         };
 
         for (const event of Object.keys(strategyEvents) as StrategyEvent[]) {
@@ -319,7 +322,7 @@ describe("Orchestrator", { sequential: true }, () => {
             const strategyAddress = "0x123" as Address;
             const mockEvent = createMockEvent(
                 "Strategy",
-                "Registered",
+                "RegisteredWithSender",
                 1,
                 undefined,
                 strategyAddress,
@@ -363,7 +366,7 @@ describe("Orchestrator", { sequential: true }, () => {
             });
             const registeredEvent = createMockEvent(
                 "Strategy",
-                "Registered",
+                "RegisteredWithSender",
                 2,
                 {
                     recipientId: "0x123",
