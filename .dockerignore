@@ -1,0 +1,10 @@
+# Ignore all .env files in any directory or subdirectory
+**/.env
+
+# Ignore node_modules and dist directories in any directory or subdirectory
+**/node_modules
+**/dist
+
+**/.git
+**/.turbo
+**/*.md

@@ -4,8 +4,9 @@ services:
         restart: always
         ports:
             - "${DATALAYER_POSTGRES_EXPOSED_PORT:-5432}:5432"
-        volumes:
-            - db_data:/var/lib/datalayer-postgresql/data
+        # TODO: remove the comment when processing service persists latest event processed
+        # volumes:
+        #     - db_data:/var/lib/datalayer-postgres/data
         env_file:
             - .env
         environment:
@@ -19,8 +20,7 @@ services:
             interval: 5s
             timeout: 5s
             retries: 5
-
-    api-hasura:
+    datalayer-graphql:
         image: hasura/graphql-engine:v2.44.0
         ports:
             - "${DATALAYER_HASURA_EXPOSED_PORT:-8082}:8080"
@@ -56,29 +56,33 @@ services:
             start_period: 5s
         networks:
             - datalayer
-
-    envio-postgres:
+    indexer-postgres:
         image: postgres:16
         restart: always
         ports:
             - "${ENVIO_POSTGRES_EXPOSED_PORT:-5433}:5432"
         volumes:
-            - db_data:/var/lib/envio-postgresql/data
+            - db_data:/var/lib/indexer-postgres/data
         env_file:
             - .env
         environment:
             POSTGRES_DB: ${ENVIO_PG_DATABASE}
             POSTGRES_USER: ${ENVIO_PG_USER}
             POSTGRES_PASSWORD: ${ENVIO_POSTGRES_PASSWORD}
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U ${DATALAYER_PG_USER}"]
+            interval: 5s
+            timeout: 5s
+            retries: 5
         networks:
-            - indexer-service
-    graphql-engine:
+            - indexer
+    indexer-graphql:
         image: hasura/graphql-engine:v2.23.0
         ports:
             - "${HASURA_EXPOSED_PORT:-8080}:${PORT:-8080}"
         user: 1001:1001
         depends_on:
-            - "envio-postgres"
+            - "indexer-postgres"
         restart: always
         env_file:
             - .env
@@ -89,24 +93,26 @@ services:
             retries: 50
             start_period: 5s
         networks:
-            - indexer-service
+            - indexer
     indexer-service:
         build:
             context: ./apps/indexer
             dockerfile: Dockerfile
-        depends_on:
-            - "envio-postgres"
-            - "graphql-engine"
         restart: always
+        depends_on:
+            indexer-postgres:
+                condition: service_healthy
+            indexer-graphql:
+                condition: service_healthy
         env_file:
             - .env
         networks:
-            - indexer-service
+            - indexer
 volumes:
     db_data:
     ganache-data:
 networks:
-    indexer-service:
+    indexer:
         name: indexer_test_network
     datalayer:
         name: datalayer_test_network

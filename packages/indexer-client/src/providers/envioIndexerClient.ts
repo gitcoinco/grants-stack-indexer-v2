@@ -32,6 +32,7 @@ export class EnvioIndexerClient implements IIndexerClient {
                         $limit: Int!
                     ) {
                         raw_events(
+                            order_by: [{ block_number: asc }, { log_index: asc }]
                             where: {
                                 chain_id: { _eq: $chainId }
                                 _or: [
@@ -69,7 +70,7 @@ export class EnvioIndexerClient implements IIndexerClient {
             if (error instanceof InvalidIndexerResponse) {
                 throw error;
             }
-            throw new IndexerClientError(JSON.stringify(error));
+            throw new IndexerClientError(JSON.stringify(error, Object.getOwnPropertyNames(error)));
         }
     }
 }

@@ -502,7 +502,7 @@ describe("Orchestrator", { sequential: true }, () => {
 
             expect(eventsProcessorSpy).toHaveBeenCalledTimes(2);
             expect(orchestrator["dataLoader"].applyChanges).toHaveBeenCalledTimes(1);
-            expect(mockEventsRegistry.saveLastProcessedEvent).toHaveBeenCalledTimes(1);
+            expect(mockEventsRegistry.saveLastProcessedEvent).toHaveBeenCalledTimes(2);
             expect(consoleSpy).toHaveBeenCalledTimes(1);
             expect(consoleSpy).toHaveBeenCalledWith(
                 expect.stringContaining(`Error processing event: ${stringify(errorEvent)}`),

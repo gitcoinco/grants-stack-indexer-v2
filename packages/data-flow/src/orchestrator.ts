@@ -100,6 +100,7 @@ export class Orchestrator {
                     await delay(this.fetchDelayInMs);
                     continue;
                 }
+                await this.eventsRegistry.saveLastProcessedEvent(event);
 
                 event = await this.enhanceStrategyId(event);
                 if (event.contractName === "Strategy" && "strategyId" in event) {
@@ -126,7 +127,6 @@ export class Orchestrator {
                         )}`,
                     );
                 }
-                await this.eventsRegistry.saveLastProcessedEvent(event);
             } catch (error: unknown) {
                 // TODO: improve error handling, retries and notify
                 if (
