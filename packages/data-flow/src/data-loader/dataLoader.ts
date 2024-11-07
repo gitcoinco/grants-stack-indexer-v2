@@ -1,6 +1,7 @@
 import {
     Changeset,
     IApplicationRepository,
+    IDonationRepository,
     IProjectRepository,
     IRoundRepository,
 } from "@grants-stack-indexer/repository";
@@ -8,6 +9,7 @@ import {
 import { ExecutionResult, IDataLoader, InvalidChangeset } from "../internal.js";
 import {
     createApplicationHandlers,
+    createDonationHandlers,
     createProjectHandlers,
     createRoundHandlers,
 } from "./handlers/index.js";
@@ -34,12 +36,14 @@ export class DataLoader implements IDataLoader {
             project: IProjectRepository;
             round: IRoundRepository;
             application: IApplicationRepository;
+            donation: IDonationRepository;
         },
     ) {
         this.handlers = {
             ...createProjectHandlers(repositories.project),
             ...createRoundHandlers(repositories.round),
             ...createApplicationHandlers(repositories.application),
+            ...createDonationHandlers(repositories.donation),
         };
     }
 

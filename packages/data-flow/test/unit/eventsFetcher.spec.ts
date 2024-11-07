@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, Mocked, vi } from "vitest";
 
 import { IIndexerClient } from "@grants-stack-indexer/indexer-client";
-import { AnyIndexerFetchedEvent, ChainId } from "@grants-stack-indexer/shared";
+import { AnyIndexerFetchedEvent, ChainId, PoolCreatedParams } from "@grants-stack-indexer/shared";
 
 import { EventsFetcher } from "../../src/eventsFetcher.js";
 
@@ -27,7 +27,11 @@ describe("EventsFetcher", () => {
                 eventName: "PoolCreated",
                 srcAddress: "0x1234567890123456789012345678901234567890",
                 logIndex: 0,
-                params: { contractAddress: "0x1234", tokenAddress: "0x1234", amount: 1000 },
+                params: {
+                    contractAddress: "0x1234",
+                    tokenAddress: "0x1234",
+                    amount: 1000n,
+                } as unknown as PoolCreatedParams,
                 transactionFields: { hash: "0x1234", transactionIndex: 0 },
             },
             {
@@ -41,8 +45,8 @@ describe("EventsFetcher", () => {
                 params: {
                     contractAddress: "0x1234",
                     tokenAddress: "0x1234",
-                    amount: 1000,
-                },
+                    amount: 1000n,
+                } as unknown as PoolCreatedParams,
                 transactionFields: { hash: "0x1234", transactionIndex: 1 },
             },
         ];

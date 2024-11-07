@@ -6,6 +6,7 @@ export type {
     IProjectReadRepository,
     IApplicationRepository,
     IApplicationReadRepository,
+    IDonationRepository,
     DatabaseConfig,
 } from "./internal.js";
 
@@ -35,17 +36,21 @@ export type {
     PartialApplication,
 } from "./types/application.types.js";
 
+export type { Donation, NewDonation } from "./types/donation.types.js";
+
 export type {
     Changeset,
     ProjectChangeset,
     RoundChangeset,
     ApplicationChangeset,
+    DonationChangeset,
 } from "./types/index.js";
 
 export {
     KyselyRoundRepository,
     KyselyProjectRepository,
     KyselyApplicationRepository,
+    KyselyDonationRepository,
 } from "./repositories/kysely/index.js";
 
 export { createKyselyPostgresDb as createKyselyDatabase } from "./internal.js";

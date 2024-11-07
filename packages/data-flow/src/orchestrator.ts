@@ -84,6 +84,7 @@ export class Orchestrator {
             project: this.dependencies.projectRepository,
             round: this.dependencies.roundRepository,
             application: this.dependencies.applicationRepository,
+            donation: this.dependencies.donationRepository,
         });
         this.eventsQueue = new Queue<ProcessorEvent<ContractName, AnyEvent>>(fetchLimit);
     }
