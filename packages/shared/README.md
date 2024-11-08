@@ -1,66 +1,41 @@
-# ts-turborepo-boilerplate: sample-lib package
+# Grants stack indexer `shared` package
 
-> Note: use this lib as reference but preferred way is to re-write package
-> from zero instead of refactoring this one.
-> When you don't need this anymore, you can delete it
+The `@grants-stack-indexer/shared` package provides shared utilities, types, constants and logger. This package is designed to be used across the packages of this monorepo to ensure consistency and reusability.
 
-Sample library that exposes a Blockchain provider to query
-account balances on Ethereum mainnet or EVM-compatible blockchains
+## 📋 Prerequisites
 
-## Setup
+-   Ensure you have `node >= 20.0.0` and `pnpm >= 9.5.0` installed.
 
-1. Change package name to your own in [`package.json`](./package.json)
-2. Install dependencies running `pnpm install`
+## Installation
 
-## Available Scripts
+```bash
+$ pnpm install
+```
 
-Available scripts that can be run using `pnpm`:
+## Building
 
-| Script        | Description                                             |
-| ------------- | ------------------------------------------------------- |
-| `build`       | Build library using tsc                                 |
-| `check-types` | Check types issues using tsc                            |
-| `clean`       | Remove `dist` folder                                    |
-| `lint`        | Run ESLint to check for coding standards                |
-| `lint:fix`    | Run linter and automatically fix code formatting issues |
-| `format`      | Check code formatting and style using Prettier          |
-| `format:fix`  | Run formatter and automatically fix issues              |
-| `test`        | Run tests using vitest                                  |
-| `test:cov`    | Run tests with coverage report                          |
+To build the monorepo packages, run:
+
+```bash
+$ pnpm build
+```
+
+## Test
+
+```bash
+# unit tests
+$ pnpm run test
+
+# test coverage
+$ pnpm run test:cov
+```
 
 ## Usage
 
 ### Importing the Package
 
-You can import the package in your TypeScript or JavaScript files as follows:
+You can import the package in your TypeScript files as follows:
 
 ```typescript
-import { BlockchainProvider } from "@ts-turborepo-boilerplate/sample-lib";
+import { ILogger, ProcessorEvent, stringify } from "@grants-stack-indexer/shared";
 ```
-
-### Example
-
-```typescript
-// EVM-provider
-const rpcUrl = ""; //non-empty valid url
-const address = "0x...";
-
-const provider = new BlockchainProvider(rpcUrl);
-
-const balance = await provider.getBalance(address);
-
-console.log(`Balance of ${address} is ${balance}`);
-```
-
-## API
-
-### [IBlockchainProvider](./src/interfaces/blockchainProvider.interface.ts)
-
-Available methods
-
--   `getBalance(address: Address)`
-
-## References
-
--   [Viem](https://viem.sh/)
--   [Offchain docs: Internal module pattern](https://www.notion.so/defi-wonderland/Best-Practices-c08b71f28e59490f8dadef64cf61c9ac?pvs=4#89f99d33053a426285bacc6275d994c0)
