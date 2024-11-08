@@ -68,7 +68,7 @@ services:
             POSTGRES_USER: ${ENVIO_PG_USER}
             POSTGRES_PASSWORD: ${ENVIO_POSTGRES_PASSWORD}
         healthcheck:
-            test: ["CMD-SHELL", "pg_isready -U ${DATALAYER_PG_USER}"]
+            test: ["CMD-SHELL", "pg_isready -U ${ENVIO_PG_USER}"]
             interval: 5s
             timeout: 5s
             retries: 5

@@ -21,19 +21,31 @@ Ensure you have the following installed on your machine:
 
 ### Setup
 
-1. Build and start the services in detached mode:
+1. Copy the Example Environment File and edit the `.env` file
+
+```
+cp .env.example .env
+```
+
+2. Build and start the services in detached mode:
 
 ```
 docker-compose up -d --build
 ```
 
-2. After starting Docker Compose, run the following command to apply the database migrations:
+3. Copy the Example Environment File on `apps/migration-scripts` and edit the `.env` file
+
+```
+cp apps/migration-scripts/.env.example apps/migration-scripts/.env
+```
+
+4. After starting Docker Compose, run the following command to apply the database migrations:
 
 ```
 pnpm script:db:migrate
 ```
 
-3. Navigate to the processing service directory and start it with:
+5. Navigate to the processing service directory and start it with:
 
 ```
 cd apps/processing && pnpm dev
