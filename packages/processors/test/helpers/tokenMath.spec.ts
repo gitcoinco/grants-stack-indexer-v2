@@ -1,7 +1,7 @@
 import { parseGwei } from "viem";
 import { describe, expect, it, test } from "vitest";
 
-import { calculateAmountInUsd } from "../../src/helpers/tokenMath.js";
+import { calculateAmountInToken, calculateAmountInUsd } from "../../src/helpers/tokenMath.js";
 import { InvalidArgument } from "../../src/internal.js";
 
 describe("calculateAmountInUsd", () => {
@@ -119,5 +119,46 @@ describe("calculateAmountInUsd", () => {
         expect(calculateAmountInUsd(3400000000000000000n, 0.5, 18, 8)).toBe("1.7");
 
         expect(calculateAmountInUsd(3400000000000000000n, 2, 18, 8)).toBe("6.8");
+    });
+});
+
+describe("calculateAmountInToken", () => {
+    it("correctly calculate the amount in token", () => {
+        expect(calculateAmountInToken("1", "1", 18)).toBe(1000000000000000000n);
+        expect(calculateAmountInToken("1", "1", 8)).toBe(100000000n);
+    });
+
+    test("migrated cases", () => {
+        expect(calculateAmountInToken("3.4", "1", 18)).toBe(3400000000000000000n);
+
+        expect(calculateAmountInToken("3.4", "2", 18)).toBe(1700000000000000000n);
+
+        expect(calculateAmountInToken("3.4", "0.5", 18)).toBe(6800000000000000000n);
+    });
+
+    it("return zero for zero USD amount", () => {
+        expect(calculateAmountInToken("0", "1", 18)).toBe(0n);
+    });
+
+    it("handle very large USD amounts", () => {
+        expect(calculateAmountInToken("1000000000000000000", "1", 18)).toBe(
+            1000000000000000000000000000000000000n,
+        );
+    });
+
+    it("handle small USD amounts", () => {
+        expect(calculateAmountInToken("0.01", "0.001", 18)).toBe(10000000000000000000n);
+    });
+
+    it("handle very large token price", () => {
+        expect(calculateAmountInToken("2", "1000000000000000000", 18)).toBe(2n);
+    });
+
+    it("throw an error for zero token price", () => {
+        expect(() => calculateAmountInToken("1", "0", 18)).toThrow();
+    });
+
+    it("handle scientific notation for USD amount", () => {
+        expect(calculateAmountInToken("1e3", "1", 18)).toBe(1000000000000000000000n);
     });
 });

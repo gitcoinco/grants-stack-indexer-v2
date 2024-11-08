@@ -16,8 +16,6 @@ export class KyselyDonationRepository implements IDonationRepository {
             .insertInto("donations")
             .values(donation)
             .onConflict((c) => {
-                //TODO: replace with logger
-                console.log("Donation already exists", donation.id);
                 return c.column("id").doNothing();
             })
             .execute();
@@ -30,8 +28,6 @@ export class KyselyDonationRepository implements IDonationRepository {
             .insertInto("donations")
             .values(donations)
             .onConflict((c) => {
-                //TODO: replace with logger
-                console.log("Donation already exists in batch");
                 return c.column("id").doNothing();
             })
             .execute();

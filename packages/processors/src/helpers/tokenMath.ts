@@ -32,3 +32,22 @@ export const calculateAmountInUsd = (
 
     return amountInUsd.toString();
 };
+
+/**
+ * Calculates the amount in token
+ * @param amountInUSD - The amount in USD
+ * @param tokenPriceInUsd - The price of the token in USD
+ * @param tokenDecimals - The number of decimals the token has
+ * @returns The amount in token
+ */
+export const calculateAmountInToken = (
+    amountInUSD: string,
+    tokenPriceInUsd: string | number,
+    tokenDecimals: number,
+): bigint => {
+    const amountInUsdBN = new BigNumber(amountInUSD);
+    const tokenPriceInUsdBN = new BigNumber(tokenPriceInUsd);
+    const scaleFactor = new BigNumber(10).pow(tokenDecimals);
+
+    return BigInt(amountInUsdBN.multipliedBy(scaleFactor).dividedBy(tokenPriceInUsdBN).toFixed(0));
+};

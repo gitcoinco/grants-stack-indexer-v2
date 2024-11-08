@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { IMetadataProvider } from "@grants-stack-indexer/metadata";
 import type {
+    IApplicationReadRepository,
     IProjectReadRepository,
     IRoundReadRepository,
 } from "@grants-stack-indexer/repository";
@@ -19,16 +20,23 @@ import {
 import { TokenPriceNotFoundError, UnsupportedEventException } from "../../../src/internal.js";
 import { BaseDistributedHandler } from "../../../src/strategy/common/index.js";
 import { DVMDDirectTransferStrategyHandler } from "../../../src/strategy/donationVotingMerkleDistributionDirectTransfer/dvmdDirectTransfer.handler.js";
-import { DVMDRegisteredHandler } from "../../../src/strategy/donationVotingMerkleDistributionDirectTransfer/handlers/index.js";
+import {
+    DVMDAllocatedHandler,
+    DVMDRegisteredHandler,
+} from "../../../src/strategy/donationVotingMerkleDistributionDirectTransfer/handlers/index.js";
 
 vi.mock(
     "../../../src/strategy/donationVotingMerkleDistributionDirectTransfer/handlers/index.js",
     () => {
         const DVMDRegisteredHandler = vi.fn();
+        const DVMDAllocatedHandler = vi.fn();
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         DVMDRegisteredHandler.prototype.handle = vi.fn();
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        DVMDAllocatedHandler.prototype.handle = vi.fn();
         return {
             DVMDRegisteredHandler,
+            DVMDAllocatedHandler,
         };
     },
 );
@@ -49,6 +57,7 @@ describe("DVMDDirectTransferHandler", () => {
     let mockProjectRepository: IProjectReadRepository;
     let mockEVMProvider: EvmProvider;
     let mockPricingProvider: IPricingProvider;
+    let mockApplicationRepository: IApplicationReadRepository;
 
     beforeEach(() => {
         mockMetadataProvider = {} as IMetadataProvider;
@@ -62,13 +71,14 @@ describe("DVMDDirectTransferHandler", () => {
         mockPricingProvider = {
             getTokenPrice: vi.fn(),
         } as IPricingProvider;
-
+        mockApplicationRepository = {} as IApplicationReadRepository;
         handler = new DVMDDirectTransferStrategyHandler(mockChainId, {
             metadataProvider: mockMetadataProvider,
             roundRepository: mockRoundRepository,
             projectRepository: mockProjectRepository,
             evmProvider: mockEVMProvider,
             pricingProvider: mockPricingProvider,
+            applicationRepository: mockApplicationRepository,
         });
     });
 
@@ -95,6 +105,7 @@ describe("DVMDDirectTransferHandler", () => {
             projectRepository: mockProjectRepository,
             evmProvider: mockEVMProvider,
             pricingProvider: mockPricingProvider,
+            applicationRepository: mockApplicationRepository,
         });
         expect(DVMDRegisteredHandler.prototype.handle).toHaveBeenCalled();
     });
@@ -114,8 +125,29 @@ describe("DVMDDirectTransferHandler", () => {
             projectRepository: mockProjectRepository,
             evmProvider: mockEVMProvider,
             pricingProvider: mockPricingProvider,
+            applicationRepository: mockApplicationRepository,
         });
         expect(BaseDistributedHandler.prototype.handle).toHaveBeenCalled();
+    });
+
+    it("calls AllocatedHandler for AllocatedWithOrigin event", async () => {
+        const mockEvent = {
+            eventName: "AllocatedWithOrigin",
+        } as ProcessorEvent<"Strategy", "AllocatedWithOrigin">;
+
+        vi.spyOn(DVMDAllocatedHandler.prototype, "handle").mockResolvedValue([]);
+
+        await handler.handle(mockEvent);
+
+        expect(DVMDAllocatedHandler).toHaveBeenCalledWith(mockEvent, mockChainId, {
+            metadataProvider: mockMetadataProvider,
+            roundRepository: mockRoundRepository,
+            projectRepository: mockProjectRepository,
+            evmProvider: mockEVMProvider,
+            pricingProvider: mockPricingProvider,
+            applicationRepository: mockApplicationRepository,
+        });
+        expect(DVMDAllocatedHandler.prototype.handle).toHaveBeenCalled();
     });
 
     describe("fetchMatchAmount", () => {
@@ -219,7 +251,6 @@ describe("DVMDDirectTransferHandler", () => {
         });
     });
 
-    it.skip("calls AllocatedHandler for Allocated event");
     it.skip("calls TimestampsUpdatedHandler for TimestampsUpdated event");
     it.skip("calls RecipientStatusUpdatedHandler for RecipientStatusUpdated event");
     it.skip("calls DistributionUpdatedHandler for DistributionUpdated event");

@@ -4,7 +4,11 @@ import { afterEach, beforeEach, describe, expect, it, Mock, vi } from "vitest";
 import { EvmProvider } from "@grants-stack-indexer/chain-providers";
 import { IMetadataProvider } from "@grants-stack-indexer/metadata";
 import { IPricingProvider } from "@grants-stack-indexer/pricing";
-import { IProjectReadRepository, IRoundReadRepository } from "@grants-stack-indexer/repository";
+import {
+    IApplicationReadRepository,
+    IProjectReadRepository,
+    IRoundReadRepository,
+} from "@grants-stack-indexer/repository";
 import { Bytes32String, ChainId, ProcessorEvent } from "@grants-stack-indexer/shared";
 
 import { ProcessorDependencies } from "../../../src/internal.js";
@@ -56,6 +60,7 @@ describe("ProfileCreatedHandler", () => {
                 getMetadata: vi.fn(),
             } as unknown as IMetadataProvider,
             roundRepository: {} as unknown as IRoundReadRepository,
+            applicationRepository: {} as unknown as IApplicationReadRepository,
         };
     });
 

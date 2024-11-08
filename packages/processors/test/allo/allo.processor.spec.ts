@@ -4,6 +4,7 @@ import type { EvmProvider } from "@grants-stack-indexer/chain-providers";
 import type { IMetadataProvider } from "@grants-stack-indexer/metadata";
 import type { IPricingProvider } from "@grants-stack-indexer/pricing";
 import type {
+    IApplicationReadRepository,
     IProjectReadRepository,
     IRoundReadRepository,
 } from "@grants-stack-indexer/repository";
@@ -43,6 +44,7 @@ describe("AlloProcessor", () => {
             metadataProvider: mockMetadataProvider,
             roundRepository: mockRoundRepository,
             projectRepository: {} as IProjectReadRepository,
+            applicationRepository: {} as IApplicationReadRepository,
         });
 
         // Reset mocks before each test
