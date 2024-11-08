@@ -17,6 +17,7 @@ import {
     ContractToEventName,
     EventParams,
     Hex,
+    ILogger,
     ProcessorEvent,
     StrategyEvent,
     stringify,
@@ -59,6 +60,12 @@ describe("Orchestrator", { sequential: true }, () => {
     const chainId = 1 as ChainId;
     const mockFetchLimit = 10;
     const mockFetchDelay = 100;
+    const logger: ILogger = {
+        debug: vi.fn(),
+        error: vi.fn(),
+        info: vi.fn(),
+        warn: vi.fn(),
+    };
 
     beforeEach(() => {
         // Setup mock implementations
@@ -105,6 +112,7 @@ describe("Orchestrator", { sequential: true }, () => {
             },
             mockFetchLimit,
             mockFetchDelay,
+            logger,
         );
     });
 
@@ -468,7 +476,6 @@ describe("Orchestrator", { sequential: true }, () => {
 
         it("keeps running when there is an error", async () => {
             const eventsProcessorSpy = vi.spyOn(orchestrator["eventsProcessor"], "processEvent");
-            const consoleSpy = vi.spyOn(console, "error");
             const errorEvent = createMockEvent("Allo", "Unknown" as unknown as AlloEvent, 1);
             const error = new Error("test");
 
@@ -503,10 +510,9 @@ describe("Orchestrator", { sequential: true }, () => {
             expect(eventsProcessorSpy).toHaveBeenCalledTimes(2);
             expect(orchestrator["dataLoader"].applyChanges).toHaveBeenCalledTimes(1);
             expect(mockEventsRegistry.saveLastProcessedEvent).toHaveBeenCalledTimes(2);
-            expect(consoleSpy).toHaveBeenCalledTimes(1);
-            expect(consoleSpy).toHaveBeenCalledWith(
+            expect(logger.error).toHaveBeenCalledTimes(1);
+            expect(logger.error).toHaveBeenCalledWith(
                 expect.stringContaining(`Error processing event: ${stringify(errorEvent)}`),
-                error,
             );
         });
 

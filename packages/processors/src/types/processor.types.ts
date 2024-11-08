@@ -5,6 +5,7 @@ import type {
     IProjectReadRepository,
     IRoundReadRepository,
 } from "@grants-stack-indexer/repository";
+import { ILogger } from "@grants-stack-indexer/shared";
 
 export type ProcessorDependencies = {
     evmProvider: EvmProvider;
@@ -12,4 +13,5 @@ export type ProcessorDependencies = {
     metadataProvider: IMetadataProvider;
     roundRepository: IRoundReadRepository;
     projectRepository: IProjectReadRepository;
+    logger: ILogger;
 };

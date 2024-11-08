@@ -1,7 +1,6 @@
-import { isNativeError } from "util/types";
 import axios, { AxiosInstance, isAxiosError } from "axios";
 
-import { TokenCode } from "@grants-stack-indexer/shared";
+import { ILogger, stringify, TokenCode } from "@grants-stack-indexer/shared";
 
 import { IPricingProvider } from "../interfaces/index.js";
 import {
@@ -62,7 +61,10 @@ export class CoingeckoProvider implements IPricingProvider {
      * @param options.apiKey - Coingecko API key.
      * @param options.apiType - Coingecko API type (demo or pro).
      */
-    constructor(options: CoingeckoOptions) {
+    constructor(
+        options: CoingeckoOptions,
+        private readonly logger: ILogger,
+    ) {
         const { apiKey, apiType } = options;
         const { baseURL, authHeader } = getApiTypeConfig(apiType);
 
@@ -111,7 +113,9 @@ export class CoingeckoProvider implements IPricingProvider {
             //TODO: notify
             if (isAxiosError(error)) {
                 if (error.status! >= 400 && error.status! < 500) {
-                    console.error(`Coingecko API error: ${error.message}. Stack: ${error.stack}`);
+                    this.logger.error(
+                        `Coingecko API error: ${error.message}. Stack: ${error.stack}`,
+                    );
                     return undefined;
                 }
 
@@ -119,11 +123,11 @@ export class CoingeckoProvider implements IPricingProvider {
                     throw new NetworkException(error.message, error.status!);
                 }
             }
-            console.error(error);
-            throw new UnknownPricingException(
-                isNativeError(error) ? error.message : JSON.stringify(error),
-                isNativeError(error) ? error.stack : undefined,
-            );
+            const errorMessage =
+                `Coingecko API error: failed to fetch token price ` +
+                stringify(error, Object.getOwnPropertyNames(error));
+            this.logger.error(errorMessage);
+            throw new UnknownPricingException(errorMessage);
         }
     }
 }

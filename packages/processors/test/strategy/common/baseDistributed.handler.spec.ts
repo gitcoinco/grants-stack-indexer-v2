@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { IRoundReadRepository, Round } from "@grants-stack-indexer/repository";
-import { ChainId, ProcessorEvent } from "@grants-stack-indexer/shared";
+import { ChainId, ILogger, ProcessorEvent } from "@grants-stack-indexer/shared";
 
 import { BaseDistributedHandler } from "../../../src/strategy/common/baseDistributed.handler.js";
 
@@ -38,7 +38,12 @@ describe("BaseDistributedHandler", () => {
     let mockRoundRepository: IRoundReadRepository;
     let mockEvent: ProcessorEvent<"Strategy", "DistributedWithRecipientAddress">;
     const chainId = 10 as ChainId;
-
+    const logger: ILogger = {
+        debug: vi.fn(),
+        error: vi.fn(),
+        info: vi.fn(),
+        warn: vi.fn(),
+    };
     beforeEach(() => {
         mockRoundRepository = {
             getRoundByStrategyAddress: vi.fn(),
@@ -53,6 +58,7 @@ describe("BaseDistributedHandler", () => {
 
         handler = new BaseDistributedHandler(mockEvent, chainId, {
             roundRepository: mockRoundRepository,
+            logger,
         });
 
         const result = await handler.handle();
@@ -76,6 +82,7 @@ describe("BaseDistributedHandler", () => {
 
         handler = new BaseDistributedHandler(mockEvent, chainId, {
             roundRepository: mockRoundRepository,
+            logger,
         });
 
         const result = await handler.handle();

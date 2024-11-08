@@ -1,18 +1,24 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
-import { ChainId, ProcessorEvent } from "@grants-stack-indexer/shared";
+import { ChainId, ILogger, ProcessorEvent } from "@grants-stack-indexer/shared";
 
 import { InMemoryEventsRegistry } from "../../src/eventsRegistry.js";
 
 describe("InMemoryEventsRegistry", () => {
+    const logger: ILogger = {
+        debug: vi.fn(),
+        error: vi.fn(),
+        info: vi.fn(),
+        warn: vi.fn(),
+    };
     it("return null when no event has been saved", async () => {
-        const registry = new InMemoryEventsRegistry();
+        const registry = new InMemoryEventsRegistry(logger);
         const lastEvent = await registry.getLastProcessedEvent();
         expect(lastEvent).toBeUndefined();
     });
 
     it("save and retrieve the last processed event", async () => {
-        const registry = new InMemoryEventsRegistry();
+        const registry = new InMemoryEventsRegistry(logger);
         const mockEvent: ProcessorEvent<"Allo", "PoolCreated"> = {
             contractName: "Allo",
             eventName: "PoolCreated",
@@ -43,7 +49,7 @@ describe("InMemoryEventsRegistry", () => {
     });
 
     it("should update the last processed event when saving multiple times", async () => {
-        const registry = new InMemoryEventsRegistry();
+        const registry = new InMemoryEventsRegistry(logger);
 
         const firstEvent: ProcessorEvent<"Allo", "PoolCreated"> = {
             contractName: "Allo",

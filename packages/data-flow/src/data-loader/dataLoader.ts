@@ -4,6 +4,7 @@ import {
     IProjectRepository,
     IRoundRepository,
 } from "@grants-stack-indexer/repository";
+import { ILogger, stringify } from "@grants-stack-indexer/shared";
 
 import { ExecutionResult, IDataLoader, InvalidChangeset } from "../internal.js";
 import {
@@ -35,6 +36,7 @@ export class DataLoader implements IDataLoader {
             round: IRoundRepository;
             application: IApplicationRepository;
         },
+        private readonly logger: ILogger,
     ) {
         this.handlers = {
             ...createProjectHandlers(repositories.project),
@@ -73,7 +75,7 @@ export class DataLoader implements IDataLoader {
                         error instanceof Error ? error.message : String(error)
                     }`,
                 );
-                console.error(error);
+                this.logger.error(`${stringify(error, Object.getOwnPropertyNames(error))}`);
                 break;
             }
         }

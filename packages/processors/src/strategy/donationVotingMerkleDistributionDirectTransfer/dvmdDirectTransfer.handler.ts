@@ -18,7 +18,12 @@ import { DVMDRegisteredHandler } from "./handlers/index.js";
 
 type Dependencies = Pick<
     ProcessorDependencies,
-    "projectRepository" | "roundRepository" | "metadataProvider" | "evmProvider" | "pricingProvider"
+    | "projectRepository"
+    | "roundRepository"
+    | "metadataProvider"
+    | "evmProvider"
+    | "pricingProvider"
+    | "logger"
 >;
 
 const STRATEGY_NAME = "allov2.DonationVotingMerkleDistributionDirectTransferStrategy";

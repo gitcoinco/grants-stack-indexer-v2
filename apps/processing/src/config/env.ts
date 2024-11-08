@@ -1,6 +1,8 @@
 import dotenv from "dotenv";
 import { z } from "zod";
 
+import { stringify } from "@grants-stack-indexer/shared";
+
 dotenv.config();
 
 const stringToJSONSchema = z.string().transform((str, ctx): z.infer<ReturnType<typeof Object>> => {
@@ -33,7 +35,7 @@ const env = validationSchema.safeParse(process.env);
 if (!env.success) {
     console.error(
         "Invalid environment variables:",
-        env.error.issues.map((issue) => JSON.stringify(issue)).join("\n"),
+        env.error.issues.map((issue) => stringify(issue)).join("\n"),
     );
     process.exit(1);
 }

@@ -7,7 +7,7 @@ import type {
     IProjectReadRepository,
     IRoundReadRepository,
 } from "@grants-stack-indexer/repository";
-import type { ChainId, ProcessorEvent, StrategyEvent } from "@grants-stack-indexer/shared";
+import type { ChainId, ILogger, ProcessorEvent, StrategyEvent } from "@grants-stack-indexer/shared";
 
 import { StrategyProcessor, UnsupportedStrategy } from "../../src/internal.js";
 
@@ -18,7 +18,12 @@ describe("StrategyProcessor", () => {
     let mockPricingProvider: IPricingProvider;
     let mockMetadataProvider: IMetadataProvider;
     let mockRoundRepository: IRoundReadRepository;
-
+    const logger: ILogger = {
+        debug: vi.fn(),
+        error: vi.fn(),
+        info: vi.fn(),
+        warn: vi.fn(),
+    };
     beforeEach(() => {
         mockEvmProvider = {} as EvmProvider;
         mockPricingProvider = {} as IPricingProvider;
@@ -31,6 +36,7 @@ describe("StrategyProcessor", () => {
             metadataProvider: mockMetadataProvider,
             roundRepository: mockRoundRepository,
             projectRepository: {} as IProjectReadRepository,
+            logger,
         });
 
         // Reset mocks before each test

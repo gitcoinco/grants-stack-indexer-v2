@@ -6,6 +6,7 @@ import {
     IProjectRepository,
     IRoundRepository,
 } from "@grants-stack-indexer/repository";
+import { ILogger } from "@grants-stack-indexer/shared";
 
 import { DataLoader } from "../../src/data-loader/dataLoader.js";
 import { InvalidChangeset } from "../../src/internal.js";
@@ -26,12 +27,21 @@ describe("DataLoader", () => {
         updateApplication: vi.fn(),
     } as unknown as IApplicationRepository;
 
+    const logger: ILogger = {
+        debug: vi.fn(),
+        error: vi.fn(),
+        info: vi.fn(),
+        warn: vi.fn(),
+    };
     const createDataLoader = (): DataLoader =>
-        new DataLoader({
-            project: mockProjectRepository,
-            round: mockRoundRepository,
-            application: mockApplicationRepository,
-        });
+        new DataLoader(
+            {
+                project: mockProjectRepository,
+                round: mockRoundRepository,
+                application: mockApplicationRepository,
+            },
+            logger,
+        );
 
     beforeEach(() => {
         vi.clearAllMocks();
