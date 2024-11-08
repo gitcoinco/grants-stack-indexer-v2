@@ -1,6 +1,6 @@
 # @grants-stack-indexer/indexer-client
 
-Is library for interacting with blockchain event indexing services.
+This is a library for interacting with blockchain event indexing services.
 
 ## Available Scripts
 
