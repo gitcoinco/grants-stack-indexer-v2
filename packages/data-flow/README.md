@@ -18,6 +18,34 @@ Available scripts that can be run using `pnpm`:
 | `test`        | Run tests using vitest                                  |
 | `test:cov`    | Run tests with coverage report                          |
 
+## 📋 Prerequisites
+
+-   Ensure you have `node >= 20.0.0` and `pnpm >= 9.5.0` installed.
+
+## Installation
+
+```bash
+$ pnpm install
+```
+
+## Building
+
+To build the monorepo packages, run:
+
+```bash
+$ pnpm build
+```
+
+## Test
+
+```bash
+# unit tests
+$ pnpm run test
+
+# test coverage
+$ pnpm run test:cov
+```
+
 ## Usage
 
 ### Importing the Package
@@ -64,8 +92,8 @@ The `EventsFetcher` class is responsible for fetching events from the blockchain
 
 ### [StrategyRegistry](./src/strategyRegistry.ts)
 
-The `StrategyRegistry` stores strategy IDs in memory to populate strategy events with them.
+The `StrategyRegistry` stores strategy IDs to populate strategy events with them given the Strategy address.
 
 ### [DataLoader](./src/data-loader/dataLoader.ts)
 
-The `DataLoader` is responsible for applying changesets to the database..
+The `DataLoader` is responsible for applying changesets to the database.

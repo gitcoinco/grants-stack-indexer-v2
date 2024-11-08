@@ -6,7 +6,7 @@ import { UnsupportedEventException } from "../internal.js";
 import { PoolCreatedHandler } from "./handlers/index.js";
 
 /**
- * AlloProcessor handles the processing of Allo V2 events by delegating them to the appropriate handler
+ * AlloProcessor handles the processing of Allo V2 events from the Allo contract by delegating them to the appropriate handler
  */
 export class AlloProcessor implements IProcessor<"Allo", AlloEvent> {
     constructor(

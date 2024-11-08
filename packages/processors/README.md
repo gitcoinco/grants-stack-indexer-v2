@@ -63,7 +63,7 @@ const changeset = await this.alloProcessor.process(event);
 
 ### Processors
 
-This package provides the following repositories:
+This package provides the following events' processors:
 
 1. **AlloProcessor**: Handles the processing of Allo V2 events from the Allo contract by delegating them to the appropriate handler
 
