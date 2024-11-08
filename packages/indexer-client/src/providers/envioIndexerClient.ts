@@ -1,6 +1,6 @@
 import { gql, GraphQLClient } from "graphql-request";
 
-import { AnyIndexerFetchedEvent, ChainId } from "@grants-stack-indexer/shared";
+import { AnyIndexerFetchedEvent, ChainId, stringify } from "@grants-stack-indexer/shared";
 
 import { IndexerClientError, InvalidIndexerResponse } from "../exceptions/index.js";
 import { IIndexerClient } from "../internal.js";
@@ -32,6 +32,7 @@ export class EnvioIndexerClient implements IIndexerClient {
                         $limit: Int!
                     ) {
                         raw_events(
+                            order_by: [{ block_number: asc }, { log_index: asc }]
                             where: {
                                 chain_id: { _eq: $chainId }
                                 _or: [
@@ -63,13 +64,13 @@ export class EnvioIndexerClient implements IIndexerClient {
             if (response?.raw_events) {
                 return response.raw_events;
             } else {
-                throw new InvalidIndexerResponse(JSON.stringify(response));
+                throw new InvalidIndexerResponse(stringify(response));
             }
         } catch (error) {
             if (error instanceof InvalidIndexerResponse) {
                 throw error;
             }
-            throw new IndexerClientError(JSON.stringify(error));
+            throw new IndexerClientError(stringify(error, Object.getOwnPropertyNames(error)));
         }
     }
 }

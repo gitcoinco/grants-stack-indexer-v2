@@ -1,4 +1,5 @@
-import type { AnyEvent, ContractName, ProcessorEvent } from "@grants-stack-indexer/shared";
+import type { AnyEvent, ContractName, ILogger, ProcessorEvent } from "@grants-stack-indexer/shared";
+import { stringify } from "@grants-stack-indexer/shared";
 
 import type { IEventsRegistry } from "./internal.js";
 
@@ -8,6 +9,8 @@ import type { IEventsRegistry } from "./internal.js";
 //TODO: Implement storage version to persist the last processed event. we need to store it by chainId
 export class InMemoryEventsRegistry implements IEventsRegistry {
     private lastProcessedEvent: ProcessorEvent<ContractName, AnyEvent> | undefined;
+
+    constructor(private logger: ILogger) {}
 
     /**
      * @inheritdoc
@@ -20,6 +23,7 @@ export class InMemoryEventsRegistry implements IEventsRegistry {
      * @inheritdoc
      */
     async saveLastProcessedEvent(event: ProcessorEvent<ContractName, AnyEvent>): Promise<void> {
+        this.logger.debug(`Saving last processed event: ${stringify(event, undefined, 4)}`);
         this.lastProcessedEvent = event;
     }
 }

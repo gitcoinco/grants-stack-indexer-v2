@@ -4,8 +4,9 @@ services:
         restart: always
         ports:
             - "${DATALAYER_POSTGRES_EXPOSED_PORT:-5432}:5432"
-        volumes:
-            - db_data:/var/lib/datalayer-postgresql/data
+        # TODO: remove the comment when processing service persists latest event processed
+        # volumes:
+        #     - db_data:/var/lib/datalayer-postgres/data
         env_file:
             - .env
         environment:
@@ -21,7 +22,7 @@ services:
             retries: 5
 
     datalayer-graphql-api:
-        image: hasura/graphql-engine:v2.44.0
+        image: hasura/graphql-engine:v2.23.0
         ports:
             - "${DATALAYER_HASURA_EXPOSED_PORT:-8082}:8080"
         restart: always
@@ -29,22 +30,19 @@ services:
             - .env
         environment:
             HASURA_GRAPHQL_DATABASE_URL: postgres://${DATALAYER_PG_USER}:${DATALAYER_POSTGRES_PASSWORD}@datalayer-postgres-db:5432/${DATALAYER_PG_DATABASE}
-            HASURA_GRAPHQL_METADATA_DATABASE_URL: postgres://${DATALAYER_PG_USER}:${DATALAYER_POSTGRES_PASSWORD}@datalayer-postgres-db:5432/${DATALAYER_PG_DATABASE}
             HASURA_GRAPHQL_ENABLE_CONSOLE: ${DATALAYER_HASURA_ENABLE_CONSOLE:-true}
             HASURA_GRAPHQL_ADMIN_SECRET: ${DATALAYER_HASURA_ADMIN_SECRET:-secret}
             HASURA_GRAPHQL_UNAUTHORIZED_ROLE: ${DATALAYER_HASURA_UNAUTHORIZED_ROLE:-public}
             HASURA_GRAPHQL_CORS_DOMAIN: ${DATALAYER_HASURA_CORS_DOMAIN:-*}
             HASURA_GRAPHQL_ENABLE_TELEMETRY: ${DATALAYER_HASURA_ENABLE_TELEMETRY:-false}
-            HASURA_GRAPHQL_EXPERIMENTAL_FEATURES: bigquery_string_numeric_input
-            HASURA_GRAPHQL_BIGQUERY_STRING_NUMERIC_INPUT: true
-            # HASURA_GRAPHQL_METADATA_DATABASE_EXTENSIONS_SCHEMA: ${DATALAYER_HASURA_METADATA_DATABASE_EXTENSIONS_SCHEMA:-chain_data_schema_1}
+            HASURA_GRAPHQL_EXPERIMENTAL_FEATURES: "bigquery_string_numeric_input"
+            HASURA_GRAPHQL_BIGQUERY_STRING_NUMERIC_INPUT: "true"
             ## enable debugging mode. It is recommended to disable this in production
             HASURA_GRAPHQL_DEV_MODE: ${DATALAYER_HASURA_DEV_MODE:-true}
             HASURA_GRAPHQL_ENABLED_LOG_TYPES: "startup, http-log, webhook-log, websocket-log, query-log"
-            HASURA_GRAPHQL_ENABLED_APIS: "graphql,metrics"
             HASURA_GRAPHQL_ADMIN_INTERNAL_ERRORS: ${DATALAYER_HASURA_ADMIN_INTERNAL_ERRORS:-true}
             ## uncomment next line to run console offline (i.e load console assets from server instead of CDN)
-            # HASURA_GRAPHQL_CONSOLE_ASSETS_DIR: /srv/console-assets
+            HASURA_GRAPHQL_CONSOLE_ASSETS_DIR: null
         depends_on:
             datalayer-postgres-db:
                 condition: service_healthy
@@ -56,20 +54,24 @@ services:
             start_period: 5s
         networks:
             - datalayer
-
     indexer-postgres-db:
         image: postgres:16
         restart: always
         ports:
             - "${ENVIO_POSTGRES_EXPOSED_PORT:-5433}:5432"
         volumes:
-            - db_data:/var/lib/envio-postgresql/data
+            - db_data:/var/lib/indexer-postgres/data
         env_file:
             - .env
         environment:
             POSTGRES_DB: ${ENVIO_PG_DATABASE}
             POSTGRES_USER: ${ENVIO_PG_USER}
             POSTGRES_PASSWORD: ${ENVIO_POSTGRES_PASSWORD}
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U ${ENVIO_PG_USER}"]
+            interval: 5s
+            timeout: 5s
+            retries: 5
         networks:
             - indexer
     indexer-graphql-api:
@@ -94,10 +96,12 @@ services:
         build:
             context: ./apps/indexer
             dockerfile: Dockerfile
-        depends_on:
-            - "indexer-postgres-db"
-            - "indexer-graphql-api"
         restart: always
+        depends_on:
+            indexer-postgres-db:
+                condition: service_healthy
+            indexer-graphql-api:
+                condition: service_healthy
         env_file:
             - .env
         networks:

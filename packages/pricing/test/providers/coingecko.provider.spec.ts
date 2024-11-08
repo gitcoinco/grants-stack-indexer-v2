@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { TokenCode } from "@grants-stack-indexer/shared";
+import { ILogger, TokenCode } from "@grants-stack-indexer/shared";
 
 import type { TokenPrice } from "../../src/external.js";
 import { CoingeckoProvider, NetworkException, UnsupportedToken } from "../../src/external.js";
@@ -29,12 +29,20 @@ vi.mock("axios", async (importActual) => {
 });
 describe("CoingeckoProvider", () => {
     let provider: CoingeckoProvider;
-
+    const logger: ILogger = {
+        debug: vi.fn(),
+        error: vi.fn(),
+        info: vi.fn(),
+        warn: vi.fn(),
+    };
     beforeEach(() => {
-        provider = new CoingeckoProvider({
-            apiKey: "test-api-key",
-            apiType: "demo",
-        });
+        provider = new CoingeckoProvider(
+            {
+                apiKey: "test-api-key",
+                apiType: "demo",
+            },
+            logger,
+        );
     });
 
     afterEach(() => {

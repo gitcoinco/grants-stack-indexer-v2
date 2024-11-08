@@ -26,7 +26,7 @@ export class ProcessingService {
 
     constructor(private readonly env: Environment) {
         const { core, registries, indexerClient, kyselyDatabase } =
-            SharedDependenciesService.initialize(env);
+            SharedDependenciesService.initialize(env, this.logger);
         this.kyselyDatabase = kyselyDatabase;
 
         // Initialize EVM provider
@@ -39,6 +39,7 @@ export class ProcessingService {
             registries,
             env.FETCH_LIMIT,
             env.FETCH_DELAY_MS,
+            this.logger,
         );
     }
 

@@ -1,6 +1,8 @@
 import MockAdapter from "axios-mock-adapter";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
+
+import { ILogger } from "@grants-stack-indexer/shared";
 
 import {
     EmptyGatewaysUrlsException,
@@ -9,13 +11,19 @@ import {
 } from "../../src/external.js";
 
 describe("IpfsProvider", () => {
+    const logger: ILogger = {
+        debug: vi.fn(),
+        error: vi.fn(),
+        info: vi.fn(),
+        warn: vi.fn(),
+    };
     let mock: MockAdapter;
     let provider: IpfsProvider;
     const gateways = ["https://ipfs.io", "https://cloudflare-ipfs.com"];
     const validCid = "QmW2WQi7j6c7UgJTarActp7tDNikE4B2qXtFCfLPdsgaTQ";
 
     beforeEach(() => {
-        provider = new IpfsProvider(gateways);
+        provider = new IpfsProvider(gateways, logger);
         mock = new MockAdapter(provider["axiosInstance"]);
     });
 
@@ -25,7 +33,7 @@ describe("IpfsProvider", () => {
 
     describe("constructor", () => {
         it("throw EmptyGatewaysUrlsException when initialized with empty gateways array", () => {
-            expect(() => new IpfsProvider([])).toThrow(EmptyGatewaysUrlsException);
+            expect(() => new IpfsProvider([], logger)).toThrow(EmptyGatewaysUrlsException);
         });
     });
 

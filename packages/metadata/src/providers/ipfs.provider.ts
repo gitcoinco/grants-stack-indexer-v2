@@ -1,13 +1,18 @@
 import axios, { AxiosInstance } from "axios";
 import { z } from "zod";
 
+import { ILogger, stringify } from "@grants-stack-indexer/shared";
+
 import type { IMetadataProvider } from "../internal.js";
 import { EmptyGatewaysUrlsException, InvalidContentException, isValidCid } from "../internal.js";
 
 export class IpfsProvider implements IMetadataProvider {
     private readonly axiosInstance: AxiosInstance;
 
-    constructor(private readonly gateways: string[]) {
+    constructor(
+        private readonly gateways: string[],
+        private readonly logger: ILogger,
+    ) {
         if (gateways.length === 0) {
             throw new EmptyGatewaysUrlsException();
         }
@@ -35,14 +40,14 @@ export class IpfsProvider implements IMetadataProvider {
                 if (error instanceof InvalidContentException) throw error;
 
                 if (axios.isAxiosError(error)) {
-                    console.warn(`Failed to fetch from ${url}: ${error.message}`);
+                    this.logger.warn(`Failed to fetch from ${url}: ${error.message}`);
                 } else {
-                    console.error(`Failed to fetch from ${url}: ${error}`);
+                    this.logger.error(`Failed to fetch from ${url}: ${error}`);
                 }
             }
         }
 
-        console.error(`Failed to fetch IPFS data for CID ${ipfsCid} from all gateways.`);
+        this.logger.error(`Failed to fetch IPFS data for CID ${ipfsCid} from all gateways.`);
         return undefined;
     }
 
@@ -61,7 +66,7 @@ export class IpfsProvider implements IMetadataProvider {
                 return parsedData.data;
             } else {
                 throw new InvalidContentException(
-                    parsedData.error.issues.map((issue) => JSON.stringify(issue)).join("\n"),
+                    parsedData.error.issues.map((issue) => stringify(issue)).join("\n"),
                 );
             }
         }

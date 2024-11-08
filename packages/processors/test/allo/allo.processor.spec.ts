@@ -8,7 +8,7 @@ import type {
     IProjectReadRepository,
     IRoundReadRepository,
 } from "@grants-stack-indexer/repository";
-import type { AlloEvent, ChainId, ProcessorEvent } from "@grants-stack-indexer/shared";
+import type { AlloEvent, ChainId, ILogger, ProcessorEvent } from "@grants-stack-indexer/shared";
 
 import { AlloProcessor } from "../../src/allo/allo.processor.js";
 import { PoolCreatedHandler } from "../../src/allo/handlers/poolCreated.handler.js";
@@ -31,7 +31,12 @@ describe("AlloProcessor", () => {
     let mockPricingProvider: IPricingProvider;
     let mockMetadataProvider: IMetadataProvider;
     let mockRoundRepository: IRoundReadRepository;
-
+    const logger: ILogger = {
+        debug: vi.fn(),
+        error: vi.fn(),
+        info: vi.fn(),
+        warn: vi.fn(),
+    };
     beforeEach(() => {
         mockEvmProvider = {} as EvmProvider;
         mockPricingProvider = {} as IPricingProvider;
@@ -45,6 +50,7 @@ describe("AlloProcessor", () => {
             roundRepository: mockRoundRepository,
             projectRepository: {} as IProjectReadRepository,
             applicationRepository: {} as IApplicationReadRepository,
+            logger,
         });
 
         // Reset mocks before each test

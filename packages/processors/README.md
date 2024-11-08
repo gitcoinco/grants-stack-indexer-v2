@@ -1,6 +1,6 @@
-# grants-stack-indexer: processors package
+# Grants stack indexer v2 `processors` package
 
-Description of your package goes here.
+The `processors` package provides a set of utilities for processing and transforming data within the grants stack indexer project. It includes processors for handling Allo, Strategy, and Registry events.
 
 ## Setup
 
@@ -22,14 +22,55 @@ Available scripts that can be run using `pnpm`:
 | `test`        | Run tests using vitest                                  |
 | `test:cov`    | Run tests with coverage report                          |
 
+## 📋 Prerequisites
+
+-   Ensure you have `node >= 20.0.0` and `pnpm >= 9.5.0` installed.
+
+## Installation
+
+```bash
+$ pnpm install
+```
+
+## Building
+
+To build the monorepo packages, run:
+
+```bash
+$ pnpm build
+```
+
+## Test
+
+```bash
+# unit tests
+$ pnpm run test
+
+# test coverage
+$ pnpm run test:cov
+```
+
 ## Usage
 
-Describe how to use your package here.
+```typescript
+import { AlloProcessor } from "@grants-stack-indexer/processors";
+
+const alloProcessor = new AlloProcessor(chainId, dependencies);
+const changeset = await this.alloProcessor.process(event);
+```
 
 ## API
 
-Describe your package's API here.
+### Processors
+
+This package provides the following events' processors:
+
+1. **AlloProcessor**: Handles the processing of Allo V2 events from the Allo contract by delegating them to the appropriate handler
+
+2. **RegistryProcessor**: Handles the processing of Allo V2 events from the Registry contract by delegating them to the appropriate handler
+
+3. **StrategyProcessor**: Handles the processing of Allo V2 events from the Strategy contract by delegating them to the appropriate handler
 
 ## References
 
-Add any relevant references here.
+-   [Allo Protocol](https://github.com/allo-protocol/allo-v2)

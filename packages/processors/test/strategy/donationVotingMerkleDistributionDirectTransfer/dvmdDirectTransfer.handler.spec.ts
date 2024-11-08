@@ -11,6 +11,7 @@ import { EvmProvider } from "@grants-stack-indexer/chain-providers";
 import { IPricingProvider } from "@grants-stack-indexer/pricing";
 import {
     ChainId,
+    ILogger,
     ProcessorEvent,
     StrategyEvent,
     Token,
@@ -59,6 +60,12 @@ describe("DVMDDirectTransferHandler", () => {
     let mockPricingProvider: IPricingProvider;
     let mockApplicationRepository: IApplicationReadRepository;
 
+    const logger: ILogger = {
+        debug: vi.fn(),
+        error: vi.fn(),
+        info: vi.fn(),
+        warn: vi.fn(),
+    };
     beforeEach(() => {
         mockMetadataProvider = {} as IMetadataProvider;
         mockRoundRepository = {} as IRoundReadRepository;
@@ -79,6 +86,7 @@ describe("DVMDDirectTransferHandler", () => {
             evmProvider: mockEVMProvider,
             pricingProvider: mockPricingProvider,
             applicationRepository: mockApplicationRepository,
+            logger,
         });
     });
 
@@ -106,6 +114,7 @@ describe("DVMDDirectTransferHandler", () => {
             evmProvider: mockEVMProvider,
             pricingProvider: mockPricingProvider,
             applicationRepository: mockApplicationRepository,
+            logger,
         });
         expect(DVMDRegisteredHandler.prototype.handle).toHaveBeenCalled();
     });
@@ -126,6 +135,7 @@ describe("DVMDDirectTransferHandler", () => {
             evmProvider: mockEVMProvider,
             pricingProvider: mockPricingProvider,
             applicationRepository: mockApplicationRepository,
+            logger,
         });
         expect(BaseDistributedHandler.prototype.handle).toHaveBeenCalled();
     });
@@ -146,6 +156,7 @@ describe("DVMDDirectTransferHandler", () => {
             evmProvider: mockEVMProvider,
             pricingProvider: mockPricingProvider,
             applicationRepository: mockApplicationRepository,
+            logger,
         });
         expect(DVMDAllocatedHandler.prototype.handle).toHaveBeenCalled();
     });

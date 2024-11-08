@@ -9,7 +9,7 @@ import {
     IProjectReadRepository,
     IRoundReadRepository,
 } from "@grants-stack-indexer/repository";
-import { Bytes32String, ChainId, ProcessorEvent } from "@grants-stack-indexer/shared";
+import { Bytes32String, ChainId, ILogger, ProcessorEvent } from "@grants-stack-indexer/shared";
 
 import { ProcessorDependencies } from "../../../src/internal.js";
 import { ProfileCreatedHandler } from "../../../src/registry/handlers/index.js";
@@ -20,7 +20,12 @@ describe("ProfileCreatedHandler", () => {
     let mockDependencies: ProcessorDependencies;
     const mockedTxHash = "0x6e5a7115323ac1712f7c27adff46df2216324a4ad615a8c9ce488c32a1f3a035";
     const mockedAddress = "0x48f33AE41E1762e1688125C4f1C536B1491dF803";
-
+    const logger: ILogger = {
+        debug: vi.fn(),
+        error: vi.fn(),
+        info: vi.fn(),
+        warn: vi.fn(),
+    };
     beforeEach(() => {
         mockEvent = {
             blockTimestamp: 123123123,
@@ -61,6 +66,7 @@ describe("ProfileCreatedHandler", () => {
             } as unknown as IMetadataProvider,
             roundRepository: {} as unknown as IRoundReadRepository,
             applicationRepository: {} as unknown as IApplicationReadRepository,
+            logger,
         };
     });
 

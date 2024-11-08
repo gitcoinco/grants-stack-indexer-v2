@@ -24,6 +24,7 @@ type Dependencies = Pick<
     | "metadataProvider"
     | "evmProvider"
     | "pricingProvider"
+    | "logger"
 >;
 
 const STRATEGY_NAME = "allov2.DonationVotingMerkleDistributionDirectTransferStrategy";

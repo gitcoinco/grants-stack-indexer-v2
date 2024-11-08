@@ -4,13 +4,35 @@ Grants Stack Indexer v2 is a tool designed to index blockchain events generated 
 
 ## 📖 Overview
 
-This repository is a monorepo that contains 1 package and 2 applications:
+This repository is a monorepo that contains 8 packages and 3 applications:
 
--   @ts-turborepo-boilerplate/sample-lib: A sample library for querying account balances.
--   @ts-turborepo-boilerplate/sample-app: A demo application demonstrating the use of sample-lib.
--   @grants-stack-indexer/indexer: An [`envio`](https://docs.envio.dev/) indexer, that collects all the relevant events from Allo contracts.
+### Applications
 
-## 🚀 Local Deployment (Dockerized)
+-   **@grants-stack-indexer/indexer**: An Envio indexer service that collects relevant events from Allo contracts. It is designed to run on the Envio hosted platform and includes a Dockerfile for deployment.
+
+-   **@grants-stack-indexer/processing**: This service runs the core processing pipeline, coordinating components from various packages to process blockchain events. It manages an Orchestrator per chain.
+
+-   **@grants-stack-indexer/scripts**: Contains scripts for managing the database schema and migrations. It includes scripts for running migrations and resetting the database schema.
+
+### Packages/libs
+
+-   **@grants-stack-indexer/chain-providers**: Provides wrappers of the Viem library to interact with EVM-based blockchains. It includes utilities for reading contracts and making batch requests.
+
+-   **@grants-stack-indexer/data-flow**: Manages the flow of data between different components of the indexer. It includes core components for the processing pipeline.
+
+-   **@grants-stack-indexer/indexer-client**: A client library for interacting with blockchain event indexing services. It provides methods to fetch events by block number and log index.
+
+-   **@grants-stack-indexer/metadata**: Handles metadata related to the indexed events. It provides a metadata provider to retrieve metadata from IPFS.
+
+-   **@grants-stack-indexer/pricing**: Manages pricing data and calculations. It includes providers to get the price of a token at a specific timestamp using chainId and token address.
+
+-   **@grants-stack-indexer/processors**: Contains various data processors used in the indexing pipeline. It includes processors for handling Allo, Strategy, and Registry events.
+
+-   **@grants-stack-indexer/repository**: Manages the storage and retrieval of indexed data. It implements the Repository pattern to abstract database operations.
+
+-   **@grants-stack-indexer/shared**: Provides shared utilities, types, constants, and logger. It is designed to be used across the packages of the monorepo to ensure consistency and reusability.
+
+## 🚀 Local Deployment (Development)
 
 ### Prerequisites
 
@@ -19,15 +41,39 @@ Ensure you have the following installed on your machine:
 -   [Docker](https://www.docker.com/get-started)
 -   [Docker Compose](https://docs.docker.com/compose/install/)
 
-### Run
+### Setup
 
-To deploy locally with Docker, run the following command:
+1. Copy the Example Environment File and edit the `.env` file
+
+```
+cp .env.example .env
+```
+
+2. Build and start the services in detached mode:
 
 ```
 docker-compose up -d --build
 ```
 
-Once the deployment is complete, you can access Hasura by navigating to:
+3. Copy the Example Environment File on `apps/migration-scripts` and edit the `.env` file
+
+```
+cp apps/migration-scripts/.env.example apps/migration-scripts/.env
+```
+
+4. After starting Docker Compose, run the following command to apply the database migrations:
+
+```
+pnpm script:db:migrate
+```
+
+5. Navigate to the processing service directory and start it with:
+
+```
+cd apps/processing && pnpm dev
+```
+
+Once the setup is completed you can access Hasura by navigating to:
 
 ```
 http://localhost:8080/

@@ -5,7 +5,7 @@ import { ChainId, ProcessorEvent } from "@grants-stack-indexer/shared";
 
 import { IEventHandler, ProcessorDependencies } from "../../internal.js";
 
-type Dependencies = Pick<ProcessorDependencies, "roundRepository">;
+type Dependencies = Pick<ProcessorDependencies, "roundRepository" | "logger">;
 
 /**
  * BaseDistributedHandler: Processes 'Distributed' events
@@ -29,7 +29,7 @@ export class BaseDistributedHandler
     ) {}
 
     async handle(): Promise<Changeset[]> {
-        const { roundRepository } = this.dependencies;
+        const { roundRepository, logger } = this.dependencies;
         const strategyAddress = getAddress(this.event.srcAddress);
         const round = await roundRepository.getRoundByStrategyAddress(
             this.chainId,
@@ -38,7 +38,7 @@ export class BaseDistributedHandler
 
         if (!round) {
             //TODO: add logging that round was not found
-            console.log("Round not found for strategy address", strategyAddress);
+            logger.info(`Round not found for strategy address ${strategyAddress}`);
             return [];
         }
 

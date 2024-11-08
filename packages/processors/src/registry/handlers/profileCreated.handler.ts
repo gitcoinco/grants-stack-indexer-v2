@@ -8,7 +8,7 @@ import { ProjectMetadata, ProjectMetadataSchema } from "../../schemas/projectMet
 
 type Dependencies = Pick<
     ProcessorDependencies,
-    "projectRepository" | "evmProvider" | "metadataProvider"
+    "projectRepository" | "evmProvider" | "metadataProvider" | "logger"
 >;
 /**
  * Handles the ProfileCreated event for the Registry contract from Allo protocol.
@@ -37,7 +37,7 @@ export class ProfileCreatedHandler implements IEventHandler<"Registry", "Profile
             metadataValue = parsedMetadata.data;
         } else {
             //TODO: Replace with logger
-            // console.warn({
+            // this.logger.warn({
             //     msg: `ProfileCreated: Failed to parse metadata for profile ${profileId}`,
             //     event: this.event,
             //     metadataCid,

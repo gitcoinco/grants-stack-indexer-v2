@@ -13,6 +13,7 @@ import {
     KyselyProjectRepository,
     KyselyRoundRepository,
 } from "@grants-stack-indexer/repository";
+import { ILogger } from "@grants-stack-indexer/shared";
 
 import { Environment } from "../config/index.js";
 
@@ -33,7 +34,7 @@ export type SharedDependencies = {
  * - Initializes indexer client
  */
 export class SharedDependenciesService {
-    static initialize(env: Environment): SharedDependencies {
+    static initialize(env: Environment, logger: ILogger): SharedDependencies {
         // Initialize repositories
         const kyselyDatabase = createKyselyDatabase({
             connectionString: env.DATABASE_URL,
@@ -49,16 +50,19 @@ export class SharedDependenciesService {
             kyselyDatabase,
             env.DATABASE_SCHEMA,
         );
-        const pricingProvider = new CoingeckoProvider({
-            apiKey: env.COINGECKO_API_KEY,
-            apiType: env.COINGECKO_API_TYPE,
-        });
+        const pricingProvider = new CoingeckoProvider(
+            {
+                apiKey: env.COINGECKO_API_KEY,
+                apiType: env.COINGECKO_API_TYPE,
+            },
+            logger,
+        );
 
-        const metadataProvider = new IpfsProvider(env.IPFS_GATEWAYS_URL);
+        const metadataProvider = new IpfsProvider(env.IPFS_GATEWAYS_URL, logger);
 
         // Initialize registries
-        const eventsRegistry = new InMemoryEventsRegistry();
-        const strategyRegistry = new InMemoryStrategyRegistry();
+        const eventsRegistry = new InMemoryEventsRegistry(logger);
+        const strategyRegistry = new InMemoryStrategyRegistry(logger);
 
         // Initialize indexer client
         const indexerClient = new EnvioIndexerClient(

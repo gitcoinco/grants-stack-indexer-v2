@@ -9,7 +9,7 @@ import {
     IProjectReadRepository,
     IRoundReadRepository,
 } from "@grants-stack-indexer/repository";
-import { ChainId } from "@grants-stack-indexer/shared";
+import { ChainId, ILogger } from "@grants-stack-indexer/shared";
 
 import { ProcessorDependencies, StrategyHandlerFactory } from "../../src/internal.js";
 import { DVMDDirectTransferStrategyHandler } from "../../src/strategy/donationVotingMerkleDistributionDirectTransfer/dvmdDirectTransfer.handler.js";
@@ -24,6 +24,12 @@ describe("StrategyHandlerFactory", () => {
     let mockProcessorDependencies: ProcessorDependencies;
     let mockApplicationRepository: IApplicationReadRepository;
 
+    const logger: ILogger = {
+        debug: vi.fn(),
+        error: vi.fn(),
+        info: vi.fn(),
+        warn: vi.fn(),
+    };
     beforeEach(() => {
         mockEvmProvider = {} as EvmProvider;
         mockPricingProvider = {} as IPricingProvider;
@@ -38,6 +44,7 @@ describe("StrategyHandlerFactory", () => {
             roundRepository: mockRoundRepository,
             projectRepository: mockProjectRepository,
             applicationRepository: mockApplicationRepository,
+            logger,
         };
     });
 

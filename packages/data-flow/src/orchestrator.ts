@@ -10,6 +10,7 @@ import {
     ChainId,
     ContractName,
     Hex,
+    ILogger,
     isAlloEvent,
     isStrategyEvent,
     ProcessorEvent,
@@ -75,17 +76,24 @@ export class Orchestrator {
         },
         private fetchLimit: number = 1000,
         private fetchDelayInMs: number = 10000,
+        private logger: ILogger,
     ) {
         this.eventsFetcher = new EventsFetcher(this.indexerClient);
-        this.eventsProcessor = new EventsProcessor(this.chainId, this.dependencies);
+        this.eventsProcessor = new EventsProcessor(this.chainId, {
+            ...this.dependencies,
+            logger: this.logger,
+        });
         this.eventsRegistry = registries.eventsRegistry;
         this.strategyRegistry = registries.strategyRegistry;
-        this.dataLoader = new DataLoader({
-            project: this.dependencies.projectRepository,
-            round: this.dependencies.roundRepository,
-            application: this.dependencies.applicationRepository,
-            donation: this.dependencies.donationRepository,
-        });
+        this.dataLoader = new DataLoader(
+            {
+                project: this.dependencies.projectRepository,
+                round: this.dependencies.roundRepository,
+                application: this.dependencies.applicationRepository,
+                donation: this.dependencies.donationRepository,
+            },
+            this.logger,
+        );
         this.eventsQueue = new Queue<ProcessorEvent<ContractName, AnyEvent>>(fetchLimit);
     }
 
@@ -101,13 +109,14 @@ export class Orchestrator {
                     await delay(this.fetchDelayInMs);
                     continue;
                 }
+                await this.eventsRegistry.saveLastProcessedEvent(event);
 
                 event = await this.enhanceStrategyId(event);
                 if (event.contractName === "Strategy" && "strategyId" in event) {
                     if (!existsHandler(event.strategyId)) {
                         //TODO: save to registry as unsupported strategy, so when the strategy is handled it will be backwards compatible and process all of the events
                         //TODO: decide if we want to log this
-                        // console.log(
+                        // this.logger.info(
                         //     `No handler found for strategyId: ${event.strategyId}. Event: ${stringify(
                         //         event,
                         //     )}`,
@@ -121,13 +130,12 @@ export class Orchestrator {
 
                 if (executionResult.numFailed > 0) {
                     //TODO: should we retry the failed changesets?
-                    console.error(
+                    this.logger.error(
                         `Failed to apply changesets. ${executionResult.errors.join("\n")} Event: ${stringify(
                             event,
                         )}`,
                     );
                 }
-                await this.eventsRegistry.saveLastProcessedEvent(event);
             } catch (error: unknown) {
                 // TODO: improve error handling, retries and notify
                 if (
@@ -135,16 +143,16 @@ export class Orchestrator {
                     error instanceof InvalidEvent ||
                     error instanceof UnsupportedEventException
                 ) {
-                    // console.error(
+                    // this.logger.error(
                     //     `Current event cannot be handled. ${error.name}: ${error.message}. Event: ${stringify(event)}`,
                     // );
                 } else {
-                    console.error(`Error processing event: ${stringify(event)}`, error);
+                    this.logger.error(`Error processing event: ${stringify(event)} ${error}`);
                 }
             }
         }
 
-        console.log("Shutdown signal received. Exiting...");
+        this.logger.info("Shutdown signal received. Exiting...");
     }
 
     /**
