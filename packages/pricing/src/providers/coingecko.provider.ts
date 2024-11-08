@@ -124,7 +124,7 @@ export class CoingeckoProvider implements IPricingProvider {
                 }
             }
             const errorMessage =
-                `Coingecko API error: failed to fetch token price` +
+                `Coingecko API error: failed to fetch token price ` +
                 stringify(error, Object.getOwnPropertyNames(error));
             this.logger.error(errorMessage);
             throw new UnknownPricingException(errorMessage);
