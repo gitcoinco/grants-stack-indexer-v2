@@ -9,10 +9,10 @@ import {
     Token,
 } from "@grants-stack-indexer/shared";
 
-import type { ProcessorDependencies, StrategyTimings } from "../../internal.js";
-import DonationVotingMerkleDistributionDirectTransferStrategy from "../../abis/allo-v2/v1/DonationVotingMerkleDistributionDirectTransferStrategy.js";
-import { calculateAmountInUsd, getDateFromTimestamp } from "../../helpers/index.js";
-import { TokenPriceNotFoundError, UnsupportedEventException } from "../../internal.js";
+import type { ProcessorDependencies, StrategyTimings } from "../../../internal.js";
+import DonationVotingMerkleDistributionDirectTransferStrategy from "../../../abis/allo-v2/v1/DonationVotingMerkleDistributionDirectTransferStrategy.js";
+import { calculateAmountInUsd, getDateFromTimestamp } from "../../../helpers/index.js";
+import { TokenPriceNotFoundError, UnsupportedEventException } from "../../../internal.js";
 import { BaseDistributedHandler, BaseStrategyHandler } from "../common/index.js";
 import { DVMDRegisteredHandler } from "./handlers/index.js";
 

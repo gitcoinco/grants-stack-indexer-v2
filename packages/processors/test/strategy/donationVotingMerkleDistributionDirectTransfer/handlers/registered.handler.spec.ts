@@ -11,7 +11,7 @@ import {
 import { ChainId, DeepPartial, mergeDeep, ProcessorEvent } from "@grants-stack-indexer/shared";
 
 import { ProjectNotFound, RoundNotFound } from "../../../../src/exceptions/index.js";
-import { DVMDRegisteredHandler } from "../../../../src/strategy/donationVotingMerkleDistributionDirectTransfer/handlers/index.js";
+import { DVMDRegisteredHandler } from "../../../../src/processors/strategy/donationVotingMerkleDistributionDirectTransfer/handlers/index.js";
 
 function createMockEvent(
     overrides: DeepPartial<ProcessorEvent<"Strategy", "RegisteredWithSender">> = {},

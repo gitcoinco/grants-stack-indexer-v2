@@ -3,8 +3,8 @@ import { getAddress } from "viem";
 import { Changeset, ProjectType } from "@grants-stack-indexer/repository";
 import { ChainId, ProcessorEvent } from "@grants-stack-indexer/shared";
 
-import { IEventHandler, ProcessorDependencies } from "../../internal.js";
-import { ProjectMetadata, ProjectMetadataSchema } from "../../schemas/projectMetadata.js";
+import { IEventHandler, ProcessorDependencies } from "../../../internal.js";
+import { ProjectMetadata, ProjectMetadataSchema } from "../../../schemas/projectMetadata.js";
 
 type Dependencies = Pick<
     ProcessorDependencies,

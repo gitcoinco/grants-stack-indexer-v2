@@ -3,12 +3,12 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ChainId, ProcessorEvent, RegistryEvent } from "@grants-stack-indexer/shared";
 
 import { ProcessorDependencies, UnsupportedEventException } from "../../src/internal.js";
-import { ProfileCreatedHandler } from "../../src/registry/handlers/profileCreated.handler.js";
-import { RoleGrantedHandler } from "../../src/registry/handlers/roleGranted.handler.js";
-import { RegistryProcessor } from "../../src/registry/registry.processor.js";
+import { ProfileCreatedHandler } from "../../src/processors/registry/handlers/profileCreated.handler.js";
+import { RoleGrantedHandler } from "../../src/processors/registry/handlers/roleGranted.handler.js";
+import { RegistryProcessor } from "../../src/processors/registry/registry.processor.js";
 
 // Mock the handlers and their handle methods
-vi.mock("../../src/registry/handlers/roleGranted.handler.js", () => {
+vi.mock("../../src/processors/registry/handlers/roleGranted.handler.js", () => {
     const RoleGrantedHandler = vi.fn();
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     RoleGrantedHandler.prototype.handle = vi.fn();
@@ -18,7 +18,7 @@ vi.mock("../../src/registry/handlers/roleGranted.handler.js", () => {
 });
 
 // Mock the handlers and their handle methods
-vi.mock("../../src/registry/handlers/profileCreated.handler.js", () => {
+vi.mock("../../src/processors/registry/handlers/profileCreated.handler.js", () => {
     const ProfileCreatedHandler = vi.fn();
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     ProfileCreatedHandler.prototype.handle = vi.fn();

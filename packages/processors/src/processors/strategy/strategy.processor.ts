@@ -1,8 +1,8 @@
 import { Changeset } from "@grants-stack-indexer/repository";
 import { ChainId, ProcessorEvent, StrategyEvent } from "@grants-stack-indexer/shared";
 
-import type { IProcessor, ProcessorDependencies } from "../internal.js";
-import { UnsupportedStrategy } from "../internal.js";
+import type { IProcessor, ProcessorDependencies } from "../../internal.js";
+import { UnsupportedStrategy } from "../../internal.js";
 import { StrategyHandlerFactory } from "./strategyHandler.factory.js";
 
 export class StrategyProcessor implements IProcessor<"Strategy", StrategyEvent> {

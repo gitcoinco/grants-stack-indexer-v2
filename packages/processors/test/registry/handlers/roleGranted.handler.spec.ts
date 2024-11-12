@@ -9,7 +9,7 @@ import {
 } from "@grants-stack-indexer/shared";
 
 import { ProcessorDependencies } from "../../../src/internal.js";
-import { RoleGrantedHandler } from "../../../src/registry/handlers/index.js"; // Adjust path if needed
+import { RoleGrantedHandler } from "../../../src/processors/registry/handlers/index.js"; // Adjust path if needed
 
 describe("RoleGrantedHandler", () => {
     const mockProjectRepository = {

@@ -1,7 +1,7 @@
 import { Changeset } from "@grants-stack-indexer/repository";
 import { Address, ProcessorEvent, StrategyEvent, Token } from "@grants-stack-indexer/shared";
 
-import { IStrategyHandler, StrategyTimings } from "../../internal.js";
+import { IStrategyHandler, StrategyTimings } from "../../../internal.js";
 
 /**
  * @abstract

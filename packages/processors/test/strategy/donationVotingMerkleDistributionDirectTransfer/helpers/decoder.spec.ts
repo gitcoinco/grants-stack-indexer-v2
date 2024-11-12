@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { decodeDVMDApplicationData } from "../../../../src/strategy/donationVotingMerkleDistributionDirectTransfer/helpers/decoder.js";
-import { DVMDApplicationData } from "../../../../src/strategy/donationVotingMerkleDistributionDirectTransfer/types/index.js";
+import { decodeDVMDApplicationData } from "../../../../src/processors/strategy/donationVotingMerkleDistributionDirectTransfer/helpers/decoder.js";
+import { DVMDApplicationData } from "../../../../src/processors/strategy/donationVotingMerkleDistributionDirectTransfer/types/index.js";
 
 describe("decodeDVMDApplicationData", () => {
     it("should correctly decode the encoded data", () => {

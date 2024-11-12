@@ -2,7 +2,7 @@ import { describe, expect, expectTypeOf, it } from "vitest";
 
 import { existsHandler } from "../../src/external.js";
 import { getHandler, StrategyHandlerConstructor } from "../../src/internal.js";
-import { DVMDDirectTransferStrategyHandler } from "../../src/strategy/donationVotingMerkleDistributionDirectTransfer/dvmdDirectTransfer.handler.js";
+import { DVMDDirectTransferStrategyHandler } from "../../src/processors/strategy/donationVotingMerkleDistributionDirectTransfer/dvmdDirectTransfer.handler.js";
 
 describe("Strategy Mapping", () => {
     describe("getHandler", () => {

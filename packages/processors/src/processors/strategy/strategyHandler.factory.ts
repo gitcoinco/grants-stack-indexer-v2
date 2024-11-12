@@ -2,7 +2,7 @@ import { Hex } from "viem";
 
 import { ChainId, StrategyEvent } from "@grants-stack-indexer/shared";
 
-import { getHandler, IStrategyHandler, ProcessorDependencies } from "../internal.js";
+import { getHandler, IStrategyHandler, ProcessorDependencies } from "../../internal.js";
 
 /**
  * Factory for creating strategy handlers

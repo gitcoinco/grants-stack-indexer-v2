@@ -6,8 +6,8 @@ export * from "./interfaces/index.js";
 export * from "./exceptions/index.js";
 
 // Allo
-export * from "./allo/index.js";
+export * from "./processors/allo/index.js";
 
 // Strategy
-export * from "./strategy/index.js";
-export * from "./registry/index.js";
+export * from "./processors/strategy/index.js";
+export * from "./processors/registry/index.js";

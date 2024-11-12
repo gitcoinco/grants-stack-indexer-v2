@@ -8,7 +8,7 @@ import { IProjectReadRepository, IRoundReadRepository } from "@grants-stack-inde
 import { Bytes32String, ChainId, ILogger, ProcessorEvent } from "@grants-stack-indexer/shared";
 
 import { ProcessorDependencies } from "../../../src/internal.js";
-import { ProfileCreatedHandler } from "../../../src/registry/handlers/index.js";
+import { ProfileCreatedHandler } from "../../../src/processors/registry/handlers/index.js";
 
 describe("ProfileCreatedHandler", () => {
     let mockEvent: ProcessorEvent<"Registry", "ProfileCreated">;
