@@ -2,6 +2,7 @@ import { ProcessorDependencies } from "@grants-stack-indexer/processors";
 import {
     Changeset,
     IApplicationRepository,
+    IDonationRepository,
     IProjectRepository,
     IRoundRepository,
 } from "@grants-stack-indexer/repository";
@@ -31,4 +32,5 @@ export type CoreDependencies = Pick<
     roundRepository: IRoundRepository;
     projectRepository: IProjectRepository;
     applicationRepository: IApplicationRepository;
+    donationRepository: IDonationRepository;
 };

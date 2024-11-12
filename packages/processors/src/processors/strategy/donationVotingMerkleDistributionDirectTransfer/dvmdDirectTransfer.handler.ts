@@ -14,12 +14,13 @@ import DonationVotingMerkleDistributionDirectTransferStrategy from "../../../abi
 import { calculateAmountInUsd, getDateFromTimestamp } from "../../../helpers/index.js";
 import { TokenPriceNotFoundError, UnsupportedEventException } from "../../../internal.js";
 import { BaseDistributedHandler, BaseStrategyHandler } from "../common/index.js";
-import { DVMDRegisteredHandler } from "./handlers/index.js";
+import { DVMDAllocatedHandler, DVMDRegisteredHandler } from "./handlers/index.js";
 
 type Dependencies = Pick<
     ProcessorDependencies,
     | "projectRepository"
     | "roundRepository"
+    | "applicationRepository"
     | "metadataProvider"
     | "evmProvider"
     | "pricingProvider"
@@ -60,6 +61,12 @@ export class DVMDDirectTransferStrategyHandler extends BaseStrategyHandler {
             case "DistributedWithRecipientAddress":
                 return new BaseDistributedHandler(
                     event as ProcessorEvent<"Strategy", "DistributedWithRecipientAddress">,
+                    this.chainId,
+                    this.dependencies,
+                ).handle();
+            case "AllocatedWithOrigin":
+                return new DVMDAllocatedHandler(
+                    event as ProcessorEvent<"Strategy", "AllocatedWithOrigin">,
                     this.chainId,
                     this.dependencies,
                 ).handle();

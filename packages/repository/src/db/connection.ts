@@ -3,6 +3,7 @@ import pg from "pg";
 
 import {
     Application,
+    Donation as DonationTable,
     PendingProjectRole as PendingProjectRoleTable,
     PendingRoundRole as PendingRoundRoleTable,
     ProjectRole as ProjectRoleTable,
@@ -35,6 +36,7 @@ export interface Database {
     pendingProjectRoles: PendingProjectRoleTable;
     projectRoles: ProjectRoleTable;
     applications: ApplicationTable;
+    donations: DonationTable;
 }
 
 /**

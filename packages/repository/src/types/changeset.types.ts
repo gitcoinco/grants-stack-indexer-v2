@@ -1,6 +1,7 @@
 import type { Address, ChainId } from "@grants-stack-indexer/shared";
 
 import { NewApplication, PartialApplication } from "./application.types.js";
+import { NewDonation } from "./donation.types.js";
 import {
     NewPendingProjectRole,
     NewProject,
@@ -144,6 +145,24 @@ export type ApplicationChangeset =
           };
       };
 
+export type DonationChangeset =
+    | {
+          type: "InsertDonation";
+          args: {
+              donation: NewDonation;
+          };
+      }
+    | {
+          type: "InsertManyDonations";
+          args: {
+              donations: NewDonation[];
+          };
+      };
+
 //TODO: add changeset for Donation and Payout tables
 
-export type Changeset = ProjectChangeset | RoundChangeset | ApplicationChangeset;
+export type Changeset =
+    | ProjectChangeset
+    | RoundChangeset
+    | ApplicationChangeset
+    | DonationChangeset;

@@ -9,6 +9,7 @@ import { CoingeckoProvider } from "@grants-stack-indexer/pricing";
 import {
     createKyselyDatabase,
     KyselyApplicationRepository,
+    KyselyDonationRepository,
     KyselyProjectRepository,
     KyselyRoundRepository,
 } from "@grants-stack-indexer/repository";
@@ -45,6 +46,10 @@ export class SharedDependenciesService {
             kyselyDatabase,
             env.DATABASE_SCHEMA,
         );
+        const donationRepository = new KyselyDonationRepository(
+            kyselyDatabase,
+            env.DATABASE_SCHEMA,
+        );
         const pricingProvider = new CoingeckoProvider(
             {
                 apiKey: env.COINGECKO_API_KEY,
@@ -71,6 +76,7 @@ export class SharedDependenciesService {
                 roundRepository,
                 applicationRepository,
                 pricingProvider,
+                donationRepository,
                 metadataProvider,
             },
             registries: {

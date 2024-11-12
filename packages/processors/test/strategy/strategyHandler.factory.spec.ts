@@ -4,7 +4,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { EvmProvider } from "@grants-stack-indexer/chain-providers";
 import { IMetadataProvider } from "@grants-stack-indexer/metadata";
 import { IPricingProvider } from "@grants-stack-indexer/pricing";
-import { IProjectReadRepository, IRoundReadRepository } from "@grants-stack-indexer/repository";
+import {
+    IApplicationReadRepository,
+    IProjectReadRepository,
+    IRoundReadRepository,
+} from "@grants-stack-indexer/repository";
 import { ChainId, ILogger } from "@grants-stack-indexer/shared";
 
 import { ProcessorDependencies, StrategyHandlerFactory } from "../../src/internal.js";
@@ -18,6 +22,8 @@ describe("StrategyHandlerFactory", () => {
     let mockRoundRepository: IRoundReadRepository;
     let mockProjectRepository: IProjectReadRepository;
     let mockProcessorDependencies: ProcessorDependencies;
+    let mockApplicationRepository: IApplicationReadRepository;
+
     const logger: ILogger = {
         debug: vi.fn(),
         error: vi.fn(),
@@ -30,12 +36,14 @@ describe("StrategyHandlerFactory", () => {
         mockMetadataProvider = {} as IMetadataProvider;
         mockRoundRepository = {} as IRoundReadRepository;
         mockProjectRepository = {} as IProjectReadRepository;
+        mockApplicationRepository = {} as IApplicationReadRepository;
         mockProcessorDependencies = {
             evmProvider: mockEvmProvider,
             pricingProvider: mockPricingProvider,
             metadataProvider: mockMetadataProvider,
             roundRepository: mockRoundRepository,
             projectRepository: mockProjectRepository,
+            applicationRepository: mockApplicationRepository,
             logger,
         };
     });

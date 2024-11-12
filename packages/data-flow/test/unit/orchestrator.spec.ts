@@ -7,6 +7,7 @@ import { UnsupportedStrategy } from "@grants-stack-indexer/processors";
 import {
     Changeset,
     IApplicationRepository,
+    IDonationRepository,
     IProjectRepository,
     IRoundRepository,
 } from "@grants-stack-indexer/repository";
@@ -92,6 +93,7 @@ describe("Orchestrator", { sequential: true }, () => {
             projectRepository: {} as unknown as IProjectRepository,
             roundRepository: {} as unknown as IRoundRepository,
             applicationRepository: {} as unknown as IApplicationRepository,
+            donationRepository: {} as unknown as IDonationRepository,
             pricingProvider: {
                 getTokenPrice: vi.fn(),
             },
@@ -269,6 +271,10 @@ describe("Orchestrator", { sequential: true }, () => {
             RegisteredWithData: "",
             DistributedWithData: "",
             DistributedWithFlowRate: "",
+            AllocatedWithOrigin: "",
+            AllocatedWithData: "",
+            AllocatedWithVotes: "",
+            AllocatedWithStatus: "",
         };
 
         for (const event of Object.keys(strategyEvents) as StrategyEvent[]) {

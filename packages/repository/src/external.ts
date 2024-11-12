@@ -6,6 +6,7 @@ export type {
     IProjectReadRepository,
     IApplicationRepository,
     IApplicationReadRepository,
+    IDonationRepository,
     DatabaseConfig,
 } from "./internal.js";
 
@@ -17,15 +18,9 @@ export type {
     PartialProject,
     ProjectRole,
     PendingProjectRole,
-} from "./types/project.types.js";
+} from "./types/index.js";
 
-export type {
-    Round,
-    NewRound,
-    PartialRound,
-    RoundRole,
-    PendingRoundRole,
-} from "./types/round.types.js";
+export type { Round, NewRound, PartialRound, RoundRole, PendingRoundRole } from "./types/index.js";
 
 export type {
     ApplicationStatus,
@@ -33,19 +28,23 @@ export type {
     Application,
     NewApplication,
     PartialApplication,
-} from "./types/application.types.js";
+} from "./types/index.js";
+
+export type { Donation, NewDonation } from "./types/index.js";
 
 export type {
     Changeset,
     ProjectChangeset,
     RoundChangeset,
     ApplicationChangeset,
+    DonationChangeset,
 } from "./types/index.js";
 
 export {
     KyselyRoundRepository,
     KyselyProjectRepository,
     KyselyApplicationRepository,
+    KyselyDonationRepository,
 } from "./repositories/kysely/index.js";
 
 export { createKyselyPostgresDb as createKyselyDatabase } from "./internal.js";

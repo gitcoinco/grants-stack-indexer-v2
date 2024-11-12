@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
     Changeset,
     IApplicationRepository,
+    IDonationRepository,
     IProjectRepository,
     IRoundRepository,
 } from "@grants-stack-indexer/repository";
@@ -27,6 +28,11 @@ describe("DataLoader", () => {
         updateApplication: vi.fn(),
     } as unknown as IApplicationRepository;
 
+    const mockDonationRepository = {
+        insertDonation: vi.fn(),
+        insertManyDonations: vi.fn(),
+    } as IDonationRepository;
+
     const logger: ILogger = {
         debug: vi.fn(),
         error: vi.fn(),
@@ -39,6 +45,7 @@ describe("DataLoader", () => {
                 project: mockProjectRepository,
                 round: mockRoundRepository,
                 application: mockApplicationRepository,
+                donation: mockDonationRepository,
             },
             logger,
         );

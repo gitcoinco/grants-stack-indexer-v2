@@ -12,7 +12,11 @@ const StrategyEventArray = [
     "DistributedWithData",
     "DistributedWithFlowRate",
     "TimestampsUpdated",
+    "AllocatedWithOrigin",
     "AllocatedWithToken",
+    "AllocatedWithData",
+    "AllocatedWithVotes",
+    "AllocatedWithStatus",
 ] as const;
 
 /**
@@ -37,7 +41,11 @@ export type StrategyEventParams<T extends StrategyEvent> = T extends "Registered
               ? TimestampsUpdatedParams
               : T extends "AllocatedWithToken"
                 ? AllocatedWithTokenParams
-                : never;
+                : T extends "AllocatedWithOrigin"
+                  ? AllocatedWithOriginParams
+                  : T extends "AllocatedWithVotes"
+                    ? AllocatedWithVotesParams
+                    : never;
 
 // =============================================================================
 // =============================== Event Parameters ============================
@@ -82,9 +90,30 @@ export type TimestampsUpdatedParams = {
 
 // ======================= Allocated =======================
 export type AllocatedWithTokenParams = {
-    contractAddress: Address;
-    tokenAddress: Address;
-    amount: number;
+    recipientId: Address;
+    amount: bigint;
+    token: Address;
+    sender: Address;
+};
+
+export type AllocatedWithOriginParams = {
+    recipientId: Address;
+    amount: bigint;
+    token: Address;
+    sender: Address;
+    origin: Address;
+};
+
+export type AllocatedWithVotesParams = {
+    recipientId: Address;
+    votes: bigint;
+    allocator: Address;
+};
+
+export type AllocatedWithStatusParams = {
+    recipientId: Address;
+    status: number;
+    sender: Address;
 };
 
 /**

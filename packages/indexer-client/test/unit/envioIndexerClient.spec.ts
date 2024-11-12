@@ -1,7 +1,7 @@
 import { GraphQLClient, RequestDocument, RequestOptions } from "graphql-request";
 import { afterEach, beforeEach, describe, expect, it, Mocked, vi } from "vitest";
 
-import { AnyIndexerFetchedEvent, ChainId } from "@grants-stack-indexer/shared";
+import { AnyIndexerFetchedEvent, ChainId, PoolCreatedParams } from "@grants-stack-indexer/shared";
 
 import { IndexerClientError, InvalidIndexerResponse } from "../../src/exceptions/index.js";
 import { EnvioIndexerClient } from "../../src/providers/envioIndexerClient.js";
@@ -32,7 +32,11 @@ describe("EnvioIndexerClient", () => {
             eventName: "PoolCreated",
             srcAddress: "0x1234",
             logIndex: 1,
-            params: { contractAddress: "0x1234", tokenAddress: "0x1234", amount: 1000 },
+            params: {
+                contractAddress: "0x1234",
+                tokenAddress: "0x1234",
+                amount: 1000n,
+            } as unknown as PoolCreatedParams,
             transactionFields: { hash: "0x123", transactionIndex: 1 },
         },
         {
@@ -43,7 +47,11 @@ describe("EnvioIndexerClient", () => {
             eventName: "PoolCreated",
             srcAddress: "0x1234",
             logIndex: 3,
-            params: { contractAddress: "0x1234", tokenAddress: "0x1234", amount: 1000 },
+            params: {
+                contractAddress: "0x1234",
+                tokenAddress: "0x1234",
+                amount: 1000n,
+            } as unknown as PoolCreatedParams,
             transactionFields: { hash: "0x123", transactionIndex: 1 },
         },
         {
@@ -54,7 +62,11 @@ describe("EnvioIndexerClient", () => {
             eventName: "PoolCreated",
             srcAddress: "0x1234",
             logIndex: 1,
-            params: { contractAddress: "0x1234", tokenAddress: "0x1234", amount: 1000 },
+            params: {
+                contractAddress: "0x1234",
+                tokenAddress: "0x1234",
+                amount: 1000n,
+            } as unknown as PoolCreatedParams,
             transactionFields: { hash: "0x123", transactionIndex: 1 },
         },
         {
@@ -65,7 +77,11 @@ describe("EnvioIndexerClient", () => {
             eventName: "PoolCreated",
             srcAddress: "0x1234",
             logIndex: 1,
-            params: { contractAddress: "0x1234", tokenAddress: "0x1234", amount: 1000 },
+            params: {
+                contractAddress: "0x1234",
+                tokenAddress: "0x1234",
+                amount: 1000n,
+            } as unknown as PoolCreatedParams,
             transactionFields: { hash: "0x123", transactionIndex: 1 },
         },
     ];
