@@ -1,7 +1,8 @@
-import { Changeset } from "@grants-stack-indexer/repository";
+import { Changeset, ProjectType } from "@grants-stack-indexer/repository";
 import { ChainId, ProcessorEvent } from "@grants-stack-indexer/shared";
 
 import { IEventHandler, ProcessorDependencies } from "../../../internal.js";
+import { ProjectMetadata, ProjectMetadataSchema } from "../../../schemas/index.js";
 
 type Dependencies = Pick<
     ProcessorDependencies,
@@ -19,6 +20,46 @@ export class ProfileMetadataUpdatedHandler
         private dependencies: Dependencies,
     ) {}
     async handle(): Promise<Changeset[]> {
+        const { metadataProvider } = this.dependencies;
+
+        const metadataCid = this.event.params.metadata[1];
+        const metadata = await metadataProvider.getMetadata(metadataCid);
+        const parsedMetadata = ProjectMetadataSchema.safeParse(metadata);
+
+        if (!parsedMetadata.success) {
+            // logger.warn({
+            //     msg: `ProfileMetadataUpdated: Failed to parse metadata`,
+            //     event,
+            //     metadataCid,
+            //     metadata,
+            // });
+            return [];
+        }
+
+        const projectType = this.getProjectTypeFromMetadata(parsedMetadata.data);
+
+        return [
+            {
+                type: "UpdateProject",
+                args: {
+                    chainId: this.chainId,
+                    projectId: this.event.params.profileId,
+                    project: {
+                        metadataCid: metadataCid,
+                        metadata: metadata,
+                        projectType,
+                    },
+                },
+            },
+        ];
         return [];
+    }
+    private getProjectTypeFromMetadata(metadata: ProjectMetadata): ProjectType {
+        // if the metadata contains a canonical reference, it's a linked project
+        if ("canonical" in metadata) {
+            return "linked";
+        }
+
+        return "canonical";
     }
 }

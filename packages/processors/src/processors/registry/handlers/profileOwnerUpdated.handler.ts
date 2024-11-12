@@ -1,3 +1,5 @@
+import { getAddress } from "viem";
+
 import { Changeset } from "@grants-stack-indexer/repository";
 import { ChainId, ProcessorEvent } from "@grants-stack-indexer/shared";
 
@@ -19,6 +21,29 @@ export class ProfileOwnerUpdatedHandler
         private dependencies: Dependencies,
     ) {}
     async handle(): Promise<Changeset[]> {
-        return [];
+        return [
+            {
+                type: "DeleteAllProjectRolesByRole",
+                args: {
+                    projectRole: {
+                        chainId: this.chainId,
+                        projectId: this.event.params.profileId,
+                        role: "owner",
+                    },
+                },
+            },
+            {
+                type: "InsertProjectRole",
+                args: {
+                    projectRole: {
+                        chainId: this.chainId,
+                        projectId: this.event.params.profileId,
+                        address: getAddress(this.event.params.owner),
+                        role: "owner",
+                        createdAtBlock: BigInt(this.event.blockNumber),
+                    },
+                },
+            },
+        ];
     }
 }

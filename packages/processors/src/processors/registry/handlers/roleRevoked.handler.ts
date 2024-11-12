@@ -1,3 +1,5 @@
+import { getAddress } from "viem";
+
 import { Changeset } from "@grants-stack-indexer/repository";
 import { ChainId, ProcessorEvent } from "@grants-stack-indexer/shared";
 
@@ -17,6 +19,30 @@ export class RoleRevokedHandler implements IEventHandler<"Registry", "RoleRevoke
         private dependencies: Dependencies,
     ) {}
     async handle(): Promise<Changeset[]> {
-        return [];
+        const { projectRepository } = this.dependencies;
+        const account = getAddress(this.event.params.account);
+        const role = this.event.params.role.toLowerCase();
+        const project = await projectRepository.getProjectById(this.chainId, role);
+
+        // The role value for a member is the profileId in Allo V1
+        // which is the project id in this database.
+        // If we don't find a project with that id we can't remove the role.
+        if (!project) {
+            return [];
+        }
+
+        return [
+            {
+                type: "DeleteAllProjectRolesByRoleAndAddress",
+                args: {
+                    projectRole: {
+                        chainId: this.chainId,
+                        projectId: project.id,
+                        address: account,
+                        role: "member",
+                    },
+                },
+            },
+        ];
     }
 }
