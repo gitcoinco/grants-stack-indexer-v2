@@ -39,6 +39,7 @@ export const calculateAmountInUsd = (
  * @param tokenPriceInUsd - The price of the token in USD
  * @param tokenDecimals - The number of decimals the token has
  * @returns The amount in token
+ * @throws Error if tokenPriceInUsd is 0 (division by zero)
  */
 export const calculateAmountInToken = (
     amountInUSD: string,
@@ -49,5 +50,10 @@ export const calculateAmountInToken = (
     const tokenPriceInUsdBN = new BigNumber(tokenPriceInUsd);
     const scaleFactor = new BigNumber(10).pow(tokenDecimals);
 
-    return BigInt(amountInUsdBN.multipliedBy(scaleFactor).dividedBy(tokenPriceInUsdBN).toFixed(0));
+    return BigInt(
+        amountInUsdBN
+            .multipliedBy(scaleFactor)
+            .dividedBy(tokenPriceInUsdBN)
+            .toFixed(0, BigNumber.ROUND_FLOOR),
+    );
 };

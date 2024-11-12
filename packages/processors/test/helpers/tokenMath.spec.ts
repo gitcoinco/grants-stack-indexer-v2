@@ -161,4 +161,14 @@ describe("calculateAmountInToken", () => {
     it("handle scientific notation for USD amount", () => {
         expect(calculateAmountInToken("1e3", "1", 18)).toBe(1000000000000000000000n);
     });
+
+    it("truncates decimals to floor", () => {
+        // For 6 decimal token
+        expect(calculateAmountInToken("1.123456", "1", 6)).toBe(1123456n);
+        expect(calculateAmountInToken("1", "0.123456", 6)).toBe(8100051n); // 8100051.840331778 before truncation
+
+        // For 8 decimal token
+        expect(calculateAmountInToken("1.12345678", "1", 8)).toBe(112345678n);
+        expect(calculateAmountInToken("1", "0.12345678", 8)).toBe(810000066n); // 810000066.4200054 before truncation
+    });
 });

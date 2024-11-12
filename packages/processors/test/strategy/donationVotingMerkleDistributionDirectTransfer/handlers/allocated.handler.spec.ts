@@ -12,15 +12,12 @@ import { ChainId, DeepPartial, mergeDeep, ProcessorEvent } from "@grants-stack-i
 
 import {
     ApplicationNotFound,
+    MetadataParsingFailed,
     RoundNotFound,
     TokenPriceNotFoundError,
     UnknownToken,
 } from "../../../../src/exceptions/index.js";
-import {
-    DVMDAllocatedHandler,
-    MetadataParsingFailed,
-    OriginMissing,
-} from "../../../../src/strategy/donationVotingMerkleDistributionDirectTransfer/handlers/allocated.handler.js";
+import { DVMDAllocatedHandler } from "../../../../src/strategy/donationVotingMerkleDistributionDirectTransfer/handlers/allocated.handler.js";
 
 function createMockEvent(
     overrides: DeepPartial<ProcessorEvent<"Strategy", "AllocatedWithOrigin">> = {},
@@ -187,20 +184,6 @@ describe("DVMDAllocatedHandler", () => {
                 },
             },
         ]);
-    });
-
-    it("throws OriginMissing if origin is undefined", async () => {
-        mockEvent = createMockEvent();
-        //forcefully remove origin from mockEvent
-        mockEvent.params.origin = undefined as unknown as `0x${string}`;
-
-        handler = new DVMDAllocatedHandler(mockEvent, chainId, {
-            roundRepository: mockRoundRepository,
-            applicationRepository: mockApplicationRepository,
-            pricingProvider: mockPricingProvider,
-        });
-
-        await expect(handler.handle()).rejects.toThrow(OriginMissing);
     });
 
     it("throws RoundNotFound if round is not found", async () => {

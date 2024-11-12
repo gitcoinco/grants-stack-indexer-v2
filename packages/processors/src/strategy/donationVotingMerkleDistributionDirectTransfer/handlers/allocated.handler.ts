@@ -7,6 +7,7 @@ import { getTokenAmountInUsd, getUsdInTokenAmount } from "../../../helpers/index
 import {
     ApplicationNotFound,
     IEventHandler,
+    MetadataParsingFailed,
     ProcessorDependencies,
     RoundNotFound,
     UnknownToken,
@@ -17,18 +18,6 @@ type Dependencies = Pick<
     ProcessorDependencies,
     "roundRepository" | "applicationRepository" | "pricingProvider"
 >;
-
-export class OriginMissing extends Error {
-    constructor() {
-        super("Origin field is required");
-    }
-}
-
-export class MetadataParsingFailed extends Error {
-    constructor(additionalInfo?: string) {
-        super(`Failed to parse application metadata: ${additionalInfo}`);
-    }
-}
 
 /**
  * Handles the Allocated event for the Donation Voting Merkle Distribution Direct Transfer strategy.
@@ -59,10 +48,6 @@ export class DVMDAllocatedHandler implements IEventHandler<"Strategy", "Allocate
     async handle(): Promise<Changeset[]> {
         const { srcAddress } = this.event;
         const { recipientId: _recipientId, amount, token: _token } = this.event.params;
-
-        if (!this.event.params.origin) {
-            throw new OriginMissing();
-        }
 
         const round = await this.getRoundOrThrow(srcAddress);
         const application = await this.getApplicationOrThrow(round.id, _recipientId);

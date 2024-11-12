@@ -2,7 +2,7 @@ import { IPricingProvider } from "@grants-stack-indexer/pricing";
 import { Token } from "@grants-stack-indexer/shared";
 
 import { TokenPriceNotFoundError } from "../internal.js";
-import { calculateAmountInToken, calculateAmountInUsd } from "./tokenMath.js";
+import { calculateAmountInToken, calculateAmountInUsd } from "./index.js";
 
 // sometimes coingecko returns no prices for 1 hour range, 2 hours works better
 const TIMESTAMP_DELTA_RANGE = 2 * 60 * 60 * 1000;
