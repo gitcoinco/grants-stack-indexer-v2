@@ -45,7 +45,7 @@ describe("RegistryProcessor", () => {
         await expect(processor.process(event)).rejects.toThrow(UnsupportedEventException);
     });
 
-    it("should call ProfileCreatedHandler", async () => {
+    it("calls ProfileCreatedHandler", async () => {
         const event: ProcessorEvent<"Registry", "ProfileCreated"> = {
             eventName: "ProfileCreated",
         } as ProcessorEvent<"Registry", "ProfileCreated">;
@@ -59,7 +59,7 @@ describe("RegistryProcessor", () => {
         expect(result).toEqual([]); // Check if handle returns []
     });
 
-    it("should call RoleGrantedHandler", async () => {
+    it("calls RoleGrantedHandler", async () => {
         const event: ProcessorEvent<"Registry", "RoleGranted"> = {
             eventName: "RoleGranted",
         } as ProcessorEvent<"Registry", "RoleGranted">;

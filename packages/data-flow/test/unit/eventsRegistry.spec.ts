@@ -48,7 +48,7 @@ describe("InMemoryEventsRegistry", () => {
         expect(retrievedEvent).toEqual(mockEvent);
     });
 
-    it("should update the last processed event when saving multiple times", async () => {
+    it("updates the last processed event when saving multiple times", async () => {
         const registry = new InMemoryEventsRegistry(logger);
 
         const firstEvent: ProcessorEvent<"Allo", "PoolCreated"> = {

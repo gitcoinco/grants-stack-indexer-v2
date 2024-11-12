@@ -5,10 +5,7 @@ import { ChainId, ProcessorEvent } from "@grants-stack-indexer/shared";
 
 import { IEventHandler, ProcessorDependencies } from "../../../internal.js";
 
-type Dependencies = Pick<
-    ProcessorDependencies,
-    "projectRepository" | "evmProvider" | "metadataProvider" | "logger"
->;
+type Dependencies = Pick<ProcessorDependencies, "projectRepository" | "logger">;
 /**
  * Handles the RoleRevoked event for the Registry contract from Allo protocol.
  */
