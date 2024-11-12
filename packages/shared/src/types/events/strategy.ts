@@ -1,6 +1,6 @@
 import { Hex } from "viem";
 
-import { Address, AnyEvent, ContractName, ProcessorEvent } from "../../internal.js";
+import { Address, AnyEvent, Bytes32String, ContractName, ProcessorEvent } from "../../internal.js";
 
 /**
  * This array is used to represent all Strategy events.
@@ -12,11 +12,20 @@ const StrategyEventArray = [
     "DistributedWithData",
     "DistributedWithFlowRate",
     "TimestampsUpdated",
+    "TimestampsUpdatedWithRegistrationAndAllocation",
     "AllocatedWithOrigin",
     "AllocatedWithToken",
     "AllocatedWithData",
     "AllocatedWithVotes",
     "AllocatedWithStatus",
+    "DistributionUpdated",
+    "FundsDistributed",
+    "RecipientStatusUpdatedWithApplicationId",
+    "RecipientStatusUpdatedWithRecipientStatus",
+    "RecipientStatusUpdatedWithFullRow",
+    "UpdatedRegistrationWithStatus",
+    "UpdatedRegistration",
+    "UpdatedRegistrationWithApplicationId",
 ] as const;
 
 /**
@@ -39,13 +48,31 @@ export type StrategyEventParams<T extends StrategyEvent> = T extends "Registered
             ? DistributedWithFlowRateParams
             : T extends "TimestampsUpdated"
               ? TimestampsUpdatedParams
-              : T extends "AllocatedWithToken"
-                ? AllocatedWithTokenParams
-                : T extends "AllocatedWithOrigin"
-                  ? AllocatedWithOriginParams
-                  : T extends "AllocatedWithVotes"
-                    ? AllocatedWithVotesParams
-                    : never;
+              : T extends "TimestampsUpdatedWithRegistrationAndAllocation"
+                ? TimestampsUpdatedWithRegistrationAndAllocationParams
+                : T extends "AllocatedWithToken"
+                  ? AllocatedWithTokenParams
+                  : T extends "AllocatedWithOrigin"
+                    ? AllocatedWithOriginParams
+                    : T extends "AllocatedWithVotes"
+                      ? AllocatedWithVotesParams
+                      : T extends "DistributionUpdated"
+                        ? DistributionUpdatedParams
+                        : T extends "FundsDistributed"
+                          ? FundsDistributedParams
+                          : T extends "RecipientStatusUpdatedWithApplicationId"
+                            ? RecipientStatusUpdatedWithApplicationIdParams
+                            : T extends "RecipientStatusUpdatedWithRecipientStatus"
+                              ? RecipientStatusUpdatedWithRecipientStatusParams
+                              : T extends "RecipientStatusUpdatedWithFullRow"
+                                ? RecipientStatusUpdatedWithFullRowParams
+                                : T extends "UpdatedRegistrationWithStatus"
+                                  ? UpdatedRegistrationWithStatusParams
+                                  : T extends "UpdatedRegistration"
+                                    ? UpdatedRegistrationParams
+                                    : T extends "UpdatedRegistrationWithApplicationId"
+                                      ? UpdatedRegistrationWithApplicationIdParams
+                                      : never;
 
 // =============================================================================
 // =============================== Event Parameters ============================
@@ -84,8 +111,25 @@ export type DistributedWithFlowRateParams = {
 // ======================= TimestampsUpdated =======================
 
 export type TimestampsUpdatedParams = {
-    contractAddress: Address;
-    timestamp: number;
+    startTime: bigint;
+    endTime: bigint;
+    sender: Address;
+};
+
+export type TimestampsUpdatedWithRegistrationAndAllocationParams = {
+    registrationStartTime: bigint;
+    registrationEndTime: bigint;
+    allocationStartTime: bigint;
+    allocationEndTime: bigint;
+    sender: Address;
+};
+
+// ======================= FundsDistributed =======================
+export type FundsDistributedParams = {
+    amount: bigint;
+    grantee: Address;
+    token: Address;
+    recipientId: Address;
 };
 
 // ======================= Allocated =======================
@@ -114,6 +158,54 @@ export type AllocatedWithStatusParams = {
     recipientId: Address;
     status: number;
     sender: Address;
+};
+
+// ======================= DistributionUpdated =======================
+export type DistributionUpdatedParams = {
+    merkleRoot: Bytes32String;
+    metadata: [protocol: bigint, pointer: string];
+};
+
+// ======================= RecipientStatusUpdated =======================
+export type RecipientStatusUpdatedWithApplicationIdParams = {
+    recipientId: Address;
+    applicationId: bigint;
+    status: number;
+    sender: Address;
+};
+
+export type RecipientStatusUpdatedWithRecipientStatusParams = {
+    recipientId: Address;
+    status: number;
+    sender: Address;
+};
+
+export type RecipientStatusUpdatedWithFullRowParams = {
+    rowIndex: bigint;
+    fullRow: bigint;
+    sender: Address;
+};
+
+// ======================= UpdatedRegistration =======================
+export type UpdatedRegistrationWithStatusParams = {
+    recipientId: Address;
+    data: Hex;
+    sender: Address;
+    status: number;
+};
+
+export type UpdatedRegistrationParams = {
+    recipientId: Address;
+    data: Hex;
+    sender: Address;
+};
+
+export type UpdatedRegistrationWithApplicationIdParams = {
+    recipientId: Address;
+    applicationId: bigint;
+    data: Hex;
+    sender: Address;
+    status: number;
 };
 
 /**

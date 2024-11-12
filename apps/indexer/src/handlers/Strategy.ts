@@ -37,3 +37,8 @@ Strategy.DirectAllocated.handler(async ({}) => {});
 Strategy.RecipientStatusUpdatedWithApplicationId.handler(async ({}) => {});
 Strategy.RecipientStatusUpdatedWithRecipientStatus.handler(async ({}) => {});
 Strategy.RecipientStatusUpdatedWithFullRow.handler(async ({}) => {});
+
+// UpdatedRegistration Handlers
+Strategy.UpdatedRegistrationWithStatus.handler(async ({}) => {});
+Strategy.UpdatedRegistration.handler(async ({}) => {});
+Strategy.UpdatedRegistrationWithApplicationId.handler(async ({}) => {});

@@ -275,6 +275,15 @@ describe("Orchestrator", { sequential: true }, () => {
             AllocatedWithData: "",
             AllocatedWithVotes: "",
             AllocatedWithStatus: "",
+            TimestampsUpdatedWithRegistrationAndAllocation: "",
+            DistributionUpdated: "",
+            FundsDistributed: "",
+            RecipientStatusUpdatedWithApplicationId: "",
+            RecipientStatusUpdatedWithRecipientStatus: "",
+            RecipientStatusUpdatedWithFullRow: "",
+            UpdatedRegistrationWithStatus: "",
+            UpdatedRegistration: "",
+            UpdatedRegistrationWithApplicationId: "",
         };
 
         for (const event of Object.keys(strategyEvents) as StrategyEvent[]) {

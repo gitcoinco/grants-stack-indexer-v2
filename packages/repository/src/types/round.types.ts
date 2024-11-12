@@ -40,7 +40,7 @@ export type Round = {
     strategyId: string;
     strategyName: string;
     readyForPayoutTransaction: string | null;
-    matchingDistribution: MatchingDistribution | null;
+    matchingDistribution: MatchingDistribution[] | null;
     projectId: string;
     tags: string[];
 };

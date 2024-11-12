@@ -86,6 +86,14 @@ contracts:
           - event: RecipientStatusUpdated(uint256 indexed rowIndex, uint256 fullRow, address sender)
             name: RecipientStatusUpdatedWithFullRow
 
+          # UpdatedRegistration
+          - event: UpdatedRegistration(address indexed recipientId, bytes data, address sender, uint8 status)
+            name: UpdatedRegistrationWithStatus
+          - event: UpdatedRegistration(address indexed recipientId, bytes data, address sender)
+            name: UpdatedRegistration
+          - event: UpdatedRegistration(address indexed recipientId, uint256 applicationId, bytes data, address sender, uint8 status)
+            name: UpdatedRegistrationWithApplicationId
+
           # ########################## ALLO v2.1 ##########################
 
           # # AllocationExtension

@@ -7,3 +7,4 @@ export * from "./roundNotFound.exception.js";
 export * from "./applicationNotFound.exception.js";
 export * from "./unknownToken.exception.js";
 export * from "./metadataParsingFailed.exception.js";
+export * from "./metadataNotFound.exception.js";
