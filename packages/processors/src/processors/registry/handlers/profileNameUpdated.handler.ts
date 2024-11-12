@@ -8,6 +8,9 @@ import { IEventHandler, ProcessorDependencies } from "../../../internal.js";
 type Dependencies = Pick<ProcessorDependencies, "logger">;
 /**
  * Handles the ProfileNameUpdated event for the Registry contract from Allo protocol.
+ *
+ * This handler performs the following steps:
+ * - Returns the changeset to update the project with the new name
  */
 export class ProfileNameUpdatedHandler implements IEventHandler<"Registry", "ProfileNameUpdated"> {
     constructor(
@@ -15,6 +18,7 @@ export class ProfileNameUpdatedHandler implements IEventHandler<"Registry", "Pro
         readonly chainId: ChainId,
         private dependencies: Dependencies,
     ) {}
+    /* @inheritdoc */
     async handle(): Promise<Changeset[]> {
         return [
             {

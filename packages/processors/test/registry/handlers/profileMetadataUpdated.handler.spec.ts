@@ -65,7 +65,20 @@ describe("ProfileMetadataUpdatedHandler", () => {
         const handler = new ProfileMetadataUpdatedHandler(mockEvent, chainId, mockDependencies);
         const result = await handler.handle();
 
-        expect(result).toEqual([]);
+        expect(result).toEqual([
+            {
+                type: "UpdateProject",
+                args: {
+                    chainId,
+                    projectId: mockEvent.params.profileId,
+                    project: {
+                        metadataCid: mockCid,
+                        metadata: null,
+                        projectType: "canonical",
+                    },
+                },
+            },
+        ]);
     });
 
     it("throws an error if getMetadata fails", async () => {

@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { IProjectRepository, Project } from "@grants-stack-indexer/repository";
 import { ChainId, ILogger, ProcessorEvent } from "@grants-stack-indexer/shared";
 
+import { ProjectByRoleNotFound } from "../../../src/internal.js";
 import { RoleRevokedHandler } from "../../../src/processors/registry/handlers/roleRevoked.handler.js";
 
 describe("RoleRevokedHandler", () => {
@@ -64,9 +65,8 @@ describe("RoleRevokedHandler", () => {
         );
 
         const handler = new RoleRevokedHandler(mockEvent, mockChainId, mockDependencies);
-        const result = await handler.handle();
 
-        expect(result).toEqual([]);
+        await expect(handler.handle()).rejects.toThrow(ProjectByRoleNotFound);
     });
 
     it("throw an error when getProjectById fails", async () => {

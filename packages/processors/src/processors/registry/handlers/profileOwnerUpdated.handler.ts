@@ -8,6 +8,11 @@ import { IEventHandler, ProcessorDependencies } from "../../../internal.js";
 type Dependencies = Pick<ProcessorDependencies, "logger">;
 /**
  * Handles the ProfileOwnerUpdated event for the Registry contract from Allo protocol.
+ *
+ * This handler performs the following steps:
+ *
+ * - Returns the changeset to delete all project roles with the role "owner"
+ * for the profile and insert a new project role with the new owner address.
  */
 export class ProfileOwnerUpdatedHandler
     implements IEventHandler<"Registry", "ProfileOwnerUpdated">
@@ -17,6 +22,7 @@ export class ProfileOwnerUpdatedHandler
         readonly chainId: ChainId,
         private dependencies: Dependencies,
     ) {}
+    /* @inheritdoc */
     async handle(): Promise<Changeset[]> {
         return [
             {

@@ -1,6 +1,6 @@
 import { Address, ChainId } from "@grants-stack-indexer/shared";
 
-export type ProjectType = "canonical" | "linked";
+export type ProjectType = "canonical" | "linked" | "unknown";
 
 export type Project = {
     id: string;
