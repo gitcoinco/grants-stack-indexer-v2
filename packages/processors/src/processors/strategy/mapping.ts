@@ -1,6 +1,6 @@
 import { Hex } from "viem";
 
-import type { StrategyHandlerConstructor } from "../internal.js";
+import type { StrategyHandlerConstructor } from "../../internal.js";
 import { DVMDDirectTransferStrategyHandler } from "./donationVotingMerkleDistributionDirectTransfer/dvmdDirectTransfer.handler.js";
 
 /**

@@ -10,12 +10,12 @@ import type {
 } from "@grants-stack-indexer/repository";
 import type { AlloEvent, ChainId, ILogger, ProcessorEvent } from "@grants-stack-indexer/shared";
 
-import { AlloProcessor } from "../../src/allo/allo.processor.js";
-import { PoolCreatedHandler } from "../../src/allo/handlers/poolCreated.handler.js";
 import { UnsupportedEventException } from "../../src/internal.js";
+import { AlloProcessor } from "../../src/processors/allo/allo.processor.js";
+import { PoolCreatedHandler } from "../../src/processors/allo/handlers/poolCreated.handler.js";
 
 // Mock the handlers
-vi.mock("../../src/allo/handlers/poolCreated.handler.js", () => {
+vi.mock("../../src/processors/allo/handlers/poolCreated.handler.js", () => {
     const PoolCreatedHandler = vi.fn();
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     PoolCreatedHandler.prototype.handle = vi.fn();

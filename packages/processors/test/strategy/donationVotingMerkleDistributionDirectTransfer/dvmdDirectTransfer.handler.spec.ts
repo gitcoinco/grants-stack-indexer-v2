@@ -19,15 +19,15 @@ import {
 } from "@grants-stack-indexer/shared";
 
 import { TokenPriceNotFoundError, UnsupportedEventException } from "../../../src/internal.js";
-import { BaseDistributedHandler } from "../../../src/strategy/common/index.js";
-import { DVMDDirectTransferStrategyHandler } from "../../../src/strategy/donationVotingMerkleDistributionDirectTransfer/dvmdDirectTransfer.handler.js";
+import { BaseDistributedHandler } from "../../../src/processors/strategy/common/index.js";
+import { DVMDDirectTransferStrategyHandler } from "../../../src/processors/strategy/donationVotingMerkleDistributionDirectTransfer/dvmdDirectTransfer.handler.js";
 import {
     DVMDAllocatedHandler,
     DVMDRegisteredHandler,
-} from "../../../src/strategy/donationVotingMerkleDistributionDirectTransfer/handlers/index.js";
+} from "../../../src/processors/strategy/donationVotingMerkleDistributionDirectTransfer/handlers/index.js";
 
 vi.mock(
-    "../../../src/strategy/donationVotingMerkleDistributionDirectTransfer/handlers/index.js",
+    "../../../src/processors/strategy/donationVotingMerkleDistributionDirectTransfer/handlers/index.js",
     () => {
         const DVMDRegisteredHandler = vi.fn();
         const DVMDAllocatedHandler = vi.fn();
@@ -41,7 +41,7 @@ vi.mock(
         };
     },
 );
-vi.mock("../../../src/strategy/common/baseDistributed.handler.js", () => {
+vi.mock("../../../src/processors/strategy/common/baseDistributed.handler.js", () => {
     const BaseDistributedHandler = vi.fn();
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     BaseDistributedHandler.prototype.handle = vi.fn();

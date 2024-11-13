@@ -12,7 +12,7 @@ import {
 import { ChainId, ILogger } from "@grants-stack-indexer/shared";
 
 import { ProcessorDependencies, StrategyHandlerFactory } from "../../src/internal.js";
-import { DVMDDirectTransferStrategyHandler } from "../../src/strategy/donationVotingMerkleDistributionDirectTransfer/dvmdDirectTransfer.handler.js";
+import { DVMDDirectTransferStrategyHandler } from "../../src/processors/strategy/donationVotingMerkleDistributionDirectTransfer/dvmdDirectTransfer.handler.js";
 
 describe("StrategyHandlerFactory", () => {
     const chainId = 10 as ChainId;

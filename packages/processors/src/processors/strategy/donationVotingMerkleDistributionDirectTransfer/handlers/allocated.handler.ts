@@ -3,7 +3,7 @@ import { Address, encodePacked, getAddress, keccak256 } from "viem";
 import { Application, Changeset, Donation, Round } from "@grants-stack-indexer/repository";
 import { ChainId, getToken, ProcessorEvent, Token } from "@grants-stack-indexer/shared";
 
-import { getTokenAmountInUsd, getUsdInTokenAmount } from "../../../helpers/index.js";
+import { getTokenAmountInUsd, getUsdInTokenAmount } from "../../../../helpers/index.js";
 import {
     ApplicationNotFound,
     IEventHandler,
@@ -11,8 +11,8 @@ import {
     ProcessorDependencies,
     RoundNotFound,
     UnknownToken,
-} from "../../../internal.js";
-import { ApplicationMetadata, ApplicationMetadataSchema } from "../../../schemas/index.js";
+} from "../../../../internal.js";
+import { ApplicationMetadata, ApplicationMetadataSchema } from "../../../../schemas/index.js";
 
 type Dependencies = Pick<
     ProcessorDependencies,

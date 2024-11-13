@@ -4,10 +4,10 @@ import type { Changeset, NewRound, PendingRoundRole } from "@grants-stack-indexe
 import type { ChainId, ProcessorEvent, Token } from "@grants-stack-indexer/shared";
 import { getToken, isAlloNativeToken } from "@grants-stack-indexer/shared";
 
-import type { IEventHandler, ProcessorDependencies, StrategyTimings } from "../../internal.js";
-import { calculateAmountInUsd, getRoundRoles } from "../../helpers/index.js";
-import { StrategyHandlerFactory, TokenPriceNotFoundError } from "../../internal.js";
-import { RoundMetadataSchema } from "../../schemas/index.js";
+import type { IEventHandler, ProcessorDependencies, StrategyTimings } from "../../../internal.js";
+import { calculateAmountInUsd, getRoundRoles } from "../../../helpers/index.js";
+import { StrategyHandlerFactory, TokenPriceNotFoundError } from "../../../internal.js";
+import { RoundMetadataSchema } from "../../../schemas/index.js";
 
 type Dependencies = Pick<
     ProcessorDependencies,

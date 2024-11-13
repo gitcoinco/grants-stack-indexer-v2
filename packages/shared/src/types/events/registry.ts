@@ -5,7 +5,14 @@ import { Address, AnyEvent, Bytes32String, ContractName, ProcessorEvent } from "
 /**
  * This array is used to represent all Registry events.
  */
-const RegistryEventArray = ["ProfileCreated", "RoleGranted"] as const;
+const RegistryEventArray = [
+    "ProfileCreated",
+    "ProfileMetadataUpdated",
+    "ProfileNameUpdated",
+    "ProfileOwnerUpdated",
+    "RoleGranted",
+    "RoleRevoked",
+] as const;
 
 /**
  * This type is used to represent a Registry events.
@@ -19,7 +26,15 @@ export type RegistryEventParams<T extends RegistryEvent> = T extends "ProfileCre
     ? ProfileCreatedParams
     : T extends "RoleGranted"
       ? RoleGrantedParams
-      : never;
+      : T extends "ProfileMetadataUpdated"
+        ? ProfileMetadataUpdatedParams
+        : T extends "ProfileNameUpdated"
+          ? ProfileNameUpdatedParams
+          : T extends "ProfileOwnerUpdated"
+            ? ProfileOwnerUpdatedParams
+            : T extends "RoleRevoked"
+              ? RoleRevokedParams
+              : never;
 
 // =============================================================================
 // =============================== Event Parameters ============================
@@ -32,7 +47,27 @@ export type ProfileCreatedParams = {
     owner: Address;
     anchor: Address;
 };
+export type ProfileMetadataUpdatedParams = {
+    profileId: Bytes32String;
+    metadata: [protocol: bigint, pointer: string];
+};
+export type ProfileNameUpdatedParams = {
+    profileId: Bytes32String;
+    name: string;
+    anchor: Address;
+};
+export type ProfileOwnerUpdatedParams = {
+    profileId: Bytes32String;
+    owner: Address;
+};
+
 export type RoleGrantedParams = {
+    role: Bytes32String;
+    account: Address;
+    sender: Address;
+};
+
+export type RoleRevokedParams = {
     role: Bytes32String;
     account: Address;
     sender: Address;

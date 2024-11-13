@@ -1,8 +1,8 @@
 import { Changeset } from "@grants-stack-indexer/repository";
 import { AlloEvent, ChainId, ProcessorEvent } from "@grants-stack-indexer/shared";
 
-import type { IProcessor, ProcessorDependencies } from "../internal.js";
-import { UnsupportedEventException } from "../internal.js";
+import type { IProcessor, ProcessorDependencies } from "../../internal.js";
+import { UnsupportedEventException } from "../../internal.js";
 import { PoolCreatedHandler } from "./handlers/index.js";
 
 /**

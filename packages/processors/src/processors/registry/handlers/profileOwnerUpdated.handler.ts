@@ -1,0 +1,52 @@
+import { getAddress } from "viem";
+
+import { Changeset } from "@grants-stack-indexer/repository";
+import { ChainId, ProcessorEvent } from "@grants-stack-indexer/shared";
+
+import { IEventHandler, ProcessorDependencies } from "../../../internal.js";
+
+type Dependencies = Pick<ProcessorDependencies, "logger">;
+/**
+ * Handles the ProfileOwnerUpdated event for the Registry contract from Allo protocol.
+ *
+ * This handler performs the following steps:
+ *
+ * - Returns the changeset to delete all project roles with the role "owner"
+ * for the profile and insert a new project role with the new owner address.
+ */
+export class ProfileOwnerUpdatedHandler
+    implements IEventHandler<"Registry", "ProfileOwnerUpdated">
+{
+    constructor(
+        readonly event: ProcessorEvent<"Registry", "ProfileOwnerUpdated">,
+        readonly chainId: ChainId,
+        private dependencies: Dependencies,
+    ) {}
+    /* @inheritdoc */
+    async handle(): Promise<Changeset[]> {
+        return [
+            {
+                type: "DeleteAllProjectRolesByRole",
+                args: {
+                    projectRole: {
+                        chainId: this.chainId,
+                        projectId: this.event.params.profileId,
+                        role: "owner",
+                    },
+                },
+            },
+            {
+                type: "InsertProjectRole",
+                args: {
+                    projectRole: {
+                        chainId: this.chainId,
+                        projectId: this.event.params.profileId,
+                        address: getAddress(this.event.params.owner),
+                        role: "owner",
+                        createdAtBlock: BigInt(this.event.blockNumber),
+                    },
+                },
+            },
+        ];
+    }
+}

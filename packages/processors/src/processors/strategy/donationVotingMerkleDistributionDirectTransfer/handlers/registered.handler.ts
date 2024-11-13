@@ -8,7 +8,7 @@ import {
     ProcessorDependencies,
     ProjectNotFound,
     RoundNotFound,
-} from "../../../internal.js";
+} from "../../../../internal.js";
 import { decodeDVMDApplicationData } from "../helpers/index.js";
 
 type Dependencies = Pick<

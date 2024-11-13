@@ -3,8 +3,8 @@ import { getAddress } from "viem";
 import { Changeset } from "@grants-stack-indexer/repository";
 import { ALLO_OWNER_ROLE, ChainId, ProcessorEvent } from "@grants-stack-indexer/shared";
 
-import { IEventHandler } from "../../internal.js";
-import { ProcessorDependencies } from "../../types/processor.types.js";
+import { IEventHandler } from "../../../internal.js";
+import { ProcessorDependencies } from "../../../types/processor.types.js";
 
 /**
  * Handles the RoleGranted event for the Registry contract from Allo protocol.

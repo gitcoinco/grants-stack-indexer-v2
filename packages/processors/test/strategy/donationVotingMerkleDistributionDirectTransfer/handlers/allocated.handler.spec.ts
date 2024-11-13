@@ -17,7 +17,7 @@ import {
     TokenPriceNotFoundError,
     UnknownToken,
 } from "../../../../src/exceptions/index.js";
-import { DVMDAllocatedHandler } from "../../../../src/strategy/donationVotingMerkleDistributionDirectTransfer/handlers/allocated.handler.js";
+import { DVMDAllocatedHandler } from "../../../../src/processors/strategy/donationVotingMerkleDistributionDirectTransfer/handlers/allocated.handler.js";
 
 function createMockEvent(
     overrides: DeepPartial<ProcessorEvent<"Strategy", "AllocatedWithOrigin">> = {},
