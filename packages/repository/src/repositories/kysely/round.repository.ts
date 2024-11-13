@@ -11,6 +11,7 @@ import {
     PartialRound,
     PendingRoundRole,
     Round,
+    RoundNotFound,
     RoundRole,
     RoundRoleNames,
 } from "../../internal.js";
@@ -56,6 +57,18 @@ export class KyselyRoundRepository implements IRoundRepository {
             .where("strategyAddress", "=", strategyAddress)
             .selectAll()
             .executeTakeFirst();
+    }
+
+    /* @inheritdoc */
+    async getRoundByStrategyAddressOrThrow(
+        chainId: ChainId,
+        strategyAddress: Address,
+    ): Promise<Round> {
+        const round = await this.getRoundByStrategyAddress(chainId, strategyAddress);
+        if (!round) {
+            throw new RoundNotFound(chainId, strategyAddress);
+        }
+        return round;
     }
 
     /* @inheritdoc */

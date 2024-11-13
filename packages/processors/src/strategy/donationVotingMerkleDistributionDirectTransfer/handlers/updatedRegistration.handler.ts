@@ -1,17 +1,9 @@
-// import StatusesBitmap from "statuses-bitmap";
-import { Address, getAddress } from "viem";
+import { getAddress } from "viem";
 
-import { Application, Changeset, Project, Round } from "@grants-stack-indexer/repository";
+import { Application, Changeset } from "@grants-stack-indexer/repository";
 import { ChainId, ProcessorEvent } from "@grants-stack-indexer/shared";
 
-import {
-    ApplicationNotFound,
-    ApplicationStatus,
-    IEventHandler,
-    ProcessorDependencies,
-    ProjectNotFound,
-    RoundNotFound,
-} from "../../../internal.js";
+import { ApplicationStatus, IEventHandler, ProcessorDependencies } from "../../../internal.js";
 import { createStatusUpdate, isValidApplicationStatus } from "../../helpers/index.js";
 import { decodeDVMDApplicationData } from "../helpers/index.js";
 
@@ -43,7 +35,13 @@ export class DVMDUpdatedRegistrationHandler
     ) {}
 
     async handle(): Promise<Changeset[]> {
-        const { metadataProvider, logger } = this.dependencies;
+        const {
+            metadataProvider,
+            logger,
+            roundRepository,
+            applicationRepository,
+            projectRepository,
+        } = this.dependencies;
 
         if (!isValidApplicationStatus(this.event.params.status)) {
             logger.warn(
@@ -53,9 +51,19 @@ export class DVMDUpdatedRegistrationHandler
             return [];
         }
 
-        const project = await this.getProjectOrThrow(this.event.params.recipientId);
-        const round = await this.getRoundOrThrow(this.event.srcAddress);
-        const application = await this.getApplicationOrThrow(round.id, project.anchorAddress!);
+        const project = await projectRepository.getProjectByAnchorOrThrow(
+            this.chainId,
+            getAddress(this.event.params.recipientId),
+        );
+        const round = await roundRepository.getRoundByStrategyAddressOrThrow(
+            this.chainId,
+            getAddress(this.event.srcAddress),
+        );
+        const application = await applicationRepository.getApplicationByAnchorAddressOrThrow(
+            this.chainId,
+            round.id,
+            project.anchorAddress!,
+        );
 
         const encodedData = this.event.params.data;
         const values = decodeDVMDApplicationData(encodedData);
@@ -87,72 +95,5 @@ export class DVMDUpdatedRegistrationHandler
                 },
             },
         ];
-    }
-
-    /**
-     * Get the round by the strategy address.
-     * @param strategyAddress - The strategy address.
-     * @returns The round.
-     * @throws If the round is not found.
-     */
-    private async getRoundOrThrow(strategyAddress: Address): Promise<Round> {
-        const round = await this.dependencies.roundRepository.getRoundByStrategyAddress(
-            this.chainId,
-            strategyAddress,
-        );
-
-        if (!round) {
-            this.dependencies.logger.warn(
-                `RecipientStatusUpdated: Round not found for strategy address ${strategyAddress}`,
-            );
-            throw new RoundNotFound(this.chainId, strategyAddress);
-        }
-
-        return round;
-    }
-
-    /**
-     * Get the project by the anchor address.
-     * @param anchorAddress - The anchor address.
-     * @returns The project.
-     * @throws If the project is not found.
-     */
-    private async getProjectOrThrow(anchorAddress: Address): Promise<Project> {
-        const _anchorAddress = getAddress(anchorAddress);
-        const project = await this.dependencies.projectRepository.getProjectByAnchor(
-            this.chainId,
-            _anchorAddress,
-        );
-
-        if (!project) {
-            throw new ProjectNotFound(this.chainId, _anchorAddress);
-        }
-
-        return project;
-    }
-
-    /**
-     * Get the application by the anchor address.
-     * @param roundId - The round ID.
-     * @param anchorAddress - The anchor address.
-     * @returns The application.
-     * @throws If the application is not found.
-     */
-    private async getApplicationOrThrow(
-        roundId: Round["id"],
-        anchorAddress: Address,
-    ): Promise<Application> {
-        const application =
-            await this.dependencies.applicationRepository.getApplicationByAnchorAddress(
-                this.chainId,
-                roundId,
-                anchorAddress,
-            );
-
-        if (!application) {
-            throw new ApplicationNotFound(this.chainId, roundId, anchorAddress);
-        }
-
-        return application;
     }
 }

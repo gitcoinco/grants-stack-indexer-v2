@@ -6,11 +6,12 @@ import {
     IRoundReadRepository,
     NewApplication,
     Project,
+    ProjectNotFound,
     Round,
+    RoundNotFound,
 } from "@grants-stack-indexer/repository";
 import { ChainId, DeepPartial, mergeDeep, ProcessorEvent } from "@grants-stack-indexer/shared";
 
-import { ProjectNotFound, RoundNotFound } from "../../../../src/exceptions/index.js";
 import { DVMDRegisteredHandler } from "../../../../src/strategy/donationVotingMerkleDistributionDirectTransfer/handlers/index.js";
 
 function createMockEvent(
@@ -50,10 +51,10 @@ describe("DVMDRegisteredHandler", () => {
 
     beforeEach(() => {
         mockRoundRepository = {
-            getRoundByStrategyAddress: vi.fn(),
+            getRoundByStrategyAddressOrThrow: vi.fn(),
         } as unknown as IRoundReadRepository;
         mockProjectRepository = {
-            getProjectByAnchor: vi.fn(),
+            getProjectByAnchorOrThrow: vi.fn(),
         } as unknown as IProjectReadRepository;
         mockMetadataProvider = {
             getMetadata: vi.fn(),
@@ -66,8 +67,10 @@ describe("DVMDRegisteredHandler", () => {
         const mockRound = { id: "round1" } as Round;
         const mockMetadata = { name: "Test Project" };
 
-        vi.spyOn(mockProjectRepository, "getProjectByAnchor").mockResolvedValue(mockProject);
-        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddress").mockResolvedValue(mockRound);
+        vi.spyOn(mockProjectRepository, "getProjectByAnchorOrThrow").mockResolvedValue(mockProject);
+        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddressOrThrow").mockResolvedValue(
+            mockRound,
+        );
         vi.spyOn(mockMetadataProvider, "getMetadata").mockResolvedValue(mockMetadata);
 
         handler = new DVMDRegisteredHandler(mockEvent, chainId, {
@@ -112,7 +115,9 @@ describe("DVMDRegisteredHandler", () => {
 
     it("throw ProjectNotFound if project is not found", async () => {
         mockEvent = createMockEvent();
-        vi.spyOn(mockProjectRepository, "getProjectByAnchor").mockResolvedValue(undefined);
+        vi.spyOn(mockProjectRepository, "getProjectByAnchorOrThrow").mockRejectedValue(
+            new ProjectNotFound(chainId, mockEvent.srcAddress),
+        );
 
         handler = new DVMDRegisteredHandler(mockEvent, chainId, {
             projectRepository: mockProjectRepository,
@@ -125,8 +130,10 @@ describe("DVMDRegisteredHandler", () => {
     it("throw RoundNotFound if round is not found", async () => {
         mockEvent = createMockEvent();
         const mockProject = { id: "project1" } as Project;
-        vi.spyOn(mockProjectRepository, "getProjectByAnchor").mockResolvedValue(mockProject);
-        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddress").mockResolvedValue(undefined);
+        vi.spyOn(mockProjectRepository, "getProjectByAnchorOrThrow").mockResolvedValue(mockProject);
+        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddressOrThrow").mockRejectedValue(
+            new RoundNotFound(chainId, mockEvent.strategyId),
+        );
 
         handler = new DVMDRegisteredHandler(mockEvent, chainId, {
             projectRepository: mockProjectRepository,
@@ -141,8 +148,10 @@ describe("DVMDRegisteredHandler", () => {
         const mockProject = { id: "project1" } as Project;
         const mockRound = { id: "round1" } as Round;
 
-        vi.spyOn(mockProjectRepository, "getProjectByAnchor").mockResolvedValue(mockProject);
-        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddress").mockResolvedValue(mockRound);
+        vi.spyOn(mockProjectRepository, "getProjectByAnchorOrThrow").mockResolvedValue(mockProject);
+        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddressOrThrow").mockResolvedValue(
+            mockRound,
+        );
         vi.spyOn(mockMetadataProvider, "getMetadata").mockResolvedValue(undefined);
 
         handler = new DVMDRegisteredHandler(mockEvent, chainId, {
@@ -167,8 +176,10 @@ describe("DVMDRegisteredHandler", () => {
         const mockProject = { id: "project1" } as Project;
         const mockRound = { id: "round1" } as Round;
 
-        vi.spyOn(mockProjectRepository, "getProjectByAnchor").mockResolvedValue(mockProject);
-        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddress").mockResolvedValue(mockRound);
+        vi.spyOn(mockProjectRepository, "getProjectByAnchorOrThrow").mockResolvedValue(mockProject);
+        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddressOrThrow").mockResolvedValue(
+            mockRound,
+        );
 
         handler = new DVMDRegisteredHandler(mockEvent, chainId, {
             projectRepository: mockProjectRepository,

@@ -47,6 +47,15 @@ export interface IProjectReadRepository {
      * @returns A promise that resolves to a Project object if found, or undefined if not found.
      */
     getProjectByAnchor(chainId: ChainId, anchorAddress: Address): Promise<Project | undefined>;
+
+    /**
+     * Retrieves a project by its anchor address and chain ID.
+     * @param chainId The chain ID of the project.
+     * @param anchorAddress The anchor address of the project.
+     * @returns A promise that resolves to a Project object
+     * @throws {ProjectNotFound} if the project does not exist
+     */
+    getProjectByAnchorOrThrow(chainId: ChainId, anchorAddress: Address): Promise<Project>;
 }
 
 export interface IProjectRepository extends IProjectReadRepository {

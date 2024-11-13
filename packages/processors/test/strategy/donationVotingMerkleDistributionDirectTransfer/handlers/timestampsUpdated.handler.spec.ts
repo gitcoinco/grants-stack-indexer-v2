@@ -1,9 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { IRoundReadRepository, PartialRound, Round } from "@grants-stack-indexer/repository";
+import {
+    IRoundReadRepository,
+    PartialRound,
+    Round,
+    RoundNotFound,
+} from "@grants-stack-indexer/repository";
 import { ChainId, DeepPartial, mergeDeep, ProcessorEvent } from "@grants-stack-indexer/shared";
 
-import { RoundNotFound } from "../../../../src/exceptions/index.js";
 import { DVMDTimestampsUpdatedHandler } from "../../../../src/strategy/donationVotingMerkleDistributionDirectTransfer/handlers/index.js";
 
 function createMockEvent(
@@ -48,7 +52,7 @@ describe("DVMDTimestampsUpdatedHandler", () => {
 
     beforeEach(() => {
         mockRoundRepository = {
-            getRoundByStrategyAddress: vi.fn(),
+            getRoundByStrategyAddressOrThrow: vi.fn(),
         } as unknown as IRoundReadRepository;
     });
 
@@ -65,7 +69,9 @@ describe("DVMDTimestampsUpdatedHandler", () => {
         });
         const mockRound = { id: "round1" } as Round;
 
-        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddress").mockResolvedValue(mockRound);
+        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddressOrThrow").mockResolvedValue(
+            mockRound,
+        );
 
         handler = new DVMDTimestampsUpdatedHandler(mockEvent, chainId, {
             roundRepository: mockRoundRepository,
@@ -94,7 +100,9 @@ describe("DVMDTimestampsUpdatedHandler", () => {
 
     it("throws RoundNotFound if round is not found", async () => {
         mockEvent = createMockEvent();
-        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddress").mockResolvedValue(undefined);
+        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddressOrThrow").mockRejectedValue(
+            new RoundNotFound(chainId, mockEvent.strategyId),
+        );
 
         handler = new DVMDTimestampsUpdatedHandler(mockEvent, chainId, {
             roundRepository: mockRoundRepository,
@@ -103,43 +111,45 @@ describe("DVMDTimestampsUpdatedHandler", () => {
         await expect(handler.handle()).rejects.toThrow(RoundNotFound);
     });
 
-    // it("correctly convert timestamps to Date objects", async () => {
-    //     const timestamps = {
-    //         registrationStartTime: 1704067200n, // 2024-01-01 00:00:00
-    //         registrationEndTime: 1704153600n, // 2024-01-02 00:00:00
-    //         allocationStartTime: 1704240000n, // 2024-01-03 00:00:00
-    //         allocationEndTime: 1704326400n, // 2024-01-04 00:00:00
-    //     };
+    it("correctly convert timestamps to Date objects", async () => {
+        const timestamps = {
+            registrationStartTime: 1704067200n, // 2024-01-01 00:00:00
+            registrationEndTime: 1704153600n, // 2024-01-02 00:00:00
+            allocationStartTime: 1704240000n, // 2024-01-03 00:00:00
+            allocationEndTime: 1704326400n, // 2024-01-04 00:00:00
+        };
 
-    //     mockEvent = createMockEvent({
-    //         params: timestamps,
-    //     });
-    //     const mockRound = { id: "round1" } as Round;
+        mockEvent = createMockEvent({
+            params: timestamps,
+        });
+        const mockRound = { id: "round1" } as Round;
 
-    //     vi.spyOn(mockRoundRepository, "getRoundByStrategyAddress").mockResolvedValue(mockRound);
+        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddressOrThrow").mockResolvedValue(
+            mockRound,
+        );
 
-    //     handler = new DVMDTimestampsUpdatedHandler(mockEvent, chainId, {
-    //         roundRepository: mockRoundRepository,
-    //     });
+        handler = new DVMDTimestampsUpdatedHandler(mockEvent, chainId, {
+            roundRepository: mockRoundRepository,
+        });
 
-    //     const result = await handler.handle();
+        const result = await handler.handle();
 
-    //     expect(result.length).toBe(1);
-    //     const changeset = result[0] as {
-    //         type: "UpdateRound";
-    //         args: { chainId: ChainId; roundId: string; round: PartialRound };
-    //     };
+        expect(result.length).toBe(1);
+        const changeset = result[0] as {
+            type: "UpdateRound";
+            args: { chainId: ChainId; roundId: string; round: PartialRound };
+        };
 
-    //     expect(changeset.type).toBe("UpdateRound");
-    //     expect(changeset.args.chainId).toBe(chainId);
-    //     expect(changeset.args.roundId).toBe("round1");
-    //     expect(changeset.args.round).toBeDefined();
+        expect(changeset.type).toBe("UpdateRound");
+        expect(changeset.args.chainId).toBe(chainId);
+        expect(changeset.args.roundId).toBe("round1");
+        expect(changeset.args.round).toBeDefined();
 
-    //     const partialRound = changeset.args.round;
+        const partialRound = changeset.args.round;
 
-    //     expect(partialRound.applicationsStartTime).toEqual(new Date("2024-01-01T00:00:00.000Z"));
-    //     expect(partialRound.applicationsEndTime).toEqual(new Date("2024-01-02T00:00:00.000Z"));
-    //     expect(partialRound.donationsStartTime).toEqual(new Date("2024-01-03T00:00:00.000Z"));
-    //     expect(partialRound.donationsEndTime).toEqual(new Date("2024-01-04T00:00:00.000Z"));
-    // });
+        expect(partialRound.applicationsStartTime).toEqual(new Date("2024-01-01T00:00:00.000Z"));
+        expect(partialRound.applicationsEndTime).toEqual(new Date("2024-01-02T00:00:00.000Z"));
+        expect(partialRound.donationsStartTime).toEqual(new Date("2024-01-03T00:00:00.000Z"));
+        expect(partialRound.donationsEndTime).toEqual(new Date("2024-01-04T00:00:00.000Z"));
+    });
 });

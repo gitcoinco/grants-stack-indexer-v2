@@ -5,7 +5,6 @@ import { ChainId, ProcessorEvent } from "@grants-stack-indexer/shared";
 
 import type { IEventHandler, ProcessorDependencies } from "../../../internal.js";
 import { getDateFromTimestamp } from "../../../helpers/index.js";
-import { RoundNotFound } from "../../../internal.js";
 
 type Dependencies = Pick<ProcessorDependencies, "roundRepository">;
 
@@ -36,14 +35,10 @@ export class DVMDTimestampsUpdatedHandler
      */
     async handle(): Promise<Changeset[]> {
         const strategyAddress = getAddress(this.event.srcAddress);
-        const round = await this.dependencies.roundRepository.getRoundByStrategyAddress(
+        const round = await this.dependencies.roundRepository.getRoundByStrategyAddressOrThrow(
             this.chainId,
             strategyAddress,
         );
-
-        if (!round) {
-            throw new RoundNotFound(this.chainId, strategyAddress);
-        }
 
         const {
             registrationStartTime,

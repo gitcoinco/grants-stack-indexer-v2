@@ -1,15 +1,10 @@
 import StatusesBitmap from "statuses-bitmap";
-import { Address, getAddress } from "viem";
+import { getAddress } from "viem";
 
-import { Application, Changeset, Round } from "@grants-stack-indexer/repository";
+import { Application, Changeset } from "@grants-stack-indexer/repository";
 import { ChainId, ProcessorEvent } from "@grants-stack-indexer/shared";
 
-import {
-    ApplicationStatus,
-    IEventHandler,
-    ProcessorDependencies,
-    RoundNotFound,
-} from "../../internal.js";
+import { ApplicationStatus, IEventHandler, ProcessorDependencies } from "../../internal.js";
 import { createStatusUpdate, isValidApplicationStatus } from "../helpers/index.js";
 
 type Dependencies = Pick<
@@ -52,7 +47,13 @@ export class BaseRecipientStatusUpdatedHandler
      * @returns An array of changesets to update application statuses.
      */
     async handle(): Promise<Changeset[]> {
-        const round = await this.getRoundOrThrow(this.event.srcAddress);
+        const { roundRepository } = this.dependencies;
+
+        const strategyAddress = getAddress(this.event.srcAddress);
+        const round = await roundRepository.getRoundByStrategyAddressOrThrow(
+            this.chainId,
+            strategyAddress,
+        );
 
         const applicationsToUpdate = await this.getApplicationsToUpdate(round.id);
 
@@ -107,27 +108,5 @@ export class BaseRecipientStatusUpdatedHandler
         }
 
         return applications;
-    }
-
-    /**
-     * Retrieves a round by its strategy address
-     * @param address - The address of the strategy
-     * @throws RoundNotFound if the round is not found
-     */
-    private async getRoundOrThrow(address: Address): Promise<Round> {
-        const normalizedAddress = getAddress(address);
-        const round = await this.dependencies.roundRepository.getRoundByStrategyAddress(
-            this.chainId,
-            normalizedAddress,
-        );
-
-        if (!round) {
-            this.dependencies.logger.warn(
-                `RecipientStatusUpdated: Round not found for strategy address ${normalizedAddress}`,
-            );
-            throw new RoundNotFound(this.chainId, normalizedAddress);
-        }
-
-        return round;
     }
 }

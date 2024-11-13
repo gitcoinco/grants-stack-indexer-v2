@@ -11,6 +11,7 @@ import {
     PartialProject,
     PendingProjectRole,
     Project,
+    ProjectNotFound,
     ProjectRoleNames,
 } from "../../internal.js";
 
@@ -55,6 +56,13 @@ export class KyselyProjectRepository implements IProjectRepository {
             .where("anchorAddress", "=", anchorAddress)
             .selectAll()
             .executeTakeFirst();
+    }
+
+    /* @inheritdoc */
+    async getProjectByAnchorOrThrow(chainId: ChainId, anchorAddress: Address): Promise<Project> {
+        const project = await this.getProjectByAnchor(chainId, anchorAddress);
+        if (!project) throw new ProjectNotFound(chainId, anchorAddress);
+        return project;
     }
 
     /* @inheritdoc */

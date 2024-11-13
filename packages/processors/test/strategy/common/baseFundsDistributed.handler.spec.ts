@@ -2,9 +2,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
     Application,
+    ApplicationNotFound,
     IApplicationRepository,
     IRoundReadRepository,
     Round,
+    RoundNotFound,
 } from "@grants-stack-indexer/repository";
 import {
     ChainId,
@@ -14,7 +16,8 @@ import {
     ProcessorEvent,
 } from "@grants-stack-indexer/shared";
 
-import { ApplicationNotFound, RoundNotFound } from "../../../src/exceptions/index.js";
+import "../../../src/exceptions/index.js";
+
 import { BaseFundsDistributedHandler } from "../../../src/strategy/common/index.js";
 
 function createMockEvent(
@@ -55,10 +58,10 @@ describe("BaseFundsDistributedHandler", () => {
 
     beforeEach(() => {
         mockRoundRepository = {
-            getRoundByStrategyAddress: vi.fn(),
+            getRoundByStrategyAddressOrThrow: vi.fn(),
         } as unknown as IRoundReadRepository;
         mockApplicationRepository = {
-            getApplicationByAnchorAddress: vi.fn(),
+            getApplicationByAnchorAddressOrThrow: vi.fn(),
         } as unknown as IApplicationRepository;
         mockLogger = {
             warn: vi.fn(),
@@ -73,10 +76,13 @@ describe("BaseFundsDistributedHandler", () => {
         const mockRound = { id: "round1" } as unknown as Round;
         const mockApplication = { id: "app1" } as unknown as Application;
 
-        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddress").mockResolvedValue(mockRound);
-        vi.spyOn(mockApplicationRepository, "getApplicationByAnchorAddress").mockResolvedValue(
-            mockApplication,
+        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddressOrThrow").mockResolvedValue(
+            mockRound,
         );
+        vi.spyOn(
+            mockApplicationRepository,
+            "getApplicationByAnchorAddressOrThrow",
+        ).mockResolvedValue(mockApplication);
 
         handler = new BaseFundsDistributedHandler(mockEvent, chainId, {
             roundRepository: mockRoundRepository,
@@ -111,7 +117,9 @@ describe("BaseFundsDistributedHandler", () => {
 
     it("throws RoundNotFound if round is not found", async () => {
         mockEvent = createMockEvent();
-        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddress").mockResolvedValue(undefined);
+        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddressOrThrow").mockRejectedValue(
+            new RoundNotFound(chainId, mockEvent.strategyId),
+        );
 
         handler = new BaseFundsDistributedHandler(mockEvent, chainId, {
             roundRepository: mockRoundRepository,
@@ -126,9 +134,14 @@ describe("BaseFundsDistributedHandler", () => {
         mockEvent = createMockEvent();
         const mockRound = { id: "round1" } as unknown as Round;
 
-        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddress").mockResolvedValue(mockRound);
-        vi.spyOn(mockApplicationRepository, "getApplicationByAnchorAddress").mockResolvedValue(
-            undefined,
+        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddressOrThrow").mockResolvedValue(
+            mockRound,
+        );
+        vi.spyOn(
+            mockApplicationRepository,
+            "getApplicationByAnchorAddressOrThrow",
+        ).mockRejectedValue(
+            new ApplicationNotFound(chainId, mockRound.id, mockEvent.params.recipientId),
         );
 
         handler = new BaseFundsDistributedHandler(mockEvent, chainId, {

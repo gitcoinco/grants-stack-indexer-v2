@@ -4,18 +4,23 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { IPricingProvider } from "@grants-stack-indexer/pricing";
 import {
     Application,
+    ApplicationNotFound,
     IApplicationRepository,
     IRoundRepository,
     Round,
+    RoundNotFound,
 } from "@grants-stack-indexer/repository";
-import { ChainId, DeepPartial, mergeDeep, ProcessorEvent } from "@grants-stack-indexer/shared";
+import {
+    ChainId,
+    DeepPartial,
+    mergeDeep,
+    ProcessorEvent,
+    UnknownToken,
+} from "@grants-stack-indexer/shared";
 
 import {
-    ApplicationNotFound,
     MetadataParsingFailed,
-    RoundNotFound,
     TokenPriceNotFoundError,
-    UnknownToken,
 } from "../../../../src/exceptions/index.js";
 import { DVMDAllocatedHandler } from "../../../../src/strategy/donationVotingMerkleDistributionDirectTransfer/handlers/allocated.handler.js";
 
@@ -59,10 +64,10 @@ describe("DVMDAllocatedHandler", () => {
 
     beforeEach(() => {
         mockRoundRepository = {
-            getRoundByStrategyAddress: vi.fn(),
+            getRoundByStrategyAddressOrThrow: vi.fn(),
         } as unknown as IRoundRepository;
         mockApplicationRepository = {
-            getApplicationByAnchorAddress: vi.fn(),
+            getApplicationByAnchorAddressOrThrow: vi.fn(),
         } as unknown as IApplicationRepository;
         mockPricingProvider = {
             getTokenPrice: vi.fn(),
@@ -87,10 +92,13 @@ describe("DVMDAllocatedHandler", () => {
             projectId: "project1",
         } as unknown as Application;
 
-        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddress").mockResolvedValue(mockRound);
-        vi.spyOn(mockApplicationRepository, "getApplicationByAnchorAddress").mockResolvedValue(
-            mockApplication,
+        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddressOrThrow").mockResolvedValue(
+            mockRound,
         );
+        vi.spyOn(
+            mockApplicationRepository,
+            "getApplicationByAnchorAddressOrThrow",
+        ).mockResolvedValue(mockApplication);
         vi.spyOn(mockPricingProvider, "getTokenPrice").mockResolvedValue({
             timestampMs: 1000000000,
             priceUsd: 2000,
@@ -147,10 +155,13 @@ describe("DVMDAllocatedHandler", () => {
             projectId: "project1",
         } as unknown as Application;
 
-        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddress").mockResolvedValue(mockRound);
-        vi.spyOn(mockApplicationRepository, "getApplicationByAnchorAddress").mockResolvedValue(
-            mockApplication,
+        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddressOrThrow").mockResolvedValue(
+            mockRound,
         );
+        vi.spyOn(
+            mockApplicationRepository,
+            "getApplicationByAnchorAddressOrThrow",
+        ).mockResolvedValue(mockApplication);
         vi.spyOn(mockPricingProvider, "getTokenPrice")
             .mockResolvedValueOnce({
                 timestampMs: 1000000000,
@@ -188,7 +199,9 @@ describe("DVMDAllocatedHandler", () => {
 
     it("throws RoundNotFound if round is not found", async () => {
         mockEvent = createMockEvent();
-        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddress").mockResolvedValue(undefined);
+        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddressOrThrow").mockRejectedValue(
+            new RoundNotFound(chainId, mockEvent.strategyId),
+        );
 
         handler = new DVMDAllocatedHandler(mockEvent, chainId, {
             roundRepository: mockRoundRepository,
@@ -206,9 +219,14 @@ describe("DVMDAllocatedHandler", () => {
             matchTokenAddress: "0x0987654321098765432109876543210987654321",
         } as unknown as Round;
 
-        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddress").mockResolvedValue(mockRound);
-        vi.spyOn(mockApplicationRepository, "getApplicationByAnchorAddress").mockResolvedValue(
-            undefined,
+        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddressOrThrow").mockResolvedValue(
+            mockRound,
+        );
+        vi.spyOn(
+            mockApplicationRepository,
+            "getApplicationByAnchorAddressOrThrow",
+        ).mockRejectedValue(
+            new ApplicationNotFound(chainId, mockRound.id, mockEvent.params.recipientId),
         );
 
         handler = new DVMDAllocatedHandler(mockEvent, chainId, {
@@ -239,10 +257,13 @@ describe("DVMDAllocatedHandler", () => {
             projectId: "project1",
         } as unknown as Application;
 
-        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddress").mockResolvedValue(mockRound);
-        vi.spyOn(mockApplicationRepository, "getApplicationByAnchorAddress").mockResolvedValue(
-            mockApplication,
+        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddressOrThrow").mockResolvedValue(
+            mockRound,
         );
+        vi.spyOn(
+            mockApplicationRepository,
+            "getApplicationByAnchorAddressOrThrow",
+        ).mockResolvedValue(mockApplication);
 
         handler = new DVMDAllocatedHandler(mockEvent, chainId, {
             roundRepository: mockRoundRepository,
@@ -270,10 +291,13 @@ describe("DVMDAllocatedHandler", () => {
             projectId: "project1",
         } as unknown as Application;
 
-        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddress").mockResolvedValue(mockRound);
-        vi.spyOn(mockApplicationRepository, "getApplicationByAnchorAddress").mockResolvedValue(
-            mockApplication,
+        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddressOrThrow").mockResolvedValue(
+            mockRound,
         );
+        vi.spyOn(
+            mockApplicationRepository,
+            "getApplicationByAnchorAddressOrThrow",
+        ).mockResolvedValue(mockApplication);
 
         handler = new DVMDAllocatedHandler(mockEvent, chainId, {
             roundRepository: mockRoundRepository,
@@ -301,10 +325,13 @@ describe("DVMDAllocatedHandler", () => {
             projectId: "project1",
         } as unknown as Application;
 
-        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddress").mockResolvedValue(mockRound);
-        vi.spyOn(mockApplicationRepository, "getApplicationByAnchorAddress").mockResolvedValue(
-            mockApplication,
+        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddressOrThrow").mockResolvedValue(
+            mockRound,
         );
+        vi.spyOn(
+            mockApplicationRepository,
+            "getApplicationByAnchorAddressOrThrow",
+        ).mockResolvedValue(mockApplication);
         vi.spyOn(mockPricingProvider, "getTokenPrice").mockResolvedValue(undefined);
 
         handler = new DVMDAllocatedHandler(mockEvent, chainId, {
@@ -333,10 +360,13 @@ describe("DVMDAllocatedHandler", () => {
             projectId: "project1",
         } as unknown as Application;
 
-        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddress").mockResolvedValue(mockRound);
-        vi.spyOn(mockApplicationRepository, "getApplicationByAnchorAddress").mockResolvedValue(
-            mockApplication,
+        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddressOrThrow").mockResolvedValue(
+            mockRound,
         );
+        vi.spyOn(
+            mockApplicationRepository,
+            "getApplicationByAnchorAddressOrThrow",
+        ).mockResolvedValue(mockApplication);
         vi.spyOn(mockPricingProvider, "getTokenPrice").mockResolvedValue({
             timestampMs: 1000000000,
             priceUsd: 2000,

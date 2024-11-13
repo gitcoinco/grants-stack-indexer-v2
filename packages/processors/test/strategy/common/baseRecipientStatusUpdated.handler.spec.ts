@@ -6,6 +6,7 @@ import {
     IRoundReadRepository,
     PartialApplication,
     Round,
+    RoundNotFound,
 } from "@grants-stack-indexer/repository";
 import {
     ChainId,
@@ -15,7 +16,6 @@ import {
     ProcessorEvent,
 } from "@grants-stack-indexer/shared";
 
-import { RoundNotFound } from "../../../src/exceptions/index.js";
 import { BaseRecipientStatusUpdatedHandler } from "../../../src/strategy/common/baseRecipientStatusUpdated.handler.js";
 
 function createMockEvent(
@@ -55,7 +55,7 @@ describe("BaseRecipientStatusUpdatedHandler", () => {
 
     beforeEach(() => {
         mockRoundRepository = {
-            getRoundByStrategyAddress: vi.fn(),
+            getRoundByStrategyAddressOrThrow: vi.fn(),
         } as unknown as IRoundReadRepository;
         mockApplicationRepository = {
             getApplicationById: vi.fn(),
@@ -90,7 +90,9 @@ describe("BaseRecipientStatusUpdatedHandler", () => {
             statusUpdatedAtBlock: 12344n,
         } as unknown as Application;
 
-        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddress").mockResolvedValue(mockRound);
+        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddressOrThrow").mockResolvedValue(
+            mockRound,
+        );
         vi.spyOn(mockApplicationRepository, "getApplicationById")
             .mockResolvedValueOnce(mockApplication1)
             .mockResolvedValueOnce(mockApplication2)
@@ -174,7 +176,9 @@ describe("BaseRecipientStatusUpdatedHandler", () => {
 
     it("throws RoundNotFound if round is not found", async () => {
         mockEvent = createMockEvent();
-        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddress").mockResolvedValue(undefined);
+        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddressOrThrow").mockRejectedValue(
+            new RoundNotFound(chainId, mockEvent.strategyId),
+        );
 
         handler = new BaseRecipientStatusUpdatedHandler(mockEvent, chainId, {
             roundRepository: mockRoundRepository,
@@ -183,14 +187,15 @@ describe("BaseRecipientStatusUpdatedHandler", () => {
         });
 
         await expect(handler.handle()).rejects.toThrow(RoundNotFound);
-        expect(mockLogger.warn).toHaveBeenCalled();
     });
 
     it("skips applications that are not found", async () => {
         mockEvent = createMockEvent();
         const mockRound = { id: "round1" } as Round;
 
-        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddress").mockResolvedValue(mockRound);
+        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddressOrThrow").mockResolvedValue(
+            mockRound,
+        );
         vi.spyOn(mockApplicationRepository, "getApplicationById").mockResolvedValue(undefined);
 
         handler = new BaseRecipientStatusUpdatedHandler(mockEvent, chainId, {
@@ -212,7 +217,9 @@ describe("BaseRecipientStatusUpdatedHandler", () => {
         });
         const mockRound = { id: "round1" } as Round;
 
-        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddress").mockResolvedValue(mockRound);
+        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddressOrThrow").mockResolvedValue(
+            mockRound,
+        );
 
         handler = new BaseRecipientStatusUpdatedHandler(mockEvent, chainId, {
             roundRepository: mockRoundRepository,
@@ -240,7 +247,9 @@ describe("BaseRecipientStatusUpdatedHandler", () => {
             statusUpdatedAtBlock: 12344n,
         } as Application;
 
-        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddress").mockResolvedValue(mockRound);
+        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddressOrThrow").mockResolvedValue(
+            mockRound,
+        );
         vi.spyOn(mockApplicationRepository, "getApplicationById").mockResolvedValue(
             mockApplication,
         );
@@ -278,7 +287,9 @@ describe("BaseRecipientStatusUpdatedHandler", () => {
             statusUpdatedAtBlock: 12344n,
         } as unknown as Application;
 
-        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddress").mockResolvedValue(mockRound);
+        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddressOrThrow").mockResolvedValue(
+            mockRound,
+        );
         vi.spyOn(mockApplicationRepository, "getApplicationById").mockResolvedValue(
             mockApplication,
         );

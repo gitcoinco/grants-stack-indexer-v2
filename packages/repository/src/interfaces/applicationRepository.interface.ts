@@ -43,6 +43,20 @@ export interface IApplicationReadRepository {
     ): Promise<Application | undefined>;
 
     /**
+     * Retrieves a specific application by its chain ID, round ID, and anchor address.
+     * @param chainId The chain ID of the application.
+     * @param roundId The round ID of the application.
+     * @param anchorAddress The anchor address of the application.
+     * @returns A promise that resolves to an Application object
+     * @throws {ApplicationNotFound} if the application does not exist
+     */
+    getApplicationByAnchorAddressOrThrow(
+        chainId: ChainId,
+        roundId: string,
+        anchorAddress: Address,
+    ): Promise<Application>;
+
+    /**
      * Retrieves all applications for a given chain ID and round ID.
      * @param chainId The chain ID of the applications.
      * @param roundId The round ID of the applications.

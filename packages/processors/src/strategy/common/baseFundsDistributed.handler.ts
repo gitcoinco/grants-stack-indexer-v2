@@ -1,14 +1,9 @@
-import { Address, getAddress } from "viem";
+import { getAddress } from "viem";
 
-import { Application, Changeset, Round } from "@grants-stack-indexer/repository";
+import { Changeset } from "@grants-stack-indexer/repository";
 import { ChainId, ProcessorEvent } from "@grants-stack-indexer/shared";
 
-import {
-    ApplicationNotFound,
-    IEventHandler,
-    ProcessorDependencies,
-    RoundNotFound,
-} from "../../internal.js";
+import { IEventHandler, ProcessorDependencies } from "../../internal.js";
 
 type Dependencies = Pick<
     ProcessorDependencies,
@@ -45,12 +40,21 @@ export class BaseFundsDistributedHandler implements IEventHandler<"Strategy", "F
      *     2. IncrementRoundTotalDistributed: Increments the total distributed amount for a round.
      */
     async handle(): Promise<Changeset[]> {
+        const { roundRepository, applicationRepository } = this.dependencies;
+
         const strategyAddress = getAddress(this.event.srcAddress);
-        const round = await this.getRoundOrThrow(strategyAddress);
+        const round = await roundRepository.getRoundByStrategyAddressOrThrow(
+            this.chainId,
+            strategyAddress,
+        );
 
         const roundId = round.id;
         const anchorAddress = getAddress(this.event.params.recipientId);
-        const application = await this.getApplicationOrThrow(roundId, anchorAddress);
+        const application = await applicationRepository.getApplicationByAnchorAddressOrThrow(
+            this.chainId,
+            roundId,
+            anchorAddress,
+        );
 
         return [
             {
@@ -73,50 +77,5 @@ export class BaseFundsDistributedHandler implements IEventHandler<"Strategy", "F
                 },
             },
         ];
-    }
-
-    /**
-     * Retrieves a round by its strategy address.
-     * @param {Address} strategyAddress - The address of the strategy.
-     * @returns {Promise<Round>} The round found.
-     * @throws {RoundNotFound} if the round does not exist.
-     */
-    private async getRoundOrThrow(strategyAddress: Address): Promise<Round> {
-        const { roundRepository } = this.dependencies;
-        const round = await roundRepository.getRoundByStrategyAddress(
-            this.chainId,
-            strategyAddress,
-        );
-
-        if (!round) {
-            throw new RoundNotFound(this.chainId, strategyAddress);
-        }
-
-        return round;
-    }
-
-    /**
-     * Retrieves an application by its round ID and recipient address.
-     * @param {string} roundId - The ID of the round.
-     * @param {Address} recipientId - The address of the recipient.
-     * @returns {Promise<Application>} The application found.
-     * @throws {ApplicationNotFound} if the application does not exist.
-     */
-    private async getApplicationOrThrow(
-        roundId: string,
-        anchorAddress: Address,
-    ): Promise<Application> {
-        const { applicationRepository } = this.dependencies;
-        const application = await applicationRepository.getApplicationByAnchorAddress(
-            this.chainId,
-            roundId,
-            anchorAddress,
-        );
-
-        if (!application) {
-            throw new ApplicationNotFound(this.chainId, roundId, anchorAddress);
-        }
-
-        return application;
     }
 }
