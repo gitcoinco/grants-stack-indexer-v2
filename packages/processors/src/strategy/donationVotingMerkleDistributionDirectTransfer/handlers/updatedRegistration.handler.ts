@@ -34,6 +34,7 @@ export class DVMDUpdatedRegistrationHandler
         private readonly dependencies: Dependencies,
     ) {}
 
+    /* @inheritdoc */
     async handle(): Promise<Changeset[]> {
         const {
             metadataProvider,

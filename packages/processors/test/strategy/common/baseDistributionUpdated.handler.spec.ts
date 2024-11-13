@@ -141,7 +141,7 @@ describe("BaseDistributionUpdatedHandler", () => {
         );
     });
 
-    it("should handle empty matching distribution array", async () => {
+    it("handles empty matching distribution array", async () => {
         mockEvent = createMockEvent();
         const emptyDistribution = {
             matchingDistribution: [],

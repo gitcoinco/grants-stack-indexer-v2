@@ -34,6 +34,7 @@ export class BaseDistributionUpdatedHandler
         private readonly dependencies: Dependencies,
     ) {}
 
+    /* @inheritdoc */
     async handle(): Promise<Changeset[]> {
         const { logger, metadataProvider } = this.dependencies;
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
