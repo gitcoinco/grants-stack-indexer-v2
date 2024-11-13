@@ -95,7 +95,7 @@ export type DistributedWithRecipientAddressParams = {
     recipientAddress: Address;
     recipientId: Address;
     sender: Address;
-    amount: bigint;
+    amount: string; //uint256
 };
 
 export type DistributedWithDataParams = {
@@ -104,29 +104,29 @@ export type DistributedWithDataParams = {
 };
 
 export type DistributedWithFlowRateParams = {
-    flowRate: bigint;
+    flowRate: string; //int96
     sender: Address;
 };
 
 // ======================= TimestampsUpdated =======================
 
 export type TimestampsUpdatedParams = {
-    startTime: bigint;
-    endTime: bigint;
+    startTime: string; //uint64
+    endTime: string; //uint64
     sender: Address;
 };
 
 export type TimestampsUpdatedWithRegistrationAndAllocationParams = {
-    registrationStartTime: bigint;
-    registrationEndTime: bigint;
-    allocationStartTime: bigint;
-    allocationEndTime: bigint;
+    registrationStartTime: string; //uint64
+    registrationEndTime: string; //uint64
+    allocationStartTime: string; //uint64
+    allocationEndTime: string; //uint64
     sender: Address;
 };
 
 // ======================= FundsDistributed =======================
 export type FundsDistributedParams = {
-    amount: bigint;
+    amount: string; //uint256
     grantee: Address;
     token: Address;
     recipientId: Address;
@@ -135,14 +135,14 @@ export type FundsDistributedParams = {
 // ======================= Allocated =======================
 export type AllocatedWithTokenParams = {
     recipientId: Address;
-    amount: bigint;
+    amount: string; //uint256
     token: Address;
     sender: Address;
 };
 
 export type AllocatedWithOriginParams = {
     recipientId: Address;
-    amount: bigint;
+    amount: string; //uint256
     token: Address;
     sender: Address;
     origin: Address;
@@ -150,39 +150,39 @@ export type AllocatedWithOriginParams = {
 
 export type AllocatedWithVotesParams = {
     recipientId: Address;
-    votes: bigint;
+    votes: string; //uint256
     allocator: Address;
 };
 
 export type AllocatedWithStatusParams = {
     recipientId: Address;
-    status: number;
+    status: string; //uint8
     sender: Address;
 };
 
 // ======================= DistributionUpdated =======================
 export type DistributionUpdatedParams = {
     merkleRoot: Bytes32String;
-    metadata: [protocol: bigint, pointer: string];
+    metadata: [protocol: string, pointer: string]; //uint256,bytes32
 };
 
 // ======================= RecipientStatusUpdated =======================
 export type RecipientStatusUpdatedWithApplicationIdParams = {
     recipientId: Address;
-    applicationId: bigint;
-    status: number;
+    applicationId: string; //uint256
+    status: string; //uint8
     sender: Address;
 };
 
 export type RecipientStatusUpdatedWithRecipientStatusParams = {
     recipientId: Address;
-    status: number;
+    status: string; //uint8
     sender: Address;
 };
 
 export type RecipientStatusUpdatedWithFullRowParams = {
-    rowIndex: bigint;
-    fullRow: bigint;
+    rowIndex: string; //uint256
+    fullRow: string; //uint256
     sender: Address;
 };
 
@@ -191,7 +191,7 @@ export type UpdatedRegistrationWithStatusParams = {
     recipientId: Address;
     data: Hex;
     sender: Address;
-    status: number;
+    status: string; //uint8
 };
 
 export type UpdatedRegistrationParams = {
@@ -205,7 +205,7 @@ export type UpdatedRegistrationWithApplicationIdParams = {
     applicationId: bigint;
     data: Hex;
     sender: Address;
-    status: number;
+    status: string; //uint8
 };
 
 /**

@@ -20,7 +20,7 @@ function createMockEvent(
 ): ProcessorEvent<"Strategy", "DistributionUpdated"> {
     const defaultEvent: ProcessorEvent<"Strategy", "DistributionUpdated"> = {
         params: {
-            metadata: [1n, "ipfs://QmTestHash"],
+            metadata: ["1", "ipfs://QmTestHash"],
             merkleRoot: "0xroot" as Bytes32String,
         },
         eventName: "DistributionUpdated",

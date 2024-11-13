@@ -41,16 +41,16 @@ export class DVMDTimestampsUpdatedHandler
         );
 
         const {
-            registrationStartTime,
-            registrationEndTime,
-            allocationStartTime,
-            allocationEndTime,
+            registrationStartTime: strRegistrationStartTime,
+            registrationEndTime: strRegistrationEndTime,
+            allocationStartTime: strAllocationStartTime,
+            allocationEndTime: strAllocationEndTime,
         } = this.event.params;
 
-        const applicationsStartTime = getDateFromTimestamp(registrationStartTime);
-        const applicationsEndTime = getDateFromTimestamp(registrationEndTime);
-        const donationsStartTime = getDateFromTimestamp(allocationStartTime);
-        const donationsEndTime = getDateFromTimestamp(allocationEndTime);
+        const applicationsStartTime = getDateFromTimestamp(BigInt(strRegistrationStartTime));
+        const applicationsEndTime = getDateFromTimestamp(BigInt(strRegistrationEndTime));
+        const donationsStartTime = getDateFromTimestamp(BigInt(strAllocationStartTime));
+        const donationsEndTime = getDateFromTimestamp(BigInt(strAllocationEndTime));
 
         return [
             {

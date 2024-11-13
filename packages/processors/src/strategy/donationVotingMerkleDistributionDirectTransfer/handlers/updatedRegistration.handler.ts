@@ -43,7 +43,10 @@ export class DVMDUpdatedRegistrationHandler
             projectRepository,
         } = this.dependencies;
 
-        if (!isValidApplicationStatus(this.event.params.status)) {
+        const { status: strStatus } = this.event.params;
+        const status = Number(strStatus);
+
+        if (!isValidApplicationStatus(status)) {
             logger.warn(
                 `[DVMDUpdatedRegistrationHandler] Invalid status: ${this.event.params.status}`,
             );
@@ -70,7 +73,7 @@ export class DVMDUpdatedRegistrationHandler
 
         const metadata = await metadataProvider.getMetadata(values.metadata.pointer);
 
-        const statusString = ApplicationStatus[this.event.params.status] as Application["status"];
+        const statusString = ApplicationStatus[status] as Application["status"];
 
         const statusUpdates = createStatusUpdate({
             application,

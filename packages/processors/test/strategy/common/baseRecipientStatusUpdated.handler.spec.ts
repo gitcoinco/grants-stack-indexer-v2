@@ -23,8 +23,8 @@ function createMockEvent(
 ): ProcessorEvent<"Strategy", "RecipientStatusUpdatedWithFullRow"> {
     const defaultEvent: ProcessorEvent<"Strategy", "RecipientStatusUpdatedWithFullRow"> = {
         params: {
-            rowIndex: 0n,
-            fullRow: 801n, // 001100100001 (status 1 at index 0, status 2 at index 4, status 3 at index 8)
+            rowIndex: "0",
+            fullRow: "801", // 001100100001 (status 1 at index 0, status 2 at index 4, status 3 at index 8)
             sender: "0xcBf407C33d68a55CB594Ffc8f4fD1416Bba39DA5",
         },
         eventName: "RecipientStatusUpdatedWithFullRow",
@@ -211,8 +211,8 @@ describe("BaseRecipientStatusUpdatedHandler", () => {
     it("skips invalid status values", async () => {
         mockEvent = createMockEvent({
             params: {
-                rowIndex: 0n,
-                fullRow: 96n, // Binary: 1100000 (invalid statuses 6 and 7)
+                rowIndex: "0",
+                fullRow: "96", // Binary: 1100000 (invalid statuses 6 and 7)
             },
         });
         const mockRound = { id: "round1" } as Round;
@@ -232,7 +232,7 @@ describe("BaseRecipientStatusUpdatedHandler", () => {
     });
 
     it("doesn't create new status snapshot if status hasn't changed", async () => {
-        mockEvent = createMockEvent({ params: { rowIndex: 0n, fullRow: 2n } }); // Binary: 10 (status 2 at index 0)
+        mockEvent = createMockEvent({ params: { rowIndex: "0", fullRow: "2" } }); // Binary: 10 (status 2 at index 0)
         const mockRound = { id: "round1" } as Round;
         const mockApplication = {
             id: "0",
@@ -275,8 +275,8 @@ describe("BaseRecipientStatusUpdatedHandler", () => {
     it("handles different row indexes correctly", async () => {
         mockEvent = createMockEvent({
             params: {
-                rowIndex: 1n, // Second row
-                fullRow: 33n, // 00100001 (status 1 at index 0, status 1 at index 4)
+                rowIndex: "1", // Second row
+                fullRow: "33", // 00100001 (status 1 at index 0, status 1 at index 4)
             },
         });
         const mockRound = { id: "round1" } as Round;

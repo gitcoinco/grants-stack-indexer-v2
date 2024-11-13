@@ -26,7 +26,7 @@ function createMockEvent(
     const defaultEvent: ProcessorEvent<"Strategy", "FundsDistributed"> = {
         params: {
             recipientId: "0x1234567890123456789012345678901234567890",
-            amount: 1000000000000000000n,
+            amount: "1000000000000000000",
             grantee: "0x1234567890123456789012345678901234567890",
             token: "0x0000000000000000000000000000000000000000",
         },
@@ -109,7 +109,7 @@ describe("BaseFundsDistributedHandler", () => {
                 args: {
                     chainId,
                     roundId: "round1",
-                    amount: mockEvent.params.amount,
+                    amount: BigInt(mockEvent.params.amount),
                 },
             },
         ]);

@@ -20,10 +20,10 @@ function createMockEvent(
         "TimestampsUpdatedWithRegistrationAndAllocation"
     > = {
         params: {
-            registrationStartTime: 1000000000n,
-            registrationEndTime: 1000086400n, // +1 day
-            allocationStartTime: 1000172800n, // +2 days
-            allocationEndTime: 1000259200n, // +3 days
+            registrationStartTime: "1000000000",
+            registrationEndTime: "1000086400", // +1 day
+            allocationStartTime: "1000172800", // +2 days
+            allocationEndTime: "1000259200", // +3 days
             sender: "0xcBf407C33d68a55CB594Ffc8f4fD1416Bba39DA5",
         },
         eventName: "TimestampsUpdatedWithRegistrationAndAllocation",
@@ -58,10 +58,10 @@ describe("DVMDTimestampsUpdatedHandler", () => {
 
     it("handle a valid timestamps update event", async () => {
         const timestamps = {
-            registrationStartTime: 1704067200n, // 2024-01-01 00:00:00
-            registrationEndTime: 1704153600n, // 2024-01-02 00:00:00
-            allocationStartTime: 1704240000n, // 2024-01-03 00:00:00
-            allocationEndTime: 1704326400n, // 2024-01-04 00:00:00
+            registrationStartTime: "1704067200", // 2024-01-01 00:00:00
+            registrationEndTime: "1704153600", // 2024-01-02 00:00:00
+            allocationStartTime: "1704240000", // 2024-01-03 00:00:00
+            allocationEndTime: "1704326400", // 2024-01-04 00:00:00
         };
 
         mockEvent = createMockEvent({
@@ -113,10 +113,10 @@ describe("DVMDTimestampsUpdatedHandler", () => {
 
     it("correctly convert timestamps to Date objects", async () => {
         const timestamps = {
-            registrationStartTime: 1704067200n, // 2024-01-01 00:00:00
-            registrationEndTime: 1704153600n, // 2024-01-02 00:00:00
-            allocationStartTime: 1704240000n, // 2024-01-03 00:00:00
-            allocationEndTime: 1704326400n, // 2024-01-04 00:00:00
+            registrationStartTime: "1704067200", // 2024-01-01 00:00:00
+            registrationEndTime: "1704153600", // 2024-01-02 00:00:00
+            allocationStartTime: "1704240000", // 2024-01-03 00:00:00
+            allocationEndTime: "1704326400", // 2024-01-04 00:00:00
         };
 
         mockEvent = createMockEvent({

@@ -48,7 +48,7 @@ export class BaseDistributedHandler
                 args: {
                     chainId: this.chainId,
                     roundId: round.id,
-                    amount: this.event.params.amount,
+                    amount: BigInt(this.event.params.amount),
                 },
             },
         ];

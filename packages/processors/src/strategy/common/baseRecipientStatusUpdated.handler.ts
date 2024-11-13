@@ -83,9 +83,9 @@ export class BaseRecipientStatusUpdatedHandler
      */
     private async getApplicationsToUpdate(roundId: string): Promise<ApplicationUpdate[]> {
         const { rowIndex, fullRow } = this.event.params;
-        this.bitmap.setRow(rowIndex, fullRow);
+        this.bitmap.setRow(BigInt(rowIndex), BigInt(fullRow));
 
-        const startIndex = rowIndex * this.bitmap.itemsPerRow;
+        const startIndex = BigInt(rowIndex) * BigInt(this.bitmap.itemsPerRow);
         const applications: { application: Application; status: number }[] = [];
 
         for (let i = startIndex; i < startIndex + this.bitmap.itemsPerRow; i++) {

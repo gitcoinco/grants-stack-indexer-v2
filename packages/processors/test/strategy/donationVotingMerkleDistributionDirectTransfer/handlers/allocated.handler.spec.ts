@@ -30,7 +30,7 @@ function createMockEvent(
     const defaultEvent: ProcessorEvent<"Strategy", "AllocatedWithOrigin"> = {
         params: {
             recipientId: "0x1234567890123456789012345678901234567890",
-            amount: 10n,
+            amount: "10",
             token: "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1",
             origin: "0xcBf407C33d68a55CB594Ffc8f4fD1416Bba39DA5",
             sender: "0xcBf407C33d68a55CB594Ffc8f4fD1416Bba39DA5",
@@ -75,7 +75,7 @@ describe("DVMDAllocatedHandler", () => {
     });
 
     it("handle a valid allocated event", async () => {
-        const amount = parseEther("10");
+        const amount = parseEther("10").toString();
         mockEvent = createMockEvent({ params: { amount } });
         const mockRound = {
             id: "round1",
@@ -127,9 +127,9 @@ describe("DVMDAllocatedHandler", () => {
                         transactionHash: mockEvent.transactionFields.hash,
                         blockNumber: BigInt(mockEvent.blockNumber),
                         tokenAddress: getAddress("0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1"),
-                        amount: amount,
+                        amount: BigInt(amount),
                         amountInUsd: "20000",
-                        amountInRoundMatchToken: amount,
+                        amountInRoundMatchToken: BigInt(amount),
                         timestamp: new Date(1000000000),
                     },
                 },
@@ -138,7 +138,7 @@ describe("DVMDAllocatedHandler", () => {
     });
 
     it("match token is different from event token", async () => {
-        const amount = parseEther("1500");
+        const amount = parseEther("1500").toString();
         mockEvent = createMockEvent({ params: { amount } });
         const mockRound = {
             id: "round1",
@@ -187,7 +187,7 @@ describe("DVMDAllocatedHandler", () => {
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                     donation: expect.objectContaining({
                         tokenAddress: getAddress("0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1"),
-                        amount: amount,
+                        amount: BigInt(amount),
                         amountInUsd: "1500",
                         amountInRoundMatchToken: parseEther("0.75"),
                         timestamp: new Date(1000000000),

@@ -41,7 +41,9 @@ export class DVMDAllocatedHandler implements IEventHandler<"Strategy", "Allocate
     async handle(): Promise<Changeset[]> {
         const { roundRepository, applicationRepository } = this.dependencies;
         const { srcAddress } = this.event;
-        const { recipientId: _recipientId, amount, token: _token } = this.event.params;
+        const { recipientId: _recipientId, amount: strAmount, token: _token } = this.event.params;
+
+        const amount = BigInt(strAmount);
 
         const round = await roundRepository.getRoundByStrategyAddressOrThrow(
             this.chainId,

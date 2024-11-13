@@ -29,8 +29,8 @@ function createMockEvent(
     const defaultEvent: ProcessorEvent<"Strategy", "UpdatedRegistrationWithStatus"> = {
         params: {
             recipientId: "0x1234567890123456789012345678901234567890",
-            status: 1,
-            data: "0x0000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000001000000000000000000000000002c7296a5ec0539f0a018c7176c97c92a9c44e2b4000000000000000000000000e7eb5d2b5b188777df902e89c54570e7ef4f59ce000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000003b6261666b72656967796334336366696e786c6e6168713561617773676869626574763675737273376b6b78663776786d7a626a79726f37366977790000000000",
+            status: "1",
+            data: "0x0000000000000000000000002c7296a5ec0539f0a018c7176c97c92a9c44e2b4000000000000000000000000e7eb5d2b5b188777df902e89c54570e7ef4f59ce000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000003b6261666b72656967796334336366696e786c6e6168713561617773676869626574763675737273376b6b78663776786d7a626a79726f37366977790000000000",
             sender: "0xcBf407C33d68a55CB594Ffc8f4fD1416Bba39DA5",
         },
         eventName: "UpdatedRegistrationWithStatus",
@@ -83,7 +83,7 @@ describe("DVMDUpdatedRegistrationHandler", () => {
     });
 
     it("handles a valid registration update event", async () => {
-        mockEvent = createMockEvent({ params: { status: 2 } });
+        mockEvent = createMockEvent({ params: { status: "2" } });
         const mockProject = {
             id: "project1",
             anchorAddress: mockEvent.params.recipientId,
@@ -144,7 +144,7 @@ describe("DVMDUpdatedRegistrationHandler", () => {
     });
 
     it("returns empty array if status is invalid", async () => {
-        const invalidStatuses = [0, 4, 10];
+        const invalidStatuses = ["0", "4", "10"];
         for (const status of invalidStatuses) {
             mockEvent = createMockEvent({ params: { status } });
 
@@ -279,7 +279,7 @@ describe("DVMDUpdatedRegistrationHandler", () => {
     });
 
     it("doesn't add status snapshot if status hasn't changed", async () => {
-        mockEvent = createMockEvent({ params: { status: 1 } }); // 1 is PENDING
+        mockEvent = createMockEvent({ params: { status: "1" } }); // 1 is PENDING
         const mockProject = {
             id: "project1",
             anchorAddress: mockEvent.params.recipientId,

@@ -4,7 +4,7 @@ import { Changeset, NewApplication } from "@grants-stack-indexer/repository";
 import { ChainId, ProcessorEvent } from "@grants-stack-indexer/shared";
 
 import { IEventHandler, ProcessorDependencies } from "../../../internal.js";
-import { decodeDVMDApplicationData } from "../helpers/index.js";
+import { decodeDVMDExtendedApplicationData } from "../helpers/index.js";
 
 type Dependencies = Pick<
     ProcessorDependencies,
@@ -47,7 +47,7 @@ export class DVMDRegisteredHandler implements IEventHandler<"Strategy", "Registe
             strategyAddress,
         );
 
-        const values = decodeDVMDApplicationData(encodedData);
+        const values = decodeDVMDExtendedApplicationData(encodedData);
         // ID is defined as recipientsCounter - 1, which is a value emitted by the strategy
         const id = (Number(values.recipientsCounter) - 1).toString();
 

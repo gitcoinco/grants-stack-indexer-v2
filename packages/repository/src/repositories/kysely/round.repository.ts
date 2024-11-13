@@ -1,6 +1,6 @@
 import { Kysely } from "kysely";
 
-import { Address, ChainId } from "@grants-stack-indexer/shared";
+import { Address, ChainId, stringify } from "@grants-stack-indexer/shared";
 
 import {
     Database,
@@ -112,10 +112,12 @@ export class KyselyRoundRepository implements IRoundRepository {
         where: { id: string; chainId: ChainId } | { chainId: ChainId; strategyAddress: Address },
         round: PartialRound,
     ): Promise<void> {
+        const _round = this.formatRound(round);
+
         const query = this.db
             .withSchema(this.schemaName)
             .updateTable("rounds")
-            .set(round)
+            .set(_round)
             .where("chainId", "=", where.chainId);
 
         if ("id" in where) {
@@ -230,5 +232,20 @@ export class KyselyRoundRepository implements IRoundRepository {
             .deleteFrom("pendingRoundRoles")
             .where("id", "in", ids)
             .execute();
+    }
+
+    /**
+     * Formats the round to ensure that the matchingDistribution is stored as a JSONB string.
+     * @param round - The round to format.
+     * @returns The formatted round.
+     */
+    private formatRound<T extends NewRound | PartialRound>(round: T): T {
+        if (round?.matchingDistribution) {
+            round = {
+                ...round,
+                matchingDistribution: stringify(round.matchingDistribution),
+            };
+        }
+        return round;
     }
 }

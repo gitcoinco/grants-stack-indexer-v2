@@ -105,7 +105,7 @@ describe("EventsProcessor", () => {
                 sender: "0x0",
                 recipientAddress: "0x0",
                 recipientId: "0x0",
-                amount: 1n,
+                amount: "1",
             },
             transactionFields: {
                 hash: "0x0",

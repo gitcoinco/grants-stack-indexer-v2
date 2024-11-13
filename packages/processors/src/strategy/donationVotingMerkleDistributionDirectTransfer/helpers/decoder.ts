@@ -1,8 +1,6 @@
 import { decodeAbiParameters, Hex } from "viem";
 
-import { Address } from "@grants-stack-indexer/shared";
-
-import { DVMDApplicationData } from "../types/index.js";
+import { DVMDApplicationData, DVMDExtendedApplicationData } from "../types/index.js";
 
 const DVMD_EVENT_DATA_DECODER = [
     { name: "data", type: "bytes" },
@@ -23,14 +21,11 @@ const DVMD_DATA_DECODER = [
 ] as const;
 
 export const decodeDVMDApplicationData = (encodedData: Hex): DVMDApplicationData => {
-    const values = decodeAbiParameters(DVMD_EVENT_DATA_DECODER, encodedData);
-
-    const decodedData = decodeAbiParameters(DVMD_DATA_DECODER, values[0]);
+    const decodedData = decodeAbiParameters(DVMD_DATA_DECODER, encodedData);
 
     const results: DVMDApplicationData = {
-        recipientsCounter: values[1].toString(),
-        anchorAddress: decodedData[0] as Address,
-        recipientAddress: decodedData[1] as Address,
+        anchorAddress: decodedData[0],
+        recipientAddress: decodedData[1],
         metadata: {
             protocol: Number(decodedData[2].protocol),
             pointer: decodedData[2].pointer,
@@ -38,4 +33,17 @@ export const decodeDVMDApplicationData = (encodedData: Hex): DVMDApplicationData
     };
 
     return results;
+};
+
+export const decodeDVMDExtendedApplicationData = (
+    encodedData: Hex,
+): DVMDExtendedApplicationData => {
+    const values = decodeAbiParameters(DVMD_EVENT_DATA_DECODER, encodedData);
+
+    const encodededDVMD = decodeDVMDApplicationData(values[0]);
+
+    return {
+        ...encodededDVMD,
+        recipientsCounter: values[1].toString(),
+    };
 };
