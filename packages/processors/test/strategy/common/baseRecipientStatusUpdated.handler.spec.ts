@@ -16,7 +16,7 @@ import {
     ProcessorEvent,
 } from "@grants-stack-indexer/shared";
 
-import { BaseRecipientStatusUpdatedHandler } from "../../../src/strategy/common/baseRecipientStatusUpdated.handler.js";
+import { BaseRecipientStatusUpdatedHandler } from "../../../src/internal.js";
 
 function createMockEvent(
     overrides: DeepPartial<ProcessorEvent<"Strategy", "RecipientStatusUpdatedWithFullRow">> = {},

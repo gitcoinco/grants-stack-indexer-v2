@@ -21,7 +21,7 @@ import {
     ProcessorEvent,
 } from "@grants-stack-indexer/shared";
 
-import { DVMDUpdatedRegistrationHandler } from "../../../../src/strategy/donationVotingMerkleDistributionDirectTransfer/handlers/index.js";
+import { DVMDUpdatedRegistrationHandler } from "../../../../src/internal.js";
 
 function createMockEvent(
     overrides: DeepPartial<ProcessorEvent<"Strategy", "UpdatedRegistrationWithStatus">> = {},

@@ -8,7 +8,7 @@ import {
 } from "@grants-stack-indexer/repository";
 import { ChainId, DeepPartial, mergeDeep, ProcessorEvent } from "@grants-stack-indexer/shared";
 
-import { DVMDTimestampsUpdatedHandler } from "../../../../src/strategy/donationVotingMerkleDistributionDirectTransfer/handlers/index.js";
+import { DVMDTimestampsUpdatedHandler } from "../../../../src/internal.js";
 
 function createMockEvent(
     overrides: DeepPartial<

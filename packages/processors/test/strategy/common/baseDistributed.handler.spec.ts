@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { IRoundReadRepository, Round } from "@grants-stack-indexer/repository";
 import { ChainId, ILogger, ProcessorEvent } from "@grants-stack-indexer/shared";
 
-import { BaseDistributedHandler } from "../../../src/strategy/common/baseDistributed.handler.js";
+import { BaseDistributedHandler } from "../../../src/processors/strategy/common/baseDistributed.handler.js";
 
 function createMockEvent(
     overrides: Partial<ProcessorEvent<"Strategy", "DistributedWithRecipientAddress">> = {},

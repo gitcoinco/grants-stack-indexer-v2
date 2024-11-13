@@ -24,17 +24,17 @@ import {
     BaseDistributionUpdatedHandler,
     BaseFundsDistributedHandler,
     BaseRecipientStatusUpdatedHandler,
-} from "../../../src/strategy/common/index.js";
-import { DVMDDirectTransferStrategyHandler } from "../../../src/strategy/donationVotingMerkleDistributionDirectTransfer/dvmdDirectTransfer.handler.js";
+} from "../../../src/processors/strategy/common/index.js";
+import { DVMDDirectTransferStrategyHandler } from "../../../src/processors/strategy/donationVotingMerkleDistributionDirectTransfer/dvmdDirectTransfer.handler.js";
 import {
     DVMDAllocatedHandler,
     DVMDRegisteredHandler,
     DVMDTimestampsUpdatedHandler,
     DVMDUpdatedRegistrationHandler,
-} from "../../../src/strategy/donationVotingMerkleDistributionDirectTransfer/handlers/index.js";
+} from "../../../src/processors/strategy/donationVotingMerkleDistributionDirectTransfer/handlers/index.js";
 
 vi.mock(
-    "../../../src/strategy/donationVotingMerkleDistributionDirectTransfer/handlers/index.js",
+    "../../../src/processors/strategy/donationVotingMerkleDistributionDirectTransfer/handlers/index.js",
     () => {
         const DVMDRegisteredHandler = vi.fn();
         const DVMDAllocatedHandler = vi.fn();
@@ -60,8 +60,9 @@ vi.mock(
         };
     },
 );
-vi.mock("../../../src/strategy/common/index.js", async (importOriginal) => {
-    const original = await importOriginal<typeof import("../../../src/strategy/common/index.js")>();
+vi.mock("../../../src/processors/strategy/common/index.js", async (importOriginal) => {
+    const original =
+        await importOriginal<typeof import("../../../src/processors/strategy/common/index.js")>();
     const BaseDistributedHandler = vi.fn();
     const BaseFundsDistributedHandler = vi.fn();
     const BaseDistributionUpdatedHandler = vi.fn();

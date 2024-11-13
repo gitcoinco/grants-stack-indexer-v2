@@ -33,7 +33,7 @@ describe("calculateAmountInUsd", () => {
     });
 
     // Test case for 8 decimal token with float price
-    it("should correctly calculate USD amount for 8 decimal token with float price", () => {
+    it("correctly calculates USD amount for 8 decimal token with float price", () => {
         const amount = 150000000n; // 1.5 tokens
         const tokenPriceInUsd = 12.75; // $12.75 per token
         const tokenDecimals = 8;
@@ -89,7 +89,7 @@ describe("calculateAmountInUsd", () => {
         expect(result).toBe("0");
     });
 
-    it("should return zero for zero token price", () => {
+    it("returns zero for zero token price", () => {
         const amount = 1000000000000000000n; // 1 token
         const tokenPriceInUsd = 0;
         const tokenDecimals = 18;

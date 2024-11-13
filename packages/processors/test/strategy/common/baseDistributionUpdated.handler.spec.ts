@@ -12,8 +12,11 @@ import {
     ProcessorEvent,
 } from "@grants-stack-indexer/shared";
 
-import { MetadataNotFound, MetadataParsingFailed } from "../../../src/internal.js";
-import { BaseDistributionUpdatedHandler } from "../../../src/strategy/common/index.js";
+import {
+    BaseDistributionUpdatedHandler,
+    MetadataNotFound,
+    MetadataParsingFailed,
+} from "../../../src/internal.js";
 
 function createMockEvent(
     overrides: DeepPartial<ProcessorEvent<"Strategy", "DistributionUpdated">> = {},

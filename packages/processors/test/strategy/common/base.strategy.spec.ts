@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { Changeset } from "@grants-stack-indexer/repository";
 import { Address, Token, TokenCode } from "@grants-stack-indexer/shared";
 
-import { BaseStrategyHandler } from "../../../src/strategy/common/base.strategy.js";
+import { BaseStrategyHandler } from "../../../src/processors/strategy/common/base.strategy.js";
 
 // Create a concrete implementation of BaseStrategyHandler for testing
 class TestStrategyHandler extends BaseStrategyHandler {

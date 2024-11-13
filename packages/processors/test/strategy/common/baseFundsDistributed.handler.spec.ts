@@ -18,7 +18,7 @@ import {
 
 import "../../../src/exceptions/index.js";
 
-import { BaseFundsDistributedHandler } from "../../../src/strategy/common/index.js";
+import { BaseFundsDistributedHandler } from "../../../src/internal.js";
 
 function createMockEvent(
     overrides: DeepPartial<ProcessorEvent<"Strategy", "FundsDistributed">> = {},

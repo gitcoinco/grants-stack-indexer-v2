@@ -11,7 +11,7 @@ import { mergeDeep } from "@grants-stack-indexer/shared";
 import {
     PoolCreatedHandler,
     TIMESTAMP_DELTA_RANGE,
-} from "../../../src/allo/handlers/poolCreated.handler.js";
+} from "../../../src/processors/allo/handlers/poolCreated.handler.js";
 
 // Function to create a mock event with optional overrides
 function createMockEvent(
