@@ -51,6 +51,9 @@ const TokenMapping: { [key: string]: CoingeckoTokenId | undefined } = {
     WSEI: "wrapped-sei" as CoingeckoTokenId,
 };
 
+// sometimes coingecko returns no prices for 1 hour range, 2 hours works better
+const TIME_DELTA = 2 * 60 * 60 * 1000;
+
 /**
  * The Coingecko provider is a pricing provider that uses the Coingecko API to get the price of a token.
  */
@@ -83,11 +86,15 @@ export class CoingeckoProvider implements IPricingProvider {
     async getTokenPrice(
         tokenCode: TokenCode,
         startTimestampMs: number,
-        endTimestampMs: number,
+        endTimestampMs?: number,
     ): Promise<TokenPrice | undefined> {
         const tokenId = TokenMapping[tokenCode];
         if (!tokenId) {
             throw new UnsupportedToken(tokenCode);
+        }
+
+        if (!endTimestampMs) {
+            endTimestampMs = startTimestampMs + TIME_DELTA;
         }
 
         if (startTimestampMs > endTimestampMs) {

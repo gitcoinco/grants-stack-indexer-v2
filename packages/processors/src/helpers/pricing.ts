@@ -4,9 +4,6 @@ import { Token } from "@grants-stack-indexer/shared";
 import { TokenPriceNotFoundError } from "../internal.js";
 import { calculateAmountInToken, calculateAmountInUsd } from "./index.js";
 
-// sometimes coingecko returns no prices for 1 hour range, 2 hours works better
-const TIMESTAMP_DELTA_RANGE = 2 * 60 * 60 * 1000;
-
 /**
  * Get the amount in USD for a given amount in the token
  * @param pricingProvider - The pricing provider to use
@@ -21,11 +18,12 @@ export const getTokenAmountInUsd = async (
     token: Token,
     amount: bigint,
     timestamp: number,
+    timestampEnd?: number,
 ): Promise<{ amountInUsd: string; timestamp: number }> => {
     const tokenPrice = await pricingProvider.getTokenPrice(
         token.priceSourceCode,
         timestamp,
-        timestamp + TIMESTAMP_DELTA_RANGE,
+        timestampEnd,
     );
 
     if (!tokenPrice) {
@@ -52,11 +50,12 @@ export const getUsdInTokenAmount = async (
     token: Token,
     amountInUSD: string,
     timestamp: number,
+    timestampEnd?: number,
 ): Promise<{ amount: bigint; price: number; timestamp: Date }> => {
     const closestPrice = await pricingProvider.getTokenPrice(
         token.priceSourceCode,
         timestamp,
-        timestamp + TIMESTAMP_DELTA_RANGE,
+        timestampEnd,
     );
 
     if (!closestPrice) {

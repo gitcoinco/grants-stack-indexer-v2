@@ -73,6 +73,25 @@ describe("CoingeckoProvider", () => {
             );
         });
 
+        it("uses default endTimestampMs if not provided", async () => {
+            const mockResponse = {
+                prices: [[1609459200000, 100]],
+            };
+            mock.get.mockResolvedValueOnce({ status: 200, data: mockResponse });
+
+            const result = await provider.getTokenPrice("ETH" as TokenCode, 1609459200000);
+
+            const expectedPrice: TokenPrice = {
+                timestampMs: 1609459200000,
+                priceUsd: 100,
+            };
+
+            expect(result).toEqual(expectedPrice);
+            expect(mock.get).toHaveBeenCalledWith(
+                "/coins/ethereum/market_chart/range?vs_currency=usd&from=1609459200000&to=1609466400000&precision=full",
+            );
+        });
+
         it("return undefined if no price data is available for timerange", async () => {
             const mockResponse = {
                 prices: [],

@@ -35,6 +35,8 @@ Available options:
 | `INDEXER_GRAPHQL_URL` | GraphQL endpoint for the indexer | N/A | Yes | |
 | `INDEXER_ADMIN_SECRET` | Admin secret for indexer authentication | N/A | Yes | |
 | `IPFS_GATEWAYS_URL` | Array of IPFS gateway URLs | N/A | Yes | Multiple gateways for redundancy |
+| `PRICING_SOURCE` | Pricing source (coingecko or dummy) | coingecko | No | |
+| `DUMMY_PRICE` | Dummy price | 1 | No | Only if PRICING_SOURCE is dummy |
 | `COINGECKO_API_KEY` | API key for CoinGecko service | N/A | Yes | |
 | `COINGECKO_API_TYPE` | CoinGecko API tier (demo or pro) | pro | No | |
 

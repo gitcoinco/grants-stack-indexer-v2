@@ -8,10 +8,7 @@ import type { IRoundReadRepository, Round } from "@grants-stack-indexer/reposito
 import type { ChainId, DeepPartial, ProcessorEvent, TokenCode } from "@grants-stack-indexer/shared";
 import { mergeDeep } from "@grants-stack-indexer/shared";
 
-import {
-    PoolCreatedHandler,
-    TIMESTAMP_DELTA_RANGE,
-} from "../../../src/allo/handlers/poolCreated.handler.js";
+import { PoolCreatedHandler } from "../../../src/allo/handlers/poolCreated.handler.js";
 
 // Function to create a mock event with optional overrides
 function createMockEvent(
@@ -465,7 +462,6 @@ describe("PoolCreatedHandler", () => {
         expect(mockPricingProvider.getTokenPrice).toHaveBeenCalledWith(
             "ETH" as TokenCode,
             1708369911,
-            1708369911 + TIMESTAMP_DELTA_RANGE,
         );
     });
 

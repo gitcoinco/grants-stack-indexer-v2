@@ -2,6 +2,9 @@ import { TokenCode } from "@grants-stack-indexer/shared";
 
 import { TokenPrice } from "../internal.js";
 
+// available pricing providers
+export type PricingProvider = "coingecko" | "dummy";
+
 /**
  * Represents a pricing service that retrieves token prices.
  * @dev is service responsibility to map token code to their internal platform ID
@@ -20,6 +23,6 @@ export interface IPricingProvider {
     getTokenPrice(
         tokenCode: TokenCode,
         startTimestampMs: number,
-        endTimestampMs: number,
+        endTimestampMs?: number,
     ): Promise<TokenPrice | undefined>;
 }

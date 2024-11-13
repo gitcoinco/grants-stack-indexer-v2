@@ -29,9 +29,6 @@ type Dependencies = Pick<
 
 const STRATEGY_NAME = "allov2.DonationVotingMerkleDistributionDirectTransferStrategy";
 
-// sometimes coingecko returns no prices for 1 hour range, 2 hours works better
-export const TIMESTAMP_DELTA_RANGE = 2 * 60 * 60 * 1000;
-
 /**
  * This handler is responsible for processing events related to the
  * Donation Voting Merkle Distribution Direct Transfer strategy.
@@ -155,11 +152,7 @@ export class DVMDDirectTransferStrategyHandler extends BaseStrategyHandler {
         timestamp: number,
     ): Promise<string> {
         const { pricingProvider } = this.dependencies;
-        const tokenPrice = await pricingProvider.getTokenPrice(
-            token.priceSourceCode,
-            timestamp,
-            timestamp + TIMESTAMP_DELTA_RANGE,
-        );
+        const tokenPrice = await pricingProvider.getTokenPrice(token.priceSourceCode, timestamp);
 
         if (!tokenPrice) {
             throw new TokenPriceNotFoundError(token.address, timestamp);

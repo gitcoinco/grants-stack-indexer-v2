@@ -14,7 +14,7 @@ const stringToJSONSchema = z.string().transform((str, ctx): z.infer<ReturnType<t
     }
 });
 
-const validationSchema = z.object({
+const baseSchema = z.object({
     RPC_URLS: stringToJSONSchema.pipe(z.array(z.string().url())),
     CHAIN_ID: z.coerce.number().int().positive(),
     FETCH_LIMIT: z.coerce.number().int().positive().default(500),
@@ -23,12 +23,37 @@ const validationSchema = z.object({
     DATABASE_SCHEMA: z.string().default("public"),
     INDEXER_GRAPHQL_URL: z.string().url(),
     INDEXER_ADMIN_SECRET: z.string(),
-    COINGECKO_API_KEY: z.string(),
-    COINGECKO_API_TYPE: z.enum(["demo", "pro"]).default("pro"),
+    PRICING_SOURCE: z.enum(["dummy", "coingecko"]).default("coingecko"),
     IPFS_GATEWAYS_URL: stringToJSONSchema
         .pipe(z.array(z.string().url()))
         .default('["https://ipfs.io"]'),
 });
+
+const dummyPricingSchema = baseSchema.extend({
+    PRICING_SOURCE: z.literal("dummy"),
+    DUMMY_PRICE: z.coerce.number().optional().default(1),
+});
+
+const coingeckoPricingSchema = baseSchema.extend({
+    PRICING_SOURCE: z.literal("coingecko"),
+    COINGECKO_API_KEY: z.string().min(1),
+    COINGECKO_API_TYPE: z.enum(["demo", "pro"]).default("pro"),
+});
+
+const validationSchema = z
+    .discriminatedUnion("PRICING_SOURCE", [dummyPricingSchema, coingeckoPricingSchema])
+    .transform((val) => {
+        if (val.PRICING_SOURCE === "dummy") {
+            return { pricingSource: val.PRICING_SOURCE, dummyPrice: val.DUMMY_PRICE, ...val };
+        }
+
+        return {
+            pricingSource: val.PRICING_SOURCE,
+            apiKey: val.COINGECKO_API_KEY,
+            apiType: val.COINGECKO_API_TYPE,
+            ...val,
+        };
+    });
 
 const env = validationSchema.safeParse(process.env);
 

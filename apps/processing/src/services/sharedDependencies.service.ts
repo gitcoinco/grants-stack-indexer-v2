@@ -5,7 +5,7 @@ import {
 } from "@grants-stack-indexer/data-flow";
 import { EnvioIndexerClient } from "@grants-stack-indexer/indexer-client";
 import { IpfsProvider } from "@grants-stack-indexer/metadata";
-import { CoingeckoProvider } from "@grants-stack-indexer/pricing";
+import { PricingProviderFactory } from "@grants-stack-indexer/pricing";
 import {
     createKyselyDatabase,
     KyselyApplicationRepository,
@@ -50,13 +50,7 @@ export class SharedDependenciesService {
             kyselyDatabase,
             env.DATABASE_SCHEMA,
         );
-        const pricingProvider = new CoingeckoProvider(
-            {
-                apiKey: env.COINGECKO_API_KEY,
-                apiType: env.COINGECKO_API_TYPE,
-            },
-            logger,
-        );
+        const pricingProvider = PricingProviderFactory.create(env, { logger });
 
         const metadataProvider = new IpfsProvider(env.IPFS_GATEWAYS_URL, logger);
 
