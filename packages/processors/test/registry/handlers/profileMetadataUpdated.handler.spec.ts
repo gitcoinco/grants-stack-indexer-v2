@@ -12,7 +12,6 @@ describe("ProfileMetadataUpdatedHandler", () => {
             metadata: [0, mockCid],
             profileId: "mockProfileId",
         },
-        // Add other necessary event properties here
     } as ProcessorEvent<"Registry", "ProfileMetadataUpdated">;
 
     const mockDependencies = {

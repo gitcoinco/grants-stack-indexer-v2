@@ -22,6 +22,7 @@ export class RoleRevokedHandler implements IEventHandler<"Registry", "RoleRevoke
         readonly chainId: ChainId,
         private dependencies: Dependencies,
     ) {}
+    /* @inheritdoc */
     async handle(): Promise<Changeset[]> {
         const { projectRepository } = this.dependencies;
         const account = getAddress(this.event.params.account);

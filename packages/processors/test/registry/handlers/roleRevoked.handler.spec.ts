@@ -70,7 +70,10 @@ describe("RoleRevokedHandler", () => {
     });
 
     it("throw an error when getProjectById fails", async () => {
-        const error = new Error("Database error");
+        const error = new ProjectByRoleNotFound(
+            mockEvent.chainId as ChainId,
+            mockEvent.params.role,
+        );
         vi.spyOn(mockDependencies.projectRepository, "getProjectById").mockRejectedValueOnce(error);
 
         const handler = new RoleRevokedHandler(mockEvent, mockChainId, mockDependencies);
