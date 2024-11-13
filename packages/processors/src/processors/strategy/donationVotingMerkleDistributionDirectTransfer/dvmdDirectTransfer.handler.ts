@@ -13,8 +13,19 @@ import type { ProcessorDependencies, StrategyTimings } from "../../../internal.j
 import DonationVotingMerkleDistributionDirectTransferStrategy from "../../../abis/allo-v2/v1/DonationVotingMerkleDistributionDirectTransferStrategy.js";
 import { calculateAmountInUsd, getDateFromTimestamp } from "../../../helpers/index.js";
 import { TokenPriceNotFoundError, UnsupportedEventException } from "../../../internal.js";
-import { BaseDistributedHandler, BaseStrategyHandler } from "../common/index.js";
-import { DVMDAllocatedHandler, DVMDRegisteredHandler } from "./handlers/index.js";
+import {
+    BaseDistributedHandler,
+    BaseDistributionUpdatedHandler,
+    BaseFundsDistributedHandler,
+    BaseRecipientStatusUpdatedHandler,
+    BaseStrategyHandler,
+} from "../common/index.js";
+import {
+    DVMDAllocatedHandler,
+    DVMDRegisteredHandler,
+    DVMDTimestampsUpdatedHandler,
+    DVMDUpdatedRegistrationHandler,
+} from "./handlers/index.js";
 
 type Dependencies = Pick<
     ProcessorDependencies,
@@ -64,6 +75,39 @@ export class DVMDDirectTransferStrategyHandler extends BaseStrategyHandler {
             case "AllocatedWithOrigin":
                 return new DVMDAllocatedHandler(
                     event as ProcessorEvent<"Strategy", "AllocatedWithOrigin">,
+                    this.chainId,
+                    this.dependencies,
+                ).handle();
+            case "TimestampsUpdatedWithRegistrationAndAllocation":
+                return new DVMDTimestampsUpdatedHandler(
+                    event as ProcessorEvent<
+                        "Strategy",
+                        "TimestampsUpdatedWithRegistrationAndAllocation"
+                    >,
+                    this.chainId,
+                    this.dependencies,
+                ).handle();
+            case "DistributionUpdated":
+                return new BaseDistributionUpdatedHandler(
+                    event as ProcessorEvent<"Strategy", "DistributionUpdated">,
+                    this.chainId,
+                    this.dependencies,
+                ).handle();
+            case "FundsDistributed":
+                return new BaseFundsDistributedHandler(
+                    event as ProcessorEvent<"Strategy", "FundsDistributed">,
+                    this.chainId,
+                    this.dependencies,
+                ).handle();
+            case "UpdatedRegistrationWithStatus":
+                return new DVMDUpdatedRegistrationHandler(
+                    event as ProcessorEvent<"Strategy", "UpdatedRegistrationWithStatus">,
+                    this.chainId,
+                    this.dependencies,
+                ).handle();
+            case "RecipientStatusUpdatedWithFullRow":
+                return new BaseRecipientStatusUpdatedHandler(
+                    event as ProcessorEvent<"Strategy", "RecipientStatusUpdatedWithFullRow">,
                     this.chainId,
                     this.dependencies,
                 ).handle();

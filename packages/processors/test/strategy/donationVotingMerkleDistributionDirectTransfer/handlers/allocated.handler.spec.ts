@@ -4,18 +4,23 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { IPricingProvider } from "@grants-stack-indexer/pricing";
 import {
     Application,
+    ApplicationNotFound,
     IApplicationRepository,
     IRoundRepository,
     Round,
+    RoundNotFound,
 } from "@grants-stack-indexer/repository";
-import { ChainId, DeepPartial, mergeDeep, ProcessorEvent } from "@grants-stack-indexer/shared";
+import {
+    ChainId,
+    DeepPartial,
+    mergeDeep,
+    ProcessorEvent,
+    UnknownToken,
+} from "@grants-stack-indexer/shared";
 
 import {
-    ApplicationNotFound,
     MetadataParsingFailed,
-    RoundNotFound,
     TokenPriceNotFoundError,
-    UnknownToken,
 } from "../../../../src/exceptions/index.js";
 import { DVMDAllocatedHandler } from "../../../../src/processors/strategy/donationVotingMerkleDistributionDirectTransfer/handlers/allocated.handler.js";
 
@@ -25,7 +30,7 @@ function createMockEvent(
     const defaultEvent: ProcessorEvent<"Strategy", "AllocatedWithOrigin"> = {
         params: {
             recipientId: "0x1234567890123456789012345678901234567890",
-            amount: 10n,
+            amount: "10",
             token: "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1",
             origin: "0xcBf407C33d68a55CB594Ffc8f4fD1416Bba39DA5",
             sender: "0xcBf407C33d68a55CB594Ffc8f4fD1416Bba39DA5",
@@ -59,10 +64,10 @@ describe("DVMDAllocatedHandler", () => {
 
     beforeEach(() => {
         mockRoundRepository = {
-            getRoundByStrategyAddress: vi.fn(),
+            getRoundByStrategyAddressOrThrow: vi.fn(),
         } as unknown as IRoundRepository;
         mockApplicationRepository = {
-            getApplicationByAnchorAddress: vi.fn(),
+            getApplicationByAnchorAddressOrThrow: vi.fn(),
         } as unknown as IApplicationRepository;
         mockPricingProvider = {
             getTokenPrice: vi.fn(),
@@ -70,7 +75,7 @@ describe("DVMDAllocatedHandler", () => {
     });
 
     it("handle a valid allocated event", async () => {
-        const amount = parseEther("10");
+        const amount = parseEther("10").toString();
         mockEvent = createMockEvent({ params: { amount } });
         const mockRound = {
             id: "round1",
@@ -87,10 +92,13 @@ describe("DVMDAllocatedHandler", () => {
             projectId: "project1",
         } as unknown as Application;
 
-        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddress").mockResolvedValue(mockRound);
-        vi.spyOn(mockApplicationRepository, "getApplicationByAnchorAddress").mockResolvedValue(
-            mockApplication,
+        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddressOrThrow").mockResolvedValue(
+            mockRound,
         );
+        vi.spyOn(
+            mockApplicationRepository,
+            "getApplicationByAnchorAddressOrThrow",
+        ).mockResolvedValue(mockApplication);
         vi.spyOn(mockPricingProvider, "getTokenPrice").mockResolvedValue({
             timestampMs: 1000000000,
             priceUsd: 2000,
@@ -119,9 +127,9 @@ describe("DVMDAllocatedHandler", () => {
                         transactionHash: mockEvent.transactionFields.hash,
                         blockNumber: BigInt(mockEvent.blockNumber),
                         tokenAddress: getAddress("0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1"),
-                        amount: amount,
+                        amount: BigInt(amount),
                         amountInUsd: "20000",
-                        amountInRoundMatchToken: amount,
+                        amountInRoundMatchToken: BigInt(amount),
                         timestamp: new Date(1000000000),
                     },
                 },
@@ -130,7 +138,7 @@ describe("DVMDAllocatedHandler", () => {
     });
 
     it("match token is different from event token", async () => {
-        const amount = parseEther("1500");
+        const amount = parseEther("1500").toString();
         mockEvent = createMockEvent({ params: { amount } });
         const mockRound = {
             id: "round1",
@@ -147,10 +155,13 @@ describe("DVMDAllocatedHandler", () => {
             projectId: "project1",
         } as unknown as Application;
 
-        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddress").mockResolvedValue(mockRound);
-        vi.spyOn(mockApplicationRepository, "getApplicationByAnchorAddress").mockResolvedValue(
-            mockApplication,
+        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddressOrThrow").mockResolvedValue(
+            mockRound,
         );
+        vi.spyOn(
+            mockApplicationRepository,
+            "getApplicationByAnchorAddressOrThrow",
+        ).mockResolvedValue(mockApplication);
         vi.spyOn(mockPricingProvider, "getTokenPrice")
             .mockResolvedValueOnce({
                 timestampMs: 1000000000,
@@ -176,7 +187,7 @@ describe("DVMDAllocatedHandler", () => {
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                     donation: expect.objectContaining({
                         tokenAddress: getAddress("0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1"),
-                        amount: amount,
+                        amount: BigInt(amount),
                         amountInUsd: "1500",
                         amountInRoundMatchToken: parseEther("0.75"),
                         timestamp: new Date(1000000000),
@@ -188,7 +199,9 @@ describe("DVMDAllocatedHandler", () => {
 
     it("throws RoundNotFound if round is not found", async () => {
         mockEvent = createMockEvent();
-        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddress").mockResolvedValue(undefined);
+        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddressOrThrow").mockRejectedValue(
+            new RoundNotFound(chainId, mockEvent.strategyId),
+        );
 
         handler = new DVMDAllocatedHandler(mockEvent, chainId, {
             roundRepository: mockRoundRepository,
@@ -206,9 +219,14 @@ describe("DVMDAllocatedHandler", () => {
             matchTokenAddress: "0x0987654321098765432109876543210987654321",
         } as unknown as Round;
 
-        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddress").mockResolvedValue(mockRound);
-        vi.spyOn(mockApplicationRepository, "getApplicationByAnchorAddress").mockResolvedValue(
-            undefined,
+        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddressOrThrow").mockResolvedValue(
+            mockRound,
+        );
+        vi.spyOn(
+            mockApplicationRepository,
+            "getApplicationByAnchorAddressOrThrow",
+        ).mockRejectedValue(
+            new ApplicationNotFound(chainId, mockRound.id, mockEvent.params.recipientId),
         );
 
         handler = new DVMDAllocatedHandler(mockEvent, chainId, {
@@ -239,10 +257,13 @@ describe("DVMDAllocatedHandler", () => {
             projectId: "project1",
         } as unknown as Application;
 
-        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddress").mockResolvedValue(mockRound);
-        vi.spyOn(mockApplicationRepository, "getApplicationByAnchorAddress").mockResolvedValue(
-            mockApplication,
+        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddressOrThrow").mockResolvedValue(
+            mockRound,
         );
+        vi.spyOn(
+            mockApplicationRepository,
+            "getApplicationByAnchorAddressOrThrow",
+        ).mockResolvedValue(mockApplication);
 
         handler = new DVMDAllocatedHandler(mockEvent, chainId, {
             roundRepository: mockRoundRepository,
@@ -270,10 +291,13 @@ describe("DVMDAllocatedHandler", () => {
             projectId: "project1",
         } as unknown as Application;
 
-        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddress").mockResolvedValue(mockRound);
-        vi.spyOn(mockApplicationRepository, "getApplicationByAnchorAddress").mockResolvedValue(
-            mockApplication,
+        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddressOrThrow").mockResolvedValue(
+            mockRound,
         );
+        vi.spyOn(
+            mockApplicationRepository,
+            "getApplicationByAnchorAddressOrThrow",
+        ).mockResolvedValue(mockApplication);
 
         handler = new DVMDAllocatedHandler(mockEvent, chainId, {
             roundRepository: mockRoundRepository,
@@ -301,10 +325,13 @@ describe("DVMDAllocatedHandler", () => {
             projectId: "project1",
         } as unknown as Application;
 
-        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddress").mockResolvedValue(mockRound);
-        vi.spyOn(mockApplicationRepository, "getApplicationByAnchorAddress").mockResolvedValue(
-            mockApplication,
+        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddressOrThrow").mockResolvedValue(
+            mockRound,
         );
+        vi.spyOn(
+            mockApplicationRepository,
+            "getApplicationByAnchorAddressOrThrow",
+        ).mockResolvedValue(mockApplication);
         vi.spyOn(mockPricingProvider, "getTokenPrice").mockResolvedValue(undefined);
 
         handler = new DVMDAllocatedHandler(mockEvent, chainId, {
@@ -333,10 +360,13 @@ describe("DVMDAllocatedHandler", () => {
             projectId: "project1",
         } as unknown as Application;
 
-        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddress").mockResolvedValue(mockRound);
-        vi.spyOn(mockApplicationRepository, "getApplicationByAnchorAddress").mockResolvedValue(
-            mockApplication,
+        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddressOrThrow").mockResolvedValue(
+            mockRound,
         );
+        vi.spyOn(
+            mockApplicationRepository,
+            "getApplicationByAnchorAddressOrThrow",
+        ).mockResolvedValue(mockApplication);
         vi.spyOn(mockPricingProvider, "getTokenPrice").mockResolvedValue({
             timestampMs: 1000000000,
             priceUsd: 2000,

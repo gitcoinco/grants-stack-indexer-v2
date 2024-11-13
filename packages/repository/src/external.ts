@@ -47,6 +47,13 @@ export {
     KyselyDonationRepository,
 } from "./repositories/kysely/index.js";
 
+export {
+    RoundNotFound,
+    ApplicationNotFound,
+    ProjectNotFound,
+    ProjectByRoleNotFound,
+} from "./internal.js";
+
 export { createKyselyPostgresDb as createKyselyDatabase } from "./internal.js";
 
 export { migrateToLatest, resetDatabase } from "./db/index.js";

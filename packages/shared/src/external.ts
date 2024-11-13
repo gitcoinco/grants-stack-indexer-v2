@@ -17,7 +17,7 @@ export { BigNumber } from "./internal.js";
 export type { BigNumberType } from "./internal.js";
 
 export type { TokenCode, Token } from "./internal.js";
-export { TOKENS, getToken } from "./tokens/tokens.js";
+export { TOKENS, getToken, getTokenOrThrow, UnknownToken } from "./internal.js";
 
 export { isAlloEvent, isRegistryEvent, isStrategyEvent } from "./internal.js";
 export { stringify } from "./internal.js";

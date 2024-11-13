@@ -1,9 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { IProjectRepository, Project } from "@grants-stack-indexer/repository";
+import {
+    IProjectRepository,
+    Project,
+    ProjectByRoleNotFound,
+} from "@grants-stack-indexer/repository";
 import { ChainId, ILogger, ProcessorEvent } from "@grants-stack-indexer/shared";
 
-import { ProjectByRoleNotFound } from "../../../src/internal.js";
 import { RoleRevokedHandler } from "../../../src/processors/registry/handlers/roleRevoked.handler.js";
 
 describe("RoleRevokedHandler", () => {

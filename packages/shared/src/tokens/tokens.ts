@@ -1,6 +1,6 @@
 import { Branded } from "viem";
 
-import { Address } from "../internal.js";
+import { Address, ChainId } from "../internal.js";
 
 export type TokenCode = Branded<string, "TokenCode">;
 
@@ -605,4 +605,16 @@ export const TOKENS: {
 
 export const getToken = (chainId: number, tokenAddress: Address): Token | undefined => {
     return TOKENS[chainId]?.[tokenAddress];
+};
+
+export class UnknownToken extends Error {
+    constructor(tokenAddress: string, chainId?: ChainId) {
+        super(`Unknown token: ${tokenAddress} ${chainId ? `on chain ${chainId}` : ""}`);
+    }
+}
+
+export const getTokenOrThrow = (chainId: ChainId, tokenAddress: Address): Token => {
+    const token = getToken(chainId, tokenAddress);
+    if (!token) throw new UnknownToken(tokenAddress, chainId);
+    return token;
 };

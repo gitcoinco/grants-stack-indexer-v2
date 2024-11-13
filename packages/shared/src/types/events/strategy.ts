@@ -1,6 +1,6 @@
 import { Hex } from "viem";
 
-import { Address, AnyEvent, ContractName, ProcessorEvent } from "../../internal.js";
+import { Address, AnyEvent, Bytes32String, ContractName, ProcessorEvent } from "../../internal.js";
 
 /**
  * This array is used to represent all Strategy events.
@@ -12,11 +12,20 @@ const StrategyEventArray = [
     "DistributedWithData",
     "DistributedWithFlowRate",
     "TimestampsUpdated",
+    "TimestampsUpdatedWithRegistrationAndAllocation",
     "AllocatedWithOrigin",
     "AllocatedWithToken",
     "AllocatedWithData",
     "AllocatedWithVotes",
     "AllocatedWithStatus",
+    "DistributionUpdated",
+    "FundsDistributed",
+    "RecipientStatusUpdatedWithApplicationId",
+    "RecipientStatusUpdatedWithRecipientStatus",
+    "RecipientStatusUpdatedWithFullRow",
+    "UpdatedRegistrationWithStatus",
+    "UpdatedRegistration",
+    "UpdatedRegistrationWithApplicationId",
 ] as const;
 
 /**
@@ -39,13 +48,31 @@ export type StrategyEventParams<T extends StrategyEvent> = T extends "Registered
             ? DistributedWithFlowRateParams
             : T extends "TimestampsUpdated"
               ? TimestampsUpdatedParams
-              : T extends "AllocatedWithToken"
-                ? AllocatedWithTokenParams
-                : T extends "AllocatedWithOrigin"
-                  ? AllocatedWithOriginParams
-                  : T extends "AllocatedWithVotes"
-                    ? AllocatedWithVotesParams
-                    : never;
+              : T extends "TimestampsUpdatedWithRegistrationAndAllocation"
+                ? TimestampsUpdatedWithRegistrationAndAllocationParams
+                : T extends "AllocatedWithToken"
+                  ? AllocatedWithTokenParams
+                  : T extends "AllocatedWithOrigin"
+                    ? AllocatedWithOriginParams
+                    : T extends "AllocatedWithVotes"
+                      ? AllocatedWithVotesParams
+                      : T extends "DistributionUpdated"
+                        ? DistributionUpdatedParams
+                        : T extends "FundsDistributed"
+                          ? FundsDistributedParams
+                          : T extends "RecipientStatusUpdatedWithApplicationId"
+                            ? RecipientStatusUpdatedWithApplicationIdParams
+                            : T extends "RecipientStatusUpdatedWithRecipientStatus"
+                              ? RecipientStatusUpdatedWithRecipientStatusParams
+                              : T extends "RecipientStatusUpdatedWithFullRow"
+                                ? RecipientStatusUpdatedWithFullRowParams
+                                : T extends "UpdatedRegistrationWithStatus"
+                                  ? UpdatedRegistrationWithStatusParams
+                                  : T extends "UpdatedRegistration"
+                                    ? UpdatedRegistrationParams
+                                    : T extends "UpdatedRegistrationWithApplicationId"
+                                      ? UpdatedRegistrationWithApplicationIdParams
+                                      : never;
 
 // =============================================================================
 // =============================== Event Parameters ============================
@@ -68,7 +95,7 @@ export type DistributedWithRecipientAddressParams = {
     recipientAddress: Address;
     recipientId: Address;
     sender: Address;
-    amount: bigint;
+    amount: string; //uint256
 };
 
 export type DistributedWithDataParams = {
@@ -77,28 +104,45 @@ export type DistributedWithDataParams = {
 };
 
 export type DistributedWithFlowRateParams = {
-    flowRate: bigint;
+    flowRate: string; //int96
     sender: Address;
 };
 
 // ======================= TimestampsUpdated =======================
 
 export type TimestampsUpdatedParams = {
-    contractAddress: Address;
-    timestamp: number;
+    startTime: string; //uint64
+    endTime: string; //uint64
+    sender: Address;
+};
+
+export type TimestampsUpdatedWithRegistrationAndAllocationParams = {
+    registrationStartTime: string; //uint64
+    registrationEndTime: string; //uint64
+    allocationStartTime: string; //uint64
+    allocationEndTime: string; //uint64
+    sender: Address;
+};
+
+// ======================= FundsDistributed =======================
+export type FundsDistributedParams = {
+    amount: string; //uint256
+    grantee: Address;
+    token: Address;
+    recipientId: Address;
 };
 
 // ======================= Allocated =======================
 export type AllocatedWithTokenParams = {
     recipientId: Address;
-    amount: bigint;
+    amount: string; //uint256
     token: Address;
     sender: Address;
 };
 
 export type AllocatedWithOriginParams = {
     recipientId: Address;
-    amount: bigint;
+    amount: string; //uint256
     token: Address;
     sender: Address;
     origin: Address;
@@ -106,14 +150,62 @@ export type AllocatedWithOriginParams = {
 
 export type AllocatedWithVotesParams = {
     recipientId: Address;
-    votes: bigint;
+    votes: string; //uint256
     allocator: Address;
 };
 
 export type AllocatedWithStatusParams = {
     recipientId: Address;
-    status: number;
+    status: string; //uint8
     sender: Address;
+};
+
+// ======================= DistributionUpdated =======================
+export type DistributionUpdatedParams = {
+    merkleRoot: Bytes32String;
+    metadata: [protocol: string, pointer: string]; //uint256,bytes32
+};
+
+// ======================= RecipientStatusUpdated =======================
+export type RecipientStatusUpdatedWithApplicationIdParams = {
+    recipientId: Address;
+    applicationId: string; //uint256
+    status: string; //uint8
+    sender: Address;
+};
+
+export type RecipientStatusUpdatedWithRecipientStatusParams = {
+    recipientId: Address;
+    status: string; //uint8
+    sender: Address;
+};
+
+export type RecipientStatusUpdatedWithFullRowParams = {
+    rowIndex: string; //uint256
+    fullRow: string; //uint256
+    sender: Address;
+};
+
+// ======================= UpdatedRegistration =======================
+export type UpdatedRegistrationWithStatusParams = {
+    recipientId: Address;
+    data: Hex;
+    sender: Address;
+    status: string; //uint8
+};
+
+export type UpdatedRegistrationParams = {
+    recipientId: Address;
+    data: Hex;
+    sender: Address;
+};
+
+export type UpdatedRegistrationWithApplicationIdParams = {
+    recipientId: Address;
+    applicationId: bigint;
+    data: Hex;
+    sender: Address;
+    status: string; //uint8
 };
 
 /**

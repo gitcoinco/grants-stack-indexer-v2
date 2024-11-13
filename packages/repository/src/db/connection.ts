@@ -4,12 +4,13 @@ import pg from "pg";
 import {
     Application,
     Donation as DonationTable,
+    MatchingDistribution,
     PendingProjectRole as PendingProjectRoleTable,
     PendingRoundRole as PendingRoundRoleTable,
     ProjectRole as ProjectRoleTable,
     Project as ProjectTable,
+    Round,
     RoundRole as RoundRoleTable,
-    Round as RoundTable,
     StatusSnapshot,
 } from "../internal.js";
 
@@ -25,6 +26,14 @@ type ApplicationTable = Omit<Application, "statusSnapshots"> & {
         StatusSnapshot[],
         StatusSnapshot[] | string,
         StatusSnapshot[] | string
+    >;
+};
+
+type RoundTable = Omit<Round, "matchingDistribution"> & {
+    matchingDistribution: ColumnType<
+        MatchingDistribution[] | null,
+        MatchingDistribution[] | string | null,
+        MatchingDistribution[] | string | null
     >;
 };
 

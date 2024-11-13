@@ -39,6 +39,15 @@ export interface IRoundReadRepository {
     ): Promise<Round | undefined>;
 
     /**
+     * Retrieves a round by its strategy address and chain ID.
+     * @param chainId The chain ID of the round.
+     * @param strategyAddress The strategy address of the round.
+     * @returns A promise that resolves to a Round object
+     * @throws {RoundNotFound} if the round does not exist
+     */
+    getRoundByStrategyAddressOrThrow(chainId: ChainId, strategyAddress: Address): Promise<Round>;
+
+    /**
      * Retrieves a round by a specific role and role value.
      * @param chainId The chain ID of the round.
      * @param roleName The name of the role to filter by.

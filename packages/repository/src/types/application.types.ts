@@ -15,7 +15,7 @@ export type Application = {
     projectId: string;
     anchorAddress: Address | null;
     status: ApplicationStatus;
-    statusSnapshots: StatusSnapshot[] | string;
+    statusSnapshots: StatusSnapshot[];
     distributionTransaction: string | null;
     metadataCid: string | null;
     metadata: unknown | null;

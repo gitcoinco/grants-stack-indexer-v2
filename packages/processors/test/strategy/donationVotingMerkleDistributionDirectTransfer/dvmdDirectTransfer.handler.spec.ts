@@ -19,11 +19,18 @@ import {
 } from "@grants-stack-indexer/shared";
 
 import { TokenPriceNotFoundError, UnsupportedEventException } from "../../../src/internal.js";
-import { BaseDistributedHandler } from "../../../src/processors/strategy/common/index.js";
+import {
+    BaseDistributedHandler,
+    BaseDistributionUpdatedHandler,
+    BaseFundsDistributedHandler,
+    BaseRecipientStatusUpdatedHandler,
+} from "../../../src/processors/strategy/common/index.js";
 import { DVMDDirectTransferStrategyHandler } from "../../../src/processors/strategy/donationVotingMerkleDistributionDirectTransfer/dvmdDirectTransfer.handler.js";
 import {
     DVMDAllocatedHandler,
     DVMDRegisteredHandler,
+    DVMDTimestampsUpdatedHandler,
+    DVMDUpdatedRegistrationHandler,
 } from "../../../src/processors/strategy/donationVotingMerkleDistributionDirectTransfer/handlers/index.js";
 
 vi.mock(
@@ -31,22 +38,50 @@ vi.mock(
     () => {
         const DVMDRegisteredHandler = vi.fn();
         const DVMDAllocatedHandler = vi.fn();
+        const DVMDTimestampsUpdatedHandler = vi.fn();
+        const DVMDUpdatedRegistrationHandler = vi.fn();
+
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         DVMDRegisteredHandler.prototype.handle = vi.fn();
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         DVMDAllocatedHandler.prototype.handle = vi.fn();
+
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        DVMDTimestampsUpdatedHandler.prototype.handle = vi.fn();
+
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        DVMDUpdatedRegistrationHandler.prototype.handle = vi.fn();
+
         return {
             DVMDRegisteredHandler,
             DVMDAllocatedHandler,
+            DVMDTimestampsUpdatedHandler,
+            DVMDUpdatedRegistrationHandler,
         };
     },
 );
-vi.mock("../../../src/processors/strategy/common/baseDistributed.handler.js", () => {
+vi.mock("../../../src/processors/strategy/common/index.js", async (importOriginal) => {
+    const original =
+        await importOriginal<typeof import("../../../src/processors/strategy/common/index.js")>();
     const BaseDistributedHandler = vi.fn();
+    const BaseFundsDistributedHandler = vi.fn();
+    const BaseDistributionUpdatedHandler = vi.fn();
+    const BaseRecipientStatusUpdatedHandler = vi.fn();
+
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     BaseDistributedHandler.prototype.handle = vi.fn();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    BaseFundsDistributedHandler.prototype.handle = vi.fn();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    BaseDistributionUpdatedHandler.prototype.handle = vi.fn();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    BaseRecipientStatusUpdatedHandler.prototype.handle = vi.fn();
     return {
+        ...original,
         BaseDistributedHandler,
+        BaseFundsDistributedHandler,
+        BaseDistributionUpdatedHandler,
+        BaseRecipientStatusUpdatedHandler,
     };
 });
 
@@ -161,6 +196,111 @@ describe("DVMDDirectTransferHandler", () => {
         expect(DVMDAllocatedHandler.prototype.handle).toHaveBeenCalled();
     });
 
+    it("calls TimestampsUpdatedHandler for TimestampsUpdated event", async () => {
+        const mockEvent = {
+            eventName: "TimestampsUpdatedWithRegistrationAndAllocation",
+        } as ProcessorEvent<"Strategy", "TimestampsUpdatedWithRegistrationAndAllocation">;
+
+        vi.spyOn(DVMDTimestampsUpdatedHandler.prototype, "handle").mockResolvedValue([]);
+
+        await handler.handle(mockEvent);
+
+        expect(DVMDTimestampsUpdatedHandler).toHaveBeenCalledWith(mockEvent, mockChainId, {
+            metadataProvider: mockMetadataProvider,
+            roundRepository: mockRoundRepository,
+            projectRepository: mockProjectRepository,
+            evmProvider: mockEVMProvider,
+            pricingProvider: mockPricingProvider,
+            applicationRepository: mockApplicationRepository,
+            logger,
+        });
+        expect(DVMDTimestampsUpdatedHandler.prototype.handle).toHaveBeenCalled();
+    });
+
+    it("calls FundsDistributedHandler for FundsDistributed event", async () => {
+        const mockEvent = {
+            eventName: "FundsDistributed",
+        } as ProcessorEvent<"Strategy", "FundsDistributed">;
+
+        vi.spyOn(BaseFundsDistributedHandler.prototype, "handle").mockResolvedValue([]);
+
+        await handler.handle(mockEvent);
+
+        expect(BaseFundsDistributedHandler).toHaveBeenCalledWith(mockEvent, mockChainId, {
+            metadataProvider: mockMetadataProvider,
+            roundRepository: mockRoundRepository,
+            projectRepository: mockProjectRepository,
+            evmProvider: mockEVMProvider,
+            pricingProvider: mockPricingProvider,
+            applicationRepository: mockApplicationRepository,
+            logger,
+        });
+        expect(BaseFundsDistributedHandler.prototype.handle).toHaveBeenCalled();
+    });
+
+    it("calls DistributionUpdatedHandler for DistributionUpdated event", async () => {
+        const mockEvent = {
+            eventName: "DistributionUpdated",
+        } as ProcessorEvent<"Strategy", "DistributionUpdated">;
+
+        vi.spyOn(BaseDistributionUpdatedHandler.prototype, "handle").mockResolvedValue([]);
+
+        await handler.handle(mockEvent);
+
+        expect(BaseDistributionUpdatedHandler).toHaveBeenCalledWith(mockEvent, mockChainId, {
+            metadataProvider: mockMetadataProvider,
+            roundRepository: mockRoundRepository,
+            projectRepository: mockProjectRepository,
+            evmProvider: mockEVMProvider,
+            pricingProvider: mockPricingProvider,
+            applicationRepository: mockApplicationRepository,
+            logger,
+        });
+        expect(BaseDistributionUpdatedHandler.prototype.handle).toHaveBeenCalled();
+    });
+
+    it("calls RecipientStatusUpdatedHandler for RecipientStatusUpdated event", async () => {
+        const mockEvent = {
+            eventName: "RecipientStatusUpdatedWithFullRow",
+        } as ProcessorEvent<"Strategy", "RecipientStatusUpdatedWithFullRow">;
+
+        vi.spyOn(BaseRecipientStatusUpdatedHandler.prototype, "handle").mockResolvedValue([]);
+
+        await handler.handle(mockEvent);
+
+        expect(BaseRecipientStatusUpdatedHandler).toHaveBeenCalledWith(mockEvent, mockChainId, {
+            metadataProvider: mockMetadataProvider,
+            roundRepository: mockRoundRepository,
+            projectRepository: mockProjectRepository,
+            evmProvider: mockEVMProvider,
+            pricingProvider: mockPricingProvider,
+            applicationRepository: mockApplicationRepository,
+            logger,
+        });
+        expect(BaseRecipientStatusUpdatedHandler.prototype.handle).toHaveBeenCalled();
+    });
+
+    it("calls UpdatedRegistrationHandler for UpdatedRegistration event", async () => {
+        const mockEvent = {
+            eventName: "UpdatedRegistrationWithStatus",
+        } as ProcessorEvent<"Strategy", "UpdatedRegistrationWithStatus">;
+
+        vi.spyOn(DVMDUpdatedRegistrationHandler.prototype, "handle").mockResolvedValue([]);
+
+        await handler.handle(mockEvent);
+
+        expect(DVMDUpdatedRegistrationHandler).toHaveBeenCalledWith(mockEvent, mockChainId, {
+            metadataProvider: mockMetadataProvider,
+            roundRepository: mockRoundRepository,
+            projectRepository: mockProjectRepository,
+            evmProvider: mockEVMProvider,
+            pricingProvider: mockPricingProvider,
+            applicationRepository: mockApplicationRepository,
+            logger,
+        });
+        expect(DVMDUpdatedRegistrationHandler.prototype.handle).toHaveBeenCalled();
+    });
+
     describe("fetchMatchAmount", () => {
         it("fetches the correct match amount and USD value", async () => {
             const matchingFundsAvailable = 1000;
@@ -261,12 +401,6 @@ describe("DVMDDirectTransferHandler", () => {
             expect(mockEVMProvider.multicall).not.toHaveBeenCalled();
         });
     });
-
-    it.skip("calls TimestampsUpdatedHandler for TimestampsUpdated event");
-    it.skip("calls RecipientStatusUpdatedHandler for RecipientStatusUpdated event");
-    it.skip("calls DistributionUpdatedHandler for DistributionUpdated event");
-    it.skip("calls UpdatedRegistrationHandler for UpdatedRegistration event");
-    it.skip("calls FundsDistributedHandler for FundsDistributed event");
 
     it("throws UnsupportedEventException for unknown event names", async () => {
         const mockEvent = { eventName: "UnknownEvent" } as unknown as ProcessorEvent<

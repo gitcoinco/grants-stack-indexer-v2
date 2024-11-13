@@ -3,13 +3,8 @@ import { getAddress } from "viem";
 import { Changeset, NewApplication } from "@grants-stack-indexer/repository";
 import { ChainId, ProcessorEvent } from "@grants-stack-indexer/shared";
 
-import {
-    IEventHandler,
-    ProcessorDependencies,
-    ProjectNotFound,
-    RoundNotFound,
-} from "../../../../internal.js";
-import { decodeDVMDApplicationData } from "../helpers/index.js";
+import { IEventHandler, ProcessorDependencies } from "../../../../internal.js";
+import { decodeDVMDExtendedApplicationData } from "../../helpers/index.js";
 
 type Dependencies = Pick<
     ProcessorDependencies,
@@ -41,23 +36,18 @@ export class DVMDRegisteredHandler implements IEventHandler<"Strategy", "Registe
         const { blockNumber, blockTimestamp } = this.event;
 
         const anchorAddress = getAddress(recipientId);
-        const project = await projectRepository.getProjectByAnchor(this.chainId, anchorAddress);
-
-        if (!project) {
-            throw new ProjectNotFound(this.chainId, anchorAddress);
-        }
+        const project = await projectRepository.getProjectByAnchorOrThrow(
+            this.chainId,
+            anchorAddress,
+        );
 
         const strategyAddress = getAddress(this.event.srcAddress);
-        const round = await roundRepository.getRoundByStrategyAddress(
+        const round = await roundRepository.getRoundByStrategyAddressOrThrow(
             this.chainId,
             strategyAddress,
         );
 
-        if (!round) {
-            throw new RoundNotFound(this.chainId, strategyAddress);
-        }
-
-        const values = decodeDVMDApplicationData(encodedData);
+        const values = decodeDVMDExtendedApplicationData(encodedData);
         // ID is defined as recipientsCounter - 1, which is a value emitted by the strategy
         const id = (Number(values.recipientsCounter) - 1).toString();
 

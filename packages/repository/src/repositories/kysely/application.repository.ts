@@ -4,6 +4,7 @@ import { Address, ChainId, stringify } from "@grants-stack-indexer/shared";
 
 import {
     Application,
+    ApplicationNotFound,
     Database,
     IApplicationRepository,
     NewApplication,
@@ -62,6 +63,25 @@ export class KyselyApplicationRepository implements IApplicationRepository {
             .where("anchorAddress", "=", anchorAddress)
             .selectAll()
             .executeTakeFirst();
+    }
+
+    /* @inheritdoc */
+    async getApplicationByAnchorAddressOrThrow(
+        chainId: ChainId,
+        roundId: string,
+        anchorAddress: Address,
+    ): Promise<Application> {
+        const application = await this.getApplicationByAnchorAddress(
+            chainId,
+            roundId,
+            anchorAddress,
+        );
+
+        if (!application) {
+            throw new ApplicationNotFound(chainId, roundId, anchorAddress);
+        }
+
+        return application;
     }
 
     /* @inheritdoc */

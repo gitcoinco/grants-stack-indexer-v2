@@ -1,9 +1,9 @@
 import { getAddress } from "viem";
 
-import { Changeset } from "@grants-stack-indexer/repository";
+import { Changeset, ProjectByRoleNotFound } from "@grants-stack-indexer/repository";
 import { ChainId, ProcessorEvent } from "@grants-stack-indexer/shared";
 
-import { IEventHandler, ProcessorDependencies, ProjectByRoleNotFound } from "../../../internal.js";
+import { IEventHandler, ProcessorDependencies } from "../../../internal.js";
 
 type Dependencies = Pick<ProcessorDependencies, "projectRepository" | "logger">;
 /**

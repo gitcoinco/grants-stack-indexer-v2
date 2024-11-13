@@ -10,7 +10,7 @@ function createMockEvent(
 ): ProcessorEvent<"Strategy", "DistributedWithRecipientAddress"> {
     const defaultEvent: ProcessorEvent<"Strategy", "DistributedWithRecipientAddress"> = {
         params: {
-            amount: 1000n,
+            amount: "1000",
             recipientAddress: "0x1234567890123456789012345678901234567890",
             recipientId: "0x1234567890123456789012345678901234567890",
             sender: "0x1234567890123456789012345678901234567890",

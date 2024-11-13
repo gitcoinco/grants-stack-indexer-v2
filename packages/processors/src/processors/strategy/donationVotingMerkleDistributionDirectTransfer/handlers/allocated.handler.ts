@@ -1,16 +1,13 @@
-import { Address, encodePacked, getAddress, keccak256 } from "viem";
+import { encodePacked, getAddress, keccak256 } from "viem";
 
-import { Application, Changeset, Donation, Round } from "@grants-stack-indexer/repository";
-import { ChainId, getToken, ProcessorEvent, Token } from "@grants-stack-indexer/shared";
+import { Changeset, Donation } from "@grants-stack-indexer/repository";
+import { ChainId, getTokenOrThrow, ProcessorEvent } from "@grants-stack-indexer/shared";
 
 import { getTokenAmountInUsd, getUsdInTokenAmount } from "../../../../helpers/index.js";
 import {
-    ApplicationNotFound,
     IEventHandler,
     MetadataParsingFailed,
     ProcessorDependencies,
-    RoundNotFound,
-    UnknownToken,
 } from "../../../../internal.js";
 import { ApplicationMetadata, ApplicationMetadataSchema } from "../../../../schemas/index.js";
 
@@ -46,16 +43,26 @@ export class DVMDAllocatedHandler implements IEventHandler<"Strategy", "Allocate
      * @throws {MetadataParsingFailed} if the metadata is invalid
      */
     async handle(): Promise<Changeset[]> {
+        const { roundRepository, applicationRepository } = this.dependencies;
         const { srcAddress } = this.event;
-        const { recipientId: _recipientId, amount, token: _token } = this.event.params;
+        const { recipientId: _recipientId, amount: strAmount, token: _token } = this.event.params;
 
-        const round = await this.getRoundOrThrow(srcAddress);
-        const application = await this.getApplicationOrThrow(round.id, _recipientId);
+        const amount = BigInt(strAmount);
+
+        const round = await roundRepository.getRoundByStrategyAddressOrThrow(
+            this.chainId,
+            getAddress(srcAddress),
+        );
+        const application = await applicationRepository.getApplicationByAnchorAddressOrThrow(
+            this.chainId,
+            round.id,
+            getAddress(_recipientId),
+        );
 
         const donationId = this.getDonationId(this.event.blockNumber, this.event.logIndex);
 
-        const token = this.getTokenOrThrow(_token);
-        const matchToken = this.getTokenOrThrow(round.matchTokenAddress);
+        const token = getTokenOrThrow(this.chainId, _token);
+        const matchToken = getTokenOrThrow(this.chainId, round.matchTokenAddress);
 
         const { amountInUsd, timestamp: priceTimestamp } = await getTokenAmountInUsd(
             this.dependencies.pricingProvider,
@@ -104,68 +111,10 @@ export class DVMDAllocatedHandler implements IEventHandler<"Strategy", "Allocate
     }
 
     /**
-     * Retrieves a round by its strategy address.
-     * @param {Address} strategyAddress - The address of the strategy.
-     * @returns {Promise<Round>} The round found.
-     * @throws {RoundNotFound} if the round does not exist.
-     */
-    private async getRoundOrThrow(strategyAddress: Address): Promise<Round> {
-        const normalizedStrategyAddress = getAddress(strategyAddress);
-        const round = await this.dependencies.roundRepository.getRoundByStrategyAddress(
-            this.chainId,
-            normalizedStrategyAddress,
-        );
-
-        if (!round) {
-            throw new RoundNotFound(this.chainId, normalizedStrategyAddress);
-        }
-
-        return round;
-    }
-
-    /**
-     * Retrieves an application by its round ID and recipient address.
-     * @param {string} roundId - The ID of the round.
-     * @param {Address} recipientId - The address of the recipient.
-     * @returns {Promise<Application>} The application found.
-     * @throws {ApplicationNotFound} if the application does not exist.
-     */
-    private async getApplicationOrThrow(
-        roundId: string,
-        recipientId: Address,
-    ): Promise<Application> {
-        const normalizedRecipientId = getAddress(recipientId);
-        const application =
-            await this.dependencies.applicationRepository.getApplicationByAnchorAddress(
-                this.chainId,
-                roundId,
-                normalizedRecipientId,
-            );
-
-        if (!application) {
-            throw new ApplicationNotFound(this.chainId, roundId, normalizedRecipientId);
-        }
-
-        return application;
-    }
-
-    /**
      * DONATION_ID = keccak256(abi.encodePacked(blockNumber, "-", logIndex));
      */
     private getDonationId(blockNumber: number, logIndex: number): string {
         return keccak256(encodePacked(["string"], [`${blockNumber}-${logIndex}`]));
-    }
-
-    /**
-     * Retrieves a token by its address and chain ID.
-     * @param {Address} tokenAddress - The address of the token.
-     * @returns {Token} The token found.
-     * @throws {UnknownToken} if the token does not exist.
-     */
-    private getTokenOrThrow(tokenAddress: Address): Token {
-        const token = getToken(this.chainId, getAddress(tokenAddress));
-        if (!token) throw new UnknownToken(tokenAddress, this.chainId);
-        return token;
     }
 
     /**
