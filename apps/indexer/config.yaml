@@ -76,7 +76,7 @@ contracts:
           - event: AllocatedWithNft(address indexed recipientId, uint256 votes, address nft, address allocator)
 
           # DirectAllocated
-          - event: DirectAllocated(address indexed recipient, uint256 amount, address token, address sender)
+          - event: DirectAllocated(bytes32 indexed profileId, address profileOwner, uint256 amount, address token, address sender)
 
           # RecipientStatusUpdated
           - event: RecipientStatusUpdated(address indexed recipientId, uint256 applicationId, uint8 status, address sender)

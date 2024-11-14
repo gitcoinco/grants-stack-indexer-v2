@@ -27,6 +27,15 @@ export interface IProjectReadRepository {
     getProjectById(chainId: ChainId, projectId: string): Promise<Project | undefined>;
 
     /**
+     * Retrieves a specific project by its ID and chain ID.
+     * @param chainId The chain ID of the project.
+     * @param projectId The unique identifier of the project.
+     * @returns A promise that resolves to a Project object.
+     * @throws {ProjectNotFound} if the project does not exist
+     */
+    getProjectByIdOrThrow(chainId: ChainId, projectId: string): Promise<Project>;
+
+    /**
      * Retrieves all pending project roles.
      * @returns A promise that resolves to an array of PendingProjectRole objects.
      */

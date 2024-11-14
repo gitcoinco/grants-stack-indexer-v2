@@ -407,6 +407,8 @@ describe("DVMDDirectTransferHandler", () => {
             "Strategy",
             StrategyEvent
         >;
-        await expect(() => handler.handle(mockEvent)).rejects.toThrow(UnsupportedEventException);
+        await expect(() => handler.handle(mockEvent)).rejects.toThrow(
+            new UnsupportedEventException("Strategy", "UnknownEvent", handler.name),
+        );
     });
 });
