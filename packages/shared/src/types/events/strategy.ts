@@ -26,6 +26,7 @@ const StrategyEventArray = [
     "UpdatedRegistrationWithStatus",
     "UpdatedRegistration",
     "UpdatedRegistrationWithApplicationId",
+    "DirectAllocated",
 ] as const;
 
 /**
@@ -72,7 +73,9 @@ export type StrategyEventParams<T extends StrategyEvent> = T extends "Registered
                                     ? UpdatedRegistrationParams
                                     : T extends "UpdatedRegistrationWithApplicationId"
                                       ? UpdatedRegistrationWithApplicationIdParams
-                                      : never;
+                                      : T extends "DirectAllocated"
+                                        ? DirectAllocatedParams
+                                        : never;
 
 // =============================================================================
 // =============================== Event Parameters ============================
@@ -206,6 +209,15 @@ export type UpdatedRegistrationWithApplicationIdParams = {
     data: Hex;
     sender: Address;
     status: string; //uint8
+};
+
+// ======================= DirectAllocated =======================
+export type DirectAllocatedParams = {
+    profileId: Bytes32String;
+    profileOwner: Address;
+    amount: string; //uint256
+    token: Address;
+    sender: Address;
 };
 
 /**

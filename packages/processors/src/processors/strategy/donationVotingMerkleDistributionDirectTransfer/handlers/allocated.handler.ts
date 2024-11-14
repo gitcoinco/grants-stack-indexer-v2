@@ -1,4 +1,4 @@
-import { encodePacked, getAddress, keccak256 } from "viem";
+import { getAddress } from "viem";
 
 import { Changeset, Donation } from "@grants-stack-indexer/repository";
 import { ChainId, getTokenOrThrow, ProcessorEvent } from "@grants-stack-indexer/shared";
@@ -10,6 +10,7 @@ import {
     ProcessorDependencies,
 } from "../../../../internal.js";
 import { ApplicationMetadata, ApplicationMetadataSchema } from "../../../../schemas/index.js";
+import { getDonationId } from "../../helpers/index.js";
 
 type Dependencies = Pick<
     ProcessorDependencies,
@@ -59,7 +60,7 @@ export class DVMDAllocatedHandler implements IEventHandler<"Strategy", "Allocate
             getAddress(_recipientId),
         );
 
-        const donationId = this.getDonationId(this.event.blockNumber, this.event.logIndex);
+        const donationId = getDonationId(this.event.blockNumber, this.event.logIndex);
 
         const token = getTokenOrThrow(this.chainId, _token);
         const matchToken = getTokenOrThrow(this.chainId, round.matchTokenAddress);
@@ -108,13 +109,6 @@ export class DVMDAllocatedHandler implements IEventHandler<"Strategy", "Allocate
                 args: { donation },
             },
         ];
-    }
-
-    /**
-     * DONATION_ID = keccak256(abi.encodePacked(blockNumber, "-", logIndex));
-     */
-    private getDonationId(blockNumber: number, logIndex: number): string {
-        return keccak256(encodePacked(["string"], [`${blockNumber}-${logIndex}`]));
     }
 
     /**

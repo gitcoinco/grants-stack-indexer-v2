@@ -45,6 +45,13 @@ export class KyselyProjectRepository implements IProjectRepository {
     }
 
     /* @inheritdoc */
+    async getProjectByIdOrThrow(chainId: ChainId, projectId: string): Promise<Project> {
+        const project = await this.getProjectById(chainId, projectId);
+        if (!project) throw new ProjectNotFound(chainId, projectId);
+        return project;
+    }
+
+    /* @inheritdoc */
     async getProjectByAnchor(
         chainId: ChainId,
         anchorAddress: Address,

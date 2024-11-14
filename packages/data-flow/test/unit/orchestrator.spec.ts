@@ -284,6 +284,7 @@ describe("Orchestrator", { sequential: true }, () => {
             UpdatedRegistrationWithStatus: "",
             UpdatedRegistration: "",
             UpdatedRegistrationWithApplicationId: "",
+            DirectAllocated: "",
         };
 
         for (const event of Object.keys(strategyEvents) as StrategyEvent[]) {
