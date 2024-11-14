@@ -112,7 +112,7 @@ export class DVMDDirectTransferStrategyHandler extends BaseStrategyHandler {
                     this.dependencies,
                 ).handle();
             default:
-                throw new UnsupportedEventException("Strategy", event.eventName);
+                throw new UnsupportedEventException("Strategy", event.eventName, this.name);
         }
     }
 
