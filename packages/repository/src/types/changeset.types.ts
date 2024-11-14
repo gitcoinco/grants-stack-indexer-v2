@@ -1,5 +1,6 @@
 import type { Address, ChainId } from "@grants-stack-indexer/shared";
 
+import { NewApplicationPayout } from "../internal.js";
 import { NewApplication, PartialApplication } from "./application.types.js";
 import { NewDonation } from "./donation.types.js";
 import {
@@ -159,10 +160,16 @@ export type DonationChangeset =
           };
       };
 
-//TODO: add changeset for Donation and Payout tables
+export type ApplicationPayoutChangeset = {
+    type: "InsertApplicationPayout";
+    args: {
+        applicationPayout: NewApplicationPayout;
+    };
+};
 
 export type Changeset =
     | ProjectChangeset
     | RoundChangeset
     | ApplicationChangeset
-    | DonationChangeset;
+    | DonationChangeset
+    | ApplicationPayoutChangeset;

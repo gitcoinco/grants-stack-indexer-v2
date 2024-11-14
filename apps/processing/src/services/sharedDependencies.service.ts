@@ -8,6 +8,7 @@ import { IpfsProvider } from "@grants-stack-indexer/metadata";
 import { PricingProviderFactory } from "@grants-stack-indexer/pricing";
 import {
     createKyselyDatabase,
+    KyselyApplicationPayoutRepository,
     KyselyApplicationRepository,
     KyselyDonationRepository,
     KyselyProjectRepository,
@@ -50,6 +51,10 @@ export class SharedDependenciesService {
             kyselyDatabase,
             env.DATABASE_SCHEMA,
         );
+        const applicationPayoutRepository = new KyselyApplicationPayoutRepository(
+            kyselyDatabase,
+            env.DATABASE_SCHEMA,
+        );
         const pricingProvider = PricingProviderFactory.create(env, { logger });
 
         const metadataProvider = new IpfsProvider(env.IPFS_GATEWAYS_URL, logger);
@@ -72,6 +77,7 @@ export class SharedDependenciesService {
                 pricingProvider,
                 donationRepository,
                 metadataProvider,
+                applicationPayoutRepository,
             },
             registries: {
                 eventsRegistry,

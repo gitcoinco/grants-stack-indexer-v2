@@ -6,6 +6,7 @@ import { IIndexerClient } from "@grants-stack-indexer/indexer-client";
 import { UnsupportedStrategy } from "@grants-stack-indexer/processors";
 import {
     Changeset,
+    IApplicationPayoutRepository,
     IApplicationRepository,
     IDonationRepository,
     IProjectRepository,
@@ -94,6 +95,7 @@ describe("Orchestrator", { sequential: true }, () => {
             roundRepository: {} as unknown as IRoundRepository,
             applicationRepository: {} as unknown as IApplicationRepository,
             donationRepository: {} as unknown as IDonationRepository,
+            applicationPayoutRepository: {} as unknown as IApplicationPayoutRepository,
             pricingProvider: {
                 getTokenPrice: vi.fn(),
             },

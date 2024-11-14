@@ -1,5 +1,6 @@
 import {
     Changeset,
+    IApplicationPayoutRepository,
     IApplicationRepository,
     IDonationRepository,
     IProjectRepository,
@@ -10,6 +11,7 @@ import { ILogger, stringify } from "@grants-stack-indexer/shared";
 import { ExecutionResult, IDataLoader, InvalidChangeset } from "../internal.js";
 import {
     createApplicationHandlers,
+    createApplicationPayoutHandlers,
     createDonationHandlers,
     createProjectHandlers,
     createRoundHandlers,
@@ -38,6 +40,7 @@ export class DataLoader implements IDataLoader {
             round: IRoundRepository;
             application: IApplicationRepository;
             donation: IDonationRepository;
+            applicationPayout: IApplicationPayoutRepository;
         },
         private readonly logger: ILogger,
     ) {
@@ -46,6 +49,7 @@ export class DataLoader implements IDataLoader {
             ...createRoundHandlers(repositories.round),
             ...createApplicationHandlers(repositories.application),
             ...createDonationHandlers(repositories.donation),
+            ...createApplicationPayoutHandlers(repositories.applicationPayout),
         };
     }
 
