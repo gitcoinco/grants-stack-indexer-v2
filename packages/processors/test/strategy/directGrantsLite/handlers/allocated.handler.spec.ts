@@ -1,4 +1,4 @@
-import { getAddress, parseEther } from "viem";
+import { getAddress, pad, parseEther } from "viem";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { IPricingProvider } from "@grants-stack-indexer/pricing";
@@ -10,9 +10,15 @@ import {
     Round,
     RoundNotFound,
 } from "@grants-stack-indexer/repository";
-import { ChainId, DeepPartial, mergeDeep, ProcessorEvent } from "@grants-stack-indexer/shared";
+import {
+    ChainId,
+    DeepPartial,
+    mergeDeep,
+    ProcessorEvent,
+    UnknownToken,
+} from "@grants-stack-indexer/shared";
 
-import { TokenPriceNotFoundError } from "../../../../src/exceptions/index.js";
+import { TokenPriceNotFoundError } from "../../../../src/exceptions/tokenPriceNotFound.exception.js";
 import { DGLiteAllocatedHandler } from "../../../../src/processors/strategy/directGrantsLite/handlers/allocated.handler.js";
 
 function createMockEvent(
@@ -63,7 +69,7 @@ describe("DGLiteAllocatedHandler", () => {
         } as IPricingProvider;
     });
 
-    it("should handle a valid allocation event", async () => {
+    it("handles a valid allocation event", async () => {
         const amount = parseEther("10").toString();
         mockEvent = createMockEvent({ params: { amount } });
         const mockRound = {
@@ -123,7 +129,7 @@ describe("DGLiteAllocatedHandler", () => {
         });
     });
 
-    it("should throw RoundNotFound if round is not found", async () => {
+    it("throws RoundNotFound if round is not found", async () => {
         mockEvent = createMockEvent();
         vi.spyOn(mockRoundRepository, "getRoundByStrategyAddressOrThrow").mockRejectedValue(
             new RoundNotFound(chainId, mockEvent.strategyId),
@@ -138,7 +144,7 @@ describe("DGLiteAllocatedHandler", () => {
         await expect(handler.handle()).rejects.toThrow(RoundNotFound);
     });
 
-    it("should throw ApplicationNotFound if application is not found", async () => {
+    it("throws ApplicationNotFound if application is not found", async () => {
         mockEvent = createMockEvent();
         const mockRound = {
             id: "round1",
@@ -173,7 +179,112 @@ describe("DGLiteAllocatedHandler", () => {
         await expect(handler.handle()).rejects.toThrow(ApplicationNotFound);
     });
 
-    it("should handle different token and match token", async () => {
+    it("throws UnknownToken if params token is not found", async () => {
+        mockEvent = createMockEvent({
+            params: { token: pad("0x1", { size: 20 }) },
+        });
+        const mockRound = {
+            id: "round1",
+            matchTokenAddress: "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1",
+        } as unknown as Round;
+        const mockApplication = {
+            id: "app1",
+            metadata: {
+                application: {
+                    round: "round1",
+                    recipient: "0xcBf407C33d68a55CB594Ffc8f4fD1416Bba39DA5",
+                },
+            },
+            projectId: "project1",
+        } as unknown as Application;
+
+        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddressOrThrow").mockResolvedValue(
+            mockRound,
+        );
+        vi.spyOn(
+            mockApplicationRepository,
+            "getApplicationByAnchorAddressOrThrow",
+        ).mockResolvedValue(mockApplication);
+
+        handler = new DGLiteAllocatedHandler(mockEvent, chainId, {
+            roundRepository: mockRoundRepository,
+            applicationRepository: mockApplicationRepository,
+            pricingProvider: mockPricingProvider,
+        });
+
+        await expect(handler.handle()).rejects.toThrow(UnknownToken);
+    });
+
+    it("throws UnknownToken if match token is not found", async () => {
+        mockEvent = createMockEvent();
+        const mockRound = {
+            id: "round1",
+            matchTokenAddress: pad("0x1", { size: 20 }),
+        } as unknown as Round;
+        const mockApplication = {
+            id: "app1",
+            metadata: {
+                application: {
+                    round: "round1",
+                    recipient: "0xcBf407C33d68a55CB594Ffc8f4fD1416Bba39DA5",
+                },
+            },
+            projectId: "project1",
+        } as unknown as Application;
+
+        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddressOrThrow").mockResolvedValue(
+            mockRound,
+        );
+        vi.spyOn(
+            mockApplicationRepository,
+            "getApplicationByAnchorAddressOrThrow",
+        ).mockResolvedValue(mockApplication);
+
+        handler = new DGLiteAllocatedHandler(mockEvent, chainId, {
+            roundRepository: mockRoundRepository,
+            applicationRepository: mockApplicationRepository,
+            pricingProvider: mockPricingProvider,
+        });
+
+        await expect(handler.handle()).rejects.toThrow(UnknownToken);
+    });
+
+    it("throws TokenPriceNotFound if token price is not found", async () => {
+        mockEvent = createMockEvent();
+        const mockRound = {
+            id: "round1",
+            matchTokenAddress: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+        } as unknown as Round;
+        const mockApplication = {
+            id: "app1",
+            metadata: {
+                application: {
+                    round: "round1",
+                    recipient: "0xcBf407C33d68a55CB594Ffc8f4fD1416Bba39DA5",
+                },
+            },
+            projectId: "project1",
+        } as unknown as Application;
+
+        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddressOrThrow").mockResolvedValue(
+            mockRound,
+        );
+        vi.spyOn(
+            mockApplicationRepository,
+            "getApplicationByAnchorAddressOrThrow",
+        ).mockResolvedValue(mockApplication);
+        vi.spyOn(mockPricingProvider, "getTokenPrice").mockResolvedValue(undefined);
+
+        handler = new DGLiteAllocatedHandler(mockEvent, chainId, {
+            roundRepository: mockRoundRepository,
+            applicationRepository: mockApplicationRepository,
+            pricingProvider: mockPricingProvider,
+        });
+
+        await expect(handler.handle()).rejects.toThrow(TokenPriceNotFoundError);
+    });
+
+    it("handles different token and match token", async () => {
         const amount = parseEther("10").toString();
         mockEvent = createMockEvent({ params: { amount } });
         const mockRound = {
