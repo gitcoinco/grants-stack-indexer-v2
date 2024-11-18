@@ -2,6 +2,7 @@ import { Hex } from "viem";
 
 import type { StrategyHandlerConstructor } from "../../internal.js";
 import { DirectAllocationStrategyHandler } from "./directAllocation/index.js";
+import { DirectGrantsSimpleStrategyHandler } from "./directGrantsSimple/index.js";
 import { DVMDDirectTransferStrategyHandler } from "./donationVotingMerkleDistributionDirectTransfer/dvmdDirectTransfer.handler.js";
 
 /**
@@ -21,6 +22,10 @@ const strategyIdToHandler: Readonly<Record<string, StrategyHandlerConstructor>> 
         DVMDDirectTransferStrategyHandler, // DonationVotingMerkleDistributionDirectTransferStrategyv2.1
     "0x4cd0051913234cdd7d165b208851240d334786d6e5afbb4d0eec203515a9c6f3":
         DirectAllocationStrategyHandler,
+    "0x263cb916541b6fc1fb5543a244829ccdba75264b097726e6ecc3c3cfce824bf5":
+        DirectGrantsSimpleStrategyHandler,
+    "0x53fb9d3bce0956ca2db5bb1441f5ca23050cb1973b33789e04a5978acfd9ca93":
+        DirectGrantsSimpleStrategyHandler,
 } as const;
 
 /**
