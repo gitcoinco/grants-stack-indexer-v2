@@ -59,25 +59,30 @@ export class DGLiteAllocatedHandler implements IEventHandler<"Strategy", "Alloca
         const token = getTokenOrThrow(this.chainId, tokenAddress);
         const matchToken = getTokenOrThrow(this.chainId, round.matchTokenAddress);
 
-        const { amountInUsd } = await getTokenAmountInUsd(
-            this.dependencies.pricingProvider,
-            token,
-            amount,
-            this.event.blockTimestamp,
-        );
+        let amountInUsd = "0";
+        let amountInRoundMatchToken = 0n;
 
-        let amountInRoundMatchToken: bigint | null = null;
-        amountInRoundMatchToken =
-            matchToken.address === token.address
-                ? amount
-                : (
-                      await getUsdInTokenAmount(
-                          this.dependencies.pricingProvider,
-                          matchToken,
-                          amountInUsd,
-                          this.event.blockTimestamp,
-                      )
-                  ).amount;
+        if (amount > 0) {
+            const { amountInUsd: amountInUsdString } = await getTokenAmountInUsd(
+                this.dependencies.pricingProvider,
+                token,
+                amount,
+                this.event.blockTimestamp,
+            );
+            amountInUsd = amountInUsdString;
+
+            amountInRoundMatchToken =
+                matchToken.address === token.address
+                    ? amount
+                    : (
+                          await getUsdInTokenAmount(
+                              this.dependencies.pricingProvider,
+                              matchToken,
+                              amountInUsd,
+                              this.event.blockTimestamp,
+                          )
+                      ).amount;
+        }
 
         const timestamp = this.event.blockTimestamp;
 

@@ -106,6 +106,60 @@ describe("DGLiteAllocatedHandler", () => {
         });
     });
 
+    it("doesn't fetch token price if amount is 0", async () => {
+        mockEvent = createMockEvent(eventName, defaultParams, defaultStrategyId, {
+            params: { amount: "0" },
+        });
+        const mockRound = {
+            id: "round1",
+            matchTokenAddress: "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1",
+            matchAmount: BigInt(0),
+            matchAmountInUsd: "0",
+            fundedAmount: BigInt(0),
+            fundedAmountInUsd: "0",
+            totalAmountDonatedInUsd: "0",
+            totalDonationsCount: 0,
+            uniqueDonorsCount: 0,
+            tags: [],
+        } as unknown as Round;
+
+        const mockApplication = {
+            id: "app1",
+            projectId: "project1",
+        } as unknown as Application;
+
+        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddressOrThrow").mockResolvedValue(
+            mockRound,
+        );
+        vi.spyOn(
+            mockApplicationRepository,
+            "getApplicationByAnchorAddressOrThrow",
+        ).mockResolvedValue(mockApplication);
+
+        handler = new DGLiteAllocatedHandler(mockEvent, chainId, {
+            roundRepository: mockRoundRepository,
+            applicationRepository: mockApplicationRepository,
+            pricingProvider: mockPricingProvider,
+        });
+
+        const result = await handler.handle();
+        const changeset = result[0] as {
+            type: "InsertApplicationPayout";
+            args: {
+                applicationPayout: {
+                    amount: bigint;
+                    amountInUsd: string;
+                    amountInRoundMatchToken: bigint;
+                };
+            };
+        };
+
+        expect(mockPricingProvider.getTokenPrice).not.toHaveBeenCalled();
+        expect(changeset.args.applicationPayout.amount).toBe(0n);
+        expect(changeset.args.applicationPayout.amountInUsd).toBe("0");
+        expect(changeset.args.applicationPayout.amountInRoundMatchToken).toBe(0n);
+    });
+
     it("throws RoundNotFound if round is not found", async () => {
         mockEvent = createMockEvent(eventName, defaultParams, defaultStrategyId);
         vi.spyOn(mockRoundRepository, "getRoundByStrategyAddressOrThrow").mockRejectedValue(
