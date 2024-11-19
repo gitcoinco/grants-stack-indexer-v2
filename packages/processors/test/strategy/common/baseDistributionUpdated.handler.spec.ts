@@ -3,46 +3,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { IMetadataProvider } from "@grants-stack-indexer/metadata";
 import { PartialRound } from "@grants-stack-indexer/repository";
-import {
-    Bytes32String,
-    ChainId,
-    DeepPartial,
-    Logger,
-    mergeDeep,
-    ProcessorEvent,
-} from "@grants-stack-indexer/shared";
+import { Bytes32String, ChainId, Logger, ProcessorEvent } from "@grants-stack-indexer/shared";
 
 import {
     BaseDistributionUpdatedHandler,
     MetadataNotFound,
     MetadataParsingFailed,
 } from "../../../src/internal.js";
-
-function createMockEvent(
-    overrides: DeepPartial<ProcessorEvent<"Strategy", "DistributionUpdated">> = {},
-): ProcessorEvent<"Strategy", "DistributionUpdated"> {
-    const defaultEvent: ProcessorEvent<"Strategy", "DistributionUpdated"> = {
-        params: {
-            metadata: ["1", "ipfs://QmTestHash"],
-            merkleRoot: "0xroot" as Bytes32String,
-        },
-        eventName: "DistributionUpdated",
-        srcAddress: "0x1234567890123456789012345678901234567890",
-        blockNumber: 12345,
-        blockTimestamp: 1000000000,
-        chainId: 10 as ChainId,
-        contractName: "Strategy",
-        logIndex: 1,
-        transactionFields: {
-            hash: "0xd2352acdcd59e312370831ea927d51a1917654697a72434cd905a60897a5bb8b",
-            transactionIndex: 6,
-            from: "0xcBf407C33d68a55CB594Ffc8f4fD1416Bba39DA5",
-        },
-        strategyId: "0x9fa6890423649187b1f0e8bf4265f0305ce99523c3d11aa36b35a54617bb0ec0",
-    };
-
-    return mergeDeep(defaultEvent, overrides);
-}
+import { createMockEvent } from "../../mocks/index.js";
 
 describe("BaseDistributionUpdatedHandler", () => {
     let handler: BaseDistributionUpdatedHandler;
@@ -50,6 +18,12 @@ describe("BaseDistributionUpdatedHandler", () => {
     let mockLogger: Logger;
     let mockEvent: ProcessorEvent<"Strategy", "DistributionUpdated">;
     const chainId = 10 as ChainId;
+    const eventName = "DistributionUpdated";
+    const defaultParams = {
+        metadata: ["1", "ipfs://QmTestHash"] as [string, string],
+        merkleRoot: "0xroot" as Bytes32String,
+    };
+    const defaultStrategyId = "0x9fa6890423649187b1f0e8bf4265f0305ce99523c3d11aa36b35a54617bb0ec0";
 
     beforeEach(() => {
         mockMetadataProvider = {
@@ -64,7 +38,7 @@ describe("BaseDistributionUpdatedHandler", () => {
     });
 
     it("handles a valid distribution update event", async () => {
-        mockEvent = createMockEvent();
+        mockEvent = createMockEvent(eventName, defaultParams, defaultStrategyId);
         const mockDistribution = {
             matchingDistribution: [
                 {
@@ -105,7 +79,7 @@ describe("BaseDistributionUpdatedHandler", () => {
     });
 
     it("throws MetadataNotFound if distribution metadata is not found", async () => {
-        mockEvent = createMockEvent();
+        mockEvent = createMockEvent(eventName, defaultParams, defaultStrategyId);
         vi.spyOn(mockMetadataProvider, "getMetadata").mockResolvedValue(undefined);
 
         handler = new BaseDistributionUpdatedHandler(mockEvent, chainId, {
@@ -120,7 +94,7 @@ describe("BaseDistributionUpdatedHandler", () => {
     });
 
     it("throw MatchingDistributionParsingError if distribution format is invalid", async () => {
-        mockEvent = createMockEvent();
+        mockEvent = createMockEvent(eventName, defaultParams, defaultStrategyId);
         const invalidDistribution = {
             matchingDistribution: [
                 {
@@ -145,7 +119,7 @@ describe("BaseDistributionUpdatedHandler", () => {
     });
 
     it("handles empty matching distribution array", async () => {
-        mockEvent = createMockEvent();
+        mockEvent = createMockEvent(eventName, defaultParams, defaultStrategyId);
         const emptyDistribution = {
             matchingDistribution: [],
         };

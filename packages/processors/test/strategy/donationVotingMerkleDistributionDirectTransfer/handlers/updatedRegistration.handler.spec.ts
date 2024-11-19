@@ -13,43 +13,10 @@ import {
     Round,
     RoundNotFound,
 } from "@grants-stack-indexer/repository";
-import {
-    ChainId,
-    DeepPartial,
-    Logger,
-    mergeDeep,
-    ProcessorEvent,
-} from "@grants-stack-indexer/shared";
+import { ChainId, Logger, ProcessorEvent } from "@grants-stack-indexer/shared";
 
 import { DVMDUpdatedRegistrationHandler } from "../../../../src/internal.js";
-
-function createMockEvent(
-    overrides: DeepPartial<ProcessorEvent<"Strategy", "UpdatedRegistrationWithStatus">> = {},
-): ProcessorEvent<"Strategy", "UpdatedRegistrationWithStatus"> {
-    const defaultEvent: ProcessorEvent<"Strategy", "UpdatedRegistrationWithStatus"> = {
-        params: {
-            recipientId: "0x1234567890123456789012345678901234567890",
-            status: "1",
-            data: "0x0000000000000000000000002c7296a5ec0539f0a018c7176c97c92a9c44e2b4000000000000000000000000e7eb5d2b5b188777df902e89c54570e7ef4f59ce000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000003b6261666b72656967796334336366696e786c6e6168713561617773676869626574763675737273376b6b78663776786d7a626a79726f37366977790000000000",
-            sender: "0xcBf407C33d68a55CB594Ffc8f4fD1416Bba39DA5",
-        },
-        eventName: "UpdatedRegistrationWithStatus",
-        srcAddress: "0x1234567890123456789012345678901234567890",
-        blockNumber: 12345,
-        blockTimestamp: 1000000000,
-        chainId: 10 as ChainId,
-        contractName: "Strategy",
-        logIndex: 1,
-        transactionFields: {
-            hash: "0xd2352acdcd59e312370831ea927d51a1917654697a72434cd905a60897a5bb8b",
-            transactionIndex: 6,
-            from: "0xcBf407C33d68a55CB594Ffc8f4fD1416Bba39DA5",
-        },
-        strategyId: "0x9fa6890423649187b1f0e8bf4265f0305ce99523c3d11aa36b35a54617bb0ec0",
-    };
-
-    return mergeDeep(defaultEvent, overrides);
-}
+import { createMockEvent } from "../../../mocks/index.js";
 
 describe("DVMDUpdatedRegistrationHandler", () => {
     let handler: DVMDUpdatedRegistrationHandler;
@@ -60,6 +27,14 @@ describe("DVMDUpdatedRegistrationHandler", () => {
     let mockLogger: Logger;
     let mockEvent: ProcessorEvent<"Strategy", "UpdatedRegistrationWithStatus">;
     const chainId = 10 as ChainId;
+    const eventName = "UpdatedRegistrationWithStatus";
+    const defaultParams = {
+        recipientId: "0x1234567890123456789012345678901234567890",
+        status: "1",
+        data: "0x0000000000000000000000002c7296a5ec0539f0a018c7176c97c92a9c44e2b4000000000000000000000000e7eb5d2b5b188777df902e89c54570e7ef4f59ce000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000003b6261666b72656967796334336366696e786c6e6168713561617773676869626574763675737273376b6b78663776786d7a626a79726f37366977790000000000",
+        sender: "0xcBf407C33d68a55CB594Ffc8f4fD1416Bba39DA5",
+    } as const;
+    const defaultStrategyId = "0x9fa6890423649187b1f0e8bf4265f0305ce99523c3d11aa36b35a54617bb0ec0";
 
     beforeEach(() => {
         mockRoundRepository = {
@@ -83,7 +58,9 @@ describe("DVMDUpdatedRegistrationHandler", () => {
     });
 
     it("handles a valid registration update event", async () => {
-        mockEvent = createMockEvent({ params: { status: "2" } });
+        mockEvent = createMockEvent(eventName, defaultParams, defaultStrategyId, {
+            params: { status: "2" },
+        });
         const mockProject = {
             id: "project1",
             anchorAddress: mockEvent.params.recipientId,
@@ -146,7 +123,9 @@ describe("DVMDUpdatedRegistrationHandler", () => {
     it("returns empty array if status is invalid", async () => {
         const invalidStatuses = ["0", "4", "10"];
         for (const status of invalidStatuses) {
-            mockEvent = createMockEvent({ params: { status } });
+            mockEvent = createMockEvent(eventName, defaultParams, defaultStrategyId, {
+                params: { status },
+            });
 
             handler = new DVMDUpdatedRegistrationHandler(mockEvent, chainId, {
                 roundRepository: mockRoundRepository,
@@ -166,7 +145,7 @@ describe("DVMDUpdatedRegistrationHandler", () => {
     });
 
     it("throws ProjectNotFound if project is not found", async () => {
-        mockEvent = createMockEvent();
+        mockEvent = createMockEvent(eventName, defaultParams, defaultStrategyId);
         vi.spyOn(mockProjectRepository, "getProjectByAnchorOrThrow").mockRejectedValue(
             new ProjectNotFound(chainId, mockEvent.params.recipientId),
         );
@@ -183,7 +162,7 @@ describe("DVMDUpdatedRegistrationHandler", () => {
     });
 
     it("throws RoundNotFound if round is not found", async () => {
-        mockEvent = createMockEvent();
+        mockEvent = createMockEvent(eventName, defaultParams, defaultStrategyId);
         const mockProject = {
             id: "project1",
             anchorAddress: mockEvent.params.recipientId,
@@ -206,7 +185,7 @@ describe("DVMDUpdatedRegistrationHandler", () => {
     });
 
     it("throws ApplicationNotFound if application is not found", async () => {
-        mockEvent = createMockEvent();
+        mockEvent = createMockEvent(eventName, defaultParams, defaultStrategyId);
         const mockProject = {
             id: "project1",
             anchorAddress: mockEvent.params.recipientId,
@@ -236,7 +215,7 @@ describe("DVMDUpdatedRegistrationHandler", () => {
     });
 
     it("handles undefined metadata", async () => {
-        mockEvent = createMockEvent();
+        mockEvent = createMockEvent(eventName, defaultParams, defaultStrategyId);
         const mockProject = {
             id: "project1",
             anchorAddress: mockEvent.params.recipientId,
@@ -279,7 +258,9 @@ describe("DVMDUpdatedRegistrationHandler", () => {
     });
 
     it("doesn't add status snapshot if status hasn't changed", async () => {
-        mockEvent = createMockEvent({ params: { status: "1" } }); // 1 is PENDING
+        mockEvent = createMockEvent(eventName, defaultParams, defaultStrategyId, {
+            params: { status: "1" },
+        }); // 1 is PENDING
         const mockProject = {
             id: "project1",
             anchorAddress: mockEvent.params.recipientId,

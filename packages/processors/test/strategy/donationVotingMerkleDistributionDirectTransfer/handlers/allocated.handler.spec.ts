@@ -10,48 +10,14 @@ import {
     Round,
     RoundNotFound,
 } from "@grants-stack-indexer/repository";
-import {
-    ChainId,
-    DeepPartial,
-    mergeDeep,
-    ProcessorEvent,
-    UnknownToken,
-} from "@grants-stack-indexer/shared";
+import { ChainId, ProcessorEvent, UnknownToken } from "@grants-stack-indexer/shared";
 
 import {
     MetadataParsingFailed,
     TokenPriceNotFoundError,
 } from "../../../../src/exceptions/index.js";
 import { DVMDAllocatedHandler } from "../../../../src/processors/strategy/donationVotingMerkleDistributionDirectTransfer/handlers/allocated.handler.js";
-
-function createMockEvent(
-    overrides: DeepPartial<ProcessorEvent<"Strategy", "AllocatedWithOrigin">> = {},
-): ProcessorEvent<"Strategy", "AllocatedWithOrigin"> {
-    const defaultEvent: ProcessorEvent<"Strategy", "AllocatedWithOrigin"> = {
-        params: {
-            recipientId: "0x1234567890123456789012345678901234567890",
-            amount: "10",
-            token: "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1",
-            origin: "0xcBf407C33d68a55CB594Ffc8f4fD1416Bba39DA5",
-            sender: "0xcBf407C33d68a55CB594Ffc8f4fD1416Bba39DA5",
-        },
-        eventName: "AllocatedWithOrigin",
-        srcAddress: "0x1234567890123456789012345678901234567890",
-        blockNumber: 118034410,
-        blockTimestamp: 1000000000,
-        chainId: 10 as ChainId,
-        contractName: "Strategy",
-        logIndex: 92,
-        transactionFields: {
-            hash: "0xd2352acdcd59e312370831ea927d51a1917654697a72434cd905a60897a5bb8b",
-            transactionIndex: 6,
-            from: "0xcBf407C33d68a55CB594Ffc8f4fD1416Bba39DA5",
-        },
-        strategyId: "0x9fa6890423649187b1f0e8bf4265f0305ce99523c3d11aa36b35a54617bb0ec0",
-    };
-
-    return mergeDeep(defaultEvent, overrides);
-}
+import { createMockEvent } from "../../../mocks/index.js";
 
 describe("DVMDAllocatedHandler", () => {
     let handler: DVMDAllocatedHandler;
@@ -60,7 +26,16 @@ describe("DVMDAllocatedHandler", () => {
     let mockPricingProvider: IPricingProvider;
     let mockEvent: ProcessorEvent<"Strategy", "AllocatedWithOrigin">;
     const chainId = 10 as ChainId;
-    const expectedDonationId = "0x60077b059a7ca75483cf0651e209a0d5c14ad2afb1fd363c728f13680d24c546";
+    const eventName = "AllocatedWithOrigin";
+    const defaultParams = {
+        recipientId: "0x1234567890123456789012345678901234567890",
+        amount: "10",
+        token: "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1",
+        origin: "0xcBf407C33d68a55CB594Ffc8f4fD1416Bba39DA5",
+        sender: "0xcBf407C33d68a55CB594Ffc8f4fD1416Bba39DA5",
+    } as const;
+    const defaultStrategyId = "0x9fa6890423649187b1f0e8bf4265f0305ce99523c3d11aa36b35a54617bb0ec0";
+    const expectedDonationId = "0x86ec85686b02d646ee8a45f0770e85db890679ef7e5f962a51be056f32d54e15";
 
     beforeEach(() => {
         mockRoundRepository = {
@@ -76,7 +51,9 @@ describe("DVMDAllocatedHandler", () => {
 
     it("handle a valid allocated event", async () => {
         const amount = parseEther("10").toString();
-        mockEvent = createMockEvent({ params: { amount } });
+        mockEvent = createMockEvent(eventName, defaultParams, defaultStrategyId, {
+            params: { amount },
+        });
         const mockRound = {
             id: "round1",
             matchTokenAddress: "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1",
@@ -139,7 +116,9 @@ describe("DVMDAllocatedHandler", () => {
 
     it("match token is different from event token", async () => {
         const amount = parseEther("1500").toString();
-        mockEvent = createMockEvent({ params: { amount } });
+        mockEvent = createMockEvent(eventName, defaultParams, defaultStrategyId, {
+            params: { amount },
+        });
         const mockRound = {
             id: "round1",
             matchTokenAddress: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
@@ -198,7 +177,7 @@ describe("DVMDAllocatedHandler", () => {
     });
 
     it("throws RoundNotFound if round is not found", async () => {
-        mockEvent = createMockEvent();
+        mockEvent = createMockEvent(eventName, defaultParams, defaultStrategyId);
         vi.spyOn(mockRoundRepository, "getRoundByStrategyAddressOrThrow").mockRejectedValue(
             new RoundNotFound(chainId, mockEvent.strategyId),
         );
@@ -213,7 +192,7 @@ describe("DVMDAllocatedHandler", () => {
     });
 
     it("throws ApplicationNotFound if application is not found", async () => {
-        mockEvent = createMockEvent();
+        mockEvent = createMockEvent(eventName, defaultParams, defaultStrategyId);
         const mockRound = {
             id: "round1",
             matchTokenAddress: "0x0987654321098765432109876543210987654321",
@@ -239,7 +218,7 @@ describe("DVMDAllocatedHandler", () => {
     });
 
     it("throws UnknownToken if params token is not found", async () => {
-        mockEvent = createMockEvent({
+        mockEvent = createMockEvent(eventName, defaultParams, defaultStrategyId, {
             params: { token: pad("0x1", { size: 20 }) },
         });
         const mockRound = {
@@ -275,7 +254,7 @@ describe("DVMDAllocatedHandler", () => {
     });
 
     it("throws UnknownToken if match token is not found", async () => {
-        mockEvent = createMockEvent();
+        mockEvent = createMockEvent(eventName, defaultParams, defaultStrategyId);
         const mockRound = {
             id: "round1",
             matchTokenAddress: pad("0x1", { size: 20 }),
@@ -309,7 +288,7 @@ describe("DVMDAllocatedHandler", () => {
     });
 
     it("throws TokenPriceNotFound if token price is not found", async () => {
-        mockEvent = createMockEvent();
+        mockEvent = createMockEvent(eventName, defaultParams, defaultStrategyId);
         const mockRound = {
             id: "round1",
             matchTokenAddress: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
@@ -344,7 +323,7 @@ describe("DVMDAllocatedHandler", () => {
     });
 
     it("throws MetadataParsingFailed if metadata is invalid", async () => {
-        mockEvent = createMockEvent();
+        mockEvent = createMockEvent(eventName, defaultParams, defaultStrategyId);
 
         const mockRound = {
             id: "round1",

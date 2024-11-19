@@ -10,44 +10,11 @@ import {
     Round,
     RoundNotFound,
 } from "@grants-stack-indexer/repository";
-import {
-    ChainId,
-    DeepPartial,
-    mergeDeep,
-    ProcessorEvent,
-    UnknownToken,
-} from "@grants-stack-indexer/shared";
+import { ChainId, ProcessorEvent, UnknownToken } from "@grants-stack-indexer/shared";
 
 import { TokenPriceNotFoundError } from "../../../../src/exceptions/tokenPriceNotFound.exception.js";
 import { DGLiteAllocatedHandler } from "../../../../src/processors/strategy/directGrantsLite/handlers/allocated.handler.js";
-
-function createMockEvent(
-    overrides: DeepPartial<ProcessorEvent<"Strategy", "AllocatedWithToken">> = {},
-): ProcessorEvent<"Strategy", "AllocatedWithToken"> {
-    const defaultEvent: ProcessorEvent<"Strategy", "AllocatedWithToken"> = {
-        params: {
-            recipientId: "0x1234567890123456789012345678901234567890",
-            amount: parseEther("10").toString(),
-            token: "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1",
-            sender: "0xcBf407C33d68a55CB594Ffc8f4fD1416Bba39DA5",
-        },
-        eventName: "AllocatedWithToken",
-        srcAddress: "0x1234567890123456789012345678901234567890",
-        blockNumber: 118034410,
-        blockTimestamp: 1000000000,
-        chainId: 10 as ChainId,
-        contractName: "Strategy",
-        logIndex: 92,
-        transactionFields: {
-            hash: "0xd2352acdcd59e312370831ea927d51a1917654697a72434cd905a60897a5bb8b",
-            transactionIndex: 6,
-            from: "0xcBf407C33d68a55CB594Ffc8f4fD1416Bba39DA5",
-        },
-        strategyId: "0x9fa6890423649187b1f0e8bf4265f0305ce99523c3d11aa36b35a54617bb0ec0",
-    };
-
-    return mergeDeep(defaultEvent, overrides);
-}
+import { createMockEvent } from "../../../mocks/index.js";
 
 describe("DGLiteAllocatedHandler", () => {
     let handler: DGLiteAllocatedHandler;
@@ -56,6 +23,14 @@ describe("DGLiteAllocatedHandler", () => {
     let mockPricingProvider: IPricingProvider;
     let mockEvent: ProcessorEvent<"Strategy", "AllocatedWithToken">;
     const chainId = 10 as ChainId;
+    const eventName = "AllocatedWithToken";
+    const defaultParams = {
+        recipientId: "0x1234567890123456789012345678901234567890",
+        amount: parseEther("10").toString(),
+        token: "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1",
+        sender: "0xcBf407C33d68a55CB594Ffc8f4fD1416Bba39DA5",
+    } as const;
+    const defaultStrategyId = "0x9fa6890423649187b1f0e8bf4265f0305ce99523c3d11aa36b35a54617bb0ec0";
 
     beforeEach(() => {
         mockRoundRepository = {
@@ -71,7 +46,9 @@ describe("DGLiteAllocatedHandler", () => {
 
     it("handles a valid allocation event", async () => {
         const amount = parseEther("10").toString();
-        mockEvent = createMockEvent({ params: { amount } });
+        mockEvent = createMockEvent(eventName, defaultParams, defaultStrategyId, {
+            params: { amount },
+        });
         const mockRound = {
             id: "round1",
             matchTokenAddress: "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1",
@@ -130,7 +107,7 @@ describe("DGLiteAllocatedHandler", () => {
     });
 
     it("throws RoundNotFound if round is not found", async () => {
-        mockEvent = createMockEvent();
+        mockEvent = createMockEvent(eventName, defaultParams, defaultStrategyId);
         vi.spyOn(mockRoundRepository, "getRoundByStrategyAddressOrThrow").mockRejectedValue(
             new RoundNotFound(chainId, mockEvent.strategyId),
         );
@@ -145,7 +122,7 @@ describe("DGLiteAllocatedHandler", () => {
     });
 
     it("throws ApplicationNotFound if application is not found", async () => {
-        mockEvent = createMockEvent();
+        mockEvent = createMockEvent(eventName, defaultParams, defaultStrategyId);
         const mockRound = {
             id: "round1",
             chainId,
@@ -180,7 +157,7 @@ describe("DGLiteAllocatedHandler", () => {
     });
 
     it("throws UnknownToken if params token is not found", async () => {
-        mockEvent = createMockEvent({
+        mockEvent = createMockEvent(eventName, defaultParams, defaultStrategyId, {
             params: { token: pad("0x1", { size: 20 }) },
         });
         const mockRound = {
@@ -216,7 +193,7 @@ describe("DGLiteAllocatedHandler", () => {
     });
 
     it("throws UnknownToken if match token is not found", async () => {
-        mockEvent = createMockEvent();
+        mockEvent = createMockEvent(eventName, defaultParams, defaultStrategyId);
         const mockRound = {
             id: "round1",
             matchTokenAddress: pad("0x1", { size: 20 }),
@@ -250,7 +227,7 @@ describe("DGLiteAllocatedHandler", () => {
     });
 
     it("throws TokenPriceNotFound if token price is not found", async () => {
-        mockEvent = createMockEvent();
+        mockEvent = createMockEvent(eventName, defaultParams, defaultStrategyId);
         const mockRound = {
             id: "round1",
             matchTokenAddress: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
@@ -286,7 +263,9 @@ describe("DGLiteAllocatedHandler", () => {
 
     it("handles different token and match token", async () => {
         const amount = parseEther("10").toString();
-        mockEvent = createMockEvent({ params: { amount } });
+        mockEvent = createMockEvent(eventName, defaultParams, defaultStrategyId, {
+            params: { amount },
+        });
         const mockRound = {
             id: "round1",
             chainId,
