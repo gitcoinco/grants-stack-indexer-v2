@@ -29,7 +29,12 @@ export class DGLiteRegisteredHandler implements IEventHandler<"Strategy", "Regis
         private readonly dependencies: Dependencies,
     ) {}
 
-    /** @inheritdoc */
+    /**
+     * Handles the RegisteredWithSender event for the Direct Grants Lite strategy.
+     * @returns The changeset with an InsertApplication operation.
+     * @throws ProjectNotFound if the project is not found.
+     * @throws RoundNotFound if the round is not found.
+     */
     async handle(): Promise<Changeset[]> {
         const { projectRepository, roundRepository, metadataProvider } = this.dependencies;
         const { data: encodedData, recipientId, sender } = this.event.params;

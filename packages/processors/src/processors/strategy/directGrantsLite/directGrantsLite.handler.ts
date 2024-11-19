@@ -9,7 +9,7 @@ import {
     StrategyTimings,
     UnsupportedEventException,
 } from "../../../internal.js";
-import { BaseStrategyHandler } from "../common/base.strategy.js";
+import { BaseStrategyHandler } from "../index.js";
 import {
     DGLiteAllocatedHandler,
     DGLiteRegisteredHandler,

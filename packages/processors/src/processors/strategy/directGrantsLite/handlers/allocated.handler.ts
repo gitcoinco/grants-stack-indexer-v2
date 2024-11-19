@@ -28,7 +28,14 @@ export class DGLiteAllocatedHandler implements IEventHandler<"Strategy", "Alloca
         private readonly dependencies: Dependencies,
     ) {}
 
-    /** @inheritdoc */
+    /**
+     * Handles the AllocatedWithToken event for the Direct Grants Lite strategy.
+     * @returns The changeset with an InsertApplicationPayout operation.
+     * @throws RoundNotFound if the round is not found.
+     * @throws ApplicationNotFound if the application is not found.
+     * @throws TokenNotFound if the token is not found.
+     * @throws TokenPriceNotFound if the token price is not found.
+     */
     async handle(): Promise<Changeset[]> {
         const { roundRepository, applicationRepository } = this.dependencies;
         const { srcAddress } = this.event;
