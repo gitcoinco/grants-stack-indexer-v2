@@ -3,11 +3,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { IRoundRepository, Round, RoundNotFound } from "@grants-stack-indexer/repository";
 import { ChainId, ProcessorEvent } from "@grants-stack-indexer/shared";
 
-import { DGSimpleTimestampsUpdatedHandler } from "../../../../src/processors/strategy/directGrantsSimple/handlers/timestampsUpdated.handler.js";
+import { DGLiteTimestampsUpdatedHandler } from "../../../../src/processors/strategy/directGrantsLite/handlers/timestampsUpdated.handler.js";
 import { createMockEvent } from "../../../mocks/index.js";
 
-describe("DGSimpleTimestampsUpdatedHandler", () => {
-    let handler: DGSimpleTimestampsUpdatedHandler;
+describe("DGLiteTimestampsUpdatedHandler", () => {
+    let handler: DGLiteTimestampsUpdatedHandler;
     let mockRoundRepository: IRoundRepository;
     let mockEvent: ProcessorEvent<"Strategy", "TimestampsUpdated">;
     const chainId = 10 as ChainId;
@@ -27,31 +27,41 @@ describe("DGSimpleTimestampsUpdatedHandler", () => {
 
     it("handles a valid timestamps update event", async () => {
         mockEvent = createMockEvent(eventName, defaultParams, defaultStrategyId);
-        const mockRound = { id: "round1" } as Round;
+        const mockRound = { id: "round1" } as unknown as Round;
 
         vi.spyOn(mockRoundRepository, "getRoundByStrategyAddressOrThrow").mockResolvedValue(
             mockRound,
         );
 
-        handler = new DGSimpleTimestampsUpdatedHandler(mockEvent, chainId, {
+        handler = new DGLiteTimestampsUpdatedHandler(mockEvent, chainId, {
             roundRepository: mockRoundRepository,
         });
 
         const result = await handler.handle();
 
-        expect(result).toEqual([
-            {
-                type: "UpdateRound",
-                args: {
-                    chainId,
-                    roundId: "round1",
-                    round: {
-                        applicationsStartTime: new Date("2024-01-01T00:00:00.000Z"),
-                        applicationsEndTime: new Date("2024-01-02T00:00:00.000Z"),
-                    },
+        const updateRound = result[0] as {
+            type: "UpdateRound";
+            args: {
+                chainId: ChainId;
+                roundId: string;
+                round: {
+                    applicationsStartTime: Date;
+                    applicationsEndTime: Date;
+                };
+            };
+        };
+
+        expect(updateRound).toEqual({
+            type: "UpdateRound",
+            args: {
+                chainId,
+                roundId: "round1",
+                round: {
+                    applicationsStartTime: new Date("2024-01-01T00:00:00.000Z"),
+                    applicationsEndTime: new Date("2024-01-02T00:00:00.000Z"),
                 },
             },
-        ]);
+        });
     });
 
     it("throws RoundNotFound if round is not found", async () => {
@@ -60,7 +70,7 @@ describe("DGSimpleTimestampsUpdatedHandler", () => {
             new RoundNotFound(chainId, mockEvent.strategyId),
         );
 
-        handler = new DGSimpleTimestampsUpdatedHandler(mockEvent, chainId, {
+        handler = new DGLiteTimestampsUpdatedHandler(mockEvent, chainId, {
             roundRepository: mockRoundRepository,
         });
 

@@ -67,10 +67,10 @@ export const decodeDVMDExtendedApplicationData = (
 ): DVMDExtendedApplicationData => {
     const values = decodeAbiParameters(DVMD_EVENT_DATA_DECODER, encodedData);
 
-    const encodededDVMD = decodeDVMDApplicationData(values[0]);
+    const decodedDVMD = decodeDVMDApplicationData(values[0]);
 
     return {
-        ...encodededDVMD,
+        ...decodedDVMD,
         recipientsCounter: values[1].toString(),
     };
 };

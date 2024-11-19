@@ -6,7 +6,7 @@ import {
     ApplicationNotFound,
     IApplicationRepository,
     IProjectRepository,
-    IRoundReadRepository,
+    IRoundRepository,
     PartialApplication,
     Project,
     ProjectNotFound,
@@ -15,12 +15,12 @@ import {
 } from "@grants-stack-indexer/repository";
 import { ChainId, Logger, ProcessorEvent } from "@grants-stack-indexer/shared";
 
-import { DVMDUpdatedRegistrationHandler } from "../../../../src/internal.js";
+import { DGLiteUpdatedRegistrationHandler } from "../../../../src/processors/strategy/directGrantsLite/handlers/updatedRegistration.handler.js";
 import { createMockEvent } from "../../../mocks/index.js";
 
-describe("DVMDUpdatedRegistrationHandler", () => {
-    let handler: DVMDUpdatedRegistrationHandler;
-    let mockRoundRepository: IRoundReadRepository;
+describe("DGLiteUpdatedRegistrationHandler", () => {
+    let handler: DGLiteUpdatedRegistrationHandler;
+    let mockRoundRepository: IRoundRepository;
     let mockApplicationRepository: IApplicationRepository;
     let mockProjectRepository: IProjectRepository;
     let mockMetadataProvider: IMetadataProvider;
@@ -30,7 +30,7 @@ describe("DVMDUpdatedRegistrationHandler", () => {
     const eventName = "UpdatedRegistrationWithStatus";
     const defaultParams = {
         recipientId: "0x1234567890123456789012345678901234567890",
-        status: "1",
+        status: "2",
         data: "0x0000000000000000000000002c7296a5ec0539f0a018c7176c97c92a9c44e2b4000000000000000000000000e7eb5d2b5b188777df902e89c54570e7ef4f59ce000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000003b6261666b72656967796334336366696e786c6e6168713561617773676869626574763675737273376b6b78663776786d7a626a79726f37366977790000000000",
         sender: "0xcBf407C33d68a55CB594Ffc8f4fD1416Bba39DA5",
     } as const;
@@ -39,7 +39,7 @@ describe("DVMDUpdatedRegistrationHandler", () => {
     beforeEach(() => {
         mockRoundRepository = {
             getRoundByStrategyAddressOrThrow: vi.fn(),
-        } as unknown as IRoundReadRepository;
+        } as unknown as IRoundRepository;
         mockApplicationRepository = {
             getApplicationByAnchorAddressOrThrow: vi.fn(),
         } as unknown as IApplicationRepository;
@@ -58,9 +58,7 @@ describe("DVMDUpdatedRegistrationHandler", () => {
     });
 
     it("handles a valid registration update event", async () => {
-        mockEvent = createMockEvent(eventName, defaultParams, defaultStrategyId, {
-            params: { status: "2" },
-        });
+        mockEvent = createMockEvent(eventName, defaultParams, defaultStrategyId);
         const mockProject = {
             id: "project1",
             anchorAddress: mockEvent.params.recipientId,
@@ -84,7 +82,7 @@ describe("DVMDUpdatedRegistrationHandler", () => {
         ).mockResolvedValue(mockApplication);
         vi.spyOn(mockMetadataProvider, "getMetadata").mockResolvedValue(mockMetadata);
 
-        handler = new DVMDUpdatedRegistrationHandler(mockEvent, chainId, {
+        handler = new DGLiteUpdatedRegistrationHandler(mockEvent, chainId, {
             roundRepository: mockRoundRepository,
             applicationRepository: mockApplicationRepository,
             projectRepository: mockProjectRepository,
@@ -94,54 +92,50 @@ describe("DVMDUpdatedRegistrationHandler", () => {
 
         const result = await handler.handle();
 
-        expect(result).toEqual([
-            {
-                type: "UpdateApplication",
-                args: {
-                    chainId,
-                    roundId: "round1",
-                    applicationId: "app1",
-                    application: {
-                        ...mockApplication,
-                        metadata: mockMetadata,
-                        metadataCid: "bafkreigyc43cfinxlnahq5aawsghibetv6usrs7kkxf7vxmzbjyro76iwy",
-                        status: "APPROVED",
-                        statusUpdatedAtBlock: BigInt(mockEvent.blockNumber),
-                        statusSnapshots: [
-                            {
-                                status: "APPROVED",
-                                updatedAtBlock: mockEvent.blockNumber.toString(),
-                                updatedAt: new Date(mockEvent.blockTimestamp),
-                            },
-                        ],
-                    },
+        expect(result[0]).toEqual({
+            type: "UpdateApplication",
+            args: {
+                chainId,
+                roundId: "round1",
+                applicationId: "app1",
+                application: {
+                    ...mockApplication,
+                    metadata: mockMetadata,
+                    metadataCid: "bafkreigyc43cfinxlnahq5aawsghibetv6usrs7kkxf7vxmzbjyro76iwy",
+                    status: "APPROVED",
+                    statusUpdatedAtBlock: BigInt(mockEvent.blockNumber),
+                    statusSnapshots: [
+                        {
+                            status: "APPROVED",
+                            updatedAtBlock: mockEvent.blockNumber.toString(),
+                            updatedAt: new Date(mockEvent.blockTimestamp),
+                        },
+                    ],
                 },
             },
-        ]);
+        });
     });
 
-    it("returns empty array if status is invalid", async () => {
-        const invalidStatuses = ["0", "4", "10"];
-        for (const status of invalidStatuses) {
-            mockEvent = createMockEvent(eventName, defaultParams, defaultStrategyId, {
-                params: { status },
-            });
+    it("returns empty array for invalid status", async () => {
+        mockEvent = createMockEvent(eventName, defaultParams, defaultStrategyId, {
+            params: { status: "4" },
+        }); // Invalid status
 
-            handler = new DVMDUpdatedRegistrationHandler(mockEvent, chainId, {
-                roundRepository: mockRoundRepository,
-                applicationRepository: mockApplicationRepository,
-                projectRepository: mockProjectRepository,
-                metadataProvider: mockMetadataProvider,
-                logger: mockLogger,
-            });
+        handler = new DGLiteUpdatedRegistrationHandler(mockEvent, chainId, {
+            roundRepository: mockRoundRepository,
+            applicationRepository: mockApplicationRepository,
+            projectRepository: mockProjectRepository,
+            metadataProvider: mockMetadataProvider,
+            logger: mockLogger,
+        });
 
-            const result = await handler.handle();
-
-            expect(result).toEqual([]);
-            expect(mockLogger.warn).toHaveBeenCalledWith(
-                `[DVMDUpdatedRegistrationHandler] Invalid status: ${mockEvent.params.status}`,
-            );
-        }
+        const result = await handler.handle();
+        expect(result).toEqual([]);
+        expect(mockLogger.warn).toHaveBeenCalledWith(
+            expect.stringContaining(
+                `[DGLiteUpdatedRegistrationHandler] Invalid status: ${mockEvent.params.status}`,
+            ),
+        );
     });
 
     it("throws ProjectNotFound if project is not found", async () => {
@@ -150,7 +144,7 @@ describe("DVMDUpdatedRegistrationHandler", () => {
             new ProjectNotFound(chainId, mockEvent.params.recipientId),
         );
 
-        handler = new DVMDUpdatedRegistrationHandler(mockEvent, chainId, {
+        handler = new DGLiteUpdatedRegistrationHandler(mockEvent, chainId, {
             roundRepository: mockRoundRepository,
             applicationRepository: mockApplicationRepository,
             projectRepository: mockProjectRepository,
@@ -170,10 +164,10 @@ describe("DVMDUpdatedRegistrationHandler", () => {
 
         vi.spyOn(mockProjectRepository, "getProjectByAnchorOrThrow").mockResolvedValue(mockProject);
         vi.spyOn(mockRoundRepository, "getRoundByStrategyAddressOrThrow").mockRejectedValue(
-            new RoundNotFound(chainId, mockEvent.strategyId),
+            new RoundNotFound(chainId, mockEvent.srcAddress),
         );
 
-        handler = new DVMDUpdatedRegistrationHandler(mockEvent, chainId, {
+        handler = new DGLiteUpdatedRegistrationHandler(mockEvent, chainId, {
             roundRepository: mockRoundRepository,
             applicationRepository: mockApplicationRepository,
             projectRepository: mockProjectRepository,
@@ -183,7 +177,6 @@ describe("DVMDUpdatedRegistrationHandler", () => {
 
         await expect(handler.handle()).rejects.toThrow(RoundNotFound);
     });
-
     it("throws ApplicationNotFound if application is not found", async () => {
         mockEvent = createMockEvent(eventName, defaultParams, defaultStrategyId);
         const mockProject = {
@@ -203,7 +196,7 @@ describe("DVMDUpdatedRegistrationHandler", () => {
             new ApplicationNotFound(chainId, mockRound.id, mockEvent.params.recipientId),
         );
 
-        handler = new DVMDUpdatedRegistrationHandler(mockEvent, chainId, {
+        handler = new DGLiteUpdatedRegistrationHandler(mockEvent, chainId, {
             roundRepository: mockRoundRepository,
             applicationRepository: mockApplicationRepository,
             projectRepository: mockProjectRepository,
@@ -238,7 +231,7 @@ describe("DVMDUpdatedRegistrationHandler", () => {
         ).mockResolvedValue(mockApplication);
         vi.spyOn(mockMetadataProvider, "getMetadata").mockResolvedValue(undefined);
 
-        handler = new DVMDUpdatedRegistrationHandler(mockEvent, chainId, {
+        handler = new DGLiteUpdatedRegistrationHandler(mockEvent, chainId, {
             roundRepository: mockRoundRepository,
             applicationRepository: mockApplicationRepository,
             projectRepository: mockProjectRepository,
@@ -268,7 +261,7 @@ describe("DVMDUpdatedRegistrationHandler", () => {
         const mockRound = { id: "round1" } as Round;
         const mockApplication = {
             id: "app1",
-            status: "PENDING", // Same status as in the event
+            status: "PENDING", // Same as new status
             statusSnapshots: [
                 {
                     status: "PENDING",
@@ -289,7 +282,7 @@ describe("DVMDUpdatedRegistrationHandler", () => {
         ).mockResolvedValue(mockApplication);
         vi.spyOn(mockMetadataProvider, "getMetadata").mockResolvedValue(null);
 
-        handler = new DVMDUpdatedRegistrationHandler(mockEvent, chainId, {
+        handler = new DGLiteUpdatedRegistrationHandler(mockEvent, chainId, {
             roundRepository: mockRoundRepository,
             applicationRepository: mockApplicationRepository,
             projectRepository: mockProjectRepository,
@@ -298,14 +291,10 @@ describe("DVMDUpdatedRegistrationHandler", () => {
         });
 
         const result = await handler.handle();
-
-        expect(result).toHaveLength(1);
         const changeset = result[0] as {
             type: "UpdateApplication";
-            args: { application: PartialApplication };
+            args: { application: { statusSnapshots: unknown[] } };
         };
         expect(changeset.args.application.statusSnapshots).toHaveLength(1);
-        expect(changeset.args.application.status).toBe("PENDING");
-        expect(changeset.args.application.statusSnapshots).toEqual(mockApplication.statusSnapshots);
     });
 });

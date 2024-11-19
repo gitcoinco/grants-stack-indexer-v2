@@ -225,7 +225,7 @@ export async function up(db: Kysely<any>): Promise<void> {
         .addColumn("amount", BIGINT_TYPE)
         .addColumn("tokenAddress", ADDRESS_TYPE)
         .addColumn("amountInUsd", CURRENCY_TYPE)
-        .addColumn("amountInRoundMatchToken", "text")
+        .addColumn("amountInRoundMatchToken", BIGINT_TYPE)
         .addColumn("transactionHash", "text")
         .addColumn("timestamp", "timestamptz")
         .addColumn("sender", ADDRESS_TYPE)

@@ -4,7 +4,7 @@ import { Changeset, NewApplication } from "@grants-stack-indexer/repository";
 import { ChainId, ProcessorEvent } from "@grants-stack-indexer/shared";
 
 import { IEventHandler, ProcessorDependencies } from "../../../../internal.js";
-import { decodeDGApplicationData } from "../../helpers/index.js";
+import { decodeDVMDExtendedApplicationData } from "../../helpers/index.js";
 
 type Dependencies = Pick<
     ProcessorDependencies,
@@ -12,7 +12,7 @@ type Dependencies = Pick<
 >;
 
 /**
- * Handles the Registered event for the Donation Voting Merkle Distribution Direct Transfer strategy.
+ * Handles the Registered event for the Direct Grants Lite strategy.
  *
  * This handler performs the following core actions when a project registers for a round:
  * - Validates that both the project and round exist
@@ -22,9 +22,7 @@ type Dependencies = Pick<
  * - Links the application to both the project and round
  */
 
-export class DGSimpleRegisteredHandler
-    implements IEventHandler<"Strategy", "RegisteredWithSender">
-{
+export class DGLiteRegisteredHandler implements IEventHandler<"Strategy", "RegisteredWithSender"> {
     constructor(
         readonly event: ProcessorEvent<"Strategy", "RegisteredWithSender">,
         private readonly chainId: ChainId,
@@ -32,7 +30,7 @@ export class DGSimpleRegisteredHandler
     ) {}
 
     /**
-     * Handles the RegisteredWithSender event for the Direct Grants Simple strategy.
+     * Handles the RegisteredWithSender event for the Direct Grants Lite strategy.
      * @returns The changeset with an InsertApplication operation.
      * @throws ProjectNotFound if the project is not found.
      * @throws RoundNotFound if the round is not found.
@@ -54,8 +52,9 @@ export class DGSimpleRegisteredHandler
             strategyAddress,
         );
 
-        const values = decodeDGApplicationData(encodedData);
-        const id = recipientId;
+        const values = decodeDVMDExtendedApplicationData(encodedData);
+        // ID is defined as recipientsCounter - 1, which is a value emitted by the strategy
+        const id = (Number(values.recipientsCounter) - 1).toString();
 
         const metadata = await metadataProvider.getMetadata(values.metadata.pointer);
 

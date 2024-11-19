@@ -5,6 +5,7 @@ import { IMetadataProvider } from "@grants-stack-indexer/metadata";
 import {
     IProjectRepository,
     IRoundRepository,
+    NewApplication,
     Project,
     ProjectNotFound,
     Round,
@@ -12,38 +13,11 @@ import {
 } from "@grants-stack-indexer/repository";
 import { ChainId, ProcessorEvent } from "@grants-stack-indexer/shared";
 
-import { DGSimpleRegisteredHandler } from "../../../../src/processors/strategy/directGrantsSimple/handlers/registered.handler.js";
+import { DGLiteRegisteredHandler } from "../../../../src/processors/strategy/directGrantsLite/handlers/registered.handler.js";
 import { createMockEvent } from "../../../mocks/index.js";
 
-// function createMockEvent(
-//     overrides: DeepPartial<ProcessorEvent<"Strategy", "RegisteredWithSender">> = {},
-// ): ProcessorEvent<"Strategy", "RegisteredWithSender"> {
-//     const defaultEvent: ProcessorEvent<"Strategy", "RegisteredWithSender"> = {
-//         params: {
-//             recipientId: "0x1234567890123456789012345678901234567890",
-//             data: "0x0000000000000000000000001234567890123456789012345678901234567890000000000000000000000000abcdefabcdefabcdefabcdefabcdefabcdefabcd0000000000000000000000000000000000000000000000000de0b6b3a7640000000000000000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000003b6261666b72656967796334336366696e786c6e6168713561617773676869626574763675737273376b6b78663776786d7a626a79726f37366977790000000000",
-//             sender: "0xcBf407C33d68a55CB594Ffc8f4fD1416Bba39DA5",
-//         },
-//         eventName: "RegisteredWithSender",
-//         srcAddress: "0x1234567890123456789012345678901234567890",
-//         blockNumber: 12345,
-//         blockTimestamp: 1000000000,
-//         chainId: 10 as ChainId,
-//         contractName: "Strategy",
-//         logIndex: 1,
-//         transactionFields: {
-//             hash: "0xd2352acdcd59e312370831ea927d51a1917654697a72434cd905a60897a5bb8b",
-//             transactionIndex: 6,
-//             from: "0xcBf407C33d68a55CB594Ffc8f4fD1416Bba39DA5",
-//         },
-//         strategyId: "0x9fa6890423649187b1f0e8bf4265f0305ce99523c3d11aa36b35a54617bb0ec0",
-//     };
-
-//     return mergeDeep(defaultEvent, overrides);
-// }
-
-describe("DGSimpleRegisteredHandler", () => {
-    let handler: DGSimpleRegisteredHandler;
+describe("DGLiteRegisteredHandler", () => {
+    let handler: DGLiteRegisteredHandler;
     let mockRoundRepository: IRoundRepository;
     let mockProjectRepository: IProjectRepository;
     let mockMetadataProvider: IMetadataProvider;
@@ -52,7 +26,7 @@ describe("DGSimpleRegisteredHandler", () => {
     const eventName = "RegisteredWithSender";
     const defaultParams = {
         recipientId: "0x1234567890123456789012345678901234567890",
-        data: "0x0000000000000000000000001234567890123456789012345678901234567890000000000000000000000000abcdefabcdefabcdefabcdefabcdefabcdefabcd0000000000000000000000000000000000000000000000000de0b6b3a7640000000000000000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000003b6261666b72656967796334336366696e786c6e6168713561617773676869626574763675737273376b6b78663776786d7a626a79726f37366977790000000000",
+        data: "0x000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000100000000000000000000000000accc041f3d1f576198ac88ede32e58c3476710a700000000000000000000000058338e95caef17861916ef10dad5fafe20421005000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000003b6261666b72656966736e77736a6c6b74746632626d6f646a6c646e76766c366677707271766a6976786b67367a6e74376a656c62786a75717a33650000000000",
         sender: "0xcBf407C33d68a55CB594Ffc8f4fD1416Bba39DA5",
     } as const;
     const defaultStrategyId = "0x9fa6890423649187b1f0e8bf4265f0305ce99523c3d11aa36b35a54617bb0ec0";
@@ -74,8 +48,11 @@ describe("DGSimpleRegisteredHandler", () => {
         const mockProject = {
             id: "project1",
             anchorAddress: mockEvent.params.recipientId,
-        } as Project;
-        const mockRound = { id: "round1" } as Round;
+        } as unknown as Project;
+        const mockRound = {
+            id: "round1",
+            chainId,
+        } as unknown as Round;
         const mockMetadata = { name: "Test Project" };
 
         vi.spyOn(mockProjectRepository, "getProjectByAnchorOrThrow").mockResolvedValue(mockProject);
@@ -84,7 +61,7 @@ describe("DGSimpleRegisteredHandler", () => {
         );
         vi.spyOn(mockMetadataProvider, "getMetadata").mockResolvedValue(mockMetadata);
 
-        handler = new DGSimpleRegisteredHandler(mockEvent, chainId, {
+        handler = new DGLiteRegisteredHandler(mockEvent, chainId, {
             roundRepository: mockRoundRepository,
             projectRepository: mockProjectRepository,
             metadataProvider: mockMetadataProvider,
@@ -97,12 +74,12 @@ describe("DGSimpleRegisteredHandler", () => {
                 type: "InsertApplication",
                 args: {
                     chainId,
-                    id: mockEvent.params.recipientId,
+                    id: "1",
                     projectId: "project1",
                     anchorAddress: getAddress(mockEvent.params.recipientId),
                     roundId: "round1",
                     status: "PENDING",
-                    metadataCid: "bafkreigyc43cfinxlnahq5aawsghibetv6usrs7kkxf7vxmzbjyro76iwy",
+                    metadataCid: "bafkreifsnwsjlkttf2bmodjldnvvl6fwprqvjivxkg6znt7jelbxjuqz3e",
                     metadata: mockMetadata,
                     createdAtBlock: BigInt(mockEvent.blockNumber),
                     createdByAddress: getAddress(mockEvent.params.sender),
@@ -122,6 +99,42 @@ describe("DGSimpleRegisteredHandler", () => {
                 },
             },
         ]);
+
+        expect(mockMetadataProvider.getMetadata).toHaveBeenCalledWith(
+            "bafkreifsnwsjlkttf2bmodjldnvvl6fwprqvjivxkg6znt7jelbxjuqz3e",
+        );
+    });
+
+    it("handles null metadata", async () => {
+        mockEvent = createMockEvent(eventName, defaultParams, defaultStrategyId);
+        const mockProject = {
+            id: "project1",
+            anchorAddress: mockEvent.params.recipientId,
+        } as unknown as Project;
+        const mockRound = {
+            id: "round1",
+            chainId,
+        } as unknown as Round;
+
+        vi.spyOn(mockProjectRepository, "getProjectByAnchorOrThrow").mockResolvedValue(mockProject);
+        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddressOrThrow").mockResolvedValue(
+            mockRound,
+        );
+        vi.spyOn(mockMetadataProvider, "getMetadata").mockResolvedValue(null);
+
+        handler = new DGLiteRegisteredHandler(mockEvent, chainId, {
+            roundRepository: mockRoundRepository,
+            projectRepository: mockProjectRepository,
+            metadataProvider: mockMetadataProvider,
+        });
+
+        const result = await handler.handle();
+        expect(result).toHaveLength(1);
+        const changeset = result[0] as {
+            type: "InsertApplication";
+            args: NewApplication;
+        };
+        expect(changeset.args.metadata).toBeNull();
     });
 
     it("throws ProjectNotFound if project is not found", async () => {
@@ -130,7 +143,7 @@ describe("DGSimpleRegisteredHandler", () => {
             new ProjectNotFound(chainId, mockEvent.params.recipientId),
         );
 
-        handler = new DGSimpleRegisteredHandler(mockEvent, chainId, {
+        handler = new DGLiteRegisteredHandler(mockEvent, chainId, {
             roundRepository: mockRoundRepository,
             projectRepository: mockProjectRepository,
             metadataProvider: mockMetadataProvider,
@@ -144,47 +157,19 @@ describe("DGSimpleRegisteredHandler", () => {
         const mockProject = {
             id: "project1",
             anchorAddress: mockEvent.params.recipientId,
-        } as Project;
+        } as unknown as Project;
 
         vi.spyOn(mockProjectRepository, "getProjectByAnchorOrThrow").mockResolvedValue(mockProject);
         vi.spyOn(mockRoundRepository, "getRoundByStrategyAddressOrThrow").mockRejectedValue(
             new RoundNotFound(chainId, mockEvent.strategyId),
         );
 
-        handler = new DGSimpleRegisteredHandler(mockEvent, chainId, {
+        handler = new DGLiteRegisteredHandler(mockEvent, chainId, {
             roundRepository: mockRoundRepository,
             projectRepository: mockProjectRepository,
             metadataProvider: mockMetadataProvider,
         });
 
         await expect(handler.handle()).rejects.toThrow(RoundNotFound);
-    });
-
-    it("handles undefined metadata", async () => {
-        mockEvent = createMockEvent(eventName, defaultParams, defaultStrategyId);
-        const mockProject = {
-            id: "project1",
-            anchorAddress: mockEvent.params.recipientId,
-        } as Project;
-        const mockRound = { id: "round1" } as Round;
-
-        vi.spyOn(mockProjectRepository, "getProjectByAnchorOrThrow").mockResolvedValue(mockProject);
-        vi.spyOn(mockRoundRepository, "getRoundByStrategyAddressOrThrow").mockResolvedValue(
-            mockRound,
-        );
-        vi.spyOn(mockMetadataProvider, "getMetadata").mockResolvedValue(null);
-
-        handler = new DGSimpleRegisteredHandler(mockEvent, chainId, {
-            roundRepository: mockRoundRepository,
-            projectRepository: mockProjectRepository,
-            metadataProvider: mockMetadataProvider,
-        });
-
-        const result = await handler.handle();
-        const changeset = result[0] as {
-            type: "InsertApplication";
-            args: { metadata: null };
-        };
-        expect(changeset.args.metadata).toBeNull();
     });
 });

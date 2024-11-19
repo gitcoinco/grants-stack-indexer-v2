@@ -1,8 +1,16 @@
-import { CamelCasePlugin, ColumnType, Kysely, PostgresDialect, WithSchemaPlugin } from "kysely";
+import {
+    CamelCasePlugin,
+    ColumnType,
+    Generated,
+    Kysely,
+    PostgresDialect,
+    WithSchemaPlugin,
+} from "kysely";
 import pg from "pg";
 
 import {
     Application,
+    ApplicationPayout,
     Donation as DonationTable,
     MatchingDistribution,
     PendingProjectRole as PendingProjectRoleTable,
@@ -37,6 +45,10 @@ type RoundTable = Omit<Round, "matchingDistribution"> & {
     >;
 };
 
+type ApplicationPayoutTable = Omit<ApplicationPayout, "id"> & {
+    id: Generated<number>;
+};
+
 export interface Database {
     rounds: RoundTable;
     pendingRoundRoles: PendingRoundRoleTable;
@@ -46,6 +58,7 @@ export interface Database {
     projectRoles: ProjectRoleTable;
     applications: ApplicationTable;
     donations: DonationTable;
+    applicationsPayouts: ApplicationPayoutTable;
 }
 
 /**

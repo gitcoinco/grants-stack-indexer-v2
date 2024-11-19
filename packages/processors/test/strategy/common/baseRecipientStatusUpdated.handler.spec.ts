@@ -8,42 +8,10 @@ import {
     Round,
     RoundNotFound,
 } from "@grants-stack-indexer/repository";
-import {
-    ChainId,
-    DeepPartial,
-    Logger,
-    mergeDeep,
-    ProcessorEvent,
-} from "@grants-stack-indexer/shared";
+import { ChainId, Logger, ProcessorEvent } from "@grants-stack-indexer/shared";
 
 import { BaseRecipientStatusUpdatedHandler } from "../../../src/internal.js";
-
-function createMockEvent(
-    overrides: DeepPartial<ProcessorEvent<"Strategy", "RecipientStatusUpdatedWithFullRow">> = {},
-): ProcessorEvent<"Strategy", "RecipientStatusUpdatedWithFullRow"> {
-    const defaultEvent: ProcessorEvent<"Strategy", "RecipientStatusUpdatedWithFullRow"> = {
-        params: {
-            rowIndex: "0",
-            fullRow: "801", // 001100100001 (status 1 at index 0, status 2 at index 4, status 3 at index 8)
-            sender: "0xcBf407C33d68a55CB594Ffc8f4fD1416Bba39DA5",
-        },
-        eventName: "RecipientStatusUpdatedWithFullRow",
-        srcAddress: "0x1234567890123456789012345678901234567890",
-        blockNumber: 12345,
-        blockTimestamp: 1000000000,
-        chainId: 10 as ChainId,
-        contractName: "Strategy",
-        logIndex: 1,
-        transactionFields: {
-            hash: "0xd2352acdcd59e312370831ea927d51a1917654697a72434cd905a60897a5bb8b",
-            transactionIndex: 6,
-            from: "0xcBf407C33d68a55CB594Ffc8f4fD1416Bba39DA5",
-        },
-        strategyId: "0x9fa6890423649187b1f0e8bf4265f0305ce99523c3d11aa36b35a54617bb0ec0",
-    };
-
-    return mergeDeep(defaultEvent, overrides);
-}
+import { createMockEvent } from "../../mocks/index.js";
 
 describe("BaseRecipientStatusUpdatedHandler", () => {
     let handler: BaseRecipientStatusUpdatedHandler;
@@ -52,6 +20,13 @@ describe("BaseRecipientStatusUpdatedHandler", () => {
     let mockLogger: Logger;
     let mockEvent: ProcessorEvent<"Strategy", "RecipientStatusUpdatedWithFullRow">;
     const chainId = 10 as ChainId;
+    const eventName = "RecipientStatusUpdatedWithFullRow";
+    const defaultParams = {
+        rowIndex: "0",
+        fullRow: "801", // 001100100001 (status 1 at index 0, status 2 at index 4, status 3 at index 8)
+        sender: "0xcBf407C33d68a55CB594Ffc8f4fD1416Bba39DA5",
+    } as const;
+    const defaultStrategyId = "0x9fa6890423649187b1f0e8bf4265f0305ce99523c3d11aa36b35a54617bb0ec0";
 
     beforeEach(() => {
         mockRoundRepository = {
@@ -69,7 +44,9 @@ describe("BaseRecipientStatusUpdatedHandler", () => {
     });
 
     it("handles valid status updates for multiple applications", async () => {
-        mockEvent = createMockEvent();
+        mockEvent = createMockEvent(eventName, defaultParams, defaultStrategyId, {
+            blockNumber: 12345,
+        });
         const mockRound = { id: "round1" } as Round;
         const mockApplication1 = {
             id: "0",
@@ -175,7 +152,7 @@ describe("BaseRecipientStatusUpdatedHandler", () => {
     });
 
     it("throws RoundNotFound if round is not found", async () => {
-        mockEvent = createMockEvent();
+        mockEvent = createMockEvent(eventName, defaultParams, defaultStrategyId);
         vi.spyOn(mockRoundRepository, "getRoundByStrategyAddressOrThrow").mockRejectedValue(
             new RoundNotFound(chainId, mockEvent.strategyId),
         );
@@ -190,7 +167,7 @@ describe("BaseRecipientStatusUpdatedHandler", () => {
     });
 
     it("skips applications that are not found", async () => {
-        mockEvent = createMockEvent();
+        mockEvent = createMockEvent(eventName, defaultParams, defaultStrategyId);
         const mockRound = { id: "round1" } as Round;
 
         vi.spyOn(mockRoundRepository, "getRoundByStrategyAddressOrThrow").mockResolvedValue(
@@ -209,7 +186,7 @@ describe("BaseRecipientStatusUpdatedHandler", () => {
     });
 
     it("skips invalid status values", async () => {
-        mockEvent = createMockEvent({
+        mockEvent = createMockEvent(eventName, defaultParams, defaultStrategyId, {
             params: {
                 rowIndex: "0",
                 fullRow: "96", // Binary: 1100000 (invalid statuses 6 and 7)
@@ -232,7 +209,9 @@ describe("BaseRecipientStatusUpdatedHandler", () => {
     });
 
     it("doesn't create new status snapshot if status hasn't changed", async () => {
-        mockEvent = createMockEvent({ params: { rowIndex: "0", fullRow: "2" } }); // Binary: 10 (status 2 at index 0)
+        mockEvent = createMockEvent(eventName, defaultParams, defaultStrategyId, {
+            params: { rowIndex: "0", fullRow: "2" }, // Binary: 10 (status 2 at index 0)
+        });
         const mockRound = { id: "round1" } as Round;
         const mockApplication = {
             id: "0",
@@ -273,7 +252,7 @@ describe("BaseRecipientStatusUpdatedHandler", () => {
     });
 
     it("handles different row indexes correctly", async () => {
-        mockEvent = createMockEvent({
+        mockEvent = createMockEvent(eventName, defaultParams, defaultStrategyId, {
             params: {
                 rowIndex: "1", // Second row
                 fullRow: "33", // 00100001 (status 1 at index 0, status 1 at index 4)

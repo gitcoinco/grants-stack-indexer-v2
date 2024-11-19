@@ -91,6 +91,7 @@ export class Orchestrator {
                 round: this.dependencies.roundRepository,
                 application: this.dependencies.applicationRepository,
                 donation: this.dependencies.donationRepository,
+                applicationPayout: this.dependencies.applicationPayoutRepository,
             },
             this.logger,
         );

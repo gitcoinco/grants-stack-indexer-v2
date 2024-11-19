@@ -12,30 +12,25 @@ import {
 } from "@grants-stack-indexer/repository";
 import { ChainId, ProcessorEvent, UnknownToken } from "@grants-stack-indexer/shared";
 
-import {
-    MetadataParsingFailed,
-    TokenPriceNotFoundError,
-} from "../../../../src/exceptions/index.js";
-import { DVMDAllocatedHandler } from "../../../../src/processors/strategy/donationVotingMerkleDistributionDirectTransfer/handlers/allocated.handler.js";
+import { TokenPriceNotFoundError } from "../../../../src/exceptions/tokenPriceNotFound.exception.js";
+import { DGLiteAllocatedHandler } from "../../../../src/processors/strategy/directGrantsLite/handlers/allocated.handler.js";
 import { createMockEvent } from "../../../mocks/index.js";
 
-describe("DVMDAllocatedHandler", () => {
-    let handler: DVMDAllocatedHandler;
+describe("DGLiteAllocatedHandler", () => {
+    let handler: DGLiteAllocatedHandler;
     let mockRoundRepository: IRoundRepository;
     let mockApplicationRepository: IApplicationRepository;
     let mockPricingProvider: IPricingProvider;
-    let mockEvent: ProcessorEvent<"Strategy", "AllocatedWithOrigin">;
+    let mockEvent: ProcessorEvent<"Strategy", "AllocatedWithToken">;
     const chainId = 10 as ChainId;
-    const eventName = "AllocatedWithOrigin";
+    const eventName = "AllocatedWithToken";
     const defaultParams = {
         recipientId: "0x1234567890123456789012345678901234567890",
-        amount: "10",
+        amount: parseEther("10").toString(),
         token: "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1",
-        origin: "0xcBf407C33d68a55CB594Ffc8f4fD1416Bba39DA5",
         sender: "0xcBf407C33d68a55CB594Ffc8f4fD1416Bba39DA5",
     } as const;
     const defaultStrategyId = "0x9fa6890423649187b1f0e8bf4265f0305ce99523c3d11aa36b35a54617bb0ec0";
-    const expectedDonationId = "0x86ec85686b02d646ee8a45f0770e85db890679ef7e5f962a51be056f32d54e15";
 
     beforeEach(() => {
         mockRoundRepository = {
@@ -49,7 +44,7 @@ describe("DVMDAllocatedHandler", () => {
         } as IPricingProvider;
     });
 
-    it("handle a valid allocated event", async () => {
+    it("handles a valid allocation event", async () => {
         const amount = parseEther("10").toString();
         mockEvent = createMockEvent(eventName, defaultParams, defaultStrategyId, {
             params: { amount },
@@ -57,15 +52,18 @@ describe("DVMDAllocatedHandler", () => {
         const mockRound = {
             id: "round1",
             matchTokenAddress: "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1",
+            matchAmount: BigInt(0),
+            matchAmountInUsd: "0",
+            fundedAmount: BigInt(0),
+            fundedAmountInUsd: "0",
+            totalAmountDonatedInUsd: "0",
+            totalDonationsCount: 0,
+            uniqueDonorsCount: 0,
+            tags: [],
         } as unknown as Round;
+
         const mockApplication = {
             id: "app1",
-            metadata: {
-                application: {
-                    round: "round1",
-                    recipient: "0xcBf407C33d68a55CB594Ffc8f4fD1416Bba39DA5",
-                },
-            },
             projectId: "project1",
         } as unknown as Application;
 
@@ -81,7 +79,7 @@ describe("DVMDAllocatedHandler", () => {
             priceUsd: 2000,
         });
 
-        handler = new DVMDAllocatedHandler(mockEvent, chainId, {
+        handler = new DGLiteAllocatedHandler(mockEvent, chainId, {
             roundRepository: mockRoundRepository,
             applicationRepository: mockApplicationRepository,
             pricingProvider: mockPricingProvider,
@@ -89,48 +87,44 @@ describe("DVMDAllocatedHandler", () => {
 
         const result = await handler.handle();
 
-        expect(result).toEqual([
-            {
-                type: "InsertDonation",
-                args: {
-                    donation: {
-                        id: expectedDonationId,
-                        chainId,
-                        roundId: "round1",
-                        applicationId: "app1",
-                        donorAddress: getAddress("0xcBf407C33d68a55CB594Ffc8f4fD1416Bba39DA5"),
-                        recipientAddress: getAddress("0xcBf407C33d68a55CB594Ffc8f4fD1416Bba39DA5"),
-                        projectId: "project1",
-                        transactionHash: mockEvent.transactionFields.hash,
-                        blockNumber: BigInt(mockEvent.blockNumber),
-                        tokenAddress: getAddress("0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1"),
-                        amount: BigInt(amount),
-                        amountInUsd: "20000",
-                        amountInRoundMatchToken: BigInt(amount),
-                        timestamp: new Date(1000000000),
-                    },
+        expect(result[0]).toEqual({
+            type: "InsertApplicationPayout",
+            args: {
+                applicationPayout: {
+                    amount: BigInt(amount),
+                    applicationId: "app1",
+                    roundId: "round1",
+                    chainId,
+                    tokenAddress: getAddress(mockEvent.params.token),
+                    amountInRoundMatchToken: BigInt(amount),
+                    amountInUsd: "20000",
+                    transactionHash: mockEvent.transactionFields.hash,
+                    sender: getAddress(mockEvent.params.sender),
+                    timestamp: new Date(mockEvent.blockTimestamp),
                 },
             },
-        ]);
+        });
     });
 
-    it("match token is different from event token", async () => {
-        const amount = parseEther("1500").toString();
+    it("doesn't fetch token price if amount is 0", async () => {
         mockEvent = createMockEvent(eventName, defaultParams, defaultStrategyId, {
-            params: { amount },
+            params: { amount: "0" },
         });
         const mockRound = {
             id: "round1",
-            matchTokenAddress: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+            matchTokenAddress: "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1",
+            matchAmount: BigInt(0),
+            matchAmountInUsd: "0",
+            fundedAmount: BigInt(0),
+            fundedAmountInUsd: "0",
+            totalAmountDonatedInUsd: "0",
+            totalDonationsCount: 0,
+            uniqueDonorsCount: 0,
+            tags: [],
         } as unknown as Round;
+
         const mockApplication = {
             id: "app1",
-            metadata: {
-                application: {
-                    round: "round1",
-                    recipient: "0xcBf407C33d68a55CB594Ffc8f4fD1416Bba39DA5",
-                },
-            },
             projectId: "project1",
         } as unknown as Application;
 
@@ -141,39 +135,29 @@ describe("DVMDAllocatedHandler", () => {
             mockApplicationRepository,
             "getApplicationByAnchorAddressOrThrow",
         ).mockResolvedValue(mockApplication);
-        vi.spyOn(mockPricingProvider, "getTokenPrice")
-            .mockResolvedValueOnce({
-                timestampMs: 1000000000,
-                priceUsd: 1,
-            })
-            .mockResolvedValueOnce({
-                timestampMs: 1000000000,
-                priceUsd: 2000,
-            });
 
-        handler = new DVMDAllocatedHandler(mockEvent, chainId, {
+        handler = new DGLiteAllocatedHandler(mockEvent, chainId, {
             roundRepository: mockRoundRepository,
             applicationRepository: mockApplicationRepository,
             pricingProvider: mockPricingProvider,
         });
 
         const result = await handler.handle();
+        const changeset = result[0] as {
+            type: "InsertApplicationPayout";
+            args: {
+                applicationPayout: {
+                    amount: bigint;
+                    amountInUsd: string;
+                    amountInRoundMatchToken: bigint;
+                };
+            };
+        };
 
-        expect(result).toEqual([
-            {
-                type: "InsertDonation",
-                args: {
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                    donation: expect.objectContaining({
-                        tokenAddress: getAddress("0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1"),
-                        amount: BigInt(amount),
-                        amountInUsd: "1500",
-                        amountInRoundMatchToken: parseEther("0.75"),
-                        timestamp: new Date(1000000000),
-                    }),
-                },
-            },
-        ]);
+        expect(mockPricingProvider.getTokenPrice).not.toHaveBeenCalled();
+        expect(changeset.args.applicationPayout.amount).toBe(0n);
+        expect(changeset.args.applicationPayout.amountInUsd).toBe("0");
+        expect(changeset.args.applicationPayout.amountInRoundMatchToken).toBe(0n);
     });
 
     it("throws RoundNotFound if round is not found", async () => {
@@ -182,7 +166,7 @@ describe("DVMDAllocatedHandler", () => {
             new RoundNotFound(chainId, mockEvent.strategyId),
         );
 
-        handler = new DVMDAllocatedHandler(mockEvent, chainId, {
+        handler = new DGLiteAllocatedHandler(mockEvent, chainId, {
             roundRepository: mockRoundRepository,
             applicationRepository: mockApplicationRepository,
             pricingProvider: mockPricingProvider,
@@ -195,7 +179,16 @@ describe("DVMDAllocatedHandler", () => {
         mockEvent = createMockEvent(eventName, defaultParams, defaultStrategyId);
         const mockRound = {
             id: "round1",
-            matchTokenAddress: "0x0987654321098765432109876543210987654321",
+            chainId,
+            matchTokenAddress: "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1",
+            matchAmount: BigInt(0),
+            matchAmountInUsd: "0",
+            fundedAmount: BigInt(0),
+            fundedAmountInUsd: "0",
+            totalAmountDonatedInUsd: "0",
+            totalDonationsCount: 0,
+            uniqueDonorsCount: 0,
+            tags: [],
         } as unknown as Round;
 
         vi.spyOn(mockRoundRepository, "getRoundByStrategyAddressOrThrow").mockResolvedValue(
@@ -208,7 +201,7 @@ describe("DVMDAllocatedHandler", () => {
             new ApplicationNotFound(chainId, mockRound.id, mockEvent.params.recipientId),
         );
 
-        handler = new DVMDAllocatedHandler(mockEvent, chainId, {
+        handler = new DGLiteAllocatedHandler(mockEvent, chainId, {
             roundRepository: mockRoundRepository,
             applicationRepository: mockApplicationRepository,
             pricingProvider: mockPricingProvider,
@@ -244,7 +237,7 @@ describe("DVMDAllocatedHandler", () => {
             "getApplicationByAnchorAddressOrThrow",
         ).mockResolvedValue(mockApplication);
 
-        handler = new DVMDAllocatedHandler(mockEvent, chainId, {
+        handler = new DGLiteAllocatedHandler(mockEvent, chainId, {
             roundRepository: mockRoundRepository,
             applicationRepository: mockApplicationRepository,
             pricingProvider: mockPricingProvider,
@@ -278,7 +271,7 @@ describe("DVMDAllocatedHandler", () => {
             "getApplicationByAnchorAddressOrThrow",
         ).mockResolvedValue(mockApplication);
 
-        handler = new DVMDAllocatedHandler(mockEvent, chainId, {
+        handler = new DGLiteAllocatedHandler(mockEvent, chainId, {
             roundRepository: mockRoundRepository,
             applicationRepository: mockApplicationRepository,
             pricingProvider: mockPricingProvider,
@@ -313,7 +306,7 @@ describe("DVMDAllocatedHandler", () => {
         ).mockResolvedValue(mockApplication);
         vi.spyOn(mockPricingProvider, "getTokenPrice").mockResolvedValue(undefined);
 
-        handler = new DVMDAllocatedHandler(mockEvent, chainId, {
+        handler = new DGLiteAllocatedHandler(mockEvent, chainId, {
             roundRepository: mockRoundRepository,
             applicationRepository: mockApplicationRepository,
             pricingProvider: mockPricingProvider,
@@ -322,20 +315,27 @@ describe("DVMDAllocatedHandler", () => {
         await expect(handler.handle()).rejects.toThrow(TokenPriceNotFoundError);
     });
 
-    it("throws MetadataParsingFailed if metadata is invalid", async () => {
-        mockEvent = createMockEvent(eventName, defaultParams, defaultStrategyId);
-
+    it("handles different token and match token", async () => {
+        const amount = parseEther("10").toString();
+        mockEvent = createMockEvent(eventName, defaultParams, defaultStrategyId, {
+            params: { amount },
+        });
         const mockRound = {
             id: "round1",
-            matchTokenAddress: "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1",
+            chainId,
+            matchTokenAddress: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+            matchAmount: BigInt(0),
+            matchAmountInUsd: "0",
+            fundedAmount: BigInt(0),
+            fundedAmountInUsd: "0",
+            totalAmountDonatedInUsd: "0",
+            totalDonationsCount: 0,
+            uniqueDonorsCount: 0,
+            tags: [],
         } as unknown as Round;
+
         const mockApplication = {
             id: "app1",
-            metadata: {
-                application: {
-                    recipient: 10n, // recipient is not a string
-                },
-            },
             projectId: "project1",
         } as unknown as Application;
 
@@ -346,17 +346,27 @@ describe("DVMDAllocatedHandler", () => {
             mockApplicationRepository,
             "getApplicationByAnchorAddressOrThrow",
         ).mockResolvedValue(mockApplication);
-        vi.spyOn(mockPricingProvider, "getTokenPrice").mockResolvedValue({
-            timestampMs: 1000000000,
-            priceUsd: 2000,
-        });
+        vi.spyOn(mockPricingProvider, "getTokenPrice")
+            .mockResolvedValueOnce({
+                timestampMs: 1000000000,
+                priceUsd: 1,
+            })
+            .mockResolvedValueOnce({
+                timestampMs: 1000000000,
+                priceUsd: 2000,
+            });
 
-        handler = new DVMDAllocatedHandler(mockEvent, chainId, {
+        handler = new DGLiteAllocatedHandler(mockEvent, chainId, {
             roundRepository: mockRoundRepository,
             applicationRepository: mockApplicationRepository,
             pricingProvider: mockPricingProvider,
         });
 
-        await expect(handler.handle()).rejects.toThrow(MetadataParsingFailed);
+        const result = await handler.handle();
+        const changeset = result[0] as {
+            type: "InsertApplicationPayout";
+            args: { applicationPayout: { amountInRoundMatchToken: bigint } };
+        };
+        expect(changeset.args.applicationPayout.amountInRoundMatchToken).toBe(parseEther("0.005"));
     });
 });

@@ -7,6 +7,7 @@ export type {
     IApplicationRepository,
     IApplicationReadRepository,
     IDonationRepository,
+    IApplicationPayoutRepository,
     DatabaseConfig,
 } from "./internal.js";
 
@@ -32,12 +33,15 @@ export type {
 
 export type { Donation, NewDonation } from "./types/index.js";
 
+export type { NewApplicationPayout, ApplicationPayout } from "./types/index.js";
+
 export type {
     Changeset,
     ProjectChangeset,
     RoundChangeset,
     ApplicationChangeset,
     DonationChangeset,
+    ApplicationPayoutChangeset,
 } from "./types/index.js";
 
 export {
@@ -45,6 +49,7 @@ export {
     KyselyProjectRepository,
     KyselyApplicationRepository,
     KyselyDonationRepository,
+    KyselyApplicationPayoutRepository,
 } from "./repositories/kysely/index.js";
 
 export {
