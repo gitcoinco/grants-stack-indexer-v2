@@ -1,8 +1,10 @@
+import path from "path";
 import { configDotenv } from "dotenv";
 
-import { createKyselyDatabase, resetDatabase } from "@grants-stack-indexer/repository";
+import { createKyselyDatabase } from "@grants-stack-indexer/repository";
 
 import { getDatabaseConfigFromEnv } from "./schemas/index.js";
+import { resetDatabase } from "./utils/index.js";
 
 configDotenv();
 
@@ -44,6 +46,10 @@ const main = async (): Promise<void> => {
     const resetResults = await resetDatabase({
         db,
         schema: DATABASE_SCHEMA,
+        migrationsFolder: path.join(
+            path.dirname(new URL(import.meta.url).pathname),
+            "./migrations",
+        ),
     });
 
     if (resetResults && resetResults?.length > 0) {

@@ -1,13 +1,31 @@
 import { promises as fs } from "fs";
 import * as path from "path";
-import { FileMigrationProvider, Kysely, MigrationResult, Migrator, NO_MIGRATIONS } from "kysely";
+import {
+    FileMigrationProvider,
+    Kysely,
+    MigrationResult,
+    Migrator,
+    NO_MIGRATIONS,
+    SchemaModule,
+} from "kysely";
 
-import { Database } from "./connection.js";
-
-export interface MigrationConfig {
-    db: Kysely<Database>;
+export interface MigrationConfig<T> {
+    db: Kysely<T>;
     schema: string;
+    migrationsFolder: string;
 }
+
+/**
+ * Since WithSchemaPlugin doesn't work with `sql.table`, we need to get the schema name manually.
+ * ref: https://github.com/kysely-org/kysely/issues/761
+ */
+export const getSchemaName = (schema: SchemaModule): string => {
+    let name = "public";
+    schema.createTable("test").$call((b) => {
+        name = b.toOperationNode().table.table.schema?.name ?? "public";
+    });
+    return name;
+};
 
 /**
  * Applies all migrations to the database up to the latest version.
@@ -17,8 +35,8 @@ export interface MigrationConfig {
  * @param config.schema - The schema to use for the migrations. Should be the same as the schema used in the Kysely database instance.
  * @returns The migration results.
  */
-export async function migrateToLatest(
-    config: MigrationConfig,
+export async function migrateToLatest<T>(
+    config: MigrationConfig<T>,
 ): Promise<MigrationResult[] | undefined> {
     await config.db.schema.createSchema(config.schema).ifNotExists().execute();
 
@@ -27,10 +45,7 @@ export async function migrateToLatest(
         provider: new FileMigrationProvider({
             fs,
             path,
-            migrationFolder: path.join(
-                path.dirname(new URL(import.meta.url).pathname),
-                "../migrations",
-            ),
+            migrationFolder: config.migrationsFolder,
         }),
         migrationTableSchema: config.schema,
     });
@@ -62,18 +77,15 @@ export async function migrateToLatest(
  * @param config.schema - The schema to use for the migrations. Should be the same as the schema used in the Kysely database instance.
  * @returns The migration results.
  */
-export async function resetDatabase(
-    config: MigrationConfig,
+export async function resetDatabase<T>(
+    config: MigrationConfig<T>,
 ): Promise<MigrationResult[] | undefined> {
     const migrator = new Migrator({
         db: config.db,
         provider: new FileMigrationProvider({
             fs,
             path,
-            migrationFolder: path.join(
-                path.dirname(new URL(import.meta.url).pathname),
-                "../migrations",
-            ),
+            migrationFolder: config.migrationsFolder,
         }),
     });
 

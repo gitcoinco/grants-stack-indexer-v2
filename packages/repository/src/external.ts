@@ -60,6 +60,3 @@ export {
 } from "./internal.js";
 
 export { createKyselyPostgresDb as createKyselyDatabase } from "./internal.js";
-
-export { migrateToLatest, resetDatabase } from "./db/index.js";
-export type { MigrationConfig } from "./db/index.js";

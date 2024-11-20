@@ -1,8 +1,10 @@
+import path from "path";
 import { configDotenv } from "dotenv";
 
-import { createKyselyDatabase, migrateToLatest } from "@grants-stack-indexer/repository";
+import { createKyselyDatabase } from "@grants-stack-indexer/repository";
 
 import { getDatabaseConfigFromEnv } from "./schemas/index.js";
+import { migrateToLatest } from "./utils/index.js";
 
 configDotenv();
 
@@ -41,6 +43,10 @@ export const main = async (): Promise<void> => {
     const migrationResults = await migrateToLatest({
         db,
         schema: DATABASE_SCHEMA,
+        migrationsFolder: path.join(
+            path.dirname(new URL(import.meta.url).pathname),
+            "./migrations",
+        ),
     });
 
     if (migrationResults && migrationResults?.length > 0) {

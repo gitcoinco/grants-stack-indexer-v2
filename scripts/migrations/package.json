@@ -1,5 +1,5 @@
 {
-    "name": "@grants-stack-indexer/scripts",
+    "name": "@grants-stack-indexer/migrations",
     "version": "0.0.1",
     "private": true,
     "description": "",
@@ -28,6 +28,7 @@
     "dependencies": {
         "@grants-stack-indexer/repository": "workspace:*",
         "dotenv": "16.4.5",
+        "kysely": "0.27.4",
         "zod": "3.23.8"
     },
     "devDependencies": {

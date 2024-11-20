@@ -1,4 +1,4 @@
-# grants-stack-indexer: scripts
+# grants-stack-indexer: migrations scripts
 
 This package contains scripts for managing the database schema and migrations.
 
@@ -110,3 +110,7 @@ export async function down(db: Kysely<any>): Promise<void> {
     - Verify schema consistency
 
 TODO: add E2E tests for the scripts
+
+## References
+
+-   [Kysely](https://kysely.dev/)
