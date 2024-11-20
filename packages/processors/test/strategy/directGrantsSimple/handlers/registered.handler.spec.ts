@@ -15,33 +15,6 @@ import { ChainId, ProcessorEvent } from "@grants-stack-indexer/shared";
 import { DGSimpleRegisteredHandler } from "../../../../src/processors/strategy/directGrantsSimple/handlers/registered.handler.js";
 import { createMockEvent } from "../../../mocks/index.js";
 
-// function createMockEvent(
-//     overrides: DeepPartial<ProcessorEvent<"Strategy", "RegisteredWithSender">> = {},
-// ): ProcessorEvent<"Strategy", "RegisteredWithSender"> {
-//     const defaultEvent: ProcessorEvent<"Strategy", "RegisteredWithSender"> = {
-//         params: {
-//             recipientId: "0x1234567890123456789012345678901234567890",
-//             data: "0x0000000000000000000000001234567890123456789012345678901234567890000000000000000000000000abcdefabcdefabcdefabcdefabcdefabcdefabcd0000000000000000000000000000000000000000000000000de0b6b3a7640000000000000000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000003b6261666b72656967796334336366696e786c6e6168713561617773676869626574763675737273376b6b78663776786d7a626a79726f37366977790000000000",
-//             sender: "0xcBf407C33d68a55CB594Ffc8f4fD1416Bba39DA5",
-//         },
-//         eventName: "RegisteredWithSender",
-//         srcAddress: "0x1234567890123456789012345678901234567890",
-//         blockNumber: 12345,
-//         blockTimestamp: 1000000000,
-//         chainId: 10 as ChainId,
-//         contractName: "Strategy",
-//         logIndex: 1,
-//         transactionFields: {
-//             hash: "0xd2352acdcd59e312370831ea927d51a1917654697a72434cd905a60897a5bb8b",
-//             transactionIndex: 6,
-//             from: "0xcBf407C33d68a55CB594Ffc8f4fD1416Bba39DA5",
-//         },
-//         strategyId: "0x9fa6890423649187b1f0e8bf4265f0305ce99523c3d11aa36b35a54617bb0ec0",
-//     };
-
-//     return mergeDeep(defaultEvent, overrides);
-// }
-
 describe("DGSimpleRegisteredHandler", () => {
     let handler: DGSimpleRegisteredHandler;
     let mockRoundRepository: IRoundRepository;

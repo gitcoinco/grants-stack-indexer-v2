@@ -16,7 +16,7 @@ const STRATEGY_NAME = "allov2.DirectGrantsSimpleStrategy";
  * - RegisteredWithSender
  * - DistributedWithRecipientAddress
  */
-export class DirectGrantsSimpleStrategyHandler extends BaseStrategyHandler {
+export class DGSimpleStrategyHandler extends BaseStrategyHandler {
     constructor(
         private readonly chainId: ChainId,
         private readonly dependencies: ProcessorDependencies,

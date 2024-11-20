@@ -12,7 +12,7 @@ import { ChainId, ILogger, ProcessorEvent, StrategyEvent } from "@grants-stack-i
 
 import { UnsupportedEventException } from "../../../src/exceptions/index.js";
 import { BaseDistributedHandler } from "../../../src/processors/strategy/common/index.js";
-import { DirectGrantsSimpleStrategyHandler } from "../../../src/processors/strategy/directGrantsSimple/directGrantsSimple.handler.js";
+import { DGSimpleStrategyHandler } from "../../../src/processors/strategy/directGrantsSimple/directGrantsSimple.handler.js";
 import {
     DGSimpleRegisteredHandler,
     DGSimpleTimestampsUpdatedHandler,
@@ -45,7 +45,7 @@ vi.mock("../../../src/processors/strategy/common/baseDistributed.handler.js", ()
 });
 
 describe("DirectGrantsSimpleStrategyHandler", () => {
-    let handler: DirectGrantsSimpleStrategyHandler;
+    let handler: DGSimpleStrategyHandler;
     let mockMetadataProvider: IMetadataProvider;
     let mockRoundRepository: IRoundReadRepository;
     let mockProjectRepository: IProjectReadRepository;
@@ -69,7 +69,7 @@ describe("DirectGrantsSimpleStrategyHandler", () => {
         mockPricingProvider = {} as IPricingProvider;
         mockApplicationRepository = {} as IApplicationReadRepository;
 
-        handler = new DirectGrantsSimpleStrategyHandler(chainId, {
+        handler = new DGSimpleStrategyHandler(chainId, {
             metadataProvider: mockMetadataProvider,
             roundRepository: mockRoundRepository,
             projectRepository: mockProjectRepository,
