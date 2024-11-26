@@ -10,37 +10,42 @@ import { SharedDependencies, SharedDependenciesService } from "./index.js";
 /**
  * Processor service application
  * - Initializes core dependencies (repositories, providers) via SharedDependenciesService
+ * For each chain:
  * - Sets up EVM provider with configured RPC endpoints
  * - Creates an Orchestrator instance to coordinate an specific chain:
  *   - Fetching on-chain events via indexer client
  *   - Processing events through registered handlers
  *   - Storing processed data in PostgreSQL via repositories
  * - Manages graceful shutdown on termination signals
- *
- * TODO: support multichain
  */
 export class ProcessingService {
     private readonly logger = Logger.getInstance();
-    private readonly orchestrator: Orchestrator;
+    private readonly orchestrators: Map<ChainId, Orchestrator> = new Map();
     private readonly kyselyDatabase: SharedDependencies["kyselyDatabase"];
 
     constructor(private readonly env: Environment) {
+        const { CHAINS: chains } = env;
         const { core, registries, indexerClient, kyselyDatabase } =
             SharedDependenciesService.initialize(env, this.logger);
         this.kyselyDatabase = kyselyDatabase;
 
-        // Initialize EVM provider
-        const evmProvider = new EvmProvider(env.RPC_URLS, optimism, this.logger);
+        for (const chain of chains) {
+            // Initialize EVM provider
+            const evmProvider = new EvmProvider(chain.rpcUrls, optimism, this.logger);
 
-        this.orchestrator = new Orchestrator(
-            env.CHAIN_ID as ChainId,
-            { ...core, evmProvider },
-            indexerClient,
-            registries,
-            env.FETCH_LIMIT,
-            env.FETCH_DELAY_MS,
-            this.logger,
-        );
+            this.orchestrators.set(
+                chain.id as ChainId,
+                new Orchestrator(
+                    chain.id as ChainId,
+                    { ...core, evmProvider },
+                    indexerClient,
+                    registries,
+                    chain.fetchLimit,
+                    chain.fetchDelayMs,
+                    this.logger,
+                ),
+            );
+        }
     }
 
     /**
@@ -52,6 +57,8 @@ export class ProcessingService {
         this.logger.info("Starting processor service...");
 
         const abortController = new AbortController();
+
+        const orchestratorProcesses: Promise<void>[] = [];
 
         // Handle graceful shutdown
         process.on("SIGINT", () => {
@@ -65,7 +72,12 @@ export class ProcessingService {
         });
 
         try {
-            await this.orchestrator.run(abortController.signal);
+            for (const orchestrator of this.orchestrators.values()) {
+                this.logger.info(`Starting orchestrator for chain ${orchestrator.chainId}...`);
+                orchestratorProcesses.push(orchestrator.run(abortController.signal));
+            }
+
+            await Promise.allSettled(orchestratorProcesses);
         } catch (error) {
             this.logger.error(`Processor service failed: ${error}`);
             throw error;

@@ -67,7 +67,7 @@ export class Orchestrator {
      * @param fetchDelayInMs - The fetch delay in milliseconds
      */
     constructor(
-        private chainId: ChainId,
+        public readonly chainId: ChainId,
         private dependencies: Readonly<CoreDependencies>,
         private indexerClient: IIndexerClient,
         private registries: {

@@ -14,11 +14,20 @@ const stringToJSONSchema = z.string().transform((str, ctx): z.infer<ReturnType<t
     }
 });
 
+const chainSchema = z.object({
+    rpcUrls: z.array(z.string().url()).nonempty(),
+    id: z.coerce.number().int().positive(),
+    name: z.string(),
+    fetchLimit: z.coerce.number().int().positive().default(500),
+    fetchDelayMs: z.coerce.number().int().positive().default(1000),
+});
+
 const baseSchema = z.object({
-    RPC_URLS: stringToJSONSchema.pipe(z.array(z.string().url())),
-    CHAIN_ID: z.coerce.number().int().positive(),
-    FETCH_LIMIT: z.coerce.number().int().positive().default(500),
-    FETCH_DELAY_MS: z.coerce.number().int().positive().default(1000),
+    CHAINS: stringToJSONSchema.pipe(z.array(chainSchema).nonempty()).refine((chains) => {
+        const ids = chains.map((chain) => chain.id);
+        const uniqueIds = new Set(ids);
+        return ids.length === uniqueIds.size;
+    }, "Chain IDs must be unique"),
     DATABASE_URL: z.string(),
     DATABASE_SCHEMA: z.string().default("public"),
     INDEXER_GRAPHQL_URL: z.string().url(),
