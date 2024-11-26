@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { ILogger } from "@grants-stack-indexer/shared";
 import { EnvioIndexerClient } from "@grants-stack-indexer/indexer-client";
 import { IpfsProvider } from "@grants-stack-indexer/metadata";
 import { PricingProviderFactory } from "@grants-stack-indexer/pricing";
 import { createKyselyDatabase } from "@grants-stack-indexer/repository";
+import { Logger } from "@grants-stack-indexer/shared";
 
 import type { Environment } from "../../src/config/env.js";
 import { SharedDependenciesService } from "../../src/services/sharedDependencies.service.js";
@@ -51,18 +51,8 @@ describe("SharedDependenciesService", () => {
         PRICING_SOURCE: "dummy",
     };
 
-    const mockLogger: ILogger = {
-        info: vi.fn(),
-        error: vi.fn(),
-        warn: vi.fn(),
-        debug: vi.fn(),
-    };
-
     it("initializes all dependencies correctly", () => {
-        const dependencies = SharedDependenciesService.initialize(
-            mockEnv as Environment,
-            mockLogger,
-        );
+        const dependencies = SharedDependenciesService.initialize(mockEnv as Environment);
 
         // Verify database initialization
         expect(createKyselyDatabase).toHaveBeenCalledWith({
@@ -70,8 +60,10 @@ describe("SharedDependenciesService", () => {
         });
 
         // Verify providers initialization
-        expect(PricingProviderFactory.create).toHaveBeenCalledWith(mockEnv, { logger: mockLogger });
-        expect(IpfsProvider).toHaveBeenCalledWith(mockEnv.IPFS_GATEWAYS_URL, mockLogger);
+        expect(PricingProviderFactory.create).toHaveBeenCalledWith(mockEnv, {
+            logger: expect.any(Logger) as Logger,
+        });
+        expect(IpfsProvider).toHaveBeenCalledWith(mockEnv.IPFS_GATEWAYS_URL, expect.any(Logger));
 
         // Verify indexer client initialization
         expect(EnvioIndexerClient).toHaveBeenCalledWith(

@@ -14,7 +14,7 @@ import {
     KyselyProjectRepository,
     KyselyRoundRepository,
 } from "@grants-stack-indexer/repository";
-import { ILogger } from "@grants-stack-indexer/shared";
+import { Logger } from "@grants-stack-indexer/shared";
 
 import { Environment } from "../config/index.js";
 
@@ -35,7 +35,7 @@ export type SharedDependencies = {
  * - Initializes indexer client
  */
 export class SharedDependenciesService {
-    static initialize(env: Environment, logger: ILogger): SharedDependencies {
+    static initialize(env: Environment): SharedDependencies {
         // Initialize repositories
         const kyselyDatabase = createKyselyDatabase({
             connectionString: env.DATABASE_URL,
@@ -55,13 +55,22 @@ export class SharedDependenciesService {
             kyselyDatabase,
             env.DATABASE_SCHEMA,
         );
-        const pricingProvider = PricingProviderFactory.create(env, { logger });
+        const pricingProvider = PricingProviderFactory.create(env, {
+            logger: new Logger({ className: "PricingProvider" }),
+        });
 
-        const metadataProvider = new IpfsProvider(env.IPFS_GATEWAYS_URL, logger);
+        const metadataProvider = new IpfsProvider(
+            env.IPFS_GATEWAYS_URL,
+            new Logger({ className: "IpfsProvider" }),
+        );
 
         // Initialize registries
-        const eventsRegistry = new InMemoryEventsRegistry(logger);
-        const strategyRegistry = new InMemoryStrategyRegistry(logger);
+        const eventsRegistry = new InMemoryEventsRegistry(
+            new Logger({ className: "InMemoryEventsRegistry" }),
+        );
+        const strategyRegistry = new InMemoryStrategyRegistry(
+            new Logger({ className: "InMemoryStrategyRegistry" }),
+        );
 
         // Initialize indexer client
         const indexerClient = new EnvioIndexerClient(

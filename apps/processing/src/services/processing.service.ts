@@ -19,19 +19,20 @@ import { SharedDependencies, SharedDependenciesService } from "./index.js";
  * - Manages graceful shutdown on termination signals
  */
 export class ProcessingService {
-    private readonly logger = Logger.getInstance();
     private readonly orchestrators: Map<ChainId, Orchestrator> = new Map();
+    private readonly logger = new Logger({ className: "ProcessingService" });
     private readonly kyselyDatabase: SharedDependencies["kyselyDatabase"];
 
     constructor(private readonly env: Environment) {
         const { CHAINS: chains } = env;
         const { core, registries, indexerClient, kyselyDatabase } =
-            SharedDependenciesService.initialize(env, this.logger);
+            SharedDependenciesService.initialize(env);
         this.kyselyDatabase = kyselyDatabase;
 
         for (const chain of chains) {
+            const chainLogger = new Logger({ chainId: chain.id as ChainId });
             // Initialize EVM provider
-            const evmProvider = new EvmProvider(chain.rpcUrls, optimism, this.logger);
+            const evmProvider = new EvmProvider(chain.rpcUrls, optimism, chainLogger);
 
             this.orchestrators.set(
                 chain.id as ChainId,
@@ -42,7 +43,7 @@ export class ProcessingService {
                     registries,
                     chain.fetchLimit,
                     chain.fetchDelayMs,
-                    this.logger,
+                    chainLogger,
                 ),
             );
         }

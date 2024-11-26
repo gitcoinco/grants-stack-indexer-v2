@@ -6,16 +6,6 @@ import { Orchestrator } from "@grants-stack-indexer/data-flow";
 import type { Environment } from "../../src/config/env.js";
 import { ProcessingService } from "../../src/services/processing.service.js";
 
-// Mock dependencies
-vi.mock("@grants-stack-indexer/shared", () => ({
-    Logger: {
-        getInstance: vi.fn(() => ({
-            info: vi.fn(),
-            error: vi.fn(),
-        })),
-    },
-}));
-
 vi.mock("../../src/services/sharedDependencies.service.js", () => ({
     SharedDependenciesService: {
         initialize: vi.fn(() => ({
@@ -32,22 +22,6 @@ vi.mock("../../src/services/sharedDependencies.service.js", () => ({
 vi.mock("@grants-stack-indexer/chain-providers", () => ({
     EvmProvider: vi.fn(),
 }));
-
-// Mock Orchestrator with a simplified run implementation
-// vi.mock("@grants-stack-indexer/data-flow", () => {
-//     const mockRun = vi.fn(async (signal: AbortSignal) => {
-//         while (!signal.aborted) {
-//             await new Promise((resolve) => setTimeout(resolve, 100));
-//         }
-//     });
-
-//     return {
-//         Orchestrator: vi.fn(() => ({
-//             chainId: 1,
-//             run: mockRun,
-//         })),
-//     };
-// });
 
 vi.spyOn(Orchestrator.prototype, "run").mockImplementation(async function (signal: AbortSignal) {
     while (!signal.aborted) {
@@ -112,6 +86,7 @@ describe("ProcessingService", () => {
     it("starts all orchestrators and handles shutdown signals", async () => {
         const abortSpy = vi.spyOn(AbortController.prototype, "abort");
         const runSpy = vi.mocked(Orchestrator.prototype.run);
+        const logSpy = vi.spyOn(processingService["logger"], "info");
 
         const startPromise = processingService.start();
 
@@ -126,14 +101,8 @@ describe("ProcessingService", () => {
             expect.any(AbortSignal),
             expect.any(AbortSignal),
         ]);
-        expect(processingService["logger"].info).toHaveBeenNthCalledWith(
-            2,
-            "Starting orchestrator for chain 1...",
-        );
-        expect(processingService["logger"].info).toHaveBeenNthCalledWith(
-            3,
-            "Starting orchestrator for chain 2...",
-        );
+        expect(logSpy).toHaveBeenNthCalledWith(2, "Starting orchestrator for chain 1...");
+        expect(logSpy).toHaveBeenNthCalledWith(3, "Starting orchestrator for chain 2...");
 
         // Simulate SIGINT
         process.emit("SIGINT");
@@ -172,12 +141,11 @@ describe("ProcessingService", () => {
 
     it("logs error during resource release", async () => {
         const mockError = new Error("Database error");
+        const logSpy = vi.spyOn(processingService["logger"], "error");
         vi.mocked(processingService["kyselyDatabase"].destroy).mockRejectedValueOnce(mockError);
 
         await processingService.releaseResources();
 
-        expect(processingService["logger"].error).toHaveBeenCalledWith(
-            `Error releasing resources: ${mockError}`,
-        );
+        expect(logSpy).toHaveBeenCalledWith(`Error releasing resources: ${mockError}`);
     });
 });
