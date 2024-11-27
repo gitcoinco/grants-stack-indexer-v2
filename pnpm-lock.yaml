@@ -65,8 +65,8 @@ importers:
                 specifier: 4.3.10
                 version: 4.3.10
             envio:
-                specifier: 2.7.3
-                version: 2.7.3
+                specifier: 2.8.2
+                version: 2.8.2(typescript@5.2.2)(zod@3.23.8)
             ethers:
                 specifier: 6.8.0
                 version: 6.8.0
@@ -560,6 +560,67 @@ packages:
             {
                 integrity: sha512-hrlQOIi7hAfzsMqlGSFyVucrx38O+j6wiGOf//H2ecvIEqYN4ADBSS2iLMh5UFyDunCNniUIPk/q3riFv45xRA==,
             }
+
+    "@envio-dev/hypersync-client-darwin-arm64@0.6.2":
+        resolution:
+            {
+                integrity: sha512-dDIuQqEgARR1JYodbGkmck1i9qbYEidc4Kw4DOrRKQ0uZFwflI4o8wm3P+G/ofc1iXwp4pm7jqNUGzZDpK9pqA==,
+            }
+        engines: { node: ">= 10" }
+        cpu: [arm64]
+        os: [darwin]
+
+    "@envio-dev/hypersync-client-darwin-x64@0.6.2":
+        resolution:
+            {
+                integrity: sha512-NGlgkmosAzlZ1EuQ5/djkg6sQI/dgVX+XGOLI6Zden0ca2zr/ByBRA7yCKxpwZHYynFN2FoMsMGSRY8jj6XQWw==,
+            }
+        engines: { node: ">= 10" }
+        cpu: [x64]
+        os: [darwin]
+
+    "@envio-dev/hypersync-client-linux-arm64-gnu@0.6.2":
+        resolution:
+            {
+                integrity: sha512-p2LQSaOSgjVvvFHOGHnPHTnsDHCWNEG78J29guZyqWojmaxTaR4eGyFEknla7eO0w58EIUGEBTF0+EJ7duMimg==,
+            }
+        engines: { node: ">= 10" }
+        cpu: [arm64]
+        os: [linux]
+
+    "@envio-dev/hypersync-client-linux-x64-gnu@0.6.2":
+        resolution:
+            {
+                integrity: sha512-/kIL9Q0e5hM0g6cvdCHL93LMu+OCnwQAGKQHCj2TKKUjVpWFNb0Ki5PMgJhQ8mimEBFsJAnErVK+HrugLTlaVQ==,
+            }
+        engines: { node: ">= 10" }
+        cpu: [x64]
+        os: [linux]
+
+    "@envio-dev/hypersync-client-linux-x64-musl@0.6.2":
+        resolution:
+            {
+                integrity: sha512-4r5hA/zyxUjWBDYYeXLCl5pBfSI9njEIPuLMFXajjVcAvSXRtBhmgVwa3JrjjCxZ8aLfqk9vvPkb/KgYfrbXXw==,
+            }
+        engines: { node: ">= 10" }
+        cpu: [x64]
+        os: [linux]
+
+    "@envio-dev/hypersync-client-win32-x64-msvc@0.6.2":
+        resolution:
+            {
+                integrity: sha512-VgsSwmDAgvpgo9QsIiwIp9IN+h3g0U/7zrCrvNAMj+lsMHJPZ7L0cfN58dQUr84wL8domJGJrnMKUtu/Yf49ow==,
+            }
+        engines: { node: ">= 10" }
+        cpu: [x64]
+        os: [win32]
+
+    "@envio-dev/hypersync-client@0.6.2":
+        resolution:
+            {
+                integrity: sha512-wgp0UmblW8yn/q5NMkVYPFDvOmgHWPTibl/QJYyYK2KXqAMHssUjP07ayduiZCexQOZ94Agpv4SvmYxQNjGBIA==,
+            }
+        engines: { node: ">= 10" }
 
     "@esbuild/aix-ppc64@0.21.5":
         resolution:
@@ -2374,42 +2435,42 @@ packages:
             }
         engines: { node: ">=6" }
 
-    envio-darwin-arm64@2.7.3:
+    envio-darwin-arm64@2.8.2:
         resolution:
             {
-                integrity: sha512-jFtqTbGRXlYBvwQJ2iEZwsumGy+19y7e4+OjPM5ZqqoJ1sHNQ70/G1AqnvZYFKD8RuTUN+5ArU5gYc0Tgqu8Ow==,
+                integrity: sha512-6FYf8/6qKRpdh8BuhylYtWsv/xW2Q1vkL9hYgy/VB0K1nMTBIfY83dDYDy2wHYSxg+R6gvawrI66L2bJ4rZn6g==,
             }
         cpu: [arm64]
         os: [darwin]
 
-    envio-darwin-x64@2.7.3:
+    envio-darwin-x64@2.8.2:
         resolution:
             {
-                integrity: sha512-yT7krrqRENpNYvCtyFMlPRGDsUSO0nvrTX0fl28f8xJyD/HAF0nKnU8f6FBiyWCzLzPh8Uby1qK3l+hUVhcktQ==,
+                integrity: sha512-t58SvMyyw3VOXW9CWrVkmxWDO7zACd56x5/sDZWFzcgGd0nOOYMkz2Gzag2VawsqqlZC0iyLQPE4HZiPPCcYZw==,
             }
         cpu: [x64]
         os: [darwin]
 
-    envio-linux-arm64@2.7.3:
+    envio-linux-arm64@2.8.2:
         resolution:
             {
-                integrity: sha512-QCJlypEOw3cc93UVkRvYuF9Z3x/n57usb0P85Mz0ADiykxBBd7QWyEFKgmMzQZlLZfgQ0NLHwcPh+92/bGoL/A==,
+                integrity: sha512-dMBRfCUB9S2fLAi88j3Fd8aftnwA4MGn5/VR1wK7VVtLFCCRKEjtNJqVyclt72UNYBw5wuhLei9U3KSiemAlDQ==,
             }
         cpu: [arm64]
         os: [linux]
 
-    envio-linux-x64@2.7.3:
+    envio-linux-x64@2.8.2:
         resolution:
             {
-                integrity: sha512-IRpfHZhlx7dTmtROhuVJONO7otPlwaUmFdb2HEycwgb4hN1+6Xadn5lPuLYmqJFSWgd2lyxn5EdAJWw8KV4qtA==,
+                integrity: sha512-u8tyNNbrEM8kbuqAy5YxNTOnpAg72DAY+5S0rxOv47RGAr9fXhmbo1EUBVwlV+Us6wz7gdcTtSId2e55Z/AzeQ==,
             }
         cpu: [x64]
         os: [linux]
 
-    envio@2.7.3:
+    envio@2.8.2:
         resolution:
             {
-                integrity: sha512-j/G4Gg+g0xUUf0RgH3PKo0REXwh2blB/t7kYEPFZy9EX3/lOw8fG076ZN7rJ82FzzOjVsQH6RSeW6OFGGWgnLw==,
+                integrity: sha512-Cg3O/1I78PPF1S3sV3ZRp1RAiaSFX2CKMFLcchbAgF7m1y/w9+OZKY4O0lhFCMNHLwmKyThnhfJI0JWxTEKs3g==,
             }
         hasBin: true
 
@@ -3589,6 +3650,83 @@ packages:
             }
         engines: { node: ^12.20.0 || ^14.13.1 || >=16.0.0 }
 
+    npm@10.9.1:
+        resolution:
+            {
+                integrity: sha512-yJUw03xLqjiv1D52oHeoS5qmOEC5hkJlhP1cWlSrCgshuxWVyFEEK3M3hLC0NwbTaklLTYrhoIanYsuNP5WUKg==,
+            }
+        engines: { node: ^18.17.0 || >=20.5.0 }
+        hasBin: true
+        bundledDependencies:
+            - "@isaacs/string-locale-compare"
+            - "@npmcli/arborist"
+            - "@npmcli/config"
+            - "@npmcli/fs"
+            - "@npmcli/map-workspaces"
+            - "@npmcli/package-json"
+            - "@npmcli/promise-spawn"
+            - "@npmcli/redact"
+            - "@npmcli/run-script"
+            - "@sigstore/tuf"
+            - abbrev
+            - archy
+            - cacache
+            - chalk
+            - ci-info
+            - cli-columns
+            - fastest-levenshtein
+            - fs-minipass
+            - glob
+            - graceful-fs
+            - hosted-git-info
+            - ini
+            - init-package-json
+            - is-cidr
+            - json-parse-even-better-errors
+            - libnpmaccess
+            - libnpmdiff
+            - libnpmexec
+            - libnpmfund
+            - libnpmhook
+            - libnpmorg
+            - libnpmpack
+            - libnpmpublish
+            - libnpmsearch
+            - libnpmteam
+            - libnpmversion
+            - make-fetch-happen
+            - minimatch
+            - minipass
+            - minipass-pipeline
+            - ms
+            - node-gyp
+            - nopt
+            - normalize-package-data
+            - npm-audit-report
+            - npm-install-checks
+            - npm-package-arg
+            - npm-pick-manifest
+            - npm-profile
+            - npm-registry-fetch
+            - npm-user-validate
+            - p-map
+            - pacote
+            - parse-conflict-json
+            - proc-log
+            - qrcode-terminal
+            - read
+            - semver
+            - spdx-expression-parse
+            - ssri
+            - supports-color
+            - tar
+            - text-table
+            - tiny-relative-date
+            - treeverse
+            - validate-npm-package-name
+            - which
+            - write-file-atomic
+
     obuf@1.1.2:
         resolution:
             {
@@ -4649,6 +4787,17 @@ packages:
             typescript:
                 optional: true
 
+    viem@2.21.0:
+        resolution:
+            {
+                integrity: sha512-9g3Gw2nOU6t4bNuoDI5vwVExzIxseU0J7Jjx10gA2RNQVrytIrLxggW++tWEe3w4mnnm/pS1WgZFjQ/QKf/nHw==,
+            }
+        peerDependencies:
+            typescript: ">=5.0.4"
+        peerDependenciesMeta:
+            typescript:
+                optional: true
+
     viem@2.21.19:
         resolution:
             {
@@ -4920,6 +5069,14 @@ packages:
             }
         engines: { node: ">=12" }
 
+    yarn@1.22.22:
+        resolution:
+            {
+                integrity: sha512-prL3kGtyG7o9Z9Sv8IPfBNrWTDmXB4Qbes8A9rEzt6wkJV8mUvoirjU0Mp3GGAU06Y0XQyA3/2/RQFVuK7MTfg==,
+            }
+        engines: { node: ">=4.0.0" }
+        hasBin: true
+
     yn@2.0.0:
         resolution:
             {
@@ -5185,6 +5342,36 @@ snapshots:
             colorspace: 1.1.4
             enabled: 2.0.0
             kuler: 2.0.0
+
+    "@envio-dev/hypersync-client-darwin-arm64@0.6.2":
+        optional: true
+
+    "@envio-dev/hypersync-client-darwin-x64@0.6.2":
+        optional: true
+
+    "@envio-dev/hypersync-client-linux-arm64-gnu@0.6.2":
+        optional: true
+
+    "@envio-dev/hypersync-client-linux-x64-gnu@0.6.2":
+        optional: true
+
+    "@envio-dev/hypersync-client-linux-x64-musl@0.6.2":
+        optional: true
+
+    "@envio-dev/hypersync-client-win32-x64-msvc@0.6.2":
+        optional: true
+
+    "@envio-dev/hypersync-client@0.6.2":
+        dependencies:
+            npm: 10.9.1
+            yarn: 1.22.22
+        optionalDependencies:
+            "@envio-dev/hypersync-client-darwin-arm64": 0.6.2
+            "@envio-dev/hypersync-client-darwin-x64": 0.6.2
+            "@envio-dev/hypersync-client-linux-arm64-gnu": 0.6.2
+            "@envio-dev/hypersync-client-linux-x64-gnu": 0.6.2
+            "@envio-dev/hypersync-client-linux-x64-musl": 0.6.2
+            "@envio-dev/hypersync-client-win32-x64-msvc": 0.6.2
 
     "@esbuild/aix-ppc64@0.21.5":
         optional: true
@@ -5810,6 +5997,11 @@ snapshots:
             jsonparse: 1.3.1
             through: 2.3.8
 
+    abitype@1.0.5(typescript@5.2.2)(zod@3.23.8):
+        optionalDependencies:
+            typescript: 5.2.2
+            zod: 3.23.8
+
     abitype@1.0.5(typescript@5.5.4)(zod@3.23.8):
         optionalDependencies:
             typescript: 5.5.4
@@ -6167,27 +6359,34 @@ snapshots:
 
     env-paths@2.2.1: {}
 
-    envio-darwin-arm64@2.7.3:
+    envio-darwin-arm64@2.8.2:
         optional: true
 
-    envio-darwin-x64@2.7.3:
+    envio-darwin-x64@2.8.2:
         optional: true
 
-    envio-linux-arm64@2.7.3:
+    envio-linux-arm64@2.8.2:
         optional: true
 
-    envio-linux-x64@2.7.3:
+    envio-linux-x64@2.8.2:
         optional: true
 
-    envio@2.7.3:
+    envio@2.8.2(typescript@5.2.2)(zod@3.23.8):
         dependencies:
+            "@envio-dev/hypersync-client": 0.6.2
             rescript: 11.1.3
             rescript-schema: 8.2.0(rescript@11.1.3)
+            viem: 2.21.0(typescript@5.2.2)(zod@3.23.8)
         optionalDependencies:
-            envio-darwin-arm64: 2.7.3
-            envio-darwin-x64: 2.7.3
-            envio-linux-arm64: 2.7.3
-            envio-linux-x64: 2.7.3
+            envio-darwin-arm64: 2.8.2
+            envio-darwin-x64: 2.8.2
+            envio-linux-arm64: 2.8.2
+            envio-linux-x64: 2.8.2
+        transitivePeerDependencies:
+            - bufferutil
+            - typescript
+            - utf-8-validate
+            - zod
 
     environment@1.1.0: {}
 
@@ -6885,6 +7084,8 @@ snapshots:
         dependencies:
             path-key: 4.0.0
 
+    npm@10.9.1: {}
+
     obuf@1.1.2: {}
 
     once@1.4.0:
@@ -7444,6 +7645,24 @@ snapshots:
             - utf-8-validate
             - zod
 
+    viem@2.21.0(typescript@5.2.2)(zod@3.23.8):
+        dependencies:
+            "@adraffy/ens-normalize": 1.10.0
+            "@noble/curves": 1.4.0
+            "@noble/hashes": 1.4.0
+            "@scure/bip32": 1.4.0
+            "@scure/bip39": 1.3.0
+            abitype: 1.0.5(typescript@5.2.2)(zod@3.23.8)
+            isows: 1.0.4(ws@8.17.1)
+            webauthn-p256: 0.0.5
+            ws: 8.17.1
+        optionalDependencies:
+            typescript: 5.2.2
+        transitivePeerDependencies:
+            - bufferutil
+            - utf-8-validate
+            - zod
+
     viem@2.21.19(typescript@5.5.4)(zod@3.23.8):
         dependencies:
             "@adraffy/ens-normalize": 1.11.0
@@ -7629,6 +7848,8 @@ snapshots:
             string-width: 4.2.3
             y18n: 5.0.8
             yargs-parser: 21.1.1
+
+    yarn@1.22.22: {}
 
     yn@2.0.0: {}
 
