@@ -110,7 +110,7 @@ export class Orchestrator {
                     await delay(this.fetchDelayInMs);
                     continue;
                 }
-                await this.eventsRegistry.saveLastProcessedEvent(event);
+                await this.eventsRegistry.saveLastProcessedEvent(this.chainId, event);
 
                 event = await this.enhanceStrategyId(event);
                 if (event.contractName === "Strategy" && "strategyId" in event) {
@@ -160,7 +160,7 @@ export class Orchestrator {
      * Enqueue new events from the events fetcher using the last processed event as a starting point
      */
     private async enqueueEvents(): Promise<void> {
-        const lastProcessedEvent = await this.eventsRegistry.getLastProcessedEvent();
+        const lastProcessedEvent = await this.eventsRegistry.getLastProcessedEvent(this.chainId);
         const blockNumber = lastProcessedEvent?.blockNumber ?? 0;
         const logIndex = lastProcessedEvent?.logIndex ?? 0;
 

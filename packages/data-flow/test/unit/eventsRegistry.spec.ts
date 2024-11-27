@@ -11,9 +11,10 @@ describe("InMemoryEventsRegistry", () => {
         info: vi.fn(),
         warn: vi.fn(),
     };
+    const chainId = 1 as ChainId;
     it("return null when no event has been saved", async () => {
         const registry = new InMemoryEventsRegistry(logger);
-        const lastEvent = await registry.getLastProcessedEvent();
+        const lastEvent = await registry.getLastProcessedEvent(chainId);
         expect(lastEvent).toBeUndefined();
     });
 
@@ -42,8 +43,8 @@ describe("InMemoryEventsRegistry", () => {
             },
         };
 
-        await registry.saveLastProcessedEvent(mockEvent);
-        const retrievedEvent = await registry.getLastProcessedEvent();
+        await registry.saveLastProcessedEvent(chainId, mockEvent);
+        const retrievedEvent = await registry.getLastProcessedEvent(chainId);
 
         expect(retrievedEvent).toEqual(mockEvent);
     });
@@ -94,10 +95,10 @@ describe("InMemoryEventsRegistry", () => {
             },
         };
 
-        await registry.saveLastProcessedEvent(firstEvent);
-        await registry.saveLastProcessedEvent(secondEvent);
+        await registry.saveLastProcessedEvent(chainId, firstEvent);
+        await registry.saveLastProcessedEvent(chainId, secondEvent);
 
-        const lastEvent = await registry.getLastProcessedEvent();
+        const lastEvent = await registry.getLastProcessedEvent(chainId);
         expect(lastEvent).toEqual(secondEvent);
         expect(lastEvent).not.toEqual(firstEvent);
     });
