@@ -26,10 +26,7 @@ $ cp .env.example .env
 Available options:
 | Name | Description | Default | Required | Notes |
 |-----------------------------|--------------------------------------------------------------------------------------------------------------------------------|-----------|----------------------------------|-----------------------------------------------------------------|
-| `RPC_URLS` | Array of RPC URLs | N/A | Yes | Multiple URLs for redundancy |
-| `CHAIN_ID` | Chain ID | N/A | Yes | At the moment only Optimism is supported (10) |
-| `FETCH_LIMIT` | Maximum number of items to fetch in one batch | 500 | No | |
-| `FETCH_DELAY_MS` | Delay between fetch operations in milliseconds | 1000 | No | |
+| `CHAINS` | JSON array of chain configurations | N/A | Yes | Each chain object requires: `id` (number), `name` (string), `rpcUrls` (string array). Optional: `fetchLimit` (default: 500), `fetchDelayMs` (default: 1000) |
 | `DATABASE_URL` | PostgreSQL Data Layer database connection URL | N/A | Yes | |
 | `DATABASE_SCHEMA` | PostgreSQL Data Layer database schema name | public | Yes | |
 | `INDEXER_GRAPHQL_URL` | GraphQL endpoint for the indexer | N/A | Yes | |
