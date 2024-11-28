@@ -1,6 +1,14 @@
 // TODO: Should we validate event params in runtime ? How should we approach that ?
 
-import { Address, AnyEvent, Bytes32String, ContractName, ProcessorEvent } from "../../internal.js";
+import {
+    Address,
+    AnyEvent,
+    Bytes32String,
+    ContractName,
+    ProcessorEvent,
+    RoleGrantedParams,
+    RoleRevokedParams,
+} from "../../internal.js";
 
 /**
  * This array is used to represent all Registry events.
@@ -59,18 +67,6 @@ export type ProfileNameUpdatedParams = {
 export type ProfileOwnerUpdatedParams = {
     profileId: Bytes32String;
     owner: Address;
-};
-
-export type RoleGrantedParams = {
-    role: Bytes32String;
-    account: Address;
-    sender: Address;
-};
-
-export type RoleRevokedParams = {
-    role: Bytes32String;
-    account: Address;
-    sender: Address;
 };
 
 /**

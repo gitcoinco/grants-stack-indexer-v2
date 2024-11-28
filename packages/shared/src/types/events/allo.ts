@@ -1,9 +1,16 @@
 import { Address, AnyEvent, ContractName, ProcessorEvent } from "../../internal.js";
+import { RoleGrantedParams, RoleRevokedParams } from "./index.js";
 
 /**
  * This array is used to represent all Allo events.
  */
-const AlloEventArray = ["PoolCreated"] as const;
+const AlloEventArray = [
+    "PoolCreated",
+    "PoolFunded",
+    "PoolMetadataUpdated",
+    "RoleGranted",
+    "RoleRevoked",
+] as const;
 
 /**
  * This type is used to represent a Allo events.
@@ -15,18 +22,37 @@ export type AlloEvent = (typeof AlloEventArray)[number];
  */
 export type AlloEventParams<T extends AlloEvent> = T extends "PoolCreated"
     ? PoolCreatedParams
-    : never;
+    : T extends "PoolMetadataUpdated"
+      ? PoolMetadataUpdatedParams
+      : T extends "PoolFunded"
+        ? PoolFundedParams
+        : T extends "RoleGranted"
+          ? RoleGrantedParams
+          : T extends "RoleRevoked"
+            ? RoleRevokedParams
+            : never;
 
 // =============================================================================
 // =============================== Event Parameters ============================
 // =============================================================================
 export type PoolCreatedParams = {
     strategy: Address;
-    poolId: bigint;
+    poolId: string; //uint256
     profileId: Address;
     token: Address;
-    amount: bigint;
-    metadata: [protocol: bigint, pointer: string];
+    amount: string; //uint256
+    metadata: [protocol: string /*uint256*/, pointer: string];
+};
+
+export type PoolMetadataUpdatedParams = {
+    poolId: string; //uint256
+    metadata: [protocol: string /*uint256*/, pointer: string];
+};
+
+export type PoolFundedParams = {
+    poolId: string; //uint256
+    amount: string; //uint256
+    fee: string; //uint256
 };
 
 /**
