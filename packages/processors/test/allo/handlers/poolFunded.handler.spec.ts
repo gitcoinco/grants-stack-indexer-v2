@@ -20,9 +20,9 @@ function createMockEvent(
         logIndex: 123,
         srcAddress: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
         params: {
-            poolId: 1n,
-            amount: 100n,
-            fee: 10n,
+            poolId: "1",
+            amount: "100",
+            fee: "10",
         },
         transactionFields: {
             hash: "0xtransactionhash",
@@ -101,9 +101,9 @@ describe("PoolFundedHandler", () => {
                 args: {
                     chainId: 10,
                     roundId: "1",
-                    fundedAmount: mockEvent.params.amount,
+                    fundedAmount: BigInt(mockEvent.params.amount),
                     fundedAmountInUsd: calculateAmountInUsd(
-                        mockEvent.params.amount,
+                        BigInt(mockEvent.params.amount),
                         mockPrice.priceUsd,
                         mockToken?.decimals as number,
                     ),

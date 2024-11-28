@@ -23,7 +23,7 @@ export class PoolFundedHandler implements IEventHandler<"Allo", "PoolFunded"> {
 
     async handle(): Promise<Changeset[]> {
         const poolId = this.event.params.poolId.toString();
-        const fundedAmount = this.event.params.amount;
+        const fundedAmount = BigInt(this.event.params.amount);
         const { roundRepository, pricingProvider } = this.dependencies;
 
         const round = await roundRepository.getRoundById(this.chainId, poolId);

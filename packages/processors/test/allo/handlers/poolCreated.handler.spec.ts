@@ -24,11 +24,11 @@ function createMockEvent(
         srcAddress: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
         params: {
             strategy: "0xD545fbA3f43EcA447CC7FBF41D4A8F0f575F2491",
-            poolId: 10n,
+            poolId: "10",
             profileId: "0xcc3509068dfb6604965939f100e57dde21e9d764d8ce4b34284bbe9364b1f5ed",
-            amount: 0n,
+            amount: "0",
             token: "0x4200000000000000000000000000000000000042",
-            metadata: [1n, "bafkreihrjyu5tney6wia2hmkertc74nzfpsgxw2epvnxm72bxj6ifnd4ku"],
+            metadata: ["1", "bafkreihrjyu5tney6wia2hmkertc74nzfpsgxw2epvnxm72bxj6ifnd4ku"],
         },
         transactionFields: {
             hash: "0xd2352acdcd59e312370831ea927d51a1917654697a72434cd905a60897a5bb8b",
@@ -72,7 +72,7 @@ describe("PoolCreatedHandler", () => {
     it("process an event with initial funds", async () => {
         const fundedAmount = parseUnits("10", 18);
         const mockEvent = createMockEvent({
-            params: { amount: fundedAmount },
+            params: { amount: fundedAmount.toString() },
             strategyId: "0xunknown",
         });
 
@@ -308,7 +308,7 @@ describe("PoolCreatedHandler", () => {
     });
 
     it("throws an error if token price fetch fails", async () => {
-        const mockEvent = createMockEvent({ params: { amount: 1n }, strategyId: "0xunknown" });
+        const mockEvent = createMockEvent({ params: { amount: "1" }, strategyId: "0xunknown" });
 
         vi.spyOn(mockMetadataProvider, "getMetadata").mockResolvedValue(undefined);
 
@@ -469,7 +469,7 @@ describe("PoolCreatedHandler", () => {
         const fundedAmount = parseUnits("10", 18);
         const mockEvent = createMockEvent({
             params: {
-                amount: fundedAmount,
+                amount: fundedAmount.toString(),
                 token: "0x95aD61b0a150d79219dCF64E1E6Cc01f0B64C4cE",
             },
             strategyId: "0xunknown",

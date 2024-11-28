@@ -39,8 +39,9 @@ export class PoolCreatedHandler implements IEventHandler<"Allo", "PoolCreated"> 
             poolId,
             token: tokenAddress,
             strategy: strategyAddress,
-            amount: fundedAmount,
+            amount,
         } = this.event.params;
+        const fundedAmount = BigInt(amount);
         const { hash: txHash, from: txFrom } = this.event.transactionFields;
         const strategyId = this.event.strategyId;
 
@@ -99,7 +100,7 @@ export class PoolCreatedHandler implements IEventHandler<"Allo", "PoolCreated"> 
         // transaction sender
         const createdBy = txFrom ?? (await evmProvider.getTransaction(txHash)).from;
 
-        const roundRoles = getRoundRoles(poolId);
+        const roundRoles = getRoundRoles(BigInt(poolId));
 
         const newRound: NewRound = {
             chainId: this.chainId,

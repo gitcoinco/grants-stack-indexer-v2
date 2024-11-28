@@ -29,12 +29,12 @@ describe("InMemoryEventsRegistry", () => {
             srcAddress: "0x123",
             strategyId: "0xstrategy",
             params: {
-                poolId: 1n,
+                poolId: "1",
                 profileId: "0x456",
                 strategy: "0x789",
                 token: "0xtoken",
-                amount: 0n,
-                metadata: [1n, "0xmetadata"],
+                amount: "0",
+                metadata: ["1", "0xmetadata"],
             },
             transactionFields: {
                 hash: "0xabc",
@@ -61,12 +61,12 @@ describe("InMemoryEventsRegistry", () => {
             srcAddress: "0x123",
             strategyId: "0xstrategy",
             params: {
-                poolId: 1n,
+                poolId: "1",
                 profileId: "0x456",
                 strategy: "0x789",
                 token: "0xtoken",
-                amount: 0n,
-                metadata: [1n, "0xmetadata"],
+                amount: "0",
+                metadata: ["1", "0xmetadata"],
             },
             transactionFields: {
                 hash: "0xabc",

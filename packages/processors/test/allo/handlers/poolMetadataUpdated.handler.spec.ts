@@ -23,8 +23,8 @@ function createMockEvent(
         logIndex: 456,
         srcAddress: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
         params: {
-            poolId: 1n,
-            metadata: [1n, "bafkreihrjyu5tney6wia2hmkertc74nzfpsgxw2epvnxm72bxj6ifnd4ku"],
+            poolId: "1",
+            metadata: ["1", "bafkreihrjyu5tney6wia2hmkertc74nzfpsgxw2epvnxm72bxj6ifnd4ku"],
         },
         transactionFields: {
             hash: "0xtransactionhash",
