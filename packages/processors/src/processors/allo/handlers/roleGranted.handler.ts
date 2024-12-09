@@ -21,7 +21,7 @@ export class RoleGrantedHandler implements IEventHandler<"Allo", "RoleGranted"> 
         private readonly chainId: ChainId,
         private readonly dependencies: Dependencies,
     ) {}
-
+    /* @inheritdoc */
     async handle(): Promise<Changeset[]> {
         const role = this.event.params.role.toLowerCase();
         const account = getAddress(this.event.params.account);

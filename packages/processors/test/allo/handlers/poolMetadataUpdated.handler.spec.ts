@@ -60,6 +60,7 @@ describe("PoolMetadataUpdatedHandler", () => {
         };
         mockRoundRepository = {
             getRoundById: vi.fn(),
+            getRoundByIdOrThrow: vi.fn(),
         } as unknown as IRoundReadRepository;
         mockLogger = {
             error: vi.fn(),
@@ -102,7 +103,7 @@ describe("PoolMetadataUpdatedHandler", () => {
             timestampMs: 1708369911,
         };
         vi.spyOn(mockMetadataProvider, "getMetadata").mockResolvedValue(metadata);
-        vi.spyOn(mockRoundRepository, "getRoundById").mockResolvedValue(round as Round);
+        vi.spyOn(mockRoundRepository, "getRoundByIdOrThrow").mockResolvedValue(round as Round);
         vi.spyOn(mockPricingProvider, "getTokenPrice").mockResolvedValue(mockTokenPrice);
 
         handler = new PoolMetadataUpdatedHandler(
@@ -119,7 +120,7 @@ describe("PoolMetadataUpdatedHandler", () => {
         expect(mockMetadataProvider.getMetadata).toHaveBeenCalledWith(
             "bafkreihrjyu5tney6wia2hmkertc74nzfpsgxw2epvnxm72bxj6ifnd4ku",
         );
-        expect(mockRoundRepository.getRoundById).toHaveBeenCalledWith(10, "1");
+        expect(mockRoundRepository.getRoundByIdOrThrow).toHaveBeenCalledWith(10, "1");
         expect(result).toEqual([
             {
                 type: "UpdateRound",
@@ -143,19 +144,6 @@ describe("PoolMetadataUpdatedHandler", () => {
                 },
             },
         ]);
-    });
-
-    it("returns an empty changeset if the round does not exist", async () => {
-        const mockEvent = createMockEvent();
-        vi.spyOn(mockRoundRepository, "getRoundById").mockResolvedValue(undefined);
-
-        handler = new PoolMetadataUpdatedHandler(mockEvent, 10 as ChainId, mockDependencies());
-
-        const result = await handler.handle();
-
-        expect(mockRoundRepository.getRoundById).toHaveBeenCalledWith(10, "1");
-        expect(result).toEqual([]);
-        expect(mockLogger.error).toHaveBeenCalledWith("Round not found for roundId: 1");
     });
 
     it("throws if tokenPrice is not found", async () => {
@@ -182,13 +170,34 @@ describe("PoolMetadataUpdatedHandler", () => {
         };
 
         vi.spyOn(mockMetadataProvider, "getMetadata").mockResolvedValue(metadata);
-        vi.spyOn(mockRoundRepository, "getRoundById").mockResolvedValue(round as Round);
+        vi.spyOn(mockRoundRepository, "getRoundByIdOrThrow").mockResolvedValue(round as Round);
         vi.spyOn(mockPricingProvider, "getTokenPrice").mockResolvedValue(undefined);
 
         handler = new PoolMetadataUpdatedHandler(mockEvent, 10 as ChainId, mockDependencies());
 
         await expect(handler.handle()).rejects.toThrowError(TokenPriceNotFoundError);
         expect(mockPricingProvider.getTokenPrice).toHaveBeenCalled();
+    });
+
+    it("throws if round is not found", async () => {
+        const mockEvent = createMockEvent();
+        const metadata = {
+            round: {
+                name: "asd",
+                roundType: "public",
+                quadraticFundingConfig: {
+                    matchingFundsAvailable: 100,
+                },
+            },
+        };
+        const roundError = new Error("Round not found");
+        vi.spyOn(mockMetadataProvider, "getMetadata").mockResolvedValue(metadata);
+        vi.spyOn(mockRoundRepository, "getRoundByIdOrThrow").mockRejectedValue(roundError);
+        vi.spyOn(mockPricingProvider, "getTokenPrice").mockResolvedValue(undefined);
+
+        handler = new PoolMetadataUpdatedHandler(mockEvent, 10 as ChainId, mockDependencies());
+
+        await expect(handler.handle()).rejects.toThrowError(roundError);
     });
 
     it("returns a changeset with empty metadata if metadata parsing fails", async () => {
@@ -202,7 +211,7 @@ describe("PoolMetadataUpdatedHandler", () => {
         };
 
         vi.spyOn(mockMetadataProvider, "getMetadata").mockResolvedValue(metadata);
-        vi.spyOn(mockRoundRepository, "getRoundById").mockResolvedValue(round as Round);
+        vi.spyOn(mockRoundRepository, "getRoundByIdOrThrow").mockResolvedValue(round as Round);
 
         handler = new PoolMetadataUpdatedHandler(mockEvent, 10 as ChainId, mockDependencies());
 

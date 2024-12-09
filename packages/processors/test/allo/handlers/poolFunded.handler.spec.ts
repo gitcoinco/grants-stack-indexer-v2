@@ -52,6 +52,7 @@ describe("PoolFundedHandler", () => {
     beforeEach(() => {
         mockRoundRepository = {
             getRoundById: vi.fn(),
+            getRoundByIdOrThrow: vi.fn(),
         } as unknown as IRoundReadRepository;
         mockPricingProvider = {
             getTokenPrice: vi.fn(),
@@ -82,7 +83,7 @@ describe("PoolFundedHandler", () => {
             id: "1",
             matchTokenAddress: mockToken?.address,
         };
-        vi.spyOn(mockRoundRepository, "getRoundById").mockResolvedValue(round as Round);
+        vi.spyOn(mockRoundRepository, "getRoundByIdOrThrow").mockResolvedValue(round as Round);
         vi.spyOn(mockPricingProvider, "getTokenPrice").mockResolvedValue(mockPrice);
 
         handler = new PoolFundedHandler(
@@ -93,7 +94,7 @@ describe("PoolFundedHandler", () => {
 
         const result = await handler.handle();
 
-        expect(mockRoundRepository.getRoundById).toHaveBeenCalledWith(10, "1");
+        expect(mockRoundRepository.getRoundByIdOrThrow).toHaveBeenCalledWith(10, "1");
         expect(mockPricingProvider.getTokenPrice).toHaveBeenCalled();
         expect(result).toEqual([
             {
@@ -112,9 +113,10 @@ describe("PoolFundedHandler", () => {
         ]);
     });
 
-    it("returns an empty changeset if the round does not exist", async () => {
+    it("throw if the round does not exist", async () => {
         const mockEvent = createMockEvent();
-        vi.spyOn(mockRoundRepository, "getRoundById").mockResolvedValue(undefined);
+        const roundError = new Error("Round not found");
+        vi.spyOn(mockRoundRepository, "getRoundByIdOrThrow").mockRejectedValue(roundError);
 
         handler = new PoolFundedHandler(
             mockEvent,
@@ -122,10 +124,7 @@ describe("PoolFundedHandler", () => {
             mockDependencies(),
         );
 
-        const result = await handler.handle();
-
-        expect(mockRoundRepository.getRoundById).toHaveBeenCalledWith(mockEvent.chainId, "1");
-        expect(result).toEqual([]);
+        await expect(handler.handle()).rejects.toThrowError(roundError);
     });
 
     it("throws an error for an unknown token", async () => {
@@ -134,7 +133,7 @@ describe("PoolFundedHandler", () => {
             id: "1",
             matchTokenAddress: "0xUnknownToken",
         };
-        vi.spyOn(mockRoundRepository, "getRoundById").mockResolvedValue(mockRound as Round);
+        vi.spyOn(mockRoundRepository, "getRoundByIdOrThrow").mockResolvedValue(mockRound as Round);
 
         handler = new PoolFundedHandler(
             mockEvent,

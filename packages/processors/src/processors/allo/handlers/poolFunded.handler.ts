@@ -20,17 +20,14 @@ export class PoolFundedHandler implements IEventHandler<"Allo", "PoolFunded"> {
         private readonly chainId: ChainId,
         private readonly dependencies: Dependencies,
     ) {}
-
+    /* @inheritdoc */
     async handle(): Promise<Changeset[]> {
         const poolId = this.event.params.poolId.toString();
         const fundedAmount = BigInt(this.event.params.amount);
         const { roundRepository, pricingProvider } = this.dependencies;
 
-        const round = await roundRepository.getRoundById(this.chainId, poolId);
+        const round = await roundRepository.getRoundByIdOrThrow(this.chainId, poolId);
 
-        if (!round) {
-            return [];
-        }
         const token = getToken(this.chainId, round.matchTokenAddress);
 
         //TODO: Review this on Advace Recovery Milestone

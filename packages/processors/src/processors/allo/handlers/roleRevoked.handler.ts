@@ -20,7 +20,7 @@ export class RoleRevokedHandler implements IEventHandler<"Allo", "RoleRevoked"> 
         private readonly chainId: ChainId,
         private readonly dependencies: Dependencies,
     ) {}
-
+    /* @inheritdoc */
     async handle(): Promise<Changeset[]> {
         const role = this.event.params.role.toLowerCase();
         const account = getAddress(this.event.params.account);

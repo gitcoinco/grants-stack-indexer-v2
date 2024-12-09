@@ -5,12 +5,12 @@ import type { ChainId, ProcessorEvent } from "@grants-stack-indexer/shared";
 import { getToken } from "@grants-stack-indexer/shared";
 
 import type { IEventHandler, ProcessorDependencies } from "../../../internal.js";
-import { getTokenAmountInUsd } from "../../../helpers/pricing.js";
+import { getTokenAmountInUsd } from "../../../helpers/index.js";
 import { RoundMetadataSchema } from "../../../schemas/index.js";
 
 type Dependencies = Pick<
     ProcessorDependencies,
-    "metadataProvider" | "roundRepository" | "logger" | "pricingProvider"
+    "metadataProvider" | "roundRepository" | "pricingProvider"
 >;
 
 /**
@@ -26,26 +26,20 @@ export class PoolMetadataUpdatedHandler implements IEventHandler<"Allo", "PoolMe
         private readonly chainId: ChainId,
         private readonly dependencies: Dependencies,
     ) {}
-
+    /* @inheritdoc */
     async handle(): Promise<Changeset[]> {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const [_protocol, metadataPointer] = this.event.params.metadata;
-        const { metadataProvider, pricingProvider, roundRepository, logger } = this.dependencies;
+        const { metadataProvider, pricingProvider, roundRepository } = this.dependencies;
 
         const metadata = await metadataProvider.getMetadata<{
             round?: unknown;
             application?: unknown;
         }>(metadataPointer);
 
-        const round = await roundRepository.getRoundById(
+        const round = await roundRepository.getRoundByIdOrThrow(
             this.chainId,
             this.event.params.poolId.toString(),
         );
-
-        if (!round) {
-            logger.error(`Round not found for roundId: ${this.event.params.poolId.toString()}`);
-            return [];
-        }
 
         let matchAmount = round.matchAmount;
         let matchAmountInUsd = round.matchAmountInUsd;
