@@ -115,14 +115,20 @@ export class Orchestrator {
                 event = await this.enhanceStrategyId(event);
                 if (event.contractName === "Strategy" && "strategyId" in event) {
                     if (!existsHandler(event.strategyId)) {
-                        //TODO: save to registry as unsupported strategy, so when the strategy is handled it will be backwards compatible and process all of the events
-                        //TODO: decide if we want to log this
-                        // this.logger.info(
-                        //     `No handler found for strategyId: ${event.strategyId}. Event: ${stringify(
-                        //         event,
-                        //     )}`,
-                        // );
+                        await this.strategyRegistry.saveStrategyId(
+                            this.chainId,
+                            event.srcAddress,
+                            event.strategyId,
+                            false,
+                        );
                         continue;
+                    } else {
+                        await this.strategyRegistry.saveStrategyId(
+                            this.chainId,
+                            event.srcAddress,
+                            event.strategyId,
+                            true,
+                        );
                     }
                 }
 
@@ -216,9 +222,12 @@ export class Orchestrator {
      * @returns The strategy id
      */
     private async getOrFetchStrategyId(strategyAddress: Address): Promise<Hex> {
-        const existingId = await this.strategyRegistry.getStrategyId(strategyAddress);
-        if (existingId) {
-            return existingId;
+        const cachedStrategy = await this.strategyRegistry.getStrategyId(
+            this.chainId,
+            strategyAddress,
+        );
+        if (cachedStrategy) {
+            return cachedStrategy.id;
         }
 
         const strategyId = await this.dependencies.evmProvider.readContract(
@@ -226,8 +235,6 @@ export class Orchestrator {
             iStrategyAbi,
             "getStrategyId",
         );
-
-        await this.strategyRegistry.saveStrategyId(strategyAddress, strategyId);
 
         return strategyId;
     }

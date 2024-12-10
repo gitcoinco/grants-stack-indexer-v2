@@ -51,8 +51,8 @@ describe("SharedDependenciesService", () => {
         PRICING_SOURCE: "dummy",
     };
 
-    it("initializes all dependencies correctly", () => {
-        const dependencies = SharedDependenciesService.initialize(mockEnv as Environment);
+    it("initializes all dependencies correctly", async () => {
+        const dependencies = await SharedDependenciesService.initialize(mockEnv as Environment);
 
         // Verify database initialization
         expect(createKyselyDatabase).toHaveBeenCalledWith({

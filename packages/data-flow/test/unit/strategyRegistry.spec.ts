@@ -1,9 +1,9 @@
 import { Address, Hex } from "viem";
 import { describe, expect, it, vi } from "vitest";
 
-import { ILogger } from "@grants-stack-indexer/shared";
+import { ChainId, ILogger } from "@grants-stack-indexer/shared";
 
-import { InMemoryStrategyRegistry } from "../../src/strategyRegistry.js";
+import { InMemoryStrategyRegistry } from "../../src/registries/strategyRegistry.js";
 
 describe("InMemoryStrategyRegistry", () => {
     const logger: ILogger = {
@@ -12,11 +12,13 @@ describe("InMemoryStrategyRegistry", () => {
         info: vi.fn(),
         warn: vi.fn(),
     };
+    const chainId = 1 as ChainId;
+
     it("return undefined for non-existent strategy address", async () => {
         const registry = new InMemoryStrategyRegistry(logger);
         const strategyAddress = "0x123" as Address;
 
-        const strategyId = await registry.getStrategyId(strategyAddress);
+        const strategyId = await registry.getStrategyId(chainId, strategyAddress);
         expect(strategyId).toBeUndefined();
     });
 
@@ -25,10 +27,15 @@ describe("InMemoryStrategyRegistry", () => {
         const strategyAddress = "0x123" as Address;
         const strategyId = "0xabc" as Hex;
 
-        await registry.saveStrategyId(strategyAddress, strategyId);
-        const retrievedId = await registry.getStrategyId(strategyAddress);
+        await registry.saveStrategyId(chainId, strategyAddress, strategyId, true);
+        const retrieved = await registry.getStrategyId(chainId, strategyAddress);
 
-        expect(retrievedId).toBe(strategyId);
+        expect(retrieved).toEqual({
+            id: strategyId,
+            address: strategyAddress,
+            chainId,
+            handled: true,
+        });
     });
 
     it("handle multiple strategy addresses independently", async () => {
@@ -38,13 +45,23 @@ describe("InMemoryStrategyRegistry", () => {
         const firstStrategyId = "0xabc" as Hex;
         const secondStrategyId = "0xdef" as Hex;
 
-        await registry.saveStrategyId(firstAddress, firstStrategyId);
-        await registry.saveStrategyId(secondAddress, secondStrategyId);
+        await registry.saveStrategyId(chainId, firstAddress, firstStrategyId, true);
+        await registry.saveStrategyId(chainId, secondAddress, secondStrategyId, true);
 
-        const retrievedFirstId = await registry.getStrategyId(firstAddress);
-        const retrievedSecondId = await registry.getStrategyId(secondAddress);
+        const retrievedFirst = await registry.getStrategyId(chainId, firstAddress);
+        const retrievedSecond = await registry.getStrategyId(chainId, secondAddress);
 
-        expect(retrievedFirstId).toBe(firstStrategyId);
-        expect(retrievedSecondId).toBe(secondStrategyId);
+        expect(retrievedFirst).toEqual({
+            id: firstStrategyId,
+            address: firstAddress,
+            chainId,
+            handled: true,
+        });
+        expect(retrievedSecond).toEqual({
+            id: secondStrategyId,
+            address: secondAddress,
+            chainId,
+            handled: true,
+        });
     });
 });

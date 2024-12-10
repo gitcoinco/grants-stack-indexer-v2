@@ -83,6 +83,7 @@ describe("Orchestrator", { sequential: true }, () => {
         mockStrategyRegistry = {
             getStrategyId: vi.fn(),
             saveStrategyId: vi.fn(),
+            getStrategies: vi.fn(),
         };
 
         mockEvmProvider = {
@@ -321,7 +322,12 @@ describe("Orchestrator", { sequential: true }, () => {
                     .mockResolvedValueOnce([mockEvent])
                     .mockResolvedValue([]);
 
-                vi.spyOn(mockStrategyRegistry, "getStrategyId").mockResolvedValue(strategyId);
+                vi.spyOn(mockStrategyRegistry, "getStrategyId").mockResolvedValue({
+                    id: strategyId,
+                    address: strategyAddress,
+                    chainId,
+                    handled: true,
+                });
                 eventsProcessorSpy.mockResolvedValue(changesets);
                 vi.spyOn(mockEventsRegistry, "saveLastProcessedEvent").mockImplementation(() => {
                     return Promise.resolve();
@@ -375,7 +381,12 @@ describe("Orchestrator", { sequential: true }, () => {
                 .mockResolvedValueOnce([mockEvent])
                 .mockResolvedValue([]);
 
-            vi.spyOn(mockStrategyRegistry, "getStrategyId").mockResolvedValue(unhandledStrategyId);
+            vi.spyOn(mockStrategyRegistry, "getStrategyId").mockResolvedValue({
+                id: unhandledStrategyId,
+                address: strategyAddress,
+                chainId,
+                handled: false,
+            });
             vi.spyOn(mockEvmProvider, "readContract").mockResolvedValue(unhandledStrategyId);
 
             runPromise = orchestrator.run(abortController.signal);
@@ -418,7 +429,12 @@ describe("Orchestrator", { sequential: true }, () => {
 
             vi.spyOn(mockStrategyRegistry, "getStrategyId")
                 .mockResolvedValueOnce(undefined)
-                .mockResolvedValue(strategyId);
+                .mockResolvedValue({
+                    id: strategyId,
+                    address: strategyAddress,
+                    chainId,
+                    handled: true,
+                });
 
             vi.spyOn(mockIndexerClient, "getEventsAfterBlockNumberAndLogIndex")
                 .mockResolvedValueOnce([poolCreatedEvent])
@@ -580,7 +596,12 @@ describe("Orchestrator", { sequential: true }, () => {
             );
             const error = new UnsupportedStrategy(strategyId);
 
-            vi.spyOn(mockStrategyRegistry, "getStrategyId").mockResolvedValue(strategyId);
+            vi.spyOn(mockStrategyRegistry, "getStrategyId").mockResolvedValue({
+                id: strategyId,
+                address: mockEvent.srcAddress,
+                chainId,
+                handled: true,
+            });
             vi.spyOn(mockIndexerClient, "getEventsAfterBlockNumberAndLogIndex")
                 .mockResolvedValueOnce([mockEvent])
                 .mockResolvedValue([]);

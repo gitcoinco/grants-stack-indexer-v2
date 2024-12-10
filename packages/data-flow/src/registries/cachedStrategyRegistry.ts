@@ -1,0 +1,78 @@
+import { Strategy } from "@grants-stack-indexer/repository";
+import { Address, ChainId, Hex, ILogger } from "@grants-stack-indexer/shared";
+
+import { IStrategyRegistry } from "../internal.js";
+
+/**
+ * Proxy class to cache the strategy ids in memory or fallback to another strategy registry
+ */
+export class InMemoryCachedStrategyRegistry implements IStrategyRegistry {
+    private cache: Map<ChainId, Map<Address, Strategy>>;
+
+    private constructor(
+        private readonly logger: ILogger,
+        private readonly strategyRegistry: IStrategyRegistry,
+        cache: Map<ChainId, Map<Address, Strategy>>,
+    ) {
+        this.cache = structuredClone(cache);
+    }
+
+    async getStrategies(params?: { handled?: boolean; chainId?: ChainId }): Promise<Strategy[]> {
+        return this.strategyRegistry.getStrategies(params);
+    }
+
+    static async initialize(
+        logger: ILogger,
+        strategyRegistry: IStrategyRegistry,
+    ): Promise<InMemoryCachedStrategyRegistry> {
+        const strategies = await strategyRegistry.getStrategies();
+        const cache = new Map<ChainId, Map<Address, Strategy>>();
+
+        logger.debug(`Loading strategies into memory...`);
+
+        for (const strategy of strategies) {
+            if (!cache.has(strategy.chainId)) {
+                cache.set(strategy.chainId, new Map());
+            }
+            cache.get(strategy.chainId)?.set(strategy.address, strategy);
+        }
+
+        return new InMemoryCachedStrategyRegistry(logger, strategyRegistry, cache);
+    }
+
+    async getStrategyId(chainId: ChainId, strategyAddress: Address): Promise<Strategy | undefined> {
+        const cache = this.cache.get(chainId)?.get(strategyAddress);
+        if (cache) {
+            return cache;
+        }
+
+        const strategy = await this.strategyRegistry.getStrategyId(chainId, strategyAddress);
+        if (strategy) {
+            this.cache.get(chainId)?.set(strategyAddress, strategy);
+        }
+        return strategy;
+    }
+
+    async saveStrategyId(
+        chainId: ChainId,
+        strategyAddress: Address,
+        strategyId: Hex,
+        handled: boolean,
+    ): Promise<void> {
+        if (this.cache.get(chainId)?.get(strategyAddress)?.handled === handled) {
+            return;
+        }
+
+        this.logger.debug(
+            `Saving strategy id ${strategyId} for address ${strategyAddress} and chainId ${chainId}`,
+        );
+        await this.strategyRegistry.saveStrategyId(chainId, strategyAddress, strategyId, handled);
+
+        this.cache.get(chainId)?.set(strategyAddress, {
+            address: strategyAddress,
+            id: strategyId,
+            chainId,
+            handled,
+        });
+    }
+}

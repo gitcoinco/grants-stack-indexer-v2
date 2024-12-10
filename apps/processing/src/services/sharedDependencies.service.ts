@@ -1,8 +1,13 @@
 import {
     CoreDependencies,
     InMemoryEventsRegistry,
-    InMemoryStrategyRegistry,
+    IStrategyRegistry,
 } from "@grants-stack-indexer/data-flow";
+import {
+    DatabaseStrategyRegistry,
+    IEventsRegistry,
+    InMemoryCachedStrategyRegistry,
+} from "@grants-stack-indexer/data-flow/dist/src/internal.js";
 import { EnvioIndexerClient } from "@grants-stack-indexer/indexer-client";
 import { IpfsProvider } from "@grants-stack-indexer/metadata";
 import { PricingProviderFactory } from "@grants-stack-indexer/pricing";
@@ -13,6 +18,7 @@ import {
     KyselyDonationRepository,
     KyselyProjectRepository,
     KyselyRoundRepository,
+    KyselyStrategyRepository,
 } from "@grants-stack-indexer/repository";
 import { Logger } from "@grants-stack-indexer/shared";
 
@@ -21,8 +27,8 @@ import { Environment } from "../config/index.js";
 export type SharedDependencies = {
     core: Omit<CoreDependencies, "evmProvider">;
     registries: {
-        eventsRegistry: InMemoryEventsRegistry;
-        strategyRegistry: InMemoryStrategyRegistry;
+        eventsRegistry: IEventsRegistry;
+        strategyRegistry: IStrategyRegistry;
     };
     indexerClient: EnvioIndexerClient;
     kyselyDatabase: ReturnType<typeof createKyselyDatabase>;
@@ -35,7 +41,7 @@ export type SharedDependencies = {
  * - Initializes indexer client
  */
 export class SharedDependenciesService {
-    static initialize(env: Environment): SharedDependencies {
+    static async initialize(env: Environment): Promise<SharedDependencies> {
         // Initialize repositories
         const kyselyDatabase = createKyselyDatabase({
             connectionString: env.DATABASE_URL,
@@ -68,8 +74,16 @@ export class SharedDependenciesService {
         const eventsRegistry = new InMemoryEventsRegistry(
             new Logger({ className: "InMemoryEventsRegistry" }),
         );
-        const strategyRegistry = new InMemoryStrategyRegistry(
+        const strategyRepository = new KyselyStrategyRepository(
+            kyselyDatabase,
+            env.DATABASE_REGISTRIES_SCHEMA,
+        );
+        const strategyRegistry = await InMemoryCachedStrategyRegistry.initialize(
             new Logger({ className: "InMemoryStrategyRegistry" }),
+            new DatabaseStrategyRegistry(
+                new Logger({ className: "DatabaseStrategyRegistry" }),
+                strategyRepository,
+            ),
         );
 
         // Initialize indexer client

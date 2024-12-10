@@ -1,22 +1,38 @@
 import { Address, Hex } from "viem";
 
+import { Strategy } from "@grants-stack-indexer/repository";
+import { ChainId } from "@grants-stack-indexer/shared";
+
 /**
  * The strategy registry saves the mapping between the strategy address and the strategy id. Serves as a Cache
  * to avoid having to read from the chain to get the strategy id every time.
  */
-//TODO: implement a mechanism to record Strategy that we still don't have a corresponding handler
-// we need to store and mark that this strategy is not handled yet, so when it's supported we can process all of the pending events for it
 export interface IStrategyRegistry {
     /**
-     * Get the strategy id by the strategy address
+     * Get the strategy id by the strategy address and chain id
+     *
+     * @param chainId - The chain id
      * @param strategyAddress - The strategy address
-     * @returns The strategy id or undefined if the strategy address is not registered
+     * @returns The strategy or undefined if the strategy address is not registered
      */
-    getStrategyId(strategyAddress: Address): Promise<Hex | undefined>;
+    getStrategyId(chainId: ChainId, strategyAddress: Address): Promise<Strategy | undefined>;
     /**
-     * Save the strategy id by the strategy address
+     * Save the strategy id by the strategy address and chain id
+     * @param chainId - The chain id
      * @param strategyAddress - The strategy address
      * @param strategyId - The strategy id
+     * @param handled - Whether the strategy is handled
      */
-    saveStrategyId(strategyAddress: Address, strategyId: Hex): Promise<void>;
+    saveStrategyId(
+        chainId: ChainId,
+        strategyAddress: Address,
+        strategyId: Hex,
+        handled: boolean,
+    ): Promise<void>;
+
+    /**
+     * Get all the strategies
+     * @returns The strategies
+     */
+    getStrategies(params?: { handled?: boolean; chainId?: ChainId }): Promise<Strategy[]>;
 }

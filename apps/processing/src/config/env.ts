@@ -30,6 +30,7 @@ const baseSchema = z.object({
     }, "Chain IDs must be unique"),
     DATABASE_URL: z.string(),
     DATABASE_SCHEMA: z.string().default("public"),
+    DATABASE_REGISTRIES_SCHEMA: z.string().default("public"),
     INDEXER_GRAPHQL_URL: z.string().url(),
     INDEXER_ADMIN_SECRET: z.string(),
     PRICING_SOURCE: z.enum(["dummy", "coingecko"]).default("coingecko"),
