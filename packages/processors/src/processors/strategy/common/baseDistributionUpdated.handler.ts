@@ -37,7 +37,6 @@ export class BaseDistributionUpdatedHandler
     /* @inheritdoc */
     async handle(): Promise<Changeset[]> {
         const { logger, metadataProvider } = this.dependencies;
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const [_, pointer] = this.event.params.metadata;
 
         const strategyAddress = getAddress(this.event.srcAddress);

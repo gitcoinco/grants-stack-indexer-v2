@@ -206,11 +206,11 @@ describe("Orchestrator", { sequential: true }, () => {
                 "0x6f9291df02b2664139cec5703c124e4ebce32879c74b6297faa1468aa5ff9ebf" as Hex;
             const mockEvent = createMockEvent("Allo", "PoolCreated", 1, {
                 strategy: strategyAddress,
-                poolId: 1n,
+                poolId: "1",
                 profileId: "0x123",
                 token: "0x123",
-                amount: 100n,
-                metadata: [1n, "1"],
+                amount: "100",
+                metadata: ["1", "1"],
             });
 
             const eventsProcessorSpy = vi.spyOn(orchestrator["eventsProcessor"], "processEvent");
@@ -396,11 +396,11 @@ describe("Orchestrator", { sequential: true }, () => {
                 "0x6f9291df02b2664139cec5703c124e4ebce32879c74b6297faa1468aa5ff9ebf" as Hex;
             const poolCreatedEvent = createMockEvent("Allo", "PoolCreated", 1, {
                 strategy: strategyAddress,
-                poolId: 1n,
+                poolId: "1",
                 profileId: "0x123",
                 token: "0x123",
-                amount: 100n,
-                metadata: [1n, "1"],
+                amount: "100",
+                metadata: ["1", "1"],
             });
             const registeredEvent = createMockEvent(
                 "Strategy",

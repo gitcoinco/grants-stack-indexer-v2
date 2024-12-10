@@ -28,6 +28,14 @@ export interface IRoundReadRepository {
     getRoundById(chainId: ChainId, roundId: string): Promise<Round | undefined>;
 
     /**
+     * Retrieves a specific round by its ID and chain ID.
+     * @param chainId The chain ID of the round.
+     * @param roundId The ID of the round to fetch.
+     * @returns A promise that resolves to a Round object
+     * @throws {RoundNotFoundForId} if the round does not exist
+     */
+    getRoundByIdOrThrow(chainId: ChainId, roundId: string): Promise<Round>;
+    /**
      * Retrieves a round by its strategy address and chain ID.
      * @param chainId The chain ID of the round.
      * @param strategyAddress The strategy address of the round.

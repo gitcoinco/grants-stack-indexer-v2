@@ -26,7 +26,11 @@ module.exports = {
         "@typescript-eslint/no-unsafe-return": "error",
         "@typescript-eslint/no-unused-vars": [
             "error",
-            { argsIgnorePattern: "_+", ignoreRestSiblings: true },
+            {
+                argsIgnorePattern: "_+",
+                ignoreRestSiblings: true,
+                destructuredArrayIgnorePattern: "^_",
+            },
         ],
         "@typescript-eslint/prefer-as-const": "warn",
     },

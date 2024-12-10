@@ -12,6 +12,7 @@ import {
     PendingRoundRole,
     Round,
     RoundNotFound,
+    RoundNotFoundForId,
     RoundRole,
     RoundRoleNames,
 } from "../../internal.js";
@@ -43,6 +44,16 @@ export class KyselyRoundRepository implements IRoundRepository {
             .where("id", "=", roundId)
             .selectAll()
             .executeTakeFirst();
+    }
+
+    /* @inheritdoc */
+    async getRoundByIdOrThrow(chainId: ChainId, roundId: string): Promise<Round> {
+        const round = await this.getRoundById(chainId, roundId);
+
+        if (!round) {
+            throw new RoundNotFoundForId(chainId, roundId);
+        }
+        return round;
     }
 
     /* @inheritdoc */
