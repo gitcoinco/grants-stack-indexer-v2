@@ -79,7 +79,7 @@ export class SharedDependenciesService {
             env.DATABASE_REGISTRIES_SCHEMA,
         );
         const strategyRegistry = await InMemoryCachedStrategyRegistry.initialize(
-            new Logger({ className: "InMemoryStrategyRegistry" }),
+            new Logger({ className: "InMemoryCachedStrategyRegistry" }),
             new DatabaseStrategyRegistry(
                 new Logger({ className: "DatabaseStrategyRegistry" }),
                 strategyRepository,

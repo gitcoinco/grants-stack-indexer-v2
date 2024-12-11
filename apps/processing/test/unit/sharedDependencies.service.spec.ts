@@ -17,6 +17,11 @@ vi.mock("@grants-stack-indexer/repository", () => ({
     KyselyApplicationRepository: vi.fn(),
     KyselyDonationRepository: vi.fn(),
     KyselyApplicationPayoutRepository: vi.fn(),
+    KyselyStrategyRepository: vi.fn().mockImplementation(() => ({
+        getStrategies: vi.fn().mockResolvedValue([]),
+        getStrategyId: vi.fn(),
+        saveStrategyId: vi.fn(),
+    })),
 }));
 
 vi.mock("@grants-stack-indexer/pricing", () => ({
@@ -32,6 +37,27 @@ vi.mock("@grants-stack-indexer/metadata", () => ({
 vi.mock("@grants-stack-indexer/indexer-client", () => ({
     EnvioIndexerClient: vi.fn(),
 }));
+
+// Update the mock to handle async initialization
+vi.mock("@grants-stack-indexer/data-flow", () => {
+    const mockStrategyRegistry = {
+        getStrategies: vi.fn(),
+        getStrategyId: vi.fn(),
+        saveStrategyId: vi.fn(),
+    };
+
+    return {
+        InMemoryEventsRegistry: vi.fn(),
+        InMemoryCachedStrategyRegistry: {
+            initialize: vi.fn().mockResolvedValue(mockStrategyRegistry),
+        },
+        DatabaseStrategyRegistry: vi.fn().mockImplementation(() => ({
+            getStrategies: vi.fn(),
+            getStrategyId: vi.fn(),
+            saveStrategyId: vi.fn(),
+        })),
+    };
+});
 
 describe("SharedDependenciesService", () => {
     const mockEnv: Pick<
@@ -89,5 +115,8 @@ describe("SharedDependenciesService", () => {
         // Verify registries
         expect(dependencies.registries).toHaveProperty("eventsRegistry");
         expect(dependencies.registries).toHaveProperty("strategyRegistry");
+
+        // Verify InMemoryCachedStrategyRegistry initialization
+        expect(dependencies.registries.strategyRegistry).toBeDefined();
     });
 });
