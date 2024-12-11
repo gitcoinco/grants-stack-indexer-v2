@@ -28,7 +28,8 @@ Available options:
 |-----------------------------|--------------------------------------------------------------------------------------------------------------------------------|-----------|----------------------------------|-----------------------------------------------------------------|
 | `CHAINS` | JSON array of chain configurations | N/A | Yes | Each chain object requires: `id` (number), `name` (string), `rpcUrls` (string array). Optional: `fetchLimit` (default: 500), `fetchDelayMs` (default: 1000) |
 | `DATABASE_URL` | PostgreSQL Data Layer database connection URL | N/A | Yes | |
-| `DATABASE_SCHEMA` | PostgreSQL Data Layer database schema name | public | Yes | |
+| `DATABASE_SCHEMA` | PostgreSQL Data Layer database chain-data schema name | public | Yes | |
+| `DATABASE_REGISTRIES_SCHEMA` | PostgreSQL Data Layer database registries schema name | public | Yes | |
 | `INDEXER_GRAPHQL_URL` | GraphQL endpoint for the indexer | N/A | Yes | |
 | `INDEXER_ADMIN_SECRET` | Admin secret for indexer authentication | N/A | Yes | |
 | `IPFS_GATEWAYS_URL` | Array of IPFS gateway URLs | N/A | Yes | Multiple gateways for redundancy |
