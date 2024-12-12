@@ -1,6 +1,6 @@
 import { Kysely } from "kysely";
 
-import { getSchemaName } from "../../utils/index.js";
+import { getSchemaName } from "../utils/index.js";
 
 /**
  * The up function is called when you update your database schema to the next version and down when you go back to previous version.

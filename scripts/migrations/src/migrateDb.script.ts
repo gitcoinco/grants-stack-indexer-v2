@@ -22,7 +22,6 @@ configDotenv();
  * - DATABASE_URL: PostgreSQL connection string
  *
  * Script arguments:
- * - folder: Folder name to migrate (e.g. "chainData" or "registries")
  * - schema: Database schema name where migrations are applied
  *
  * The script will:
@@ -34,7 +33,7 @@ configDotenv();
 
 export const main = async (): Promise<void> => {
     const { DATABASE_URL } = getDatabaseConfigFromEnv();
-    const { folder, schema } = parseArguments();
+    const { schema } = parseArguments();
 
     const db = createKyselyDatabase({
         connectionString: DATABASE_URL,
@@ -46,7 +45,7 @@ export const main = async (): Promise<void> => {
     const migrationResults = await migrateToLatest({
         db,
         schema,
-        migrationsFolder: getMigrationsFolder(folder),
+        migrationsFolder: getMigrationsFolder(),
     });
 
     if (migrationResults && migrationResults?.length > 0) {

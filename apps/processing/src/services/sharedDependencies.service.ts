@@ -76,7 +76,7 @@ export class SharedDependenciesService {
         );
         const strategyRepository = new KyselyStrategyRepository(
             kyselyDatabase,
-            env.DATABASE_REGISTRIES_SCHEMA,
+            env.DATABASE_SCHEMA,
         );
         const strategyRegistry = await InMemoryCachedStrategyRegistry.initialize(
             new Logger({ className: "InMemoryCachedStrategyRegistry" }),

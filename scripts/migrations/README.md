@@ -4,12 +4,10 @@ This package contains scripts for managing the database schema and migrations.
 
 ## Available Scripts
 
-| Script               | Description                                                  |
-| -------------------- | ------------------------------------------------------------ |
-| `migrate:chain-data` | Runs all pending database migrations on chainData tables     |
-| `migrate:registries` | Runs all pending database migrations on registries tables    |
-| `reset:chain-data`   | Drops and recreates the database schema on chainData tables  |
-| `reset:registries`   | Drops and recreates the database schema on registries tables |
+| Script       | Description                             |
+| ------------ | --------------------------------------- |
+| `db:migrate` | Runs all pending database migrations    |
+| `db:reset`   | Drops and recreates the database schema |
 
 ## Environment Setup
 
@@ -39,8 +37,12 @@ pnpm install
 To apply all pending migrations:
 
 ```bash
-pnpm migrate:chain-data --schema=schema_name
+pnpm db:migrate --schema=schema_name
 ```
+
+Optional arguments:
+
+-   `--schema` or `-s`: Database schema name where migrations are applied. Defaults to `public`.
 
 This will:
 
@@ -55,7 +57,7 @@ This will:
 To completely reset the database schema:
 
 ```bash
-pnpm reset:chain-data --schema=schema_name
+pnpm db:reset --schema=schema_name
 ```
 
 **Warning**: This will:
@@ -71,7 +73,7 @@ pnpm reset:chain-data --schema=schema_name
 1. Create a new migration file in [`packages/repository/src/migrations`](../../packages//repository/migrations)
 2. Name it using the format: `YYYYMMDDTHHmmss_description.ts`
 3. Implement the `up` and `down` functions
-4. Run `pnpm migrate:chain-data` to apply the new migration
+4. Run `pnpm db:migrate` to apply the new migration
 
 Example migration file:
 
