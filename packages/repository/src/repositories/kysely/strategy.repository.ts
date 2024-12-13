@@ -11,6 +11,7 @@ export class KyselyStrategyRepository implements IStrategyRepository {
         private readonly schemaName: string,
     ) {}
 
+    /** @inheritdoc */
     async getStrategyByChainIdAndAddress(
         chainId: ChainId,
         strategyAddress: Address,
@@ -23,6 +24,8 @@ export class KyselyStrategyRepository implements IStrategyRepository {
             .selectAll()
             .executeTakeFirst();
     }
+
+    /** @inheritdoc */
     async saveStrategy(strategy: Strategy): Promise<void> {
         await this.db
             .withSchema(this.schemaName)

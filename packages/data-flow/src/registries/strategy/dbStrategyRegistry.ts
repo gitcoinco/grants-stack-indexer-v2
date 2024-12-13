@@ -3,7 +3,7 @@ import type { Address, Hex } from "viem";
 import { IStrategyRepository, Strategy } from "@grants-stack-indexer/repository";
 import { ChainId, ILogger } from "@grants-stack-indexer/shared";
 
-import { IStrategyRegistry } from "../internal.js";
+import { IStrategyRegistry } from "../../internal.js";
 
 /**
  * Class to store strategy ids in Database

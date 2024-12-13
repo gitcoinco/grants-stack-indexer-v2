@@ -38,7 +38,6 @@ vi.mock("@grants-stack-indexer/indexer-client", () => ({
     EnvioIndexerClient: vi.fn(),
 }));
 
-// Update the mock to handle async initialization
 vi.mock("@grants-stack-indexer/data-flow", () => {
     const mockStrategyRegistry = {
         getStrategies: vi.fn(),

@@ -5,7 +5,7 @@ import { Strategy } from "@grants-stack-indexer/repository";
 import { ChainId, ILogger } from "@grants-stack-indexer/shared";
 
 import { IStrategyRegistry } from "../../src/internal.js";
-import { InMemoryCachedStrategyRegistry } from "../../src/registries/cachedStrategyRegistry.js";
+import { InMemoryCachedStrategyRegistry } from "../../src/registries/strategy/cachedStrategyRegistry.js";
 
 describe("InMemoryCachedStrategyRegistry", () => {
     const logger: ILogger = {

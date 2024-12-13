@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import { IStrategyRepository, Strategy } from "@grants-stack-indexer/repository";
 import { ChainId, ILogger } from "@grants-stack-indexer/shared";
 
-import { DatabaseStrategyRegistry } from "../../src/registries/dbStrategyRegistry.js";
+import { DatabaseStrategyRegistry } from "../../src/registries/strategy/dbStrategyRegistry.js";
 
 describe("DatabaseStrategyRegistry", () => {
     const logger: ILogger = {

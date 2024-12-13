@@ -95,7 +95,6 @@ The `EventsFetcher` class is responsible for fetching events from the blockchain
 The `StrategyRegistry` stores strategy IDs to populate strategy events with them given the Strategy address.
 There are 3 implementations:
 
--   `InMemoryStrategyRegistry`: stores map in-memory
 -   `DatabaseStrategyRegistry`: persists data to database using IStrategyRepository
 -   `InMemoryCachedStrategyRegistry`: stores map in-memory as cache and persists to database
 

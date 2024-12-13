@@ -1,7 +1,5 @@
 import { Kysely } from "kysely";
 
-import { getSchemaName } from "../utils/index.js";
-
 /**
  * The up function is called when you update your database schema to the next version and down when you go back to previous version.
  * The only argument for the functions is an instance of Kysely<any>. It's important to use Kysely<any> and not Kysely<YourDatabase>.
@@ -11,10 +9,6 @@ import { getSchemaName } from "../utils/index.js";
 export async function up(db: Kysely<any>): Promise<void> {
     const ADDRESS_TYPE = "text";
     const CHAIN_ID_TYPE = "integer";
-
-    const schema = getSchemaName(db.schema);
-
-    console.log("schema", schema);
 
     await db.schema
         .createTable("strategies")

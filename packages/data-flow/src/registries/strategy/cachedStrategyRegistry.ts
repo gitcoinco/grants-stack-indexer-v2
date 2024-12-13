@@ -1,7 +1,7 @@
 import { Strategy } from "@grants-stack-indexer/repository";
 import { Address, ChainId, Hex, ILogger } from "@grants-stack-indexer/shared";
 
-import { IStrategyRegistry } from "../internal.js";
+import { IStrategyRegistry } from "../../internal.js";
 
 /**
  * Proxy class to cache the strategy ids in memory or fallback to another strategy registry
@@ -17,10 +17,19 @@ export class InMemoryCachedStrategyRegistry implements IStrategyRegistry {
         this.cache = structuredClone(cache);
     }
 
+    /** @inheritdoc */
     async getStrategies(params?: { handled?: boolean; chainId?: ChainId }): Promise<Strategy[]> {
         return this.strategyRegistry.getStrategies(params);
     }
 
+    /**
+     * Creates a new cached strategy registry instance. It will load the strategies into memory and cache them and
+     * fallback to the strategy registry if the strategy is not found in the cache.
+     *
+     * @param logger - The logger instance
+     * @param strategyRegistry - The strategy registry instance
+     * @returns The initialized cached strategy registry
+     */
     static async initialize(
         logger: ILogger,
         strategyRegistry: IStrategyRegistry,
@@ -40,6 +49,7 @@ export class InMemoryCachedStrategyRegistry implements IStrategyRegistry {
         return new InMemoryCachedStrategyRegistry(logger, strategyRegistry, cache);
     }
 
+    /** @inheritdoc */
     async getStrategyId(chainId: ChainId, strategyAddress: Address): Promise<Strategy | undefined> {
         const cache = this.cache.get(chainId)?.get(strategyAddress);
         if (cache) {
@@ -53,6 +63,7 @@ export class InMemoryCachedStrategyRegistry implements IStrategyRegistry {
         return strategy;
     }
 
+    /** @inheritdoc */
     async saveStrategyId(
         chainId: ChainId,
         strategyAddress: Address,

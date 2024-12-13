@@ -1,13 +1,11 @@
 import {
     CoreDependencies,
-    InMemoryEventsRegistry,
-    IStrategyRegistry,
-} from "@grants-stack-indexer/data-flow";
-import {
     DatabaseStrategyRegistry,
     IEventsRegistry,
     InMemoryCachedStrategyRegistry,
-} from "@grants-stack-indexer/data-flow/dist/src/internal.js";
+    InMemoryEventsRegistry,
+    IStrategyRegistry,
+} from "@grants-stack-indexer/data-flow";
 import { EnvioIndexerClient } from "@grants-stack-indexer/indexer-client";
 import { IpfsProvider } from "@grants-stack-indexer/metadata";
 import { PricingProviderFactory } from "@grants-stack-indexer/pricing";
