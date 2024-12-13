@@ -1,7 +1,7 @@
 import { Address, Hex } from "viem";
 import { describe, expect, it, vi } from "vitest";
 
-import { IStrategyRepository, Strategy } from "@grants-stack-indexer/repository";
+import { IStrategyRegistryRepository, Strategy } from "@grants-stack-indexer/repository";
 import { ChainId, ILogger } from "@grants-stack-indexer/shared";
 
 import { DatabaseStrategyRegistry } from "../../src/registries/strategy/dbStrategyRegistry.js";
@@ -14,7 +14,7 @@ describe("DatabaseStrategyRegistry", () => {
         warn: vi.fn(),
     };
 
-    const mockStrategyRepository: IStrategyRepository = {
+    const mockStrategyRepository: IStrategyRegistryRepository = {
         getStrategies: vi.fn(),
         getStrategyByChainIdAndAddress: vi.fn(),
         saveStrategy: vi.fn(),

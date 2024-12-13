@@ -8,7 +8,7 @@ export type {
     IApplicationReadRepository,
     IDonationRepository,
     IApplicationPayoutRepository,
-    IStrategyRepository,
+    IStrategyRegistryRepository,
     DatabaseConfig,
 } from "./internal.js";
 
@@ -53,7 +53,7 @@ export {
     KyselyApplicationRepository,
     KyselyDonationRepository,
     KyselyApplicationPayoutRepository,
-    KyselyStrategyRepository,
+    KyselyStrategyRegistryRepository,
 } from "./repositories/kysely/index.js";
 
 export {

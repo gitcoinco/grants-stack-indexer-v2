@@ -18,8 +18,8 @@ export class InMemoryCachedStrategyRegistry implements IStrategyRegistry {
     }
 
     /** @inheritdoc */
-    async getStrategies(params?: { handled?: boolean; chainId?: ChainId }): Promise<Strategy[]> {
-        return this.strategyRegistry.getStrategies(params);
+    async getStrategies(filters?: { handled?: boolean; chainId?: ChainId }): Promise<Strategy[]> {
+        return this.strategyRegistry.getStrategies(filters);
     }
 
     /**

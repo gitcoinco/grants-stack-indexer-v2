@@ -1,6 +1,6 @@
 import type { Address, Hex } from "viem";
 
-import { IStrategyRepository, Strategy } from "@grants-stack-indexer/repository";
+import { IStrategyRegistryRepository, Strategy } from "@grants-stack-indexer/repository";
 import { ChainId, ILogger } from "@grants-stack-indexer/shared";
 
 import { IStrategyRegistry } from "../../internal.js";
@@ -11,12 +11,12 @@ import { IStrategyRegistry } from "../../internal.js";
 export class DatabaseStrategyRegistry implements IStrategyRegistry {
     constructor(
         private logger: ILogger,
-        private strategyRepository: IStrategyRepository,
+        private strategyRepository: IStrategyRegistryRepository,
     ) {}
 
     /** @inheritdoc */
-    async getStrategies(params?: { handled?: boolean; chainId?: ChainId }): Promise<Strategy[]> {
-        return this.strategyRepository.getStrategies(params);
+    async getStrategies(filters?: { handled?: boolean; chainId?: ChainId }): Promise<Strategy[]> {
+        return this.strategyRepository.getStrategies(filters);
     }
 
     /** @inheritdoc */

@@ -34,5 +34,5 @@ export interface IStrategyRegistry {
      * Get all the strategies
      * @returns The strategies
      */
-    getStrategies(params?: { handled?: boolean; chainId?: ChainId }): Promise<Strategy[]>;
+    getStrategies(filters?: { handled?: boolean; chainId?: ChainId }): Promise<Strategy[]>;
 }

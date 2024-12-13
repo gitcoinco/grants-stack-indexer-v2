@@ -16,7 +16,7 @@ import {
     KyselyDonationRepository,
     KyselyProjectRepository,
     KyselyRoundRepository,
-    KyselyStrategyRepository,
+    KyselyStrategyRegistryRepository,
 } from "@grants-stack-indexer/repository";
 import { Logger } from "@grants-stack-indexer/shared";
 
@@ -72,7 +72,7 @@ export class SharedDependenciesService {
         const eventsRegistry = new InMemoryEventsRegistry(
             new Logger({ className: "InMemoryEventsRegistry" }),
         );
-        const strategyRepository = new KyselyStrategyRepository(
+        const strategyRepository = new KyselyStrategyRegistryRepository(
             kyselyDatabase,
             env.DATABASE_SCHEMA,
         );

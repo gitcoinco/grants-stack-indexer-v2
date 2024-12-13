@@ -2,10 +2,10 @@ import { Kysely } from "kysely";
 
 import { Address, ChainId } from "@grants-stack-indexer/shared";
 
-import { IStrategyRepository } from "../../interfaces/index.js";
+import { IStrategyRegistryRepository } from "../../interfaces/index.js";
 import { Database, Strategy } from "../../internal.js";
 
-export class KyselyStrategyRepository implements IStrategyRepository {
+export class KyselyStrategyRegistryRepository implements IStrategyRegistryRepository {
     constructor(
         private readonly db: Kysely<Database>,
         private readonly schemaName: string,
@@ -35,15 +35,16 @@ export class KyselyStrategyRepository implements IStrategyRepository {
             .execute();
     }
 
-    async getStrategies(params?: { handled?: boolean; chainId?: ChainId }): Promise<Strategy[]> {
+    /** @inheritdoc */
+    async getStrategies(filters?: { handled?: boolean; chainId?: ChainId }): Promise<Strategy[]> {
         const query = this.db.withSchema(this.schemaName).selectFrom("strategies");
 
-        if (params?.chainId) {
-            query.where("chainId", "=", params.chainId);
+        if (filters?.chainId) {
+            query.where("chainId", "=", filters.chainId);
         }
 
-        if (params?.handled) {
-            query.where("handled", "=", params.handled);
+        if (filters?.handled) {
+            query.where("handled", "=", filters.handled);
         }
 
         return query.selectAll().execute();
