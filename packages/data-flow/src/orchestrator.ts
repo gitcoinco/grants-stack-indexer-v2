@@ -114,24 +114,17 @@ export class Orchestrator {
 
                 event = await this.enhanceStrategyId(event);
                 if (this.isPoolCreated(event)) {
-                    // we save the strategy id with handled = false because we don't know if the strategy is handled yet
+                    const handleable = existsHandler(event.strategyId);
                     await this.strategyRegistry.saveStrategyId(
                         this.chainId,
                         event.srcAddress,
                         event.strategyId,
-                        false,
+                        handleable,
                     );
                 } else if (event.contractName === "Strategy" && "strategyId" in event) {
                     if (!existsHandler(event.strategyId)) {
                         // we skip the event if the strategy id is not handled yet
                         continue;
-                    } else {
-                        await this.strategyRegistry.saveStrategyId(
-                            this.chainId,
-                            event.srcAddress,
-                            event.strategyId,
-                            true,
-                        );
                     }
                 }
 

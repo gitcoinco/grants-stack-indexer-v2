@@ -17,7 +17,7 @@ vi.mock("@grants-stack-indexer/repository", () => ({
     KyselyApplicationRepository: vi.fn(),
     KyselyDonationRepository: vi.fn(),
     KyselyApplicationPayoutRepository: vi.fn(),
-    KyselyStrategyRepository: vi.fn().mockImplementation(() => ({
+    KyselyStrategyRegistryRepository: vi.fn().mockImplementation(() => ({
         getStrategies: vi.fn().mockResolvedValue([]),
         getStrategyId: vi.fn(),
         saveStrategyId: vi.fn(),
