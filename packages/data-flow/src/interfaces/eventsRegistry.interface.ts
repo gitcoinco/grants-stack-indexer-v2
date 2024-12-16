@@ -1,4 +1,5 @@
-import { AnyEvent, ChainId, ContractName, ProcessorEvent } from "@grants-stack-indexer/shared";
+import { NewProcessedEvent, ProcessedEvent } from "@grants-stack-indexer/repository";
+import { ChainId } from "@grants-stack-indexer/shared";
 
 /**
  * The events registry saves as a checkpoint to the last processed event by the system.
@@ -10,16 +11,11 @@ export interface IEventsRegistry {
      * @param chainId - The chain id
      * @returns The last processed event or undefined if no event has been processed yet.
      */
-    getLastProcessedEvent(
-        chainId: ChainId,
-    ): Promise<ProcessorEvent<ContractName, AnyEvent> | undefined>;
+    getLastProcessedEvent(chainId: ChainId): Promise<ProcessedEvent | undefined>;
     /**
      * Save the last processed event by the system
      * @param chainId - The chain id
      * @param event - The event to save.
      */
-    saveLastProcessedEvent(
-        chainId: ChainId,
-        event: ProcessorEvent<ContractName, AnyEvent>,
-    ): Promise<void>;
+    saveLastProcessedEvent(chainId: ChainId, event: NewProcessedEvent): Promise<void>;
 }

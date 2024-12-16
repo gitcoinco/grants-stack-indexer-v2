@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { ChainId, ILogger, ProcessorEvent } from "@grants-stack-indexer/shared";
 
-import { InMemoryEventsRegistry } from "../../src/eventsRegistry.js";
+import { InMemoryEventsRegistry } from "../../src/registries/event/eventsRegistry.js";
 
 describe("InMemoryEventsRegistry", () => {
     const logger: ILogger = {

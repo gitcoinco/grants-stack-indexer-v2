@@ -12,6 +12,7 @@ import {
     Application,
     ApplicationPayout,
     Donation as DonationTable,
+    ProcessedEvent as EventTable,
     MatchingDistribution,
     PendingProjectRole as PendingProjectRoleTable,
     PendingRoundRole as PendingRoundRoleTable,
@@ -61,6 +62,7 @@ export interface Database {
     donations: DonationTable;
     applicationsPayouts: ApplicationPayoutTable;
     strategies: StrategyTable;
+    events: EventTable;
 }
 
 /**

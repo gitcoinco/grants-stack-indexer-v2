@@ -112,10 +112,7 @@ describe("SharedDependenciesService", () => {
         expect(dependencies.core).toHaveProperty("applicationPayoutRepository");
 
         // Verify registries
-        expect(dependencies.registries).toHaveProperty("eventsRegistry");
-        expect(dependencies.registries).toHaveProperty("strategyRegistry");
-
-        // Verify InMemoryCachedStrategyRegistry initialization
-        expect(dependencies.registries.strategyRegistry).toBeDefined();
+        expect(dependencies.registriesRepositories).toHaveProperty("eventRegistryRepository");
+        expect(dependencies.registriesRepositories).toHaveProperty("strategyRegistryRepository");
     });
 });

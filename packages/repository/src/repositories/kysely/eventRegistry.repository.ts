@@ -1,0 +1,33 @@
+import { Kysely } from "kysely";
+
+import { ChainId } from "@grants-stack-indexer/shared";
+
+import { IEventRegistryRepository } from "../../interfaces/index.js";
+import { Database, NewProcessedEvent, ProcessedEvent } from "../../internal.js";
+
+export class KyselyEventRegistryRepository implements IEventRegistryRepository {
+    constructor(
+        private readonly db: Kysely<Database>,
+        private readonly schemaName: string,
+    ) {}
+
+    /** @inheritdoc */
+    async getLastProcessedEvent(chainId: ChainId): Promise<ProcessedEvent | undefined> {
+        return this.db
+            .withSchema(this.schemaName)
+            .selectFrom("events")
+            .where("chainId", "=", chainId)
+            .selectAll()
+            .executeTakeFirst();
+    }
+
+    /** @inheritdoc */
+    async saveLastProcessedEvent(chainId: ChainId, event: NewProcessedEvent): Promise<void> {
+        await this.db
+            .withSchema(this.schemaName)
+            .insertInto("events")
+            .values({ ...event, chainId })
+            .onConflict((oc) => oc.columns(["chainId"]).doUpdateSet({ ...event, chainId }))
+            .execute();
+    }
+}
