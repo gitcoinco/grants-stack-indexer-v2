@@ -117,7 +117,7 @@ export class Orchestrator {
                     const handleable = existsHandler(event.strategyId);
                     await this.strategyRegistry.saveStrategyId(
                         this.chainId,
-                        event.srcAddress,
+                        event.params.strategy,
                         event.strategyId,
                         handleable,
                     );

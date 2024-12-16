@@ -281,7 +281,7 @@ describe("Orchestrator", { sequential: true }, () => {
         });
 
         it("save strategyId to registry on PoolCreated event", async () => {
-            const strategyAddress = "0x123" as Address;
+            const strategyAddress = "0xff212432" as Address;
             const strategyId = "0xunknown" as Hex;
             const existingStrategyId =
                 "0x6f9291df02b2664139cec5703c124e4ebce32879c74b6297faa1468aa5ff9ebf" as Hex;
@@ -314,14 +314,14 @@ describe("Orchestrator", { sequential: true }, () => {
             expect(mockStrategyRegistry.saveStrategyId).toHaveBeenNthCalledWith(
                 1,
                 chainId,
-                strategyAddress,
+                mockEvent.params.strategy,
                 strategyId,
                 false,
             );
             expect(mockStrategyRegistry.saveStrategyId).toHaveBeenNthCalledWith(
                 2,
                 chainId,
-                strategyAddress,
+                mockEvent.params.strategy,
                 existingStrategyId,
                 true,
             );
