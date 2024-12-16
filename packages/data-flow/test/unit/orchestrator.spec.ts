@@ -83,6 +83,7 @@ describe("Orchestrator", { sequential: true }, () => {
         mockStrategyRegistry = {
             getStrategyId: vi.fn(),
             saveStrategyId: vi.fn(),
+            getStrategies: vi.fn(),
         };
 
         mockEvmProvider = {
@@ -140,6 +141,12 @@ describe("Orchestrator", { sequential: true }, () => {
             const eventsProcessorSpy = vi.spyOn(orchestrator["eventsProcessor"], "processEvent");
 
             vi.spyOn(mockEventsRegistry, "getLastProcessedEvent").mockResolvedValue(undefined);
+            vi.spyOn(mockStrategyRegistry, "getStrategyId").mockResolvedValue({
+                id: "0x6f9291df02b2664139cec5703c124e4ebce32879c74b6297faa1468aa5ff9ebf",
+                address: "0x123",
+                chainId,
+                handled: false,
+            });
             vi.spyOn(mockIndexerClient, "getEventsAfterBlockNumberAndLogIndex")
                 .mockResolvedValueOnce(mockEvents)
                 .mockResolvedValue([]);
@@ -152,6 +159,9 @@ describe("Orchestrator", { sequential: true }, () => {
                 numSuccessful: 1,
             });
             vi.spyOn(mockEventsRegistry, "saveLastProcessedEvent").mockImplementation(() => {
+                return Promise.resolve();
+            });
+            vi.spyOn(mockStrategyRegistry, "saveStrategyId").mockImplementation(() => {
                 return Promise.resolve();
             });
 
@@ -258,10 +268,6 @@ describe("Orchestrator", { sequential: true }, () => {
             });
 
             expect(orchestrator["eventsProcessor"].processEvent).toHaveBeenCalledTimes(1);
-            expect(mockStrategyRegistry.saveStrategyId).toHaveBeenCalledWith(
-                strategyAddress,
-                strategyId,
-            );
             expect(orchestrator["eventsProcessor"].processEvent).toHaveBeenCalledWith({
                 ...mockEvent,
                 strategyId,
@@ -271,6 +277,53 @@ describe("Orchestrator", { sequential: true }, () => {
             expect(mockEventsRegistry.saveLastProcessedEvent).toHaveBeenCalledWith(
                 chainId,
                 mockEvent,
+            );
+        });
+
+        it("save strategyId to registry on PoolCreated event", async () => {
+            const strategyAddress = "0x123" as Address;
+            const strategyId = "0xunknown" as Hex;
+            const existingStrategyId =
+                "0x6f9291df02b2664139cec5703c124e4ebce32879c74b6297faa1468aa5ff9ebf" as Hex;
+
+            const mockEvent = createMockEvent("Allo", "PoolCreated", 1, {
+                strategy: strategyAddress,
+                poolId: "1",
+                profileId: "0x123",
+                token: "0x123",
+                amount: "100",
+                metadata: ["1", "1"],
+            });
+
+            const eventsProcessorSpy = vi.spyOn(orchestrator["eventsProcessor"], "processEvent");
+            vi.spyOn(mockStrategyRegistry, "getStrategyId").mockResolvedValue(undefined);
+            vi.spyOn(mockEvmProvider, "readContract")
+                .mockResolvedValueOnce(strategyId)
+                .mockResolvedValueOnce(existingStrategyId);
+            vi.spyOn(mockEventsRegistry, "getLastProcessedEvent").mockResolvedValue(undefined);
+            vi.spyOn(mockIndexerClient, "getEventsAfterBlockNumberAndLogIndex")
+                .mockResolvedValueOnce([mockEvent, mockEvent])
+                .mockResolvedValue([]);
+
+            runPromise = orchestrator.run(abortController.signal);
+
+            await vi.waitFor(() => {
+                if (eventsProcessorSpy.mock.calls.length < 1) throw new Error("Not yet called");
+            });
+
+            expect(mockStrategyRegistry.saveStrategyId).toHaveBeenNthCalledWith(
+                1,
+                chainId,
+                strategyAddress,
+                strategyId,
+                false,
+            );
+            expect(mockStrategyRegistry.saveStrategyId).toHaveBeenNthCalledWith(
+                2,
+                chainId,
+                strategyAddress,
+                existingStrategyId,
+                true,
             );
         });
 
@@ -321,7 +374,12 @@ describe("Orchestrator", { sequential: true }, () => {
                     .mockResolvedValueOnce([mockEvent])
                     .mockResolvedValue([]);
 
-                vi.spyOn(mockStrategyRegistry, "getStrategyId").mockResolvedValue(strategyId);
+                vi.spyOn(mockStrategyRegistry, "getStrategyId").mockResolvedValue({
+                    id: strategyId,
+                    address: strategyAddress,
+                    chainId,
+                    handled: true,
+                });
                 eventsProcessorSpy.mockResolvedValue(changesets);
                 vi.spyOn(mockEventsRegistry, "saveLastProcessedEvent").mockImplementation(() => {
                     return Promise.resolve();
@@ -345,7 +403,10 @@ describe("Orchestrator", { sequential: true }, () => {
                     ...mockEvent,
                     strategyId,
                 });
-                expect(mockStrategyRegistry.getStrategyId).toHaveBeenCalledWith(strategyAddress);
+                expect(mockStrategyRegistry.getStrategyId).toHaveBeenCalledWith(
+                    chainId,
+                    strategyAddress,
+                );
                 expect(orchestrator["dataLoader"].applyChanges).toHaveBeenCalledTimes(1);
                 expect(orchestrator["dataLoader"].applyChanges).toHaveBeenCalledWith(changesets);
                 expect(mockEventsRegistry.saveLastProcessedEvent).toHaveBeenCalledWith(
@@ -375,7 +436,12 @@ describe("Orchestrator", { sequential: true }, () => {
                 .mockResolvedValueOnce([mockEvent])
                 .mockResolvedValue([]);
 
-            vi.spyOn(mockStrategyRegistry, "getStrategyId").mockResolvedValue(unhandledStrategyId);
+            vi.spyOn(mockStrategyRegistry, "getStrategyId").mockResolvedValue({
+                id: unhandledStrategyId,
+                address: strategyAddress,
+                chainId,
+                handled: false,
+            });
             vi.spyOn(mockEvmProvider, "readContract").mockResolvedValue(unhandledStrategyId);
 
             runPromise = orchestrator.run(abortController.signal);
@@ -388,6 +454,7 @@ describe("Orchestrator", { sequential: true }, () => {
             expect(orchestrator["eventsProcessor"].processEvent).not.toHaveBeenCalled();
             expect(orchestrator["dataLoader"].applyChanges).not.toHaveBeenCalled();
             expect(mockEventsRegistry.saveLastProcessedEvent).not.toHaveBeenCalled();
+            expect(mockStrategyRegistry.saveStrategyId).not.toHaveBeenCalled();
         });
 
         it("uses cached strategy ID from registry", async () => {
@@ -418,12 +485,16 @@ describe("Orchestrator", { sequential: true }, () => {
 
             vi.spyOn(mockStrategyRegistry, "getStrategyId")
                 .mockResolvedValueOnce(undefined)
-                .mockResolvedValue(strategyId);
+                .mockResolvedValue({
+                    id: strategyId,
+                    address: strategyAddress,
+                    chainId,
+                    handled: true,
+                });
+            vi.spyOn(mockEvmProvider, "readContract").mockResolvedValue(strategyId);
 
             vi.spyOn(mockIndexerClient, "getEventsAfterBlockNumberAndLogIndex")
-                .mockResolvedValueOnce([poolCreatedEvent])
-                .mockResolvedValueOnce([])
-                .mockResolvedValueOnce([registeredEvent])
+                .mockResolvedValueOnce([poolCreatedEvent, registeredEvent])
                 .mockResolvedValue([]);
 
             eventsProcessorSpy.mockResolvedValue([]);
@@ -435,6 +506,9 @@ describe("Orchestrator", { sequential: true }, () => {
                 numSuccessful: 1,
             });
             vi.spyOn(mockEventsRegistry, "saveLastProcessedEvent").mockImplementation(() => {
+                return Promise.resolve();
+            });
+            vi.spyOn(mockStrategyRegistry, "saveStrategyId").mockImplementation(() => {
                 return Promise.resolve();
             });
 
@@ -451,7 +525,10 @@ describe("Orchestrator", { sequential: true }, () => {
             );
 
             expect(mockEvmProvider.readContract).toHaveBeenCalledTimes(1);
-            expect(mockStrategyRegistry.getStrategyId).toHaveBeenLastCalledWith(strategyAddress);
+            expect(mockStrategyRegistry.getStrategyId).toHaveBeenLastCalledWith(
+                chainId,
+                strategyAddress,
+            );
             expect(eventsProcessorSpy).toHaveBeenLastCalledWith({
                 ...registeredEvent,
                 strategyId,
@@ -580,7 +657,12 @@ describe("Orchestrator", { sequential: true }, () => {
             );
             const error = new UnsupportedStrategy(strategyId);
 
-            vi.spyOn(mockStrategyRegistry, "getStrategyId").mockResolvedValue(strategyId);
+            vi.spyOn(mockStrategyRegistry, "getStrategyId").mockResolvedValue({
+                id: strategyId,
+                address: mockEvent.srcAddress,
+                chainId,
+                handled: true,
+            });
             vi.spyOn(mockIndexerClient, "getEventsAfterBlockNumberAndLogIndex")
                 .mockResolvedValueOnce([mockEvent])
                 .mockResolvedValue([]);

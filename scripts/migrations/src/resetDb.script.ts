@@ -1,10 +1,9 @@
-import path from "path";
 import { configDotenv } from "dotenv";
 
 import { createKyselyDatabase } from "@grants-stack-indexer/repository";
 
 import { getDatabaseConfigFromEnv } from "./schemas/index.js";
-import { resetDatabase } from "./utils/index.js";
+import { getMigrationsFolder, parseArguments, resetDatabase } from "./utils/index.js";
 
 configDotenv();
 
@@ -21,7 +20,9 @@ configDotenv();
  *
  * Environment variables required:
  * - DATABASE_URL: PostgreSQL connection string
- * - DATABASE_SCHEMA: Schema name to reset (e.g. "grants_stack")
+ *
+ * Script arguments:
+ * - schema: Database schema name where migrations are applied
  *
  * The script will:
  * - Drop the schema if it exists
@@ -34,22 +35,20 @@ configDotenv();
  */
 
 const main = async (): Promise<void> => {
-    const { DATABASE_URL, DATABASE_SCHEMA } = getDatabaseConfigFromEnv();
+    const { DATABASE_URL } = getDatabaseConfigFromEnv();
+    const { schema } = parseArguments();
 
     const db = createKyselyDatabase({
         connectionString: DATABASE_URL,
-        withSchema: DATABASE_SCHEMA,
+        withSchema: schema,
     });
 
-    console.log(`Resetting database schema '${DATABASE_SCHEMA}'...`);
+    console.log(`Resetting database schema '${schema}'...`);
 
     const resetResults = await resetDatabase({
         db,
-        schema: DATABASE_SCHEMA,
-        migrationsFolder: path.join(
-            path.dirname(new URL(import.meta.url).pathname),
-            "./migrations",
-        ),
+        schema,
+        migrationsFolder: getMigrationsFolder(),
     });
 
     if (resetResults && resetResults?.length > 0) {

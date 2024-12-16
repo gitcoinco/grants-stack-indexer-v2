@@ -113,15 +113,17 @@ export class Orchestrator {
                 await this.eventsRegistry.saveLastProcessedEvent(this.chainId, event);
 
                 event = await this.enhanceStrategyId(event);
-                if (event.contractName === "Strategy" && "strategyId" in event) {
+                if (this.isPoolCreated(event)) {
+                    const handleable = existsHandler(event.strategyId);
+                    await this.strategyRegistry.saveStrategyId(
+                        this.chainId,
+                        event.srcAddress,
+                        event.strategyId,
+                        handleable,
+                    );
+                } else if (event.contractName === "Strategy" && "strategyId" in event) {
                     if (!existsHandler(event.strategyId)) {
-                        //TODO: save to registry as unsupported strategy, so when the strategy is handled it will be backwards compatible and process all of the events
-                        //TODO: decide if we want to log this
-                        // this.logger.info(
-                        //     `No handler found for strategyId: ${event.strategyId}. Event: ${stringify(
-                        //         event,
-                        //     )}`,
-                        // );
+                        // we skip the event if the strategy id is not handled yet
                         continue;
                     }
                 }
@@ -216,9 +218,12 @@ export class Orchestrator {
      * @returns The strategy id
      */
     private async getOrFetchStrategyId(strategyAddress: Address): Promise<Hex> {
-        const existingId = await this.strategyRegistry.getStrategyId(strategyAddress);
-        if (existingId) {
-            return existingId;
+        const cachedStrategy = await this.strategyRegistry.getStrategyId(
+            this.chainId,
+            strategyAddress,
+        );
+        if (cachedStrategy) {
+            return cachedStrategy.id;
         }
 
         const strategyId = await this.dependencies.evmProvider.readContract(
@@ -227,9 +232,18 @@ export class Orchestrator {
             "getStrategyId",
         );
 
-        await this.strategyRegistry.saveStrategyId(strategyAddress, strategyId);
-
         return strategyId;
+    }
+
+    /**
+     * Check if the event is a PoolCreated event from Allo contract
+     * @param event - The event
+     * @returns True if the event is a PoolCreated event from Allo contract, false otherwise
+     */
+    private isPoolCreated(
+        event: ProcessorEvent<ContractName, AnyEvent>,
+    ): event is ProcessorEvent<"Allo", "PoolCreated"> {
+        return isAlloEvent(event) && event.eventName === "PoolCreated";
     }
 
     /**
@@ -240,6 +254,6 @@ export class Orchestrator {
     private requiresStrategyId(
         event: ProcessorEvent<ContractName, AnyEvent>,
     ): event is ProcessorEvent<"Allo", "PoolCreated"> | ProcessorEvent<"Strategy", StrategyEvent> {
-        return (isAlloEvent(event) && event.eventName === "PoolCreated") || isStrategyEvent(event);
+        return this.isPoolCreated(event) || isStrategyEvent(event);
     }
 }

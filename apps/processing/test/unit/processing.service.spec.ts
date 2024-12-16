@@ -52,9 +52,9 @@ describe("ProcessingService", () => {
         DATABASE_SCHEMA: "public",
     };
 
-    beforeEach(() => {
+    beforeEach(async () => {
         vi.clearAllMocks();
-        processingService = new ProcessingService(mockEnv as Environment);
+        processingService = await ProcessingService.initialize(mockEnv as Environment);
     });
 
     afterEach(() => {

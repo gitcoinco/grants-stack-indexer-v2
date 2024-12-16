@@ -6,7 +6,7 @@ import { ProcessingService } from "./services/processing.service.js";
 let processor: ProcessingService;
 
 const main = async (): Promise<void> => {
-    processor = new ProcessingService(environment);
+    processor = await ProcessingService.initialize(environment);
     await processor.start();
 };
 

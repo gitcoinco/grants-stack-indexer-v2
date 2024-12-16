@@ -23,10 +23,9 @@ export class ProcessingService {
     private readonly logger = new Logger({ className: "ProcessingService" });
     private readonly kyselyDatabase: SharedDependencies["kyselyDatabase"];
 
-    constructor(private readonly env: Environment) {
+    private constructor(env: Environment, sharedDependencies: SharedDependencies) {
         const { CHAINS: chains } = env;
-        const { core, registries, indexerClient, kyselyDatabase } =
-            SharedDependenciesService.initialize(env);
+        const { core, registries, indexerClient, kyselyDatabase } = sharedDependencies;
         this.kyselyDatabase = kyselyDatabase;
 
         for (const chain of chains) {
@@ -47,6 +46,11 @@ export class ProcessingService {
                 ),
             );
         }
+    }
+
+    static async initialize(env: Environment): Promise<ProcessingService> {
+        const sharedDependencies = await SharedDependenciesService.initialize(env);
+        return new ProcessingService(env, sharedDependencies);
     }
 
     /**

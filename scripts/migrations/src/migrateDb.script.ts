@@ -1,10 +1,9 @@
-import path from "path";
 import { configDotenv } from "dotenv";
 
 import { createKyselyDatabase } from "@grants-stack-indexer/repository";
 
 import { getDatabaseConfigFromEnv } from "./schemas/index.js";
-import { migrateToLatest } from "./utils/index.js";
+import { getMigrationsFolder, migrateToLatest, parseArguments } from "./utils/index.js";
 
 configDotenv();
 
@@ -21,7 +20,9 @@ configDotenv();
  *
  * Environment variables required:
  * - DATABASE_URL: PostgreSQL connection string
- * - DATABASE_SCHEMA: Schema name to migrate (e.g. "grants_stack")
+ *
+ * Script arguments:
+ * - schema: Database schema name where migrations are applied
  *
  * The script will:
  * - Create the schema if it doesn't exist
@@ -31,22 +32,20 @@ configDotenv();
  */
 
 export const main = async (): Promise<void> => {
-    const { DATABASE_URL, DATABASE_SCHEMA } = getDatabaseConfigFromEnv();
+    const { DATABASE_URL } = getDatabaseConfigFromEnv();
+    const { schema } = parseArguments();
 
     const db = createKyselyDatabase({
         connectionString: DATABASE_URL,
-        withSchema: DATABASE_SCHEMA,
+        withSchema: schema,
     });
 
-    console.log(`Migrating database schema '${DATABASE_SCHEMA}'...`);
+    console.log(`Migrating database schema '${schema}'...`);
 
     const migrationResults = await migrateToLatest({
         db,
-        schema: DATABASE_SCHEMA,
-        migrationsFolder: path.join(
-            path.dirname(new URL(import.meta.url).pathname),
-            "./migrations",
-        ),
+        schema,
+        migrationsFolder: getMigrationsFolder(),
     });
 
     if (migrationResults && migrationResults?.length > 0) {

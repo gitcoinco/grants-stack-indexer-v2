@@ -20,6 +20,7 @@ import {
     Round,
     RoundRole as RoundRoleTable,
     StatusSnapshot,
+    Strategy as StrategyTable,
 } from "../internal.js";
 
 const { Pool } = pg;
@@ -59,6 +60,7 @@ export interface Database {
     applications: ApplicationTable;
     donations: DonationTable;
     applicationsPayouts: ApplicationPayoutTable;
+    strategies: StrategyTable;
 }
 
 /**

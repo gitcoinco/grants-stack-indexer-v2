@@ -1,7 +1,8 @@
 export {
     DataLoader,
     InMemoryEventsRegistry,
-    InMemoryStrategyRegistry,
+    InMemoryCachedStrategyRegistry,
+    DatabaseStrategyRegistry,
     Orchestrator,
 } from "./internal.js";
 
