@@ -254,4 +254,167 @@ describe("EnvioIndexerClient", () => {
             expect(result).toEqual([]);
         });
     });
+
+    describe("getEventsBySrcAddress", () => {
+        beforeEach(() => {
+            // Update the mock implementation for getEventsBySrcAddress queries
+            graphqlClient.request.mockImplementation(
+                async (
+                    _document: RequestDocument | RequestOptions<object, object>,
+                    ...args: object[]
+                ) => {
+                    const variables = args[0] as {
+                        chainId: ChainId;
+                        srcAddresses: string[];
+                        fromBlock: number;
+                        fromLogIndex: number;
+                        toBlock: number;
+                        toLogIndex: number;
+                        limit: number;
+                    };
+                    const {
+                        chainId,
+                        srcAddresses,
+                        fromBlock,
+                        fromLogIndex,
+                        toBlock,
+                        toLogIndex,
+                        limit,
+                    } = variables;
+
+                    const filteredEvents = testEvents
+                        .filter((event) => {
+                            // Match chainId and srcAddress
+                            if (event.chainId !== chainId) return false;
+                            if (!srcAddresses.includes(event.srcAddress)) return false;
+
+                            // Check if event is after fromBlock/fromLogIndex
+                            const isAfterFrom =
+                                event.blockNumber > fromBlock ||
+                                (event.blockNumber === fromBlock && event.logIndex > fromLogIndex);
+
+                            // Check if event is before or at toBlock/toLogIndex
+                            const isBeforeTo =
+                                event.blockNumber < toBlock ||
+                                (event.blockNumber === toBlock && event.logIndex <= toLogIndex);
+
+                            return isAfterFrom && isBeforeTo;
+                        })
+                        .slice(0, limit);
+
+                    return { raw_events: filteredEvents };
+                },
+            );
+        });
+
+        it("returns events within the specified block range and matching srcAddresses", async () => {
+            const result = await envioIndexerClient.getEventsBySrcAddress({
+                chainId: 1 as ChainId,
+                srcAddresses: ["0x1234"],
+                from: { blockNumber: 100, logIndex: 0 },
+                to: { blockNumber: 101, logIndex: 2 },
+            });
+
+            expect(result).toHaveLength(3);
+            expect(result).toEqual(
+                expect.arrayContaining([
+                    expect.objectContaining({ blockNumber: 100, logIndex: 1 }),
+                    expect.objectContaining({ blockNumber: 100, logIndex: 3 }),
+                    expect.objectContaining({ blockNumber: 101, logIndex: 1 }),
+                ]),
+            );
+        });
+
+        it("uses default from values when not provided", async () => {
+            const result = await envioIndexerClient.getEventsBySrcAddress({
+                chainId: 1 as ChainId,
+                srcAddresses: ["0x1234"],
+                to: { blockNumber: 101, logIndex: 2 },
+            });
+
+            expect(result).toHaveLength(3);
+            // Should include all events up to block 101, logIndex 2
+            expect(result[0]?.blockNumber).toBe(100);
+            expect(result[2]?.blockNumber).toBe(101);
+        });
+
+        it("respects the limit parameter", async () => {
+            const result = await envioIndexerClient.getEventsBySrcAddress({
+                chainId: 1 as ChainId,
+                srcAddresses: ["0x1234"],
+                to: { blockNumber: 101, logIndex: 2 },
+                limit: 2,
+            });
+
+            expect(result).toHaveLength(2);
+        });
+
+        it("uses default limit when not provided", async () => {
+            await envioIndexerClient.getEventsBySrcAddress({
+                chainId: 1 as ChainId,
+                srcAddresses: ["0x1234"],
+                to: { blockNumber: 101, logIndex: 2 },
+            });
+
+            expect(graphqlClient.request).toHaveBeenCalledWith(
+                expect.any(String),
+                expect.objectContaining({ limit: 100 }),
+            );
+        });
+
+        it("returns empty array when no events match srcAddresses", async () => {
+            const result = await envioIndexerClient.getEventsBySrcAddress({
+                chainId: 1 as ChainId,
+                srcAddresses: ["0x9999"],
+                to: { blockNumber: 101, logIndex: 2 },
+            });
+
+            expect(result).toHaveLength(0);
+        });
+
+        it("throws InvalidIndexerResponse when response structure is incorrect", async () => {
+            graphqlClient.request.mockResolvedValue({ status: 200, headers: {}, data: {} });
+
+            await expect(
+                envioIndexerClient.getEventsBySrcAddress({
+                    chainId: 1 as ChainId,
+                    srcAddresses: ["0x1234"],
+                    to: { blockNumber: 101, logIndex: 2 },
+                }),
+            ).rejects.toThrow(InvalidIndexerResponse);
+        });
+
+        it("throws IndexerClientError when GraphQL request fails", async () => {
+            graphqlClient.request.mockRejectedValue(new Error("GraphQL request failed"));
+
+            await expect(
+                envioIndexerClient.getEventsBySrcAddress({
+                    chainId: 1 as ChainId,
+                    srcAddresses: ["0x1234"],
+                    to: { blockNumber: 101, logIndex: 2 },
+                }),
+            ).rejects.toThrow(IndexerClientError);
+        });
+
+        it("filters events by multiple srcAddresses", async () => {
+            // Add a test event with a different srcAddress
+            const extraTestEvent = {
+                ...testEvents[0],
+                srcAddress: "0x5678",
+                blockNumber: 100,
+                logIndex: 2,
+            } as AnyIndexerFetchedEvent;
+            testEvents.push(extraTestEvent);
+
+            const result = await envioIndexerClient.getEventsBySrcAddress({
+                chainId: 1 as ChainId,
+                srcAddresses: ["0x1234", "0x5678"],
+                from: { blockNumber: 100, logIndex: 0 },
+                to: { blockNumber: 101, logIndex: 2 },
+            });
+
+            expect(result).toContainEqual(expect.objectContaining({ srcAddress: "0x5678" }));
+            expect(result).toContainEqual(expect.objectContaining({ srcAddress: "0x1234" }));
+        });
+    });
 });
