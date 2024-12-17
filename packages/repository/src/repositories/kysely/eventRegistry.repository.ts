@@ -23,11 +23,20 @@ export class KyselyEventRegistryRepository implements IEventRegistryRepository {
 
     /** @inheritdoc */
     async saveLastProcessedEvent(chainId: ChainId, event: NewProcessedEvent): Promise<void> {
+        const { blockNumber, blockTimestamp, logIndex, rawEvent } = event; // Extract only the fields from NewProcessedEvent
         await this.db
             .withSchema(this.schemaName)
             .insertInto("events")
-            .values({ ...event, chainId })
-            .onConflict((oc) => oc.columns(["chainId"]).doUpdateSet({ ...event, chainId }))
+            .values({ blockNumber, blockTimestamp, logIndex, chainId, rawEvent })
+            .onConflict((oc) =>
+                oc.columns(["chainId"]).doUpdateSet({
+                    blockNumber,
+                    blockTimestamp,
+                    logIndex,
+                    rawEvent,
+                    chainId,
+                }),
+            )
             .execute();
     }
 }

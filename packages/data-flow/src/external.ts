@@ -1,6 +1,5 @@
 export {
     DataLoader,
-    InMemoryEventsRegistry,
     InMemoryCachedStrategyRegistry,
     InMemoryCachedEventRegistry,
     DatabaseEventRegistry,

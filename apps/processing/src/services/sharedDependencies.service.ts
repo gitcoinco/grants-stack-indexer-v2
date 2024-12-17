@@ -31,7 +31,7 @@ export type SharedDependencies = {
 /**
  * Shared dependencies service
  * - Initializes core dependencies (repositories, providers)
- * - Initializes registries
+ * - Initializes registries repositories
  * - Initializes indexer client
  */
 export class SharedDependenciesService {

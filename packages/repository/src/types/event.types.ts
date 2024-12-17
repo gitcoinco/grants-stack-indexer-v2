@@ -1,11 +1,11 @@
-import { AnyEvent, ChainId } from "@grants-stack-indexer/shared";
+import { AnyEvent, ChainId, ContractName, ProcessorEvent } from "@grants-stack-indexer/shared";
 
 export type ProcessedEvent = {
     chainId: ChainId;
     blockNumber: number;
     blockTimestamp: number;
     logIndex: number;
-    rawEvent?: AnyEvent;
+    rawEvent?: Partial<ProcessorEvent<ContractName, AnyEvent>>;
 };
 
 export type NewProcessedEvent = Omit<ProcessedEvent, "chainId">;

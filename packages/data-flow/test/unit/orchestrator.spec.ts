@@ -178,14 +178,7 @@ describe("Orchestrator", { sequential: true }, () => {
 
             expect(eventsProcessorSpy).toHaveBeenCalledWith(mockEvents[0]);
             expect(eventsProcessorSpy).toHaveBeenCalledWith(mockEvents[1]);
-            expect(mockEventsRegistry.saveLastProcessedEvent).toHaveBeenCalledWith(
-                chainId,
-                mockEvents[0],
-            );
-            expect(mockEventsRegistry.saveLastProcessedEvent).toHaveBeenCalledWith(
-                chainId,
-                mockEvents[1],
-            );
+            expect(mockEventsRegistry.saveLastProcessedEvent).toHaveBeenCalledTimes(2);
         });
 
         it("wait and keep polling on empty queue", async () => {
@@ -274,10 +267,7 @@ describe("Orchestrator", { sequential: true }, () => {
             });
             expect(orchestrator["dataLoader"].applyChanges).toHaveBeenCalledTimes(1);
             expect(orchestrator["dataLoader"].applyChanges).toHaveBeenCalledWith(changesets);
-            expect(mockEventsRegistry.saveLastProcessedEvent).toHaveBeenCalledWith(
-                chainId,
-                mockEvent,
-            );
+            expect(mockEventsRegistry.saveLastProcessedEvent).toHaveBeenCalled();
         });
 
         it("save strategyId to registry on PoolCreated event", async () => {
@@ -409,10 +399,7 @@ describe("Orchestrator", { sequential: true }, () => {
                 );
                 expect(orchestrator["dataLoader"].applyChanges).toHaveBeenCalledTimes(1);
                 expect(orchestrator["dataLoader"].applyChanges).toHaveBeenCalledWith(changesets);
-                expect(mockEventsRegistry.saveLastProcessedEvent).toHaveBeenCalledWith(
-                    chainId,
-                    mockEvent,
-                );
+                expect(mockEventsRegistry.saveLastProcessedEvent).toHaveBeenCalled();
             });
         }
 

@@ -16,8 +16,10 @@ import { SharedDependencies, SharedDependenciesService } from "./index.js";
 /**
  * Processor service application
  * - Initializes core dependencies (repositories, providers) via SharedDependenciesService
+ * - Initializes a StrategyRegistry and loads it with strategies from the database
  * For each chain:
  * - Sets up EVM provider with configured RPC endpoints
+ * - Instantiates an EventsRegistry and loads it with the last processed event for the chain
  * - Creates an Orchestrator instance to coordinate an specific chain:
  *   - Fetching on-chain events via indexer client
  *   - Processing events through registered handlers
@@ -51,19 +53,20 @@ export class ProcessingService {
                 strategyRegistryRepository,
             ),
         );
+        const eventsRegistry = new DatabaseEventRegistry(
+            new Logger({ className: "DatabaseEventRegistry" }),
+            eventRegistryRepository,
+        );
 
         for (const chain of chains) {
             const chainLogger = new Logger({ chainId: chain.id as ChainId });
             // Initialize EVM provider
             const evmProvider = new EvmProvider(chain.rpcUrls, optimism, chainLogger);
 
-            // Initialize events registry
-            const eventsRegistry = await InMemoryCachedEventRegistry.initialize(
+            // Initialize events registry for the chain
+            const cachedEventsRegistry = await InMemoryCachedEventRegistry.initialize(
                 new Logger({ className: "InMemoryCachedEventRegistry" }),
-                new DatabaseEventRegistry(
-                    new Logger({ className: "DatabaseEventRegistry" }),
-                    eventRegistryRepository,
-                ),
+                eventsRegistry,
                 [chain.id as ChainId],
             );
 
@@ -74,7 +77,7 @@ export class ProcessingService {
                     { ...core, evmProvider },
                     indexerClient,
                     {
-                        eventsRegistry,
+                        eventsRegistry: cachedEventsRegistry,
                         strategyRegistry,
                     },
                     chain.fetchLimit,
