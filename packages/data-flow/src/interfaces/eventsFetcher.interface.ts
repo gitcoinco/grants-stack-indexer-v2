@@ -1,4 +1,5 @@
-import { Address, AnyIndexerFetchedEvent, ChainId } from "@grants-stack-indexer/shared";
+import { GetEventsFilters } from "@grants-stack-indexer/indexer-client";
+import { AnyIndexerFetchedEvent, ChainId } from "@grants-stack-indexer/shared";
 
 /**
  * Interface for the events fetcher
@@ -26,17 +27,5 @@ export interface IEventsFetcher {
      * @param logIndex log index in the block to fetch events from
      * @param limit limit of events to fetch
      */
-    fetchEventsBySrcAddress(params: {
-        chainId: ChainId;
-        srcAddresses: Address[];
-        from?: {
-            blockNumber?: number;
-            logIndex?: number;
-        };
-        to: {
-            blockNumber: number;
-            logIndex: number;
-        };
-        limit?: number;
-    }): Promise<AnyIndexerFetchedEvent[]>;
+    fetchEvents(params: GetEventsFilters): Promise<AnyIndexerFetchedEvent[]>;
 }

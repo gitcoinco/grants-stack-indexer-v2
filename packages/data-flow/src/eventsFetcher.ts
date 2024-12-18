@@ -1,5 +1,5 @@
-import { IIndexerClient } from "@grants-stack-indexer/indexer-client";
-import { Address, AnyIndexerFetchedEvent, ChainId } from "@grants-stack-indexer/shared";
+import { GetEventsFilters, IIndexerClient } from "@grants-stack-indexer/indexer-client";
+import { AnyIndexerFetchedEvent, ChainId } from "@grants-stack-indexer/shared";
 
 import { IEventsFetcher } from "./interfaces/index.js";
 
@@ -21,19 +21,7 @@ export class EventsFetcher implements IEventsFetcher {
     }
 
     /** @inheritdoc */
-    async fetchEventsBySrcAddress(params: {
-        chainId: ChainId;
-        srcAddresses: Address[];
-        from?: {
-            blockNumber?: number;
-            logIndex?: number;
-        };
-        to: {
-            blockNumber: number;
-            logIndex: number;
-        };
-        limit?: number;
-    }): Promise<AnyIndexerFetchedEvent[]> {
-        return this.indexerClient.getEventsBySrcAddress(params);
+    async fetchEvents(params: GetEventsFilters): Promise<AnyIndexerFetchedEvent[]> {
+        return this.indexerClient.getEvents(params);
     }
 }
