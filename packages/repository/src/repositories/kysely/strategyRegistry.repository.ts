@@ -37,16 +37,16 @@ export class KyselyStrategyRegistryRepository implements IStrategyRegistryReposi
 
     /** @inheritdoc */
     async getStrategies(filters?: { handled?: boolean; chainId?: ChainId }): Promise<Strategy[]> {
-        const query = this.db.withSchema(this.schemaName).selectFrom("strategies");
+        let query = this.db.withSchema(this.schemaName).selectFrom("strategies").selectAll();
 
         if (filters?.chainId) {
-            query.where("chainId", "=", filters.chainId);
+            query = query.where("chainId", "=", filters.chainId);
         }
 
-        if (filters?.handled) {
-            query.where("handled", "=", filters.handled);
+        if (filters?.handled !== undefined && filters?.handled !== null) {
+            query = query.where("handled", "=", filters.handled);
         }
 
-        return query.selectAll().execute();
+        return query.execute();
     }
 }
