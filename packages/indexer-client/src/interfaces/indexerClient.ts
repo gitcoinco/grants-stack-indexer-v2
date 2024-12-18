@@ -21,7 +21,7 @@ export interface IIndexerClient {
     ): Promise<AnyIndexerFetchedEvent[]>;
 
     /**
-     * Get the events by src address from the indexer service
+     * Get the events by filters from the indexer service
      * @param params Filters to fetch events
      * @returns Events fetched from the indexer service
      */
