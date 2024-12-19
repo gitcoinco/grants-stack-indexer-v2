@@ -38,7 +38,6 @@ export class InMemoryCachedEventRegistry implements IEventsRegistry {
     }
 
     /**
-    /**
      * Creates a new cached event registry instance. It will load the events into memory and cache them and
      * fallback to the event registry if the event is not found in the cache.
      *

@@ -104,4 +104,20 @@ describe("InMemoryCachedEventRegistry", () => {
         expect(cached2).toEqual(mockEvent2);
         expect(mockEventRegistry.getLastProcessedEvent).toHaveBeenCalledTimes(2);
     });
+
+    it("throws error when underlying registry throws error", async () => {
+        vi.mocked(mockEventRegistry.saveLastProcessedEvent).mockRejectedValue(
+            new Error("Saving error"),
+        );
+
+        const registry = await InMemoryCachedEventRegistry.initialize(logger, mockEventRegistry, [
+            chainId,
+        ]);
+        const cacheSetSpy = vi.spyOn(registry["cache"], "set");
+
+        await expect(registry.saveLastProcessedEvent(chainId, mockEvent)).rejects.toThrow(
+            "Saving error",
+        );
+        expect(cacheSetSpy).not.toHaveBeenCalled();
+    });
 });
