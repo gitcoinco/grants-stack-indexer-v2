@@ -11,17 +11,17 @@ export async function up(db: Kysely<any>): Promise<void> {
     const CHAIN_ID_TYPE = "integer";
 
     await db.schema
-        .createTable("strategies")
+        .createTable("strategies_registry")
         .addColumn("address", ADDRESS_TYPE)
         .addColumn("id", "text")
         .addColumn("chainId", CHAIN_ID_TYPE)
         .addColumn("handled", "boolean")
-        .addPrimaryKeyConstraint("strategies_pkey", ["address", "chainId"])
+        .addPrimaryKeyConstraint("strategies_registry_pkey", ["address", "chainId"])
         .execute();
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function down(db: Kysely<any>): Promise<void> {
     // Drop everything in reverse order
-    await db.schema.dropTable("strategies").execute();
+    await db.schema.dropTable("strategies_registry").execute();
 }

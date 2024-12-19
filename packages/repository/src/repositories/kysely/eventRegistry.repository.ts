@@ -15,7 +15,7 @@ export class KyselyEventRegistryRepository implements IEventRegistryRepository {
     async getLastProcessedEvent(chainId: ChainId): Promise<ProcessedEvent | undefined> {
         return this.db
             .withSchema(this.schemaName)
-            .selectFrom("events")
+            .selectFrom("eventsRegistry")
             .where("chainId", "=", chainId)
             .selectAll()
             .executeTakeFirst();
@@ -26,7 +26,7 @@ export class KyselyEventRegistryRepository implements IEventRegistryRepository {
         const { blockNumber, blockTimestamp, logIndex, rawEvent } = event; // Extract only the fields from NewProcessedEvent
         await this.db
             .withSchema(this.schemaName)
-            .insertInto("events")
+            .insertInto("eventsRegistry")
             .values({ blockNumber, blockTimestamp, logIndex, chainId, rawEvent })
             .onConflict((oc) =>
                 oc.columns(["chainId"]).doUpdateSet({

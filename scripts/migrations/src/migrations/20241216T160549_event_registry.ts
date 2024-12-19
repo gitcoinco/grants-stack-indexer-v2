@@ -10,18 +10,18 @@ export async function up(db: Kysely<any>): Promise<void> {
     const CHAIN_ID_TYPE = "integer";
 
     await db.schema
-        .createTable("events")
+        .createTable("events_registry")
         .addColumn("chainId", CHAIN_ID_TYPE)
         .addColumn("blockNumber", "integer")
         .addColumn("blockTimestamp", "integer")
         .addColumn("logIndex", "integer")
         .addColumn("rawEvent", "jsonb")
-        .addPrimaryKeyConstraint("events_pkey", ["chainId"])
+        .addPrimaryKeyConstraint("events_registry_pkey", ["chainId"])
         .execute();
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function down(db: Kysely<any>): Promise<void> {
     // Drop everything in reverse order
-    await db.schema.dropTable("events").execute();
+    await db.schema.dropTable("events_registry").execute();
 }
