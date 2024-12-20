@@ -21,13 +21,13 @@ export interface IStrategyRegistry {
      * @param chainId - The chain id
      * @param strategyAddress - The strategy address
      * @param strategyId - The strategy id
-     * @param handled - Whether the strategy is handled
+     * @param handleable - Whether the strategy is handled
      */
     saveStrategyId(
         chainId: ChainId,
         strategyAddress: Address,
         strategyId: Hex,
-        handled: boolean,
+        handleable: boolean,
     ): Promise<void>;
 
     /**

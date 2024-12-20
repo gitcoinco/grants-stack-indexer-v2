@@ -9,6 +9,7 @@ export type {
     IDonationRepository,
     IApplicationPayoutRepository,
     IStrategyRegistryRepository,
+    IEventRegistryRepository,
     DatabaseConfig,
 } from "./internal.js";
 
@@ -37,6 +38,7 @@ export type { Donation, NewDonation } from "./types/index.js";
 export type { NewApplicationPayout, ApplicationPayout } from "./types/index.js";
 
 export type { Strategy, NewStrategy } from "./types/index.js";
+export type { ProcessedEvent, NewProcessedEvent } from "./types/index.js";
 
 export type {
     Changeset,
@@ -54,6 +56,7 @@ export {
     KyselyDonationRepository,
     KyselyApplicationPayoutRepository,
     KyselyStrategyRegistryRepository,
+    KyselyEventRegistryRepository,
 } from "./repositories/kysely/index.js";
 
 export {

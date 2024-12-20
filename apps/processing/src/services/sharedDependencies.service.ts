@@ -1,19 +1,15 @@
-import {
-    CoreDependencies,
-    DatabaseStrategyRegistry,
-    IEventsRegistry,
-    InMemoryCachedStrategyRegistry,
-    InMemoryEventsRegistry,
-    IStrategyRegistry,
-} from "@grants-stack-indexer/data-flow";
+import { CoreDependencies } from "@grants-stack-indexer/data-flow";
 import { EnvioIndexerClient } from "@grants-stack-indexer/indexer-client";
 import { IpfsProvider } from "@grants-stack-indexer/metadata";
 import { PricingProviderFactory } from "@grants-stack-indexer/pricing";
 import {
     createKyselyDatabase,
+    IEventRegistryRepository,
+    IStrategyRegistryRepository,
     KyselyApplicationPayoutRepository,
     KyselyApplicationRepository,
     KyselyDonationRepository,
+    KyselyEventRegistryRepository,
     KyselyProjectRepository,
     KyselyRoundRepository,
     KyselyStrategyRegistryRepository,
@@ -24,9 +20,9 @@ import { Environment } from "../config/index.js";
 
 export type SharedDependencies = {
     core: Omit<CoreDependencies, "evmProvider">;
-    registries: {
-        eventsRegistry: IEventsRegistry;
-        strategyRegistry: IStrategyRegistry;
+    registriesRepositories: {
+        eventRegistryRepository: IEventRegistryRepository;
+        strategyRegistryRepository: IStrategyRegistryRepository;
     };
     indexerClient: EnvioIndexerClient;
     kyselyDatabase: ReturnType<typeof createKyselyDatabase>;
@@ -35,7 +31,7 @@ export type SharedDependencies = {
 /**
  * Shared dependencies service
  * - Initializes core dependencies (repositories, providers)
- * - Initializes registries
+ * - Initializes registries repositories
  * - Initializes indexer client
  */
 export class SharedDependenciesService {
@@ -68,20 +64,13 @@ export class SharedDependenciesService {
             new Logger({ className: "IpfsProvider" }),
         );
 
-        // Initialize registries
-        const eventsRegistry = new InMemoryEventsRegistry(
-            new Logger({ className: "InMemoryEventsRegistry" }),
-        );
-        const strategyRepository = new KyselyStrategyRegistryRepository(
+        const eventRegistryRepository = new KyselyEventRegistryRepository(
             kyselyDatabase,
             env.DATABASE_SCHEMA,
         );
-        const strategyRegistry = await InMemoryCachedStrategyRegistry.initialize(
-            new Logger({ className: "InMemoryCachedStrategyRegistry" }),
-            new DatabaseStrategyRegistry(
-                new Logger({ className: "DatabaseStrategyRegistry" }),
-                strategyRepository,
-            ),
+        const strategyRegistryRepository = new KyselyStrategyRegistryRepository(
+            kyselyDatabase,
+            env.DATABASE_SCHEMA,
         );
 
         // Initialize indexer client
@@ -100,9 +89,9 @@ export class SharedDependenciesService {
                 metadataProvider,
                 applicationPayoutRepository,
             },
-            registries: {
-                eventsRegistry,
-                strategyRegistry,
+            registriesRepositories: {
+                eventRegistryRepository,
+                strategyRegistryRepository,
             },
             indexerClient,
             kyselyDatabase,

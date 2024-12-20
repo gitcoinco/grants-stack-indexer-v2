@@ -12,6 +12,7 @@ import {
     Application,
     ApplicationPayout,
     Donation as DonationTable,
+    ProcessedEvent as EventRegistryTable,
     MatchingDistribution,
     PendingProjectRole as PendingProjectRoleTable,
     PendingRoundRole as PendingRoundRoleTable,
@@ -20,7 +21,7 @@ import {
     Round,
     RoundRole as RoundRoleTable,
     StatusSnapshot,
-    Strategy as StrategyTable,
+    Strategy as StrategyRegistryTable,
 } from "../internal.js";
 
 const { Pool } = pg;
@@ -60,7 +61,8 @@ export interface Database {
     applications: ApplicationTable;
     donations: DonationTable;
     applicationsPayouts: ApplicationPayoutTable;
-    strategies: StrategyTable;
+    strategiesRegistry: StrategyRegistryTable;
+    eventsRegistry: EventRegistryTable;
 }
 
 /**

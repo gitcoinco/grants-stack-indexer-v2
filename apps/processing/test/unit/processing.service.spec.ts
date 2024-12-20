@@ -1,7 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { EvmProvider } from "@grants-stack-indexer/chain-providers";
-import { Orchestrator } from "@grants-stack-indexer/data-flow";
+import {
+    DatabaseEventRegistry,
+    DatabaseStrategyRegistry,
+    InMemoryCachedEventRegistry,
+    InMemoryCachedStrategyRegistry,
+    Orchestrator,
+} from "@grants-stack-indexer/data-flow";
 
 import type { Environment } from "../../src/config/env.js";
 import { ProcessingService } from "../../src/services/processing.service.js";
@@ -10,7 +16,7 @@ vi.mock("../../src/services/sharedDependencies.service.js", () => ({
     SharedDependenciesService: {
         initialize: vi.fn(() => ({
             core: {},
-            registries: {},
+            registriesRepositories: {},
             indexerClient: {},
             kyselyDatabase: {
                 destroy: vi.fn(),
@@ -22,6 +28,39 @@ vi.mock("../../src/services/sharedDependencies.service.js", () => ({
 vi.mock("@grants-stack-indexer/chain-providers", () => ({
     EvmProvider: vi.fn(),
 }));
+
+vi.mock("@grants-stack-indexer/data-flow", async (importOriginal) => {
+    const actual = await importOriginal<typeof import("@grants-stack-indexer/data-flow")>();
+    const mockStrategyRegistry = {
+        getStrategies: vi.fn(),
+        getStrategyId: vi.fn(),
+        saveStrategyId: vi.fn(),
+    };
+
+    const mockEventRegistry = {
+        getLastProcessedEvent: vi.fn(),
+        saveLastProcessedEvent: vi.fn(),
+    };
+
+    return {
+        ...actual,
+        InMemoryCachedStrategyRegistry: {
+            initialize: vi.fn().mockResolvedValue(mockStrategyRegistry),
+        },
+        DatabaseStrategyRegistry: vi.fn().mockImplementation(() => ({
+            getStrategies: vi.fn(),
+            getStrategyId: vi.fn(),
+            saveStrategyId: vi.fn(),
+        })),
+        DatabaseEventRegistry: vi.fn().mockImplementation(() => ({
+            getLastProcessedEvent: vi.fn(),
+            saveLastProcessedEvent: vi.fn(),
+        })),
+        InMemoryCachedEventRegistry: {
+            initialize: vi.fn().mockResolvedValue(mockEventRegistry),
+        },
+    };
+});
 
 vi.spyOn(Orchestrator.prototype, "run").mockImplementation(async function (signal: AbortSignal) {
     while (!signal.aborted) {
@@ -62,7 +101,12 @@ describe("ProcessingService", () => {
     });
 
     it("initializes multiple orchestrators correctly", () => {
+        expect(InMemoryCachedStrategyRegistry.initialize).toHaveBeenCalledTimes(1);
+        expect(DatabaseStrategyRegistry).toHaveBeenCalledTimes(1);
+        expect(DatabaseEventRegistry).toHaveBeenCalledTimes(1);
         expect(EvmProvider).toHaveBeenCalledTimes(2);
+        expect(InMemoryCachedEventRegistry.initialize).toHaveBeenCalledTimes(2);
+
         // Verify orchestrators were created with correct parameters
         expect(processingService["orchestrators"].size).toBe(2);
 

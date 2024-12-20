@@ -6,6 +6,5 @@ export * from "./utils/index.js";
 export * from "./data-loader/index.js";
 export * from "./eventsFetcher.js";
 export * from "./registries/index.js";
-export * from "./eventsRegistry.js";
 export * from "./eventsProcessor.js";
 export * from "./orchestrator.js";

@@ -110,7 +110,10 @@ export class Orchestrator {
                     await delay(this.fetchDelayInMs);
                     continue;
                 }
-                await this.eventsRegistry.saveLastProcessedEvent(this.chainId, event);
+                await this.eventsRegistry.saveLastProcessedEvent(this.chainId, {
+                    ...event,
+                    rawEvent: event,
+                });
 
                 event = await this.enhanceStrategyId(event);
                 if (this.isPoolCreated(event)) {

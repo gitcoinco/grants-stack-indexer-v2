@@ -5,3 +5,4 @@ export * from "./changeset.types.js";
 export * from "./donation.types.js";
 export * from "./applicationPayout.types.js";
 export * from "./strategy.types.js";
+export * from "./event.types.js";
