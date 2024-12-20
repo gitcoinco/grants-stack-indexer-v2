@@ -58,7 +58,11 @@ export class InMemoryCachedStrategyRegistry implements IStrategyRegistry {
 
         const strategy = await this.strategyRegistry.getStrategyId(chainId, strategyAddress);
         if (strategy) {
-            this.cache.get(chainId)?.set(strategyAddress, strategy);
+            if (!this.cache.has(strategy.chainId)) {
+                this.cache.set(strategy.chainId, new Map());
+            }
+
+            this.cache.get(strategy.chainId)?.set(strategyAddress, strategy);
         }
         return strategy;
     }
@@ -78,6 +82,10 @@ export class InMemoryCachedStrategyRegistry implements IStrategyRegistry {
             `Saving strategy id ${strategyId} for address ${strategyAddress} and chainId ${chainId}`,
         );
         await this.strategyRegistry.saveStrategyId(chainId, strategyAddress, strategyId, handled);
+
+        if (!this.cache.has(chainId)) {
+            this.cache.set(chainId, new Map());
+        }
 
         this.cache.get(chainId)?.set(strategyAddress, {
             address: strategyAddress,

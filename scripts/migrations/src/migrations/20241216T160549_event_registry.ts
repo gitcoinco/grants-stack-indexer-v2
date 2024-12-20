@@ -7,21 +7,21 @@ import { Kysely } from "kysely";
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function up(db: Kysely<any>): Promise<void> {
-    const ADDRESS_TYPE = "text";
     const CHAIN_ID_TYPE = "integer";
 
     await db.schema
-        .createTable("strategies_registry")
-        .addColumn("address", ADDRESS_TYPE)
-        .addColumn("id", "text")
+        .createTable("events_registry")
         .addColumn("chainId", CHAIN_ID_TYPE)
-        .addColumn("handled", "boolean")
-        .addPrimaryKeyConstraint("strategies_registry_pkey", ["address", "chainId"])
+        .addColumn("blockNumber", "integer")
+        .addColumn("blockTimestamp", "integer")
+        .addColumn("logIndex", "integer")
+        .addColumn("rawEvent", "jsonb")
+        .addPrimaryKeyConstraint("events_registry_pkey", ["chainId"])
         .execute();
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function down(db: Kysely<any>): Promise<void> {
     // Drop everything in reverse order
-    await db.schema.dropTable("strategies_registry").execute();
+    await db.schema.dropTable("events_registry").execute();
 }

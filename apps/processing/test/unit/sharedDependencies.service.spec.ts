@@ -22,6 +22,7 @@ vi.mock("@grants-stack-indexer/repository", () => ({
         getStrategyId: vi.fn(),
         saveStrategyId: vi.fn(),
     })),
+    KyselyEventRegistryRepository: vi.fn(),
 }));
 
 vi.mock("@grants-stack-indexer/pricing", () => ({
@@ -45,8 +46,12 @@ vi.mock("@grants-stack-indexer/data-flow", () => {
         saveStrategyId: vi.fn(),
     };
 
+    const mockEventRegistry = {
+        getLastProcessedEvent: vi.fn(),
+        saveLastProcessedEvent: vi.fn(),
+    };
+
     return {
-        InMemoryEventsRegistry: vi.fn(),
         InMemoryCachedStrategyRegistry: {
             initialize: vi.fn().mockResolvedValue(mockStrategyRegistry),
         },
@@ -55,6 +60,13 @@ vi.mock("@grants-stack-indexer/data-flow", () => {
             getStrategyId: vi.fn(),
             saveStrategyId: vi.fn(),
         })),
+        DatabaseEventRegistry: vi.fn().mockImplementation(() => ({
+            getLastProcessedEvent: vi.fn(),
+            saveLastProcessedEvent: vi.fn(),
+        })),
+        InMemoryCachedEventRegistry: {
+            initialize: vi.fn().mockResolvedValue(mockEventRegistry),
+        },
     };
 });
 
@@ -98,7 +110,7 @@ describe("SharedDependenciesService", () => {
 
         // Verify structure of returned dependencies
         expect(dependencies).toHaveProperty("core");
-        expect(dependencies).toHaveProperty("registries");
+        expect(dependencies).toHaveProperty("registriesRepositories");
         expect(dependencies).toHaveProperty("indexerClient");
         expect(dependencies).toHaveProperty("kyselyDatabase");
 
@@ -112,10 +124,7 @@ describe("SharedDependenciesService", () => {
         expect(dependencies.core).toHaveProperty("applicationPayoutRepository");
 
         // Verify registries
-        expect(dependencies.registries).toHaveProperty("eventsRegistry");
-        expect(dependencies.registries).toHaveProperty("strategyRegistry");
-
-        // Verify InMemoryCachedStrategyRegistry initialization
-        expect(dependencies.registries.strategyRegistry).toBeDefined();
+        expect(dependencies.registriesRepositories).toHaveProperty("eventRegistryRepository");
+        expect(dependencies.registriesRepositories).toHaveProperty("strategyRegistryRepository");
     });
 });
