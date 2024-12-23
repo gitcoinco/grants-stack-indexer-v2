@@ -7,6 +7,7 @@ import {
     InMemoryCachedEventRegistry,
     InMemoryCachedStrategyRegistry,
     Orchestrator,
+    RetroactiveProcessor,
 } from "@grants-stack-indexer/data-flow";
 import { ChainId, Logger } from "@grants-stack-indexer/shared";
 
@@ -27,12 +28,12 @@ import { SharedDependencies, SharedDependenciesService } from "./index.js";
  * - Manages graceful shutdown on termination signals
  */
 export class ProcessingService {
-    private readonly orchestrators: Map<ChainId, Orchestrator> = new Map();
+    private readonly orchestrators: Map<ChainId, [Orchestrator, RetroactiveProcessor]> = new Map();
     private readonly logger = new Logger({ className: "ProcessingService" });
     private readonly kyselyDatabase: SharedDependencies["kyselyDatabase"];
 
     private constructor(
-        orchestrators: Map<ChainId, Orchestrator>,
+        orchestrators: Map<ChainId, [Orchestrator, RetroactiveProcessor]>,
         kyselyDatabase: SharedDependencies["kyselyDatabase"],
     ) {
         this.orchestrators = orchestrators;
@@ -44,7 +45,7 @@ export class ProcessingService {
         const { CHAINS: chains } = env;
         const { core, registriesRepositories, indexerClient, kyselyDatabase } = sharedDependencies;
         const { eventRegistryRepository, strategyRegistryRepository } = registriesRepositories;
-        const orchestrators: Map<ChainId, Orchestrator> = new Map();
+        const orchestrators: Map<ChainId, [Orchestrator, RetroactiveProcessor]> = new Map();
 
         const strategyRegistry = await InMemoryCachedStrategyRegistry.initialize(
             new Logger({ className: "InMemoryCachedStrategyRegistry" }),
@@ -70,21 +71,31 @@ export class ProcessingService {
                 [chain.id as ChainId],
             );
 
-            orchestrators.set(
+            const orchestrator = new Orchestrator(
                 chain.id as ChainId,
-                new Orchestrator(
-                    chain.id as ChainId,
-                    { ...core, evmProvider },
-                    indexerClient,
-                    {
-                        eventsRegistry: cachedEventsRegistry,
-                        strategyRegistry,
-                    },
-                    chain.fetchLimit,
-                    chain.fetchDelayMs,
-                    chainLogger,
-                ),
+                { ...core, evmProvider },
+                indexerClient,
+                {
+                    eventsRegistry: cachedEventsRegistry,
+                    strategyRegistry,
+                },
+                chain.fetchLimit,
+                chain.fetchDelayMs,
+                chainLogger,
             );
+            const retroactiveProcessor = new RetroactiveProcessor(
+                chain.id as ChainId,
+                { ...core, evmProvider },
+                indexerClient,
+                {
+                    eventsRegistry: cachedEventsRegistry,
+                    strategyRegistry,
+                },
+                chain.fetchLimit,
+                chainLogger,
+            );
+
+            orchestrators.set(chain.id as ChainId, [orchestrator, retroactiveProcessor]);
         }
 
         return new ProcessingService(orchestrators, kyselyDatabase);
@@ -114,7 +125,7 @@ export class ProcessingService {
         });
 
         try {
-            for (const orchestrator of this.orchestrators.values()) {
+            for (const [orchestrator, _] of this.orchestrators.values()) {
                 this.logger.info(`Starting orchestrator for chain ${orchestrator.chainId}...`);
                 orchestratorProcesses.push(orchestrator.run(abortController.signal));
             }
@@ -123,6 +134,12 @@ export class ProcessingService {
         } catch (error) {
             this.logger.error(`Processor service failed: ${error}`);
             throw error;
+        }
+    }
+
+    async processRetroactiveEvents(): Promise<void> {
+        for (const [_, retroactiveProcessor] of this.orchestrators.values()) {
+            await retroactiveProcessor.processRetroactiveStrategies();
         }
     }
 
