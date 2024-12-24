@@ -8,6 +8,7 @@ import {
     IDonationRepository,
     IProjectRepository,
     IRoundRepository,
+    IStrategyProcessingCheckpointRepository,
     Strategy,
 } from "@grants-stack-indexer/repository";
 import {
@@ -64,6 +65,7 @@ describe("RetroactiveProcessor", () => {
     let mockEventsRegistry: IEventsRegistry;
     let mockStrategyRegistry: IStrategyRegistry;
     let mockEvmProvider: EvmProvider;
+    let mockCheckpointRepository: IStrategyProcessingCheckpointRepository;
     let mockLogger: ILogger;
     let mockEventsProcessor: EventsProcessor;
     let mockDataLoader: DataLoader;
@@ -123,6 +125,12 @@ describe("RetroactiveProcessor", () => {
             warn: vi.fn(),
         };
 
+        mockCheckpointRepository = {
+            upsertCheckpoint: vi.fn(),
+            deleteCheckpoint: vi.fn(),
+            getCheckpoint: vi.fn(),
+        };
+
         const dependencies: CoreDependencies = {
             evmProvider: mockEvmProvider,
             projectRepository: {} as IProjectRepository,
@@ -145,6 +153,7 @@ describe("RetroactiveProcessor", () => {
             {
                 eventsRegistry: mockEventsRegistry,
                 strategyRegistry: mockStrategyRegistry,
+                checkpointRepository: mockCheckpointRepository,
             },
             mockFetchLimit,
             mockLogger,
@@ -217,6 +226,8 @@ describe("RetroactiveProcessor", () => {
             );
             expect(mockEventsProcessor.processEvent).toHaveBeenCalledTimes(1);
             expect(mockStrategyRegistry.saveStrategyId).toHaveBeenCalledTimes(2);
+            expect(mockCheckpointRepository.upsertCheckpoint).toHaveBeenCalledTimes(1);
+            expect(mockCheckpointRepository.deleteCheckpoint).toHaveBeenCalledTimes(1);
         });
 
         it("process multiple new handleable strategies", async () => {
@@ -272,6 +283,59 @@ describe("RetroactiveProcessor", () => {
                 "0x6f9291df02b2664139cec5703c124e4ebce32879c74b6297faa1468aa5ff9ebf",
                 true,
             );
+            expect(mockCheckpointRepository.upsertCheckpoint).toHaveBeenCalledTimes(2);
+            expect(mockCheckpointRepository.deleteCheckpoint).toHaveBeenCalledTimes(2);
+        });
+
+        it("starts from checkpoint if exists", async () => {
+            const mockEvent = createMockEvent(eventName, defaultParams, existentStrategyId, {
+                blockNumber: 95,
+                logIndex: 4,
+            });
+
+            vi.spyOn(mockStrategyRegistry, "getStrategies").mockResolvedValue(mockValidStrategies);
+            vi.spyOn(mockEventsRegistry, "getLastProcessedEvent").mockResolvedValue({
+                blockNumber: 100,
+                logIndex: 1,
+                chainId,
+                blockTimestamp: 1234567890,
+            });
+            vi.spyOn(mockCheckpointRepository, "getCheckpoint").mockResolvedValue({
+                chainId,
+                strategyId: existentStrategyId,
+                lastProcessedBlockNumber: 90,
+                lastProcessedLogIndex: 0,
+            });
+
+            vi.spyOn(mockEventsFetcher, "fetchEvents")
+                .mockResolvedValueOnce([mockEvent])
+                .mockResolvedValue([]);
+            vi.spyOn(mockEventsProcessor, "processEvent").mockResolvedValue([]);
+            vi.spyOn(mockDataLoader, "applyChanges").mockResolvedValue({
+                numFailed: 0,
+                errors: [],
+                changesets: [],
+                numExecuted: 1,
+                numSuccessful: 1,
+            });
+            vi.spyOn(mockStrategyRegistry, "saveStrategyId").mockResolvedValue();
+
+            await processor.processRetroactiveStrategies();
+
+            expect(mockLogger.info).toHaveBeenCalledWith(
+                "Retroactive processing complete. Succeeded: 1, Failed: 0",
+            );
+
+            expect(mockEventsProcessor.processEvent).toHaveBeenCalledTimes(1);
+            expect(mockStrategyRegistry.saveStrategyId).toHaveBeenCalledTimes(2);
+            expect(mockEventsFetcher.fetchEvents).not.toHaveBeenNthCalledWith(
+                1,
+                expect.objectContaining({
+                    from: { blockNumber: 0, logIndex: 0 },
+                }),
+            );
+            expect(mockCheckpointRepository.upsertCheckpoint).toHaveBeenCalledTimes(1);
+            expect(mockCheckpointRepository.deleteCheckpoint).toHaveBeenCalledTimes(1);
         });
 
         it("breaks loop if event is older than last processed", async () => {
@@ -432,7 +496,6 @@ describe("RetroactiveProcessor", () => {
         });
     });
 });
-
 /**
  * Creates a mock event for testing.
  *

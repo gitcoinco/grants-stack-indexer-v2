@@ -21,6 +21,7 @@ import {
     Round,
     RoundRole as RoundRoleTable,
     StatusSnapshot,
+    StrategyProcessingCheckpoint as StrategyProcessingCheckpointTable,
     Strategy as StrategyRegistryTable,
 } from "../internal.js";
 
@@ -63,6 +64,7 @@ export interface Database {
     applicationsPayouts: ApplicationPayoutTable;
     strategiesRegistry: StrategyRegistryTable;
     eventsRegistry: EventRegistryTable;
+    strategyProcessingCheckpoints: StrategyProcessingCheckpointTable;
 }
 
 /**

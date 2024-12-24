@@ -55,6 +55,7 @@ Available scripts that can be run using `pnpm`:
 | `start`       | Run the compiled app from dist folder                   |
 | `test`        | Run tests using vitest                                  |
 | `test:cov`    | Run tests with coverage report                          |
+| `retroactive` | Run retroactive processing for all chains               |
 
 TODO: e2e tests
 TODO: Docker image

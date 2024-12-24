@@ -44,7 +44,11 @@ export class ProcessingService {
         const sharedDependencies = await SharedDependenciesService.initialize(env);
         const { CHAINS: chains } = env;
         const { core, registriesRepositories, indexerClient, kyselyDatabase } = sharedDependencies;
-        const { eventRegistryRepository, strategyRegistryRepository } = registriesRepositories;
+        const {
+            eventRegistryRepository,
+            strategyRegistryRepository,
+            strategyProcessingCheckpointRepository,
+        } = registriesRepositories;
         const orchestrators: Map<ChainId, [Orchestrator, RetroactiveProcessor]> = new Map();
 
         const strategyRegistry = await InMemoryCachedStrategyRegistry.initialize(
@@ -90,6 +94,7 @@ export class ProcessingService {
                 {
                     eventsRegistry: cachedEventsRegistry,
                     strategyRegistry,
+                    checkpointRepository: strategyProcessingCheckpointRepository,
                 },
                 chain.fetchLimit,
                 chainLogger,

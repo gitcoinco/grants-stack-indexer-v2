@@ -6,3 +6,4 @@ export * from "./donation.types.js";
 export * from "./applicationPayout.types.js";
 export * from "./strategy.types.js";
 export * from "./event.types.js";
+export * from "./strategyProcessingCheckpoint.types.js";

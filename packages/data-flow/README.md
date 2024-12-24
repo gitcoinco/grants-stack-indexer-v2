@@ -101,3 +101,7 @@ There are 3 implementations:
 ### [DataLoader](./src/data-loader/dataLoader.ts)
 
 The `DataLoader` is responsible for applying changesets to the database.
+
+### [RetroactiveProcessor](./src/retroactiveProcessor.ts)
+
+The `RetroactiveProcessor` is an independent runner class for retroactively processing strategies from strategies that were previously unsupported.

@@ -5,3 +5,4 @@ export * from "./donationRepository.interface.js";
 export * from "./applicationPayoutRepository.interface.js";
 export * from "./strategyRepository.interface.js";
 export * from "./eventsRepository.interface.js";
+export * from "./strategyProcessingCheckpointRepository.interface.js";

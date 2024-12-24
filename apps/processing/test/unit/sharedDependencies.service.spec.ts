@@ -23,6 +23,7 @@ vi.mock("@grants-stack-indexer/repository", () => ({
         saveStrategyId: vi.fn(),
     })),
     KyselyEventRegistryRepository: vi.fn(),
+    KyselyStrategyProcessingCheckpointRepository: vi.fn(),
 }));
 
 vi.mock("@grants-stack-indexer/pricing", () => ({
@@ -126,5 +127,8 @@ describe("SharedDependenciesService", () => {
         // Verify registries
         expect(dependencies.registriesRepositories).toHaveProperty("eventRegistryRepository");
         expect(dependencies.registriesRepositories).toHaveProperty("strategyRegistryRepository");
+        expect(dependencies.registriesRepositories).toHaveProperty(
+            "strategyProcessingCheckpointRepository",
+        );
     });
 });

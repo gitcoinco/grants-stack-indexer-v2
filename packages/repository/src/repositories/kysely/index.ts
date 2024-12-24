@@ -5,3 +5,4 @@ export * from "./donation.repository.js";
 export * from "./applicationPayout.repository.js";
 export * from "./strategyRegistry.repository.js";
 export * from "./eventRegistry.repository.js";
+export * from "./strategyProcessingCheckpoint.repository.js";

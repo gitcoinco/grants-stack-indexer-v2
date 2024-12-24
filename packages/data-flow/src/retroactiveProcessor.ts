@@ -1,5 +1,6 @@
 import { IIndexerClient } from "@grants-stack-indexer/indexer-client";
 import { existsHandler, UnsupportedEventException } from "@grants-stack-indexer/processors";
+import { IStrategyProcessingCheckpointRepository } from "@grants-stack-indexer/repository";
 import {
     Address,
     AnyEvent,
@@ -39,10 +40,20 @@ type EventPointer = {
  * catch up on missed events and maintain data consistency.
  *
  * Key responsibilities:
- * 1. Identify newly handleable strategies
- * 2. Fetch historical events for these strategies
- * 3. Process events through the appropriate handlers
+ * 1. Identify newly handleable strategies that were previously unsupported
+ * 2. Fetch historical events for these strategies from the Indexer client
+ * 3. Process events through the appropriate handlers to update system state
  * 4. Update strategy registry with processed status
+ * 5. Track processing progress via checkpoints to enable resumability
+ *
+ * The checkpoint registry maintains processing state for each strategy, storing:
+ * - Last processed block number and log index
+ *
+ * This enables the processor to:
+ * - Resume processing from last checkpoint after interruption
+ * - Track multiple strategies independently
+ * - Provide processing status visibility
+ * - Ensure exactly-once processing semantics
  */
 export class RetroactiveProcessor {
     private readonly eventsFetcher: IEventsFetcher;
@@ -50,6 +61,7 @@ export class RetroactiveProcessor {
     private readonly eventsRegistry: IEventsRegistry;
     private readonly strategyRegistry: IStrategyRegistry;
     private readonly dataLoader: DataLoader;
+    private readonly checkpointRepository: IStrategyProcessingCheckpointRepository;
 
     /**
      * Creates a new instance of RetroactiveProcessor
@@ -67,6 +79,7 @@ export class RetroactiveProcessor {
         private registries: {
             eventsRegistry: IEventsRegistry;
             strategyRegistry: IStrategyRegistry;
+            checkpointRepository: IStrategyProcessingCheckpointRepository;
         },
         private fetchLimit: number = 1000,
         private logger: ILogger,
@@ -78,6 +91,7 @@ export class RetroactiveProcessor {
         });
         this.eventsRegistry = registries.eventsRegistry;
         this.strategyRegistry = registries.strategyRegistry;
+        this.checkpointRepository = registries.checkpointRepository;
         this.dataLoader = new DataLoader(
             {
                 project: this.dependencies.projectRepository,
@@ -146,7 +160,16 @@ export class RetroactiveProcessor {
         strategyAddresses: Set<Address>,
         lastEventPointer: Readonly<EventPointer>,
     ): Promise<void> {
-        const currentPointer: EventPointer = { blockNumber: 0, logIndex: 0 };
+        // Check if we have a checkpoint for this strategy
+        const checkpoint = await this.checkpointRepository.getCheckpoint(this.chainId, strategyId);
+
+        const currentPointer: EventPointer = checkpoint
+            ? {
+                  blockNumber: checkpoint.lastProcessedBlockNumber,
+                  logIndex: checkpoint.lastProcessedLogIndex,
+              }
+            : { blockNumber: 0, logIndex: 0 };
+
         const events = new Queue<ProcessorEvent<ContractName, AnyEvent> & { strategyId?: Hex }>();
         let event: (ProcessorEvent<ContractName, AnyEvent> & { strategyId?: Hex }) | undefined;
 
@@ -176,8 +199,6 @@ export class RetroactiveProcessor {
                         `Failed to apply changesets. ${executionResult.errors.join("\n")} Event: ${stringify(event)}`,
                     );
                 }
-
-                // Update pointer
             } catch (error) {
                 if (error instanceof InvalidEvent || error instanceof UnsupportedEventException) {
                     // Expected errors that we can safely ignore
@@ -186,9 +207,25 @@ export class RetroactiveProcessor {
                     this.logger.error(`Error processing event: ${stringify(event)} ${error}`);
                 }
             }
+
+            // Update checkpoint after processing
+            await this.updateCheckpoint(strategyId, currentPointer);
         }
 
         await this.markStrategyAsHandled(strategyId, strategyAddresses);
+        // Delete checkpoint after processing of all events
+        await this.checkpointRepository.deleteCheckpoint(this.chainId, strategyId);
+    }
+
+    private async updateCheckpoint(strategyId: Hex, currentPointer: EventPointer): Promise<void> {
+        const checkpointData = {
+            chainId: this.chainId,
+            strategyId,
+            lastProcessedBlockNumber: currentPointer.blockNumber,
+            lastProcessedLogIndex: currentPointer.logIndex,
+        };
+
+        await this.checkpointRepository.upsertCheckpoint(checkpointData);
     }
 
     private async enqueueEventsIfEmpty(

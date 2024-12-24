@@ -5,6 +5,7 @@ import { PricingProviderFactory } from "@grants-stack-indexer/pricing";
 import {
     createKyselyDatabase,
     IEventRegistryRepository,
+    IStrategyProcessingCheckpointRepository,
     IStrategyRegistryRepository,
     KyselyApplicationPayoutRepository,
     KyselyApplicationRepository,
@@ -12,6 +13,7 @@ import {
     KyselyEventRegistryRepository,
     KyselyProjectRepository,
     KyselyRoundRepository,
+    KyselyStrategyProcessingCheckpointRepository,
     KyselyStrategyRegistryRepository,
 } from "@grants-stack-indexer/repository";
 import { Logger } from "@grants-stack-indexer/shared";
@@ -23,6 +25,7 @@ export type SharedDependencies = {
     registriesRepositories: {
         eventRegistryRepository: IEventRegistryRepository;
         strategyRegistryRepository: IStrategyRegistryRepository;
+        strategyProcessingCheckpointRepository: IStrategyProcessingCheckpointRepository;
     };
     indexerClient: EnvioIndexerClient;
     kyselyDatabase: ReturnType<typeof createKyselyDatabase>;
@@ -73,6 +76,9 @@ export class SharedDependenciesService {
             env.DATABASE_SCHEMA,
         );
 
+        const strategyProcessingCheckpointRepository =
+            new KyselyStrategyProcessingCheckpointRepository(kyselyDatabase, env.DATABASE_SCHEMA);
+
         // Initialize indexer client
         const indexerClient = new EnvioIndexerClient(
             env.INDEXER_GRAPHQL_URL,
@@ -92,6 +98,7 @@ export class SharedDependenciesService {
             registriesRepositories: {
                 eventRegistryRepository,
                 strategyRegistryRepository,
+                strategyProcessingCheckpointRepository,
             },
             indexerClient,
             kyselyDatabase,

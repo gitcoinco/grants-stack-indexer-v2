@@ -48,7 +48,6 @@ import { CoreDependencies, DataLoader, delay, IQueue, iStrategyAbi, Queue } from
  * - Registry tracking of supported/unsupported strategies and events
  *
  * TODO: Enhance the error handling/retries, logging and observability
- * TODO: Handle unhandled strategies appropriately
  */
 export class Orchestrator {
     private readonly eventsQueue: IQueue<ProcessorEvent<ContractName, AnyEvent>>;

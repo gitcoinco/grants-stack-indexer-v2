@@ -10,6 +10,7 @@ export type {
     IApplicationPayoutRepository,
     IStrategyRegistryRepository,
     IEventRegistryRepository,
+    IStrategyProcessingCheckpointRepository,
     DatabaseConfig,
 } from "./internal.js";
 
@@ -57,6 +58,7 @@ export {
     KyselyApplicationPayoutRepository,
     KyselyStrategyRegistryRepository,
     KyselyEventRegistryRepository,
+    KyselyStrategyProcessingCheckpointRepository,
 } from "./repositories/kysely/index.js";
 
 export {
@@ -65,5 +67,7 @@ export {
     ProjectNotFound,
     ProjectByRoleNotFound,
 } from "./internal.js";
+
+export type { StrategyProcessingCheckpoint, NewStrategyProcessingCheckpoint } from "./internal.js";
 
 export { createKyselyPostgresDb as createKyselyDatabase } from "./internal.js";
