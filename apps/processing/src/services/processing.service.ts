@@ -46,12 +46,9 @@ export class ProcessingService {
         const { eventRegistryRepository, strategyRegistryRepository } = registriesRepositories;
         const orchestrators: Map<ChainId, Orchestrator> = new Map();
 
-        const strategyRegistry = await InMemoryCachedStrategyRegistry.initialize(
-            new Logger({ className: "InMemoryCachedStrategyRegistry" }),
-            new DatabaseStrategyRegistry(
-                new Logger({ className: "DatabaseStrategyRegistry" }),
-                strategyRegistryRepository,
-            ),
+        const strategyRegistry = new DatabaseStrategyRegistry(
+            new Logger({ className: "DatabaseStrategyRegistry" }),
+            strategyRegistryRepository,
         );
         const eventsRegistry = new DatabaseEventRegistry(
             new Logger({ className: "DatabaseEventRegistry" }),
@@ -69,6 +66,11 @@ export class ProcessingService {
                 eventsRegistry,
                 [chain.id as ChainId],
             );
+            const cachedStrategyRegistry = await InMemoryCachedStrategyRegistry.initialize(
+                new Logger({ className: "InMemoryCachedStrategyRegistry" }),
+                strategyRegistry,
+                chain.id as ChainId,
+            );
 
             orchestrators.set(
                 chain.id as ChainId,
@@ -78,7 +80,7 @@ export class ProcessingService {
                     indexerClient,
                     {
                         eventsRegistry: cachedEventsRegistry,
-                        strategyRegistry,
+                        strategyRegistry: cachedStrategyRegistry,
                     },
                     chain.fetchLimit,
                     chain.fetchDelayMs,
