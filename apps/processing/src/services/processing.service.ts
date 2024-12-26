@@ -144,7 +144,12 @@ export class ProcessingService {
         }
     }
 
+    /**
+     * Process retroactive events for all chains
+     * - This is a blocking operation that will run until all retroactive events are processed
+     */
     async processRetroactiveEvents(): Promise<void> {
+        this.logger.info("Processing retroactive events...");
         for (const [_, retroactiveProcessor] of this.orchestrators.values()) {
             await retroactiveProcessor.processRetroactiveStrategies();
         }

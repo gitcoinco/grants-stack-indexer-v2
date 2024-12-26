@@ -145,8 +145,6 @@ describe("ProcessingService", () => {
             await new Promise((resolve) => setTimeout(resolve, 100));
 
             // Verify both orchestrators are running
-            // const orchestratorInstances = vi.mocked(Orchestrator).mock.results;
-            // Verify both orchestrators are running
             expect(runSpy).toHaveBeenCalledTimes(2);
             expect(runSpy.mock.calls.map((call) => call[0])).toEqual([
                 expect.any(AbortSignal),

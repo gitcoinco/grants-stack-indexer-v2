@@ -12,11 +12,11 @@ import {
     stringify,
 } from "@grants-stack-indexer/shared";
 
-import { EventsProcessor } from "./eventsProcessor.js";
 import {
     CoreDependencies,
     DataLoader,
     EventsFetcher,
+    EventsProcessor,
     IEventsFetcher,
     IEventsRegistry,
     InvalidEvent,
@@ -69,7 +69,7 @@ export class RetroactiveProcessor {
      * @param dependencies - Core system dependencies for data access and processing
      * @param indexerClient - Client for fetching blockchain events
      * @param registries - Event and strategy registries for tracking processing state
-     * @param fetchLimit - Maximum number of events to fetch in a single batch
+     * @param fetchLimit - Maximum number of events to fetch in a single batch (default: 1000)
      * @param logger - Logger instance for debugging and monitoring
      */
     constructor(
@@ -109,6 +109,8 @@ export class RetroactiveProcessor {
      * @returns Promise that resolves when all retroactive processing is complete
      */
     async processRetroactiveStrategies(): Promise<void> {
+        this.logger.info(`Processing retroactive strategies for chain ${this.chainId}`);
+
         const newHandleableStrategies = await this.findNewHandleableStrategies();
 
         if (newHandleableStrategies.size === 0) {
@@ -217,6 +219,11 @@ export class RetroactiveProcessor {
         await this.checkpointRepository.deleteCheckpoint(this.chainId, strategyId);
     }
 
+    /**
+     * Update the checkpoint for a strategy
+     * @param strategyId - The strategy ID
+     * @param currentPointer - The current event pointer
+     */
     private async updateCheckpoint(strategyId: Hex, currentPointer: EventPointer): Promise<void> {
         const checkpointData = {
             chainId: this.chainId,
@@ -228,6 +235,13 @@ export class RetroactiveProcessor {
         await this.checkpointRepository.upsertCheckpoint(checkpointData);
     }
 
+    /**
+     * Enqueue events if the queue is empty
+     * @param queue - The queue to enqueue events into
+     * @param strategyAddresses - The set of strategy addresses
+     * @param currentPointer - The current event pointer
+     * @param lastEventPointer - The last event pointer
+     */
     private async enqueueEventsIfEmpty(
         queue: Queue<ProcessorEvent<ContractName, AnyEvent> & { strategyId?: Hex }>,
         strategyAddresses: Set<Address>,
@@ -276,6 +290,11 @@ export class RetroactiveProcessor {
         );
     }
 
+    /**
+     * Mark a strategy as handled for all addresses covered by the strategy
+     * @param strategyId - The strategy ID
+     * @param addresses - The set of strategy addresses
+     */
     private async markStrategyAsHandled(strategyId: Hex, addresses: Set<Address>): Promise<void> {
         this.logger.info(`Processed retroactively strategy ${strategyId}`);
 

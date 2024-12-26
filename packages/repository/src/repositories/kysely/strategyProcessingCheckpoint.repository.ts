@@ -2,9 +2,12 @@ import { Kysely } from "kysely";
 
 import { ChainId, Hex } from "@grants-stack-indexer/shared";
 
-import { Database } from "../../db/connection.js";
-import { IStrategyProcessingCheckpointRepository } from "../../interfaces/strategyProcessingCheckpointRepository.interface.js";
-import { NewStrategyProcessingCheckpoint, StrategyProcessingCheckpoint } from "../../internal.js";
+import {
+    Database,
+    IStrategyProcessingCheckpointRepository,
+    NewStrategyProcessingCheckpoint,
+    StrategyProcessingCheckpoint,
+} from "../../internal.js";
 
 export class KyselyStrategyProcessingCheckpointRepository
     implements IStrategyProcessingCheckpointRepository
