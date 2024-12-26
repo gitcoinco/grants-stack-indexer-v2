@@ -8,6 +8,8 @@ import {
 } from "kysely";
 import pg from "pg";
 
+import { ILogger } from "@grants-stack-indexer/shared";
+
 import {
     Application,
     ApplicationPayout,
@@ -86,7 +88,10 @@ export interface Database {
  * };
  * const db = createKyselyDatabase(dbConfig);
  */
-export const createKyselyPostgresDb = (config: DatabaseConfig): Kysely<Database> => {
+export const createKyselyPostgresDb = (
+    config: DatabaseConfig,
+    logger?: ILogger,
+): Kysely<Database> => {
     const dialect = new PostgresDialect({
         pool: new Pool({
             max: 15,
@@ -102,5 +107,16 @@ export const createKyselyPostgresDb = (config: DatabaseConfig): Kysely<Database>
     return new Kysely<Database>({
         dialect,
         plugins: [new CamelCasePlugin(), new WithSchemaPlugin(withSchema)],
+        log(event): void {
+            if (event.level === "error") {
+                logger?.error(
+                    `Query failed. SQL: ${event.query.sql} with params: ${event.query.parameters}`,
+                    {
+                        durationMs: event.queryDurationMillis,
+                        error: event.error,
+                    },
+                );
+            }
+        },
     });
 };

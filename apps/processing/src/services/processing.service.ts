@@ -9,7 +9,7 @@ import {
     Orchestrator,
     RetroactiveProcessor,
 } from "@grants-stack-indexer/data-flow";
-import { ChainId, Logger } from "@grants-stack-indexer/shared";
+import { ChainId, ILogger } from "@grants-stack-indexer/shared";
 
 import { Environment } from "../config/env.js";
 import { SharedDependencies, SharedDependenciesService } from "./index.js";
@@ -29,21 +29,23 @@ import { SharedDependencies, SharedDependenciesService } from "./index.js";
  */
 export class ProcessingService {
     private readonly orchestrators: Map<ChainId, [Orchestrator, RetroactiveProcessor]> = new Map();
-    private readonly logger = new Logger({ className: "ProcessingService" });
     private readonly kyselyDatabase: SharedDependencies["kyselyDatabase"];
-
+    private readonly logger: ILogger;
     private constructor(
         orchestrators: Map<ChainId, [Orchestrator, RetroactiveProcessor]>,
         kyselyDatabase: SharedDependencies["kyselyDatabase"],
+        logger: ILogger,
     ) {
         this.orchestrators = orchestrators;
         this.kyselyDatabase = kyselyDatabase;
+        this.logger = logger;
     }
 
     static async initialize(env: Environment): Promise<ProcessingService> {
         const sharedDependencies = await SharedDependenciesService.initialize(env);
         const { CHAINS: chains } = env;
-        const { core, registriesRepositories, indexerClient, kyselyDatabase } = sharedDependencies;
+        const { core, registriesRepositories, indexerClient, kyselyDatabase, logger } =
+            sharedDependencies;
         const {
             eventRegistryRepository,
             strategyRegistryRepository,
@@ -51,28 +53,21 @@ export class ProcessingService {
         } = registriesRepositories;
         const orchestrators: Map<ChainId, [Orchestrator, RetroactiveProcessor]> = new Map();
 
-        const strategyRegistry = new DatabaseStrategyRegistry(
-            new Logger({ className: "DatabaseStrategyRegistry" }),
-            strategyRegistryRepository,
-        );
-        const eventsRegistry = new DatabaseEventRegistry(
-            new Logger({ className: "DatabaseEventRegistry" }),
-            eventRegistryRepository,
-        );
+        const strategyRegistry = new DatabaseStrategyRegistry(logger, strategyRegistryRepository);
+        const eventsRegistry = new DatabaseEventRegistry(logger, eventRegistryRepository);
 
         for (const chain of chains) {
-            const chainLogger = new Logger({ chainId: chain.id as ChainId });
             // Initialize EVM provider
-            const evmProvider = new EvmProvider(chain.rpcUrls, optimism, chainLogger);
+            const evmProvider = new EvmProvider(chain.rpcUrls, optimism, logger);
 
             // Initialize events registry for the chain
             const cachedEventsRegistry = await InMemoryCachedEventRegistry.initialize(
-                new Logger({ className: "InMemoryCachedEventRegistry" }),
+                logger,
                 eventsRegistry,
                 [chain.id as ChainId],
             );
             const cachedStrategyRegistry = await InMemoryCachedStrategyRegistry.initialize(
-                new Logger({ className: "InMemoryCachedStrategyRegistry" }),
+                logger,
                 strategyRegistry,
                 chain.id as ChainId,
             );
@@ -87,7 +82,7 @@ export class ProcessingService {
                 },
                 chain.fetchLimit,
                 chain.fetchDelayMs,
-                chainLogger,
+                logger,
             );
             const retroactiveProcessor = new RetroactiveProcessor(
                 chain.id as ChainId,
@@ -99,13 +94,13 @@ export class ProcessingService {
                     checkpointRepository: strategyProcessingCheckpointRepository,
                 },
                 chain.fetchLimit,
-                chainLogger,
+                logger,
             );
 
             orchestrators.set(chain.id as ChainId, [orchestrator, retroactiveProcessor]);
         }
 
-        return new ProcessingService(orchestrators, kyselyDatabase);
+        return new ProcessingService(orchestrators, kyselyDatabase, logger);
     }
 
     /**
@@ -114,7 +109,7 @@ export class ProcessingService {
      * The processor runs indefinitely until it is terminated.
      */
     async start(): Promise<void> {
-        this.logger.info("Starting processor service...");
+        this.logger.info("Starting processor service...", { className: ProcessingService.name });
 
         const abortController = new AbortController();
 
@@ -122,24 +117,32 @@ export class ProcessingService {
 
         // Handle graceful shutdown
         process.on("SIGINT", () => {
-            this.logger.info("Received SIGINT signal. Shutting down...");
+            this.logger.info("Received SIGINT signal. Shutting down...", {
+                className: ProcessingService.name,
+            });
             abortController.abort();
         });
 
         process.on("SIGTERM", () => {
-            this.logger.info("Received SIGTERM signal. Shutting down...");
+            this.logger.info("Received SIGTERM signal. Shutting down...", {
+                className: ProcessingService.name,
+            });
             abortController.abort();
         });
 
         try {
             for (const [orchestrator, _] of this.orchestrators.values()) {
-                this.logger.info(`Starting orchestrator for chain ${orchestrator.chainId}...`);
+                this.logger.info(`Starting orchestrator for chain ${orchestrator.chainId}...`, {
+                    className: ProcessingService.name,
+                });
                 orchestratorProcesses.push(orchestrator.run(abortController.signal));
             }
 
             await Promise.allSettled(orchestratorProcesses);
         } catch (error) {
-            this.logger.error(`Processor service failed: ${error}`);
+            this.logger.error(`Processor service failed: ${error}`, {
+                className: ProcessingService.name,
+            });
             throw error;
         }
     }
@@ -149,7 +152,9 @@ export class ProcessingService {
      * - This is a blocking operation that will run until all retroactive events are processed
      */
     async processRetroactiveEvents(): Promise<void> {
-        this.logger.info("Processing retroactive events...");
+        this.logger.info("Processing retroactive events...", {
+            className: ProcessingService.name,
+        });
         for (const [_, retroactiveProcessor] of this.orchestrators.values()) {
             await retroactiveProcessor.processRetroactiveStrategies();
         }
@@ -161,10 +166,14 @@ export class ProcessingService {
      */
     async releaseResources(): Promise<void> {
         try {
-            this.logger.info("Releasing resources...");
+            this.logger.info("Releasing resources...", {
+                className: ProcessingService.name,
+            });
             await this.kyselyDatabase.destroy();
         } catch (error) {
-            this.logger.error(`Error releasing resources: ${error}`);
+            this.logger.error(`Error releasing resources: ${error}`, {
+                className: ProcessingService.name,
+            });
         }
     }
 }

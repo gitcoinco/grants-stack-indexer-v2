@@ -120,9 +120,10 @@ export class CoingeckoProvider implements IPricingProvider {
             //TODO: notify
             if (isAxiosError(error)) {
                 if (error.status! >= 400 && error.status! < 500) {
-                    this.logger.error(
-                        `Coingecko API error: ${error.message}. Stack: ${error.stack}`,
-                    );
+                    this.logger.error(error, {
+                        className: CoingeckoProvider.name,
+                        path: `${error.response?.config.baseURL}${path}`,
+                    });
                     return undefined;
                 }
 

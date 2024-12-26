@@ -1,3 +1,5 @@
+import { isNativeError } from "util/types";
+
 import { IIndexerClient } from "@grants-stack-indexer/indexer-client";
 import {
     existsHandler,
@@ -106,6 +108,13 @@ export class Orchestrator {
                 event = this.eventsQueue.pop();
 
                 if (!event) {
+                    this.logger.debug(
+                        `No event to process, sleeping for ${this.fetchDelayInMs}ms`,
+                        {
+                            className: Orchestrator.name,
+                            chainId: this.chainId,
+                        },
+                    );
                     await delay(this.fetchDelayInMs);
                     continue;
                 }
@@ -125,6 +134,11 @@ export class Orchestrator {
                     );
                 } else if (event.contractName === "Strategy" && "strategyId" in event) {
                     if (!existsHandler(event.strategyId)) {
+                        this.logger.debug("Skipping event", {
+                            event,
+                            className: Orchestrator.name,
+                            chainId: this.chainId,
+                        });
                         // we skip the event if the strategy id is not handled yet
                         continue;
                     }
@@ -139,6 +153,10 @@ export class Orchestrator {
                         `Failed to apply changesets. ${executionResult.errors.join("\n")} Event: ${stringify(
                             event,
                         )}`,
+                        {
+                            className: Orchestrator.name,
+                            chainId: this.chainId,
+                        },
                     );
                 }
             } catch (error: unknown) {
@@ -152,12 +170,29 @@ export class Orchestrator {
                     //     `Current event cannot be handled. ${error.name}: ${error.message}. Event: ${stringify(event)}`,
                     // );
                 } else {
-                    this.logger.error(`Error processing event: ${stringify(event)} ${error}`);
+                    if (error instanceof Error || isNativeError(error)) {
+                        this.logger.error(error, {
+                            event,
+                            className: Orchestrator.name,
+                            chainId: this.chainId,
+                        });
+                    } else {
+                        this.logger.error(
+                            new Error(`Error processing event: ${stringify(event)} ${error}`),
+                            {
+                                className: Orchestrator.name,
+                                chainId: this.chainId,
+                            },
+                        );
+                    }
                 }
             }
         }
 
-        this.logger.info("Shutdown signal received. Exiting...");
+        this.logger.info("Shutdown signal received. Exiting...", {
+            className: Orchestrator.name,
+            chainId: this.chainId,
+        });
     }
 
     /**

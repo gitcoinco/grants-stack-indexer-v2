@@ -109,12 +109,18 @@ export class RetroactiveProcessor {
      * @returns Promise that resolves when all retroactive processing is complete
      */
     async processRetroactiveStrategies(): Promise<void> {
-        this.logger.info(`Processing retroactive strategies for chain ${this.chainId}`);
+        this.logger.info(`Processing retroactive strategies`, {
+            className: RetroactiveProcessor.name,
+            chainId: this.chainId,
+        });
 
         const newHandleableStrategies = await this.findNewHandleableStrategies();
 
         if (newHandleableStrategies.size === 0) {
-            this.logger.info("No new handleable strategies found");
+            this.logger.info("No new handleable strategies found", {
+                className: RetroactiveProcessor.name,
+                chainId: this.chainId,
+            });
             return;
         }
 
@@ -136,6 +142,10 @@ export class RetroactiveProcessor {
                     } catch (error) {
                         this.logger.error(
                             `Failed to process strategy ${strategyId}: ${error instanceof Error ? error.message : String(error)}`,
+                            {
+                                className: RetroactiveProcessor.name,
+                                chainId: this.chainId,
+                            },
                         );
                         throw error;
                     }
@@ -148,6 +158,10 @@ export class RetroactiveProcessor {
         const failed = results.filter((r) => r.status === "rejected").length;
         this.logger.info(
             `Retroactive processing complete. Succeeded: ${succeeded}, Failed: ${failed}`,
+            {
+                className: RetroactiveProcessor.name,
+                chainId: this.chainId,
+            },
         );
     }
 
@@ -199,14 +213,24 @@ export class RetroactiveProcessor {
                 if (executionResult.numFailed > 0) {
                     this.logger.error(
                         `Failed to apply changesets. ${executionResult.errors.join("\n")} Event: ${stringify(event)}`,
+                        {
+                            className: RetroactiveProcessor.name,
+                            chainId: this.chainId,
+                        },
                     );
                 }
             } catch (error) {
                 if (error instanceof InvalidEvent || error instanceof UnsupportedEventException) {
                     // Expected errors that we can safely ignore
-                    this.logger.debug(`Skipping error for ${error.name}: ${stringify(event)}`);
+                    this.logger.debug(`Skipping error for ${error.name}: ${stringify(event)}`, {
+                        className: RetroactiveProcessor.name,
+                        chainId: this.chainId,
+                    });
                 } else {
-                    this.logger.error(`Error processing event: ${stringify(event)} ${error}`);
+                    this.logger.error(`Error processing event: ${stringify(event)} ${error}`, {
+                        className: RetroactiveProcessor.name,
+                        chainId: this.chainId,
+                    });
                 }
             }
 
@@ -296,12 +320,19 @@ export class RetroactiveProcessor {
      * @param addresses - The set of strategy addresses
      */
     private async markStrategyAsHandled(strategyId: Hex, addresses: Set<Address>): Promise<void> {
-        this.logger.info(`Processed retroactively strategy ${strategyId}`);
+        this.logger.info(`Processed retroactively strategy ${strategyId}`, {
+            className: RetroactiveProcessor.name,
+            chainId: this.chainId,
+        });
 
         await Promise.all(
             Array.from(addresses).map(async (address) => {
                 this.logger.debug(
                     `Marking strategy ${strategyId} as handled for address ${address}`,
+                    {
+                        className: RetroactiveProcessor.name,
+                        chainId: this.chainId,
+                    },
                 );
                 try {
                     await this.strategyRegistry.saveStrategyId(
@@ -311,7 +342,13 @@ export class RetroactiveProcessor {
                         true,
                     );
                 } catch (error: unknown) {
-                    this.logger.error(`Failed to mark strategy ${strategyId} as handled: ${error}`);
+                    this.logger.error(
+                        `Failed to mark strategy ${strategyId} as handled: ${error}`,
+                        {
+                            className: RetroactiveProcessor.name,
+                            chainId: this.chainId,
+                        },
+                    );
                     throw error;
                 }
             }),

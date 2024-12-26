@@ -33,6 +33,10 @@ export class DatabaseStrategyRegistry implements IStrategyRegistry {
     ): Promise<void> {
         this.logger.debug(
             `Saving strategy id ${strategyId} for address ${strategyAddress} and chainId ${chainId} in Database`,
+            {
+                className: DatabaseStrategyRegistry.name,
+                chainId,
+            },
         );
         await this.strategyRepository.saveStrategy({
             chainId,

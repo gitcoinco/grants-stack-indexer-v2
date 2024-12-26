@@ -2,8 +2,8 @@
  * Generic logger interface.
  */
 export interface ILogger {
-    error: (error: Error | string) => void;
-    info: (message: string) => void;
-    warn: (message: string) => void;
-    debug: (message: string) => void;
+    error: (error: Error | string, context?: Record<string, unknown>) => void;
+    info: (message: string, context?: Record<string, unknown>) => void;
+    warn: (message: string, context?: Record<string, unknown>) => void;
+    debug: (message: string, context?: Record<string, unknown>) => void;
 }

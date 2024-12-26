@@ -83,6 +83,10 @@ export class InMemoryCachedStrategyRegistry implements IStrategyRegistry {
 
         this.logger.debug(
             `Saving strategy id ${strategyId} for address ${strategyAddress} and chainId ${chainId}`,
+            {
+                className: InMemoryCachedStrategyRegistry.name,
+                chainId,
+            },
         );
         await this.strategyRegistry.saveStrategyId(chainId, strategyAddress, strategyId, handled);
 

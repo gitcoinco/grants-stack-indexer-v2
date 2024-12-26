@@ -1,6 +1,6 @@
 import { createLogger, format, transports, Logger as WinstonLogger } from "winston";
 
-import { ChainId } from "../internal.js";
+import { stringify } from "../internal.js";
 import { ILogger } from "./logger.interface.js";
 
 type LogLevel = "error" | "warn" | "info" | "debug";
@@ -9,44 +9,75 @@ const validLogLevels: LogLevel[] = ["error", "warn", "info", "debug"];
 
 export class Logger implements ILogger {
     private logger: WinstonLogger;
+    private static instance: Logger | null;
     private level: LogLevel;
 
-    constructor(config: { chainId?: ChainId; className?: string } = {}) {
-        const { chainId, className } = config;
+    private constructor() {
         this.level = this.isValidLogLevel(process.env.LOG_LEVEL) ? process.env.LOG_LEVEL : "info";
         this.logger = createLogger({
             level: this.level,
-            defaultMeta: { chainId, className },
             format: format.combine(
                 format.colorize(),
                 format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
                 format.errors({ stack: true }),
-                format.printf(({ level, message, timestamp, stack, chainId, className }) => {
-                    return `${chainId ? `[Chain:${chainId}] ` : ""}${className ? `[${className}] ` : ""}${timestamp} ${level}: ${stack ?? message ?? ""}`;
-                }),
+                format.printf(
+                    ({ level, message, timestamp, stack, className, chainId, ...rest }) => {
+                        const parts = [
+                            timestamp,
+                            chainId ? `[Chain:${chainId}]` : "",
+                            level,
+                            className ? `[${className}]` : "",
+                            ":",
+                            stack ?? message ?? "",
+                        ];
+
+                        const contextInfo =
+                            Object.keys(rest).length > 0 ? `| context: ${stringify(rest)}` : "";
+
+                        return (
+                            parts.filter(Boolean).join(" ") + (contextInfo ? ` ${contextInfo}` : "")
+                        );
+                    },
+                ),
             ),
             transports: [new transports.Console()],
         });
+    }
+
+    /**
+     * Returns the instance of the Logger class.
+     * @param level The log level to be used by the logger.
+     * @returns The instance of the Logger class.
+     */
+    public static getInstance(): ILogger {
+        if (!Logger.instance) {
+            Logger.instance = new Logger();
+        }
+        return Logger.instance;
     }
 
     isValidLogLevel(level?: string): level is LogLevel {
         return validLogLevels.includes(level as LogLevel);
     }
 
-    info(message: string): void {
-        this.logger.info(message);
+    info(message: string, context?: Record<string, unknown>): void {
+        this.logger.info(message, context);
     }
-    error(error: Error | string): void {
+    error(error: Error | string, context?: Record<string, unknown>): void {
         if (error instanceof Error) {
-            this.logger.error(error);
+            this.logger.log("error", error.message, {
+                ...context,
+                stack: error.stack,
+                cause: error.cause,
+            });
         } else {
-            this.logger.error(new Error(error));
+            this.logger.log("error", error, context);
         }
     }
-    warn(message: string): void {
-        this.logger.warn(message);
+    warn(message: string, context?: Record<string, unknown>): void {
+        this.logger.warn(message, context);
     }
-    debug(message: string): void {
-        this.logger.debug(message);
+    debug(message: string, context?: Record<string, unknown>): void {
+        this.logger.debug(message, context);
     }
 }

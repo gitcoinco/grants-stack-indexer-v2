@@ -16,7 +16,7 @@ import {
     KyselyStrategyProcessingCheckpointRepository,
     KyselyStrategyRegistryRepository,
 } from "@grants-stack-indexer/repository";
-import { Logger } from "@grants-stack-indexer/shared";
+import { ILogger, Logger } from "@grants-stack-indexer/shared";
 
 import { Environment } from "../config/index.js";
 
@@ -29,6 +29,7 @@ export type SharedDependencies = {
     };
     indexerClient: EnvioIndexerClient;
     kyselyDatabase: ReturnType<typeof createKyselyDatabase>;
+    logger: ILogger;
 };
 
 /**
@@ -39,10 +40,15 @@ export type SharedDependencies = {
  */
 export class SharedDependenciesService {
     static async initialize(env: Environment): Promise<SharedDependencies> {
+        const logger = Logger.getInstance();
+
         // Initialize repositories
-        const kyselyDatabase = createKyselyDatabase({
-            connectionString: env.DATABASE_URL,
-        });
+        const kyselyDatabase = createKyselyDatabase(
+            {
+                connectionString: env.DATABASE_URL,
+            },
+            logger,
+        );
 
         const projectRepository = new KyselyProjectRepository(kyselyDatabase, env.DATABASE_SCHEMA);
         const roundRepository = new KyselyRoundRepository(kyselyDatabase, env.DATABASE_SCHEMA);
@@ -59,13 +65,10 @@ export class SharedDependenciesService {
             env.DATABASE_SCHEMA,
         );
         const pricingProvider = PricingProviderFactory.create(env, {
-            logger: new Logger({ className: "PricingProvider" }),
+            logger,
         });
 
-        const metadataProvider = new IpfsProvider(
-            env.IPFS_GATEWAYS_URL,
-            new Logger({ className: "IpfsProvider" }),
-        );
+        const metadataProvider = new IpfsProvider(env.IPFS_GATEWAYS_URL, logger);
 
         const eventRegistryRepository = new KyselyEventRegistryRepository(
             kyselyDatabase,
@@ -102,6 +105,7 @@ export class SharedDependenciesService {
             },
             indexerClient,
             kyselyDatabase,
+            logger,
         };
     }
 }

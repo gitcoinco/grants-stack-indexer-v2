@@ -32,7 +32,10 @@ export class InMemoryCachedEventRegistry implements IEventsRegistry {
 
     /** @inheritdoc */
     async saveLastProcessedEvent(chainId: ChainId, event: NewProcessedEvent): Promise<void> {
-        this.logger.debug(`Saving last processed event: ${stringify(event, undefined, 4)}`);
+        this.logger.debug(`Saving last processed event: ${stringify(event, undefined, 4)}`, {
+            className: InMemoryCachedEventRegistry.name,
+            chainId,
+        });
         await this.eventRegistry.saveLastProcessedEvent(chainId, event);
         this.cache.set(chainId, { ...event, chainId });
     }
