@@ -44,6 +44,7 @@ describe("InMemoryCachedStrategyRegistry", () => {
         const registry = await InMemoryCachedStrategyRegistry.initialize(
             logger,
             mockStrategyRegistry,
+            chainId,
         );
         const cached = await registry.getStrategyId(chainId, strategyAddress);
 
@@ -65,6 +66,7 @@ describe("InMemoryCachedStrategyRegistry", () => {
         const registry = await InMemoryCachedStrategyRegistry.initialize(
             logger,
             mockStrategyRegistry,
+            chainId,
         );
         const result = await registry.getStrategyId(chainId, strategyAddress);
 
@@ -78,6 +80,7 @@ describe("InMemoryCachedStrategyRegistry", () => {
         const registry = await InMemoryCachedStrategyRegistry.initialize(
             logger,
             mockStrategyRegistry,
+            chainId,
         );
         await registry.saveStrategyId(chainId, strategyAddress, strategyId, true);
 
@@ -109,6 +112,7 @@ describe("InMemoryCachedStrategyRegistry", () => {
         const registry = await InMemoryCachedStrategyRegistry.initialize(
             logger,
             mockStrategyRegistry,
+            chainId,
         );
         await registry.saveStrategyId(chainId, strategyAddress, strategyId, true);
 
@@ -130,6 +134,7 @@ describe("InMemoryCachedStrategyRegistry", () => {
         const registry = await InMemoryCachedStrategyRegistry.initialize(
             logger,
             mockStrategyRegistry,
+            chainId,
         );
         const params = { handled: true, chainId };
         const result = await registry.getStrategies(params);

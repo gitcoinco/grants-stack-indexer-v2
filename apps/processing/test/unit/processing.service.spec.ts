@@ -101,10 +101,10 @@ describe("ProcessingService", () => {
     });
 
     it("initializes multiple orchestrators correctly", () => {
-        expect(InMemoryCachedStrategyRegistry.initialize).toHaveBeenCalledTimes(1);
         expect(DatabaseStrategyRegistry).toHaveBeenCalledTimes(1);
         expect(DatabaseEventRegistry).toHaveBeenCalledTimes(1);
         expect(EvmProvider).toHaveBeenCalledTimes(2);
+        expect(InMemoryCachedStrategyRegistry.initialize).toHaveBeenCalledTimes(2);
         expect(InMemoryCachedEventRegistry.initialize).toHaveBeenCalledTimes(2);
 
         // Verify orchestrators were created with correct parameters

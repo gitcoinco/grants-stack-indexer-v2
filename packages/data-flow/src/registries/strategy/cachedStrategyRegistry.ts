@@ -28,16 +28,19 @@ export class InMemoryCachedStrategyRegistry implements IStrategyRegistry {
      *
      * @param logger - The logger instance
      * @param strategyRegistry - The strategy registry instance
+     * @param chainId - The chain ID to load strategies for
      * @returns The initialized cached strategy registry
      */
     static async initialize(
         logger: ILogger,
         strategyRegistry: IStrategyRegistry,
+        chainId: ChainId,
     ): Promise<InMemoryCachedStrategyRegistry> {
-        const strategies = await strategyRegistry.getStrategies();
         const cache = new Map<ChainId, Map<Address, Strategy>>();
 
-        logger.debug(`Loading strategies into memory...`);
+        logger.debug(`Loading strategies into memory for chain ID: ${chainId}...`);
+
+        const strategies = await strategyRegistry.getStrategies({ chainId });
 
         for (const strategy of strategies) {
             if (!cache.has(strategy.chainId)) {
