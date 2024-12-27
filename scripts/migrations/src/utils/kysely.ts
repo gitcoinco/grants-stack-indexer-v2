@@ -1,5 +1,6 @@
 import { promises as fs } from "fs";
 import * as path from "path";
+import { isNativeError } from "util/types";
 import {
     FileMigrationProvider,
     Kysely,
@@ -8,6 +9,8 @@ import {
     NO_MIGRATIONS,
     SchemaModule,
 } from "kysely";
+
+import { ILogger, stringify } from "@grants-stack-indexer/shared";
 
 export interface MigrationConfig<T> {
     db: Kysely<T>;
@@ -37,6 +40,7 @@ export const getSchemaName = (schema: SchemaModule): string => {
  */
 export async function migrateToLatest<T>(
     config: MigrationConfig<T>,
+    logger: ILogger,
 ): Promise<MigrationResult[] | undefined> {
     await config.db.schema.createSchema(config.schema).ifNotExists().execute();
 
@@ -54,15 +58,15 @@ export async function migrateToLatest<T>(
 
     results?.forEach((it) => {
         if (it.status === "Success") {
-            console.log(`migration "${it.migrationName}" was executed successfully`);
+            logger.info(`migration "${it.migrationName}" was executed successfully`);
         } else if (it.status === "Error") {
-            console.error(`failed to execute migration "${it.migrationName}"`);
+            logger.error(`failed to execute migration "${it.migrationName}"`);
         }
     });
 
     if (error) {
-        console.error("failed to migrate");
-        console.error(error);
+        logger.error("failed to migrate");
+        logger.error(isNativeError(error) ? error : stringify(error));
         throw error;
     }
 
@@ -79,6 +83,7 @@ export async function migrateToLatest<T>(
  */
 export async function resetDatabase<T>(
     config: MigrationConfig<T>,
+    logger: ILogger,
 ): Promise<MigrationResult[] | undefined> {
     const migrator = new Migrator({
         db: config.db,
@@ -92,8 +97,8 @@ export async function resetDatabase<T>(
     const { error, results } = await migrator.migrateTo(NO_MIGRATIONS);
 
     if (error) {
-        console.error("failed to reset database");
-        console.error(error);
+        logger.error("failed to reset database");
+        logger.error(isNativeError(error) ? error : stringify(error));
         throw error;
     }
 

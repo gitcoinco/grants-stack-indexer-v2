@@ -27,6 +27,7 @@
     },
     "dependencies": {
         "@grants-stack-indexer/repository": "workspace:*",
+        "@grants-stack-indexer/shared": "workspace:*",
         "dotenv": "16.4.5",
         "kysely": "0.27.4",
         "yargs": "17.7.2",

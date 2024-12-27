@@ -273,6 +273,9 @@ importers:
             "@grants-stack-indexer/repository":
                 specifier: workspace:*
                 version: link:../../packages/repository
+            "@grants-stack-indexer/shared":
+                specifier: workspace:*
+                version: link:../../packages/shared
             dotenv:
                 specifier: 16.4.5
                 version: 16.4.5

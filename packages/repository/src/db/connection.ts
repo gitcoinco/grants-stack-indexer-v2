@@ -90,7 +90,7 @@ export interface Database {
  */
 export const createKyselyPostgresDb = (
     config: DatabaseConfig,
-    logger?: ILogger,
+    logger: ILogger,
 ): Kysely<Database> => {
     const dialect = new PostgresDialect({
         pool: new Pool({
@@ -109,7 +109,7 @@ export const createKyselyPostgresDb = (
         plugins: [new CamelCasePlugin(), new WithSchemaPlugin(withSchema)],
         log(event): void {
             if (event.level === "error") {
-                logger?.error(
+                logger.error(
                     `Query failed. SQL: ${event.query.sql} with params: ${event.query.parameters}`,
                     {
                         durationMs: event.queryDurationMillis,

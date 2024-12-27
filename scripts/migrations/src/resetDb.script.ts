@@ -1,6 +1,7 @@
 import { configDotenv } from "dotenv";
 
 import { createKyselyDatabase } from "@grants-stack-indexer/repository";
+import { Logger, stringify } from "@grants-stack-indexer/shared";
 
 import { getDatabaseConfigFromEnv } from "./schemas/index.js";
 import { getMigrationsFolder, parseArguments, resetDatabase } from "./utils/index.js";
@@ -38,30 +39,38 @@ const main = async (): Promise<void> => {
     const { DATABASE_URL } = getDatabaseConfigFromEnv();
     const { schema } = parseArguments();
 
-    const db = createKyselyDatabase({
-        connectionString: DATABASE_URL,
-        withSchema: schema,
-    });
+    const logger = Logger.getInstance();
 
-    console.log(`Resetting database schema '${schema}'...`);
+    const db = createKyselyDatabase(
+        {
+            connectionString: DATABASE_URL,
+            withSchema: schema,
+        },
+        logger,
+    );
 
-    const resetResults = await resetDatabase({
-        db,
-        schema,
-        migrationsFolder: getMigrationsFolder(),
-    });
+    logger.info(`Resetting database schema '${schema}'...`);
+
+    const resetResults = await resetDatabase(
+        {
+            db,
+            schema,
+            migrationsFolder: getMigrationsFolder(),
+        },
+        logger,
+    );
 
     if (resetResults && resetResults?.length > 0) {
         const failedResets = resetResults.filter((resetResult) => resetResult.status === "Error");
 
         if (failedResets.length > 0) {
-            console.error("❌ Failed resets:", failedResets);
+            logger.error(`❌ Failed resets: ${stringify(failedResets)}`);
             throw new Error("Failed resets");
         }
 
-        console.log(`✅ Reset applied successfully`);
+        logger.info(`✅ Reset applied successfully`);
     } else {
-        console.log("No resets to apply");
+        logger.info("No resets to apply");
     }
 
     await db.destroy();

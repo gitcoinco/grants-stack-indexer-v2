@@ -1,6 +1,7 @@
 import { configDotenv } from "dotenv";
 
 import { createKyselyDatabase } from "@grants-stack-indexer/repository";
+import { Logger, stringify } from "@grants-stack-indexer/shared";
 
 import { getDatabaseConfigFromEnv } from "./schemas/index.js";
 import { getMigrationsFolder, migrateToLatest, parseArguments } from "./utils/index.js";
@@ -35,18 +36,26 @@ export const main = async (): Promise<void> => {
     const { DATABASE_URL } = getDatabaseConfigFromEnv();
     const { schema } = parseArguments();
 
-    const db = createKyselyDatabase({
-        connectionString: DATABASE_URL,
-        withSchema: schema,
-    });
+    const logger = Logger.getInstance();
 
-    console.log(`Migrating database schema '${schema}'...`);
+    const db = createKyselyDatabase(
+        {
+            connectionString: DATABASE_URL,
+            withSchema: schema,
+        },
+        logger,
+    );
 
-    const migrationResults = await migrateToLatest({
-        db,
-        schema,
-        migrationsFolder: getMigrationsFolder(),
-    });
+    logger.info(`Migrating database schema '${schema}'...`);
+
+    const migrationResults = await migrateToLatest(
+        {
+            db,
+            schema,
+            migrationsFolder: getMigrationsFolder(),
+        },
+        logger,
+    );
 
     if (migrationResults && migrationResults?.length > 0) {
         const failedMigrations = migrationResults.filter(
@@ -54,13 +63,13 @@ export const main = async (): Promise<void> => {
         );
 
         if (failedMigrations.length > 0) {
-            console.error("❌ Failed migrations:", failedMigrations);
+            logger.error(`❌ Failed migrations: ${stringify(failedMigrations)}`);
             throw new Error("Failed migrations");
         }
 
-        console.log(`✅ Migrations applied successfully`);
+        logger.info(`✅ Migrations applied successfully`);
     } else {
-        console.log("No migrations to apply");
+        logger.info("No migrations to apply");
     }
 
     await db.destroy();
