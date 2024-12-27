@@ -29,8 +29,9 @@ import { SharedDependencies, SharedDependenciesService } from "./index.js";
  */
 export class ProcessingService {
     private readonly orchestrators: Map<ChainId, [Orchestrator, RetroactiveProcessor]> = new Map();
-    private readonly kyselyDatabase: SharedDependencies["kyselyDatabase"];
     private readonly logger: ILogger;
+    private readonly kyselyDatabase: SharedDependencies["kyselyDatabase"];
+
     private constructor(
         orchestrators: Map<ChainId, [Orchestrator, RetroactiveProcessor]>,
         kyselyDatabase: SharedDependencies["kyselyDatabase"],
@@ -109,7 +110,7 @@ export class ProcessingService {
      * The processor runs indefinitely until it is terminated.
      */
     async start(): Promise<void> {
-        this.logger.info("Starting processor service...", { className: ProcessingService.name });
+        this.logger.info("Starting processor service...");
 
         const abortController = new AbortController();
 
@@ -117,32 +118,24 @@ export class ProcessingService {
 
         // Handle graceful shutdown
         process.on("SIGINT", () => {
-            this.logger.info("Received SIGINT signal. Shutting down...", {
-                className: ProcessingService.name,
-            });
+            this.logger.info("Received SIGINT signal. Shutting down...");
             abortController.abort();
         });
 
         process.on("SIGTERM", () => {
-            this.logger.info("Received SIGTERM signal. Shutting down...", {
-                className: ProcessingService.name,
-            });
+            this.logger.info("Received SIGTERM signal. Shutting down...");
             abortController.abort();
         });
 
         try {
             for (const [orchestrator, _] of this.orchestrators.values()) {
-                this.logger.info(`Starting orchestrator for chain ${orchestrator.chainId}...`, {
-                    className: ProcessingService.name,
-                });
+                this.logger.info(`Starting orchestrator for chain ${orchestrator.chainId}...`);
                 orchestratorProcesses.push(orchestrator.run(abortController.signal));
             }
 
             await Promise.allSettled(orchestratorProcesses);
         } catch (error) {
-            this.logger.error(`Processor service failed: ${error}`, {
-                className: ProcessingService.name,
-            });
+            this.logger.error(`Processor service failed: ${error}`);
             throw error;
         }
     }
@@ -152,9 +145,7 @@ export class ProcessingService {
      * - This is a blocking operation that will run until all retroactive events are processed
      */
     async processRetroactiveEvents(): Promise<void> {
-        this.logger.info("Processing retroactive events...", {
-            className: ProcessingService.name,
-        });
+        this.logger.info("Processing retroactive events...");
         for (const [_, retroactiveProcessor] of this.orchestrators.values()) {
             await retroactiveProcessor.processRetroactiveStrategies();
         }
@@ -166,14 +157,10 @@ export class ProcessingService {
      */
     async releaseResources(): Promise<void> {
         try {
-            this.logger.info("Releasing resources...", {
-                className: ProcessingService.name,
-            });
+            this.logger.info("Releasing resources...");
             await this.kyselyDatabase.destroy();
         } catch (error) {
-            this.logger.error(`Error releasing resources: ${error}`, {
-                className: ProcessingService.name,
-            });
+            this.logger.error(`Error releasing resources: ${error}`);
         }
     }
 }

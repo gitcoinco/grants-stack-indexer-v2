@@ -605,9 +605,11 @@ describe("Orchestrator", { sequential: true }, () => {
             expect(orchestrator["dataLoader"].applyChanges).toHaveBeenCalledTimes(1);
             expect(mockEventsRegistry.saveLastProcessedEvent).toHaveBeenCalledTimes(2);
             expect(logger.error).toHaveBeenCalledTimes(1);
-            expect(logger.error).toHaveBeenCalledWith(
-                expect.stringContaining(`Error processing event: ${stringify(errorEvent)}`),
-            );
+            expect(logger.error).toHaveBeenCalledWith(error, {
+                className: Orchestrator.name,
+                chainId,
+                event: errorEvent,
+            });
         });
 
         it.skip("logs error for InvalidEvent", async () => {

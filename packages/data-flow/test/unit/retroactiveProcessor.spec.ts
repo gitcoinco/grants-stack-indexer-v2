@@ -174,7 +174,10 @@ describe("RetroactiveProcessor", () => {
 
             await processor.processRetroactiveStrategies();
 
-            expect(mockLogger.info).toHaveBeenCalledWith("No new handleable strategies found");
+            expect(mockLogger.info).toHaveBeenCalledWith("No new handleable strategies found", {
+                className: RetroactiveProcessor.name,
+                chainId,
+            });
             expect(mockEventsRegistry.getLastProcessedEvent).not.toHaveBeenCalled();
         });
 
@@ -189,7 +192,10 @@ describe("RetroactiveProcessor", () => {
 
             await processor.processRetroactiveStrategies();
 
-            expect(mockLogger.info).toHaveBeenCalledWith("No new handleable strategies found");
+            expect(mockLogger.info).toHaveBeenCalledWith("No new handleable strategies found", {
+                className: RetroactiveProcessor.name,
+                chainId,
+            });
             expect(mockEventsRegistry.getLastProcessedEvent).not.toHaveBeenCalled();
         });
 
@@ -223,6 +229,10 @@ describe("RetroactiveProcessor", () => {
 
             expect(mockLogger.info).toHaveBeenCalledWith(
                 "Retroactive processing complete. Succeeded: 1, Failed: 0",
+                {
+                    className: RetroactiveProcessor.name,
+                    chainId,
+                },
             );
             expect(mockEventsProcessor.processEvent).toHaveBeenCalledTimes(1);
             expect(mockStrategyRegistry.saveStrategyId).toHaveBeenCalledTimes(2);
@@ -274,6 +284,10 @@ describe("RetroactiveProcessor", () => {
 
             expect(mockLogger.info).toHaveBeenCalledWith(
                 "Retroactive processing complete. Succeeded: 2, Failed: 0",
+                {
+                    className: RetroactiveProcessor.name,
+                    chainId,
+                },
             );
             expect(mockEventsFetcher.fetchEvents).toHaveBeenCalledTimes(4);
             expect(mockStrategyRegistry.saveStrategyId).toHaveBeenCalledTimes(3);
@@ -324,6 +338,10 @@ describe("RetroactiveProcessor", () => {
 
             expect(mockLogger.info).toHaveBeenCalledWith(
                 "Retroactive processing complete. Succeeded: 1, Failed: 0",
+                {
+                    className: RetroactiveProcessor.name,
+                    chainId,
+                },
             );
 
             expect(mockEventsProcessor.processEvent).toHaveBeenCalledTimes(1);
@@ -367,6 +385,10 @@ describe("RetroactiveProcessor", () => {
 
             expect(mockLogger.info).toHaveBeenCalledWith(
                 "Retroactive processing complete. Succeeded: 1, Failed: 0",
+                {
+                    className: RetroactiveProcessor.name,
+                    chainId,
+                },
             );
             expect(mockEventsProcessor.processEvent).toHaveBeenCalledTimes(0);
             expect(mockStrategyRegistry.saveStrategyId).toHaveBeenCalledTimes(2);
@@ -456,6 +478,10 @@ describe("RetroactiveProcessor", () => {
                 expect(processEventSpy).toHaveBeenCalledTimes(2);
                 expect(mockLogger.debug).toHaveBeenCalledWith(
                     expect.stringContaining("Skipping error for InvalidEvent"),
+                    {
+                        className: RetroactiveProcessor.name,
+                        chainId,
+                    },
                 );
                 expect(mockLogger.error).not.toHaveBeenCalled();
                 expect(mockStrategyRegistry.saveStrategyId).toHaveBeenCalledTimes(2);
@@ -491,6 +517,10 @@ describe("RetroactiveProcessor", () => {
 
                 expect(mockLogger.info).toHaveBeenCalledWith(
                     "Retroactive processing complete. Succeeded: 0, Failed: 1",
+                    {
+                        className: RetroactiveProcessor.name,
+                        chainId,
+                    },
                 );
             });
         });

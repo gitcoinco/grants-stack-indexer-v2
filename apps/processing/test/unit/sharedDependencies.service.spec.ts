@@ -4,10 +4,28 @@ import { EnvioIndexerClient } from "@grants-stack-indexer/indexer-client";
 import { IpfsProvider } from "@grants-stack-indexer/metadata";
 import { PricingProviderFactory } from "@grants-stack-indexer/pricing";
 import { createKyselyDatabase } from "@grants-stack-indexer/repository";
-import { Logger } from "@grants-stack-indexer/shared";
 
 import type { Environment } from "../../src/config/env.js";
 import { SharedDependenciesService } from "../../src/services/sharedDependencies.service.js";
+
+const mocks = vi.hoisted(() => {
+    return {
+        logger: {
+            info: vi.fn(),
+            error: vi.fn(),
+            debug: vi.fn(),
+            warn: vi.fn(),
+        },
+    };
+});
+
+vi.mock("@grants-stack-indexer/shared", () => {
+    return {
+        Logger: {
+            getInstance: vi.fn().mockReturnValue(mocks.logger),
+        },
+    };
+});
 
 // Mock dependencies
 vi.mock("@grants-stack-indexer/repository", () => ({
@@ -93,15 +111,18 @@ describe("SharedDependenciesService", () => {
         const dependencies = await SharedDependenciesService.initialize(mockEnv as Environment);
 
         // Verify database initialization
-        expect(createKyselyDatabase).toHaveBeenCalledWith({
-            connectionString: mockEnv.DATABASE_URL,
-        });
+        expect(createKyselyDatabase).toHaveBeenCalledWith(
+            {
+                connectionString: mockEnv.DATABASE_URL,
+            },
+            mocks.logger,
+        );
 
         // Verify providers initialization
         expect(PricingProviderFactory.create).toHaveBeenCalledWith(mockEnv, {
-            logger: expect.any(Logger) as Logger,
+            logger: mocks.logger,
         });
-        expect(IpfsProvider).toHaveBeenCalledWith(mockEnv.IPFS_GATEWAYS_URL, expect.any(Logger));
+        expect(IpfsProvider).toHaveBeenCalledWith(mockEnv.IPFS_GATEWAYS_URL, mocks.logger);
 
         // Verify indexer client initialization
         expect(EnvioIndexerClient).toHaveBeenCalledWith(
@@ -114,6 +135,7 @@ describe("SharedDependenciesService", () => {
         expect(dependencies).toHaveProperty("registriesRepositories");
         expect(dependencies).toHaveProperty("indexerClient");
         expect(dependencies).toHaveProperty("kyselyDatabase");
+        expect(dependencies).toHaveProperty("logger");
 
         // Verify core dependencies
         expect(dependencies.core).toHaveProperty("projectRepository");

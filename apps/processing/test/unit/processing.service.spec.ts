@@ -22,6 +22,12 @@ vi.mock("../../src/services/sharedDependencies.service.js", () => ({
             kyselyDatabase: {
                 destroy: vi.fn(),
             },
+            logger: {
+                info: vi.fn(),
+                error: vi.fn(),
+                debug: vi.fn(),
+                warn: vi.fn(),
+            },
         })),
     },
 }));
