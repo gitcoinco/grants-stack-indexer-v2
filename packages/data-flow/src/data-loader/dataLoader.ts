@@ -5,10 +5,11 @@ import {
     IDonationRepository,
     IProjectRepository,
     IRoundRepository,
+    ITransactionManager,
 } from "@grants-stack-indexer/repository";
-import { ILogger, stringify } from "@grants-stack-indexer/shared";
+import { ILogger } from "@grants-stack-indexer/shared";
 
-import { ExecutionResult, IDataLoader, InvalidChangeset } from "../internal.js";
+import { IDataLoader, InvalidChangeset } from "../internal.js";
 import {
     createApplicationHandlers,
     createApplicationPayoutHandlers,
@@ -42,6 +43,7 @@ export class DataLoader implements IDataLoader {
             donation: IDonationRepository;
             applicationPayout: IApplicationPayoutRepository;
         },
+        private readonly transactionManager: ITransactionManager,
         private readonly logger: ILogger,
     ) {
         this.handlers = {
@@ -54,40 +56,26 @@ export class DataLoader implements IDataLoader {
     }
 
     /** @inheritdoc */
-    public async applyChanges(changesets: Changeset[]): Promise<ExecutionResult> {
-        const result: ExecutionResult = {
-            changesets: [],
-            numExecuted: 0,
-            numSuccessful: 0,
-            numFailed: 0,
-            errors: [],
-        };
-
+    public async applyChanges(changesets: Changeset[]): Promise<void> {
         const invalidTypes = changesets.filter((changeset) => !this.handlers[changeset.type]);
         if (invalidTypes.length > 0) {
             throw new InvalidChangeset(invalidTypes.map((changeset) => changeset.type));
         }
 
-        //TODO: research how to manage transactions so we can rollback on error
-        for (const changeset of changesets) {
-            result.numExecuted++;
-            try {
-                //TODO: inside each handler, we should add zod validation that the args match the expected type
-                await this.handlers[changeset.type](changeset as never);
-                result.changesets.push(changeset.type);
-                result.numSuccessful++;
-            } catch (error) {
-                result.numFailed++;
-                result.errors.push(
-                    `Failed to apply changeset ${changeset.type}: ${
-                        error instanceof Error ? error.message : String(error)
-                    }`,
-                );
-                this.logger.error(`${stringify(error, Object.getOwnPropertyNames(error))}`);
-                break;
-            }
-        }
+        await this.transactionManager.runInTransaction(async (tx) => {
+            this.logger.debug("Starting transaction...");
+            for (const changeset of changesets) {
+                try {
+                    //TODO: inside each handler, we should add zod validation that the args match the expected type
+                    await this.handlers[changeset.type](changeset as never, tx);
+                } catch (error) {
+                    this.logger.debug(
+                        `Error applying changeset ${changeset.type}. Rolling back transaction with ${changesets.length} changesets`,
+                    );
 
-        return result;
+                    throw error;
+                }
+            }
+        });
     }
 }

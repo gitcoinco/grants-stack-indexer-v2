@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { IRoundRepository, NewRound } from "@grants-stack-indexer/repository";
+import {
+    IRoundRepository,
+    NewRound,
+    TransactionConnection,
+} from "@grants-stack-indexer/repository";
 import { Address, ChainId } from "@grants-stack-indexer/shared";
 
 import { createRoundHandlers } from "../../../src/data-loader/handlers/round.handlers.js";
@@ -16,6 +20,7 @@ describe("Round Handlers", () => {
         insertRoundRole: vi.fn(),
         deleteManyRoundRolesByRoleAndAddress: vi.fn(),
     } as unknown as IRoundRepository;
+    const mockTxConnection = { query: vi.fn() } as unknown as TransactionConnection;
 
     const handlers = createRoundHandlers(mockRepository);
 
@@ -30,12 +35,15 @@ describe("Round Handlers", () => {
             matchAmount: 1000n,
         } as NewRound;
 
-        await handlers.InsertRound({
-            type: "InsertRound" as const,
-            args: { round },
-        });
+        await handlers.InsertRound(
+            {
+                type: "InsertRound" as const,
+                args: { round },
+            },
+            mockTxConnection,
+        );
 
-        expect(mockRepository.insertRound).toHaveBeenCalledWith(round);
+        expect(mockRepository.insertRound).toHaveBeenCalledWith(round, mockTxConnection);
     });
 
     it("handle UpdateRound changeset", async () => {
@@ -56,6 +64,7 @@ describe("Round Handlers", () => {
         expect(mockRepository.updateRound).toHaveBeenCalledWith(
             { id: "round-1", chainId: 1 as ChainId },
             { matchAmount: 2000n, matchAmountInUsd: "2000" },
+            undefined,
         );
     });
 
@@ -77,6 +86,7 @@ describe("Round Handlers", () => {
         expect(mockRepository.updateRound).toHaveBeenCalledWith(
             { chainId: 1 as ChainId, strategyAddress: "0x123" as Address },
             { matchAmount: 2000n, matchAmountInUsd: "2000" },
+            undefined,
         );
     });
 
@@ -97,6 +107,7 @@ describe("Round Handlers", () => {
             { chainId: 1 as ChainId, roundId: "round-1" },
             1000n,
             "1000",
+            undefined,
         );
     });
 
@@ -115,6 +126,7 @@ describe("Round Handlers", () => {
         expect(mockRepository.incrementRoundTotalDistributed).toHaveBeenCalledWith(
             { chainId: 1 as ChainId, roundId: "round-1" },
             1000n,
+            undefined,
         );
     });
 
@@ -135,6 +147,7 @@ describe("Round Handlers", () => {
 
         expect(mockRepository.insertPendingRoundRole).toHaveBeenCalledWith(
             changeset.args.pendingRoundRole,
+            undefined,
         );
     });
 
@@ -148,7 +161,10 @@ describe("Round Handlers", () => {
 
         await handlers.DeletePendingRoundRoles(changeset);
 
-        expect(mockRepository.deleteManyPendingRoundRoles).toHaveBeenCalledWith([1, 2, 3]);
+        expect(mockRepository.deleteManyPendingRoundRoles).toHaveBeenCalledWith(
+            [1, 2, 3],
+            undefined,
+        );
     });
 
     it("handle InsertRoundRole changeset", async () => {
@@ -167,7 +183,10 @@ describe("Round Handlers", () => {
 
         await handlers.InsertRoundRole(changeset);
 
-        expect(mockRepository.insertRoundRole).toHaveBeenCalledWith(changeset.args.roundRole);
+        expect(mockRepository.insertRoundRole).toHaveBeenCalledWith(
+            changeset.args.roundRole,
+            undefined,
+        );
     });
 
     it("handle DeleteAllRoundRolesByRoleAndAddress changeset", async () => {
@@ -190,6 +209,7 @@ describe("Round Handlers", () => {
             changeset.args.roundRole.roundId,
             changeset.args.roundRole.role,
             changeset.args.roundRole.address,
+            undefined,
         );
     });
 });

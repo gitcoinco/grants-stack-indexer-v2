@@ -1,23 +1,12 @@
 import { ProcessorDependencies } from "@grants-stack-indexer/processors";
 import {
-    Changeset,
     IApplicationPayoutRepository,
     IApplicationRepository,
     IDonationRepository,
     IProjectRepository,
     IRoundRepository,
+    ITransactionManager,
 } from "@grants-stack-indexer/repository";
-
-/**
- * The result of the execution of the changesets.
- */
-export type ExecutionResult = {
-    changesets: Changeset["type"][];
-    numExecuted: number;
-    numSuccessful: number;
-    numFailed: number;
-    errors: string[];
-};
 
 /**
  * The core dependencies for the data flow
@@ -35,4 +24,5 @@ export type CoreDependencies = Pick<
     applicationRepository: IApplicationRepository;
     donationRepository: IDonationRepository;
     applicationPayoutRepository: IApplicationPayoutRepository;
+    transactionManager: ITransactionManager;
 };

@@ -11,6 +11,7 @@ import {
     IDonationRepository,
     IProjectRepository,
     IRoundRepository,
+    ITransactionManager,
 } from "@grants-stack-indexer/repository";
 import {
     AlloEvent,
@@ -92,6 +93,7 @@ describe("Orchestrator", { sequential: true }, () => {
 
         const dependencies: CoreDependencies = {
             evmProvider: mockEvmProvider,
+            transactionManager: {} as unknown as ITransactionManager,
             projectRepository: {} as unknown as IProjectRepository,
             roundRepository: {} as unknown as IRoundRepository,
             applicationRepository: {} as unknown as IApplicationRepository,
@@ -151,13 +153,9 @@ describe("Orchestrator", { sequential: true }, () => {
                 .mockResolvedValueOnce(mockEvents)
                 .mockResolvedValue([]);
             eventsProcessorSpy.mockResolvedValue([]);
-            vi.spyOn(orchestrator["dataLoader"], "applyChanges").mockResolvedValue({
-                numFailed: 0,
-                errors: [],
-                changesets: [],
-                numExecuted: 1,
-                numSuccessful: 1,
-            });
+            vi.spyOn(orchestrator["dataLoader"], "applyChanges").mockResolvedValue(
+                await Promise.resolve(),
+            );
             vi.spyOn(mockEventsRegistry, "saveLastProcessedEvent").mockImplementation(() => {
                 return Promise.resolve();
             });
@@ -246,13 +244,9 @@ describe("Orchestrator", { sequential: true }, () => {
                 return Promise.resolve();
             });
 
-            vi.spyOn(orchestrator["dataLoader"], "applyChanges").mockResolvedValue({
-                numFailed: 0,
-                errors: [],
-                changesets: ["InsertProject", "InsertRoundRole", "DeletePendingRoundRoles"],
-                numExecuted: 3,
-                numSuccessful: 3,
-            });
+            vi.spyOn(orchestrator["dataLoader"], "applyChanges").mockResolvedValue(
+                await Promise.resolve(),
+            );
 
             runPromise = orchestrator.run(abortController.signal);
 
@@ -374,13 +368,9 @@ describe("Orchestrator", { sequential: true }, () => {
                 vi.spyOn(mockEventsRegistry, "saveLastProcessedEvent").mockImplementation(() => {
                     return Promise.resolve();
                 });
-                vi.spyOn(orchestrator["dataLoader"], "applyChanges").mockResolvedValue({
-                    numFailed: 0,
-                    errors: [],
-                    changesets: ["InsertApplication"],
-                    numExecuted: 1,
-                    numSuccessful: 1,
-                });
+                vi.spyOn(orchestrator["dataLoader"], "applyChanges").mockResolvedValue(
+                    await Promise.resolve(),
+                );
 
                 runPromise = orchestrator.run(abortController.signal);
 
@@ -485,13 +475,9 @@ describe("Orchestrator", { sequential: true }, () => {
                 .mockResolvedValue([]);
 
             eventsProcessorSpy.mockResolvedValue([]);
-            vi.spyOn(orchestrator["dataLoader"], "applyChanges").mockResolvedValue({
-                numFailed: 0,
-                errors: [],
-                changesets: [],
-                numExecuted: 1,
-                numSuccessful: 1,
-            });
+            vi.spyOn(orchestrator["dataLoader"], "applyChanges").mockResolvedValue(
+                await Promise.resolve(),
+            );
             vi.spyOn(mockEventsRegistry, "saveLastProcessedEvent").mockImplementation(() => {
                 return Promise.resolve();
             });
@@ -544,13 +530,9 @@ describe("Orchestrator", { sequential: true }, () => {
                 return Promise.resolve();
             });
 
-            vi.spyOn(orchestrator["dataLoader"], "applyChanges").mockResolvedValue({
-                numFailed: 0,
-                errors: [],
-                changesets: ["InsertPendingRoundRole"],
-                numExecuted: 1,
-                numSuccessful: 1,
-            });
+            vi.spyOn(orchestrator["dataLoader"], "applyChanges").mockResolvedValue(
+                await Promise.resolve(),
+            );
 
             runPromise = orchestrator.run(abortController.signal);
 
@@ -579,13 +561,9 @@ describe("Orchestrator", { sequential: true }, () => {
                 .mockResolvedValue([]);
 
             eventsProcessorSpy.mockRejectedValueOnce(error).mockResolvedValueOnce([]);
-            vi.spyOn(orchestrator["dataLoader"], "applyChanges").mockResolvedValue({
-                numFailed: 0,
-                errors: [],
-                changesets: [],
-                numExecuted: 1,
-                numSuccessful: 1,
-            });
+            vi.spyOn(orchestrator["dataLoader"], "applyChanges").mockResolvedValue(
+                await Promise.resolve(),
+            );
             vi.spyOn(mockEventsRegistry, "saveLastProcessedEvent").mockImplementation(() => {
                 return Promise.resolve();
             });
@@ -674,41 +652,50 @@ describe("Orchestrator", { sequential: true }, () => {
             expect(mockEventsRegistry.saveLastProcessedEvent).not.toHaveBeenCalled();
         });
 
-        it.skip("logs DataLoader errors", async () => {
-            const mockEvent = createMockEvent("Allo", "PoolCreated", 1);
-            const mockChangesets: Changeset[] = [
-                { type: "UpdateProject", args: { chainId, projectId: "1", project: {} } },
+        it("logs DataLoader errors", async () => {
+            const mockEvent = createMockEvent("Registry", "ProfileCreated", 1, undefined);
+            const changesets = [
+                {
+                    type: "InsertPendingRoundRole",
+                    args: { chainId, roundId: "1", roundRole: {} },
+                } as unknown as Changeset,
             ];
 
-            const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-            const dataLoaderSpy = vi.spyOn(orchestrator["dataLoader"], "applyChanges");
+            const eventsProcessorSpy = vi.spyOn(orchestrator["eventsProcessor"], "processEvent");
 
+            vi.spyOn(mockEventsRegistry, "getLastProcessedEvent").mockResolvedValue(undefined);
             vi.spyOn(mockIndexerClient, "getEventsAfterBlockNumberAndLogIndex")
                 .mockResolvedValueOnce([mockEvent])
                 .mockResolvedValue([]);
-            vi.spyOn(orchestrator["eventsProcessor"], "processEvent").mockResolvedValue(
-                mockChangesets,
-            );
-            dataLoaderSpy.mockResolvedValue({
-                numFailed: 1,
-                errors: ["Failed to update project"],
-                changesets: ["UpdateProject"],
-                numExecuted: 1,
-                numSuccessful: 0,
+
+            eventsProcessorSpy.mockResolvedValue(changesets);
+
+            vi.spyOn(mockEventsRegistry, "saveLastProcessedEvent").mockImplementation(() => {
+                return Promise.resolve();
+            });
+
+            const dataLoaderSpy = vi.spyOn(orchestrator["dataLoader"], "applyChanges");
+            const error = new Error("Failed to apply changesets");
+            dataLoaderSpy.mockRejectedValue(error);
+
+            runPromise = orchestrator.run(abortController.signal);
+
+            await vi.waitFor(() => {
+                if (eventsProcessorSpy.mock.calls.length < 1) throw new Error("Not yet called");
             });
 
             runPromise = orchestrator.run(abortController.signal);
 
             await vi.waitFor(() => {
-                if (dataLoaderSpy.mock.calls.length < 1) throw new Error("Not yet called");
+                if (eventsProcessorSpy.mock.calls.length < 1) throw new Error("Not yet called");
             });
 
-            expect(consoleSpy).toHaveBeenCalledWith(
-                expect.stringContaining("Failed to apply changesets"),
-            );
-            expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining(stringify(mockEvent)));
+            expect(logger.error).toHaveBeenCalledWith(error, {
+                event: mockEvent,
+                className: Orchestrator.name,
+                chainId,
+            });
             expect(dataLoaderSpy).toHaveBeenCalledTimes(1);
-            expect(mockEventsRegistry.saveLastProcessedEvent).not.toHaveBeenCalled();
         });
     });
 });

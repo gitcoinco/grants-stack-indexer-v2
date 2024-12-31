@@ -1,7 +1,5 @@
 import type { Changeset } from "@grants-stack-indexer/repository";
 
-import type { ExecutionResult } from "../internal.js";
-
 export interface IDataLoader {
     /**
      * Applies the changesets to the database.
@@ -9,5 +7,5 @@ export interface IDataLoader {
      * @returns The execution result.
      * @throws {InvalidChangeset} if there are changesets with invalid types.
      */
-    applyChanges(changesets: Changeset[]): Promise<ExecutionResult>;
+    applyChanges(changesets: Changeset[]): Promise<void>;
 }

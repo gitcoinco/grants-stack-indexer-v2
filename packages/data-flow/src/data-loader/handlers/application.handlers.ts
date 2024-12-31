@@ -19,12 +19,16 @@ export type ApplicationHandlers = {
 export const createApplicationHandlers = (
     repository: IApplicationRepository,
 ): ApplicationHandlers => ({
-    InsertApplication: (async (changeset): Promise<void> => {
-        await repository.insertApplication(changeset.args);
+    InsertApplication: (async (changeset, txConnection): Promise<void> => {
+        await repository.insertApplication(changeset.args, txConnection);
     }) satisfies ChangesetHandler<"InsertApplication">,
 
-    UpdateApplication: (async (changeset): Promise<void> => {
+    UpdateApplication: (async (changeset, txConnection): Promise<void> => {
         const { chainId, roundId, applicationId, application } = changeset.args;
-        await repository.updateApplication({ chainId, roundId, id: applicationId }, application);
+        await repository.updateApplication(
+            { chainId, roundId, id: applicationId },
+            application,
+            txConnection,
+        );
     }) satisfies ChangesetHandler<"UpdateApplication">,
 });
