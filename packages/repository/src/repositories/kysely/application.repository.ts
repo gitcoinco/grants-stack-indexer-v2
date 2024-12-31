@@ -7,11 +7,12 @@ import {
     ApplicationNotFound,
     Database,
     IApplicationRepository,
+    KyselyTransaction,
     NewApplication,
     PartialApplication,
 } from "../../internal.js";
 
-export class KyselyApplicationRepository implements IApplicationRepository<Kysely<Database>> {
+export class KyselyApplicationRepository implements IApplicationRepository<KyselyTransaction> {
     constructor(
         private readonly db: Kysely<Database>,
         private readonly schemaName: string,
@@ -96,7 +97,7 @@ export class KyselyApplicationRepository implements IApplicationRepository<Kysel
     }
 
     /* @inheritdoc */
-    async insertApplication(application: NewApplication, tx?: Kysely<Database>): Promise<void> {
+    async insertApplication(application: NewApplication, tx?: KyselyTransaction): Promise<void> {
         const _application = this.formatApplication(application);
         const queryBuilder = (tx || this.db).withSchema(this.schemaName);
 
@@ -107,7 +108,7 @@ export class KyselyApplicationRepository implements IApplicationRepository<Kysel
     async updateApplication(
         where: { id: string; chainId: ChainId; roundId: string },
         application: PartialApplication,
-        tx?: Kysely<Database>,
+        tx?: KyselyTransaction,
     ): Promise<void> {
         const _application = this.formatApplication(application);
         const queryBuilder = (tx || this.db).withSchema(this.schemaName);

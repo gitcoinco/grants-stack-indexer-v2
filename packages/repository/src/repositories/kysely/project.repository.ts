@@ -5,6 +5,7 @@ import { Address, ChainId } from "@grants-stack-indexer/shared";
 import { IProjectRepository } from "../../interfaces/projectRepository.interface.js";
 import {
     Database,
+    KyselyTransaction,
     NewPendingProjectRole,
     NewProject,
     NewProjectRole,
@@ -15,7 +16,7 @@ import {
     ProjectRoleNames,
 } from "../../internal.js";
 
-export class KyselyProjectRepository implements IProjectRepository<Kysely<Database>> {
+export class KyselyProjectRepository implements IProjectRepository<KyselyTransaction> {
     constructor(
         private readonly db: Kysely<Database>,
         private readonly schemaName: string,
@@ -73,7 +74,7 @@ export class KyselyProjectRepository implements IProjectRepository<Kysely<Databa
     }
 
     /* @inheritdoc */
-    async insertProject(project: NewProject, tx?: Kysely<Database>): Promise<void> {
+    async insertProject(project: NewProject, tx?: KyselyTransaction): Promise<void> {
         const queryBuilder = (tx || this.db).withSchema(this.schemaName);
         await queryBuilder.insertInto("projects").values(project).execute();
     }
@@ -82,7 +83,7 @@ export class KyselyProjectRepository implements IProjectRepository<Kysely<Databa
     async updateProject(
         where: { id: string; chainId: ChainId },
         project: PartialProject,
-        tx?: Kysely<Database>,
+        tx?: KyselyTransaction,
     ): Promise<void> {
         const queryBuilder = (tx || this.db).withSchema(this.schemaName);
         await queryBuilder
@@ -96,7 +97,7 @@ export class KyselyProjectRepository implements IProjectRepository<Kysely<Databa
     // ============================ PROJECT ROLES ============================
 
     /* @inheritdoc */
-    async insertProjectRole(projectRole: NewProjectRole, tx?: Kysely<Database>): Promise<void> {
+    async insertProjectRole(projectRole: NewProjectRole, tx?: KyselyTransaction): Promise<void> {
         const queryBuilder = (tx || this.db).withSchema(this.schemaName);
         await queryBuilder.insertInto("projectRoles").values(projectRole).execute();
     }
@@ -107,7 +108,7 @@ export class KyselyProjectRepository implements IProjectRepository<Kysely<Databa
         projectId: string,
         role: ProjectRoleNames,
         address?: Address,
-        tx?: Kysely<Database>,
+        tx?: KyselyTransaction,
     ): Promise<void> {
         const queryBuilder = (tx || this.db).withSchema(this.schemaName);
         const query = queryBuilder
@@ -151,14 +152,14 @@ export class KyselyProjectRepository implements IProjectRepository<Kysely<Databa
     /* @inheritdoc */
     async insertPendingProjectRole(
         pendingProjectRole: NewPendingProjectRole,
-        tx?: Kysely<Database>,
+        tx?: KyselyTransaction,
     ): Promise<void> {
         const queryBuilder = (tx || this.db).withSchema(this.schemaName);
         await queryBuilder.insertInto("pendingProjectRoles").values(pendingProjectRole).execute();
     }
 
     /* @inheritdoc */
-    async deleteManyPendingProjectRoles(ids: number[], tx?: Kysely<Database>): Promise<void> {
+    async deleteManyPendingProjectRoles(ids: number[], tx?: KyselyTransaction): Promise<void> {
         const queryBuilder = (tx || this.db).withSchema(this.schemaName);
         await queryBuilder.deleteFrom("pendingProjectRoles").where("id", "in", ids).execute();
     }

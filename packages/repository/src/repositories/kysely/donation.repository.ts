@@ -1,15 +1,15 @@
 import { Kysely } from "kysely";
 
-import { Database, IDonationRepository, NewDonation } from "../../internal.js";
+import { Database, IDonationRepository, KyselyTransaction, NewDonation } from "../../internal.js";
 
-export class KyselyDonationRepository implements IDonationRepository<Kysely<Database>> {
+export class KyselyDonationRepository implements IDonationRepository<KyselyTransaction> {
     constructor(
         private readonly db: Kysely<Database>,
         private readonly schemaName: string,
     ) {}
 
     /** @inheritdoc */
-    async insertDonation(donation: NewDonation, tx?: Kysely<Database>): Promise<void> {
+    async insertDonation(donation: NewDonation, tx?: KyselyTransaction): Promise<void> {
         const queryBuilder = (tx || this.db).withSchema(this.schemaName);
 
         await queryBuilder
@@ -22,7 +22,7 @@ export class KyselyDonationRepository implements IDonationRepository<Kysely<Data
     }
 
     /** @inheritdoc */
-    async insertManyDonations(donations: NewDonation[], tx?: Kysely<Database>): Promise<void> {
+    async insertManyDonations(donations: NewDonation[], tx?: KyselyTransaction): Promise<void> {
         const queryBuilder = (tx || this.db).withSchema(this.schemaName);
 
         await queryBuilder

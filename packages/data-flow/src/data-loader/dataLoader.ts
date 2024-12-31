@@ -63,7 +63,9 @@ export class DataLoader implements IDataLoader {
         }
 
         await this.transactionManager.runInTransaction(async (tx) => {
-            this.logger.debug("Starting transaction...");
+            this.logger.debug(`Starting transaction on ${changesets.length} changesets...`, {
+                className: DataLoader.name,
+            });
             for (const changeset of changesets) {
                 try {
                     //TODO: inside each handler, we should add zod validation that the args match the expected type
@@ -71,11 +73,17 @@ export class DataLoader implements IDataLoader {
                 } catch (error) {
                     this.logger.debug(
                         `Error applying changeset ${changeset.type}. Rolling back transaction with ${changesets.length} changesets`,
+                        {
+                            className: DataLoader.name,
+                        },
                     );
 
                     throw error;
                 }
             }
+        });
+        this.logger.debug(`Successfully applied ${changesets.length} changesets`, {
+            className: DataLoader.name,
         });
     }
 }
