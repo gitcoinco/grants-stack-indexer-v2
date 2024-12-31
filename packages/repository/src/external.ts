@@ -70,4 +70,7 @@ export {
 
 export type { StrategyProcessingCheckpoint, NewStrategyProcessingCheckpoint } from "./internal.js";
 
+export type { ITransactionManager, TransactionConnection } from "./internal.js";
+export { KyselyTransactionManager } from "./internal.js";
+
 export { createKyselyPostgresDb as createKyselyDatabase } from "./internal.js";

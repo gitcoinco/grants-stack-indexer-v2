@@ -6,3 +6,4 @@ export * from "./applicationPayoutRepository.interface.js";
 export * from "./strategyRepository.interface.js";
 export * from "./eventsRepository.interface.js";
 export * from "./strategyProcessingCheckpointRepository.interface.js";
+export * from "./transactionManager.interface.js";
