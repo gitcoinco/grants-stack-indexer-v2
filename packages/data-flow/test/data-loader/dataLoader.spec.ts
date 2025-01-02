@@ -127,8 +127,11 @@ describe("DataLoader", () => {
 
             await expect(dataLoader.applyChanges(changesets)).rejects.toThrow(error);
 
-            expect(logger.debug).toHaveBeenCalledWith(
+            expect(logger.debug).toHaveBeenLastCalledWith(
                 `Error applying changeset InsertProject. Rolling back transaction with 2 changesets`,
+                {
+                    className: DataLoader.name,
+                },
             );
             expect(mockRoundRepository.insertRound).not.toHaveBeenCalled();
         });
