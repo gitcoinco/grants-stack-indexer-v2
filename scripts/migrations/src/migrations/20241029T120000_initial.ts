@@ -1,4 +1,4 @@
-import { Kysely, sql } from "kysely";
+import { Kysely, RawBuilder, sql } from "kysely";
 
 import { getSchemaName } from "../utils/index.js";
 
@@ -16,6 +16,7 @@ export async function up(db: Kysely<any>): Promise<void> {
     const CURRENCY_TYPE = sql`numeric(18,2)`;
 
     const schema = getSchemaName(db.schema);
+    const ref = (name: string): RawBuilder<unknown> => sql.table(`${schema}.${name}`);
     await db.schema.createType("project_type").asEnum(["canonical", "linked"]).execute();
 
     console.log("schema", schema);
@@ -288,6 +289,48 @@ export async function up(db: Kysely<any>): Promise<void> {
         .addUniqueConstraint("unique_v1ProjectId", ["v1ProjectId"])
         .addUniqueConstraint("unique_v2ProjectId", ["v2ProjectId"])
         .execute();
+
+    // Computed fields
+    await sql`
+        create function ${ref("applications_project")}(a ${ref(
+            "applications",
+        )} ) returns ${ref("projects")} as $$
+            select *
+            from ${ref("projects")}
+            where id = a.project_id
+            and (chain_id = a.chain_id or true)
+            order by
+            case when chain_id = a.chain_id then 0 else 1 end,
+            id
+            limit 1;
+        $$ language sql stable;
+
+        create function ${ref("projects_applications")}(p ${ref(
+            "projects",
+        )} ) returns setof ${ref("applications")} as $$
+            select *
+            from ${ref("applications")}
+            where project_id = p.id;
+        $$ language sql stable;
+
+        create function ${ref("search_projects")}(search_term text)
+        returns setof ${ref("projects")} as $$
+            select *
+            from ${ref("projects")}
+            where to_tsvector(name) @@ to_tsquery(search_term)
+            order by ts_rank_cd(to_tsvector(name), to_tsquery(search_term)) desc;
+        $$ language sql stable;
+
+        create function ${ref("applications_canonical_project")}(a ${ref(
+            "applications",
+        )} ) returns ${ref("projects")} as $$
+            select *
+            from ${ref("projects")}
+            where id = a.project_id
+            and project_type = 'canonical'
+            limit 1;
+        $$ language sql stable;
+     `.execute(db);
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

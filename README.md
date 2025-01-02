@@ -64,7 +64,7 @@ cp scripts/migrations/.env.example scripts/migrations/.env
 4. After starting Docker Compose, run the following command to apply the database migrations:
 
 ```
-pnpm script:db:migrate
+pnpm db:migrate
 ```
 
 5. Copy the Example Environment File on `apps/processing` and edit the `.env` file
@@ -80,10 +80,10 @@ pnpm dev
 Once the setup is completed you can access Hasura by navigating to:
 
 ```
-http://localhost:8080/
+http://localhost:8082/
 ```
 
-Use the default password: `testing`.
+Use the default password: `my-admin-secret`.
 
 ## Contributing
 

@@ -35,7 +35,8 @@ services:
             HASURA_GRAPHQL_UNAUTHORIZED_ROLE: ${DATALAYER_HASURA_UNAUTHORIZED_ROLE:-public}
             HASURA_GRAPHQL_CORS_DOMAIN: ${DATALAYER_HASURA_CORS_DOMAIN:-*}
             HASURA_GRAPHQL_ENABLE_TELEMETRY: ${DATALAYER_HASURA_ENABLE_TELEMETRY:-false}
-            HASURA_GRAPHQL_EXPERIMENTAL_FEATURES: "bigquery_string_numeric_input"
+            HASURA_GRAPHQL_EXPERIMENTAL_FEATURES: "bigquery_string_numeric_input,naming_convention"
+            HASURA_GRAPHQL_DEFAULT_NAMING_CONVENTION: "graphql-default"
             HASURA_GRAPHQL_BIGQUERY_STRING_NUMERIC_INPUT: "true"
             ## enable debugging mode. It is recommended to disable this in production
             HASURA_GRAPHQL_DEV_MODE: ${DATALAYER_HASURA_DEV_MODE:-true}
