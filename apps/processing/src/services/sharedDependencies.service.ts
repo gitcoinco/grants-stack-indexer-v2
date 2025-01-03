@@ -15,6 +15,7 @@ import {
     KyselyRoundRepository,
     KyselyStrategyProcessingCheckpointRepository,
     KyselyStrategyRegistryRepository,
+    KyselyTransactionManager,
 } from "@grants-stack-indexer/repository";
 import { ILogger, Logger } from "@grants-stack-indexer/shared";
 
@@ -49,6 +50,8 @@ export class SharedDependenciesService {
             },
             logger,
         );
+
+        const transactionManager = new KyselyTransactionManager(kyselyDatabase);
 
         const projectRepository = new KyselyProjectRepository(kyselyDatabase, env.DATABASE_SCHEMA);
         const roundRepository = new KyselyRoundRepository(kyselyDatabase, env.DATABASE_SCHEMA);
@@ -97,6 +100,7 @@ export class SharedDependenciesService {
                 donationRepository,
                 metadataProvider,
                 applicationPayoutRepository,
+                transactionManager,
             },
             registriesRepositories: {
                 eventRegistryRepository,

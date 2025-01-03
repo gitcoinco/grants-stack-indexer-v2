@@ -5,6 +5,7 @@ import { Address, ChainId } from "@grants-stack-indexer/shared";
 import { IProjectRepository } from "../../interfaces/projectRepository.interface.js";
 import {
     Database,
+    KyselyTransaction,
     NewPendingProjectRole,
     NewProject,
     NewProjectRole,
@@ -15,7 +16,7 @@ import {
     ProjectRoleNames,
 } from "../../internal.js";
 
-export class KyselyProjectRepository implements IProjectRepository {
+export class KyselyProjectRepository implements IProjectRepository<KyselyTransaction> {
     constructor(
         private readonly db: Kysely<Database>,
         private readonly schemaName: string,
@@ -73,17 +74,19 @@ export class KyselyProjectRepository implements IProjectRepository {
     }
 
     /* @inheritdoc */
-    async insertProject(project: NewProject): Promise<void> {
-        await this.db.withSchema(this.schemaName).insertInto("projects").values(project).execute();
+    async insertProject(project: NewProject, tx?: KyselyTransaction): Promise<void> {
+        const queryBuilder = (tx || this.db).withSchema(this.schemaName);
+        await queryBuilder.insertInto("projects").values(project).execute();
     }
 
     /* @inheritdoc */
     async updateProject(
         where: { id: string; chainId: ChainId },
         project: PartialProject,
+        tx?: KyselyTransaction,
     ): Promise<void> {
-        await this.db
-            .withSchema(this.schemaName)
+        const queryBuilder = (tx || this.db).withSchema(this.schemaName);
+        await queryBuilder
             .updateTable("projects")
             .set(project)
             .where("id", "=", where.id)
@@ -94,12 +97,9 @@ export class KyselyProjectRepository implements IProjectRepository {
     // ============================ PROJECT ROLES ============================
 
     /* @inheritdoc */
-    async insertProjectRole(projectRole: NewProjectRole): Promise<void> {
-        await this.db
-            .withSchema(this.schemaName)
-            .insertInto("projectRoles")
-            .values(projectRole)
-            .execute();
+    async insertProjectRole(projectRole: NewProjectRole, tx?: KyselyTransaction): Promise<void> {
+        const queryBuilder = (tx || this.db).withSchema(this.schemaName);
+        await queryBuilder.insertInto("projectRoles").values(projectRole).execute();
     }
 
     /* @inheritdoc */
@@ -108,9 +108,10 @@ export class KyselyProjectRepository implements IProjectRepository {
         projectId: string,
         role: ProjectRoleNames,
         address?: Address,
+        tx?: KyselyTransaction,
     ): Promise<void> {
-        const query = this.db
-            .withSchema(this.schemaName)
+        const queryBuilder = (tx || this.db).withSchema(this.schemaName);
+        const query = queryBuilder
             .deleteFrom("projectRoles")
             .where("chainId", "=", chainId)
             .where("projectId", "=", projectId)
@@ -149,20 +150,17 @@ export class KyselyProjectRepository implements IProjectRepository {
     }
 
     /* @inheritdoc */
-    async insertPendingProjectRole(pendingProjectRole: NewPendingProjectRole): Promise<void> {
-        await this.db
-            .withSchema(this.schemaName)
-            .insertInto("pendingProjectRoles")
-            .values(pendingProjectRole)
-            .execute();
+    async insertPendingProjectRole(
+        pendingProjectRole: NewPendingProjectRole,
+        tx?: KyselyTransaction,
+    ): Promise<void> {
+        const queryBuilder = (tx || this.db).withSchema(this.schemaName);
+        await queryBuilder.insertInto("pendingProjectRoles").values(pendingProjectRole).execute();
     }
 
     /* @inheritdoc */
-    async deleteManyPendingProjectRoles(ids: number[]): Promise<void> {
-        await this.db
-            .withSchema(this.schemaName)
-            .deleteFrom("pendingProjectRoles")
-            .where("id", "in", ids)
-            .execute();
+    async deleteManyPendingProjectRoles(ids: number[], tx?: KyselyTransaction): Promise<void> {
+        const queryBuilder = (tx || this.db).withSchema(this.schemaName);
+        await queryBuilder.deleteFrom("pendingProjectRoles").where("id", "in", ids).execute();
     }
 }

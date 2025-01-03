@@ -9,6 +9,7 @@ import {
     Project,
     ProjectRoleNames,
 } from "../types/project.types.js";
+import { TransactionConnection } from "../types/transaction.types.js";
 
 export interface IProjectReadRepository {
     /**
@@ -67,28 +68,37 @@ export interface IProjectReadRepository {
     getProjectByAnchorOrThrow(chainId: ChainId, anchorAddress: Address): Promise<Project>;
 }
 
-export interface IProjectRepository extends IProjectReadRepository {
+export interface IProjectRepository<
+    TxConnection extends TransactionConnection = TransactionConnection,
+> extends IProjectReadRepository {
     /**
      * Inserts a new project into the repository.
      * @param project The new project to be inserted.
+     * @param tx Optional transaction connection
      * @returns A promise that resolves when the insertion is complete.
      */
-    insertProject(project: NewProject): Promise<void>;
+    insertProject(project: NewProject, tx?: TxConnection): Promise<void>;
 
     /**
      * Updates an existing project in the repository.
      * @param where An object containing the id and chainId to identify the project to update.
      * @param project The partial project data to update.
+     * @param tx Optional transaction connection
      * @returns A promise that resolves when the update is complete.
      */
-    updateProject(where: { id: string; chainId: ChainId }, project: PartialProject): Promise<void>;
+    updateProject(
+        where: { id: string; chainId: ChainId },
+        project: PartialProject,
+        tx?: TxConnection,
+    ): Promise<void>;
 
     /**
      * Inserts a new project role into the repository.
      * @param projectRole The new project role to be inserted.
+     * @param tx Optional transaction connection
      * @returns A promise that resolves when the insertion is complete.
      */
-    insertProjectRole(projectRole: NewProjectRole): Promise<void>;
+    insertProjectRole(projectRole: NewProjectRole, tx?: TxConnection): Promise<void>;
 
     /**
      * Deletes multiple project roles based on the provided criteria.
@@ -96,6 +106,7 @@ export interface IProjectRepository extends IProjectReadRepository {
      * @param projectId The project ID of the roles to delete.
      * @param role The role type to delete.
      * @param address Optional address to further filter the roles to delete.
+     * @param tx Optional transaction connection
      * @returns A promise that resolves when the deletion is complete.
      */
     deleteManyProjectRoles(
@@ -103,19 +114,25 @@ export interface IProjectRepository extends IProjectReadRepository {
         projectId: string,
         role: ProjectRoleNames,
         address?: Address,
+        tx?: TxConnection,
     ): Promise<void>;
 
     /**
      * Inserts a new pending project role into the repository.
      * @param pendingProjectRole The new pending project role to be inserted.
+     * @param tx Optional transaction connection
      * @returns A promise that resolves when the insertion is complete.
      */
-    insertPendingProjectRole(pendingProjectRole: NewPendingProjectRole): Promise<void>;
+    insertPendingProjectRole(
+        pendingProjectRole: NewPendingProjectRole,
+        tx?: TxConnection,
+    ): Promise<void>;
 
     /**
      * Deletes multiple pending project roles based on their IDs.
      * @param ids An array of IDs of the pending project roles to delete.
+     * @param tx Optional transaction connection
      * @returns A promise that resolves when the deletion is complete.
      */
-    deleteManyPendingProjectRoles(ids: number[]): Promise<void>;
+    deleteManyPendingProjectRoles(ids: number[], tx?: TxConnection): Promise<void>;
 }

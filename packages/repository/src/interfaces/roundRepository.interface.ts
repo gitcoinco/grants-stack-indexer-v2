@@ -10,6 +10,7 @@ import {
     RoundRole,
     RoundRoleNames,
 } from "../types/round.types.js";
+import { TransactionConnection } from "../types/transaction.types.js";
 
 export interface IRoundReadRepository {
     /**
@@ -94,23 +95,28 @@ export interface IRoundReadRepository {
     getPendingRoundRoles(chainId: ChainId, role: RoundRoleNames): Promise<PendingRoundRole[]>;
 }
 
-export interface IRoundRepository extends IRoundReadRepository {
+export interface IRoundRepository<
+    TxConnection extends TransactionConnection = TransactionConnection,
+> extends IRoundReadRepository {
     /**
      * Inserts a new round into the repository.
      * @param round The new round to insert.
+     * @param tx Optional transaction connection
      * @returns A promise that resolves when the insertion is complete.
      */
-    insertRound(round: NewRound): Promise<void>;
+    insertRound(round: NewRound, tx?: TxConnection): Promise<void>;
 
     /**
      * Updates an existing round in the repository.
      * @param where An object containing the id and chainId of the round to update.
      * @param round The partial round data to update.
+     * @param tx Optional transaction connection
      * @returns A promise that resolves when the update is complete.
      */
     updateRound(
         where: { id: string; chainId: ChainId } | { chainId: ChainId; strategyAddress: Address },
         round: PartialRound,
+        tx?: TxConnection,
     ): Promise<void>;
 
     /**
@@ -118,6 +124,7 @@ export interface IRoundRepository extends IRoundReadRepository {
      * @param where An object containing the chainId and roundId of the round to update.
      * @param amount The amount to increment by.
      * @param amountInUsd The amount in USD to increment by.
+     * @param tx Optional transaction connection
      * @returns A promise that resolves when the increment is complete.
      */
     incrementRoundFunds(
@@ -127,12 +134,14 @@ export interface IRoundRepository extends IRoundReadRepository {
         },
         amount: bigint,
         amountInUsd: string,
+        tx?: TxConnection,
     ): Promise<void>;
 
     /**
      * Increments the total distributed amount for a specific round.
      * @param where An object containing the chainId and roundId of the round to update.
      * @param amount The amount to increment by.
+     * @param tx Optional transaction connection
      * @returns A promise that resolves when the increment is complete.
      */
     incrementRoundTotalDistributed(
@@ -141,14 +150,16 @@ export interface IRoundRepository extends IRoundReadRepository {
             roundId: string;
         },
         amount: bigint,
+        tx?: TxConnection,
     ): Promise<void>;
 
     /**
      * Inserts a new round role into the repository.
      * @param roundRole The new round role to insert.
+     * @param tx Optional transaction connection
      * @returns A promise that resolves when the insertion is complete.
      */
-    insertRoundRole(roundRole: NewRoundRole): Promise<void>;
+    insertRoundRole(roundRole: NewRoundRole, tx?: TxConnection): Promise<void>;
 
     /**
      * Deletes multiple round roles based on chain ID, round ID, role, and address.
@@ -156,6 +167,7 @@ export interface IRoundRepository extends IRoundReadRepository {
      * @param roundId The round ID of the roles to delete.
      * @param role The role name of the roles to delete.
      * @param address The address associated with the roles to delete.
+     * @param tx Optional transaction connection
      * @returns A promise that resolves when the deletion is complete.
      */
     deleteManyRoundRolesByRoleAndAddress(
@@ -163,19 +175,22 @@ export interface IRoundRepository extends IRoundReadRepository {
         roundId: string,
         role: RoundRoleNames,
         address: Address,
+        tx?: TxConnection,
     ): Promise<void>;
 
     /**
      * Inserts a new pending round role into the repository.
      * @param pendingRoundRole The new pending round role to insert.
+     * @param tx Optional transaction connection
      * @returns A promise that resolves when the insertion is complete.
      */
-    insertPendingRoundRole(pendingRoundRole: NewPendingRoundRole): Promise<void>;
+    insertPendingRoundRole(pendingRoundRole: NewPendingRoundRole, tx?: TxConnection): Promise<void>;
 
     /**
      * Deletes multiple pending round roles by their IDs.
      * @param ids An array of IDs of the pending round roles to delete.
+     * @param tx Optional transaction connection
      * @returns A promise that resolves when the deletion is complete.
      */
-    deleteManyPendingRoundRoles(ids: number[]): Promise<void>;
+    deleteManyPendingRoundRoles(ids: number[], tx?: TxConnection): Promise<void>;
 }

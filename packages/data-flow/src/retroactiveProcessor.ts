@@ -100,6 +100,7 @@ export class RetroactiveProcessor {
                 donation: this.dependencies.donationRepository,
                 applicationPayout: this.dependencies.applicationPayoutRepository,
             },
+            this.dependencies.transactionManager,
             this.logger,
         );
     }
@@ -208,17 +209,7 @@ export class RetroactiveProcessor {
 
                 event.strategyId = strategyId;
                 const changesets = await this.eventsProcessor.processEvent(event);
-                const executionResult = await this.dataLoader.applyChanges(changesets);
-
-                if (executionResult.numFailed > 0) {
-                    this.logger.error(
-                        `Failed to apply changesets. ${executionResult.errors.join("\n")} Event: ${stringify(event)}`,
-                        {
-                            className: RetroactiveProcessor.name,
-                            chainId: this.chainId,
-                        },
-                    );
-                }
+                await this.dataLoader.applyChanges(changesets);
             } catch (error) {
                 if (error instanceof InvalidEvent || error instanceof UnsupportedEventException) {
                     // Expected errors that we can safely ignore

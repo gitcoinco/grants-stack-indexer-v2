@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
     Changeset,
@@ -7,6 +7,8 @@ import {
     IDonationRepository,
     IProjectRepository,
     IRoundRepository,
+    ITransactionManager,
+    TransactionConnection,
 } from "@grants-stack-indexer/repository";
 import { ILogger } from "@grants-stack-indexer/shared";
 
@@ -14,6 +16,7 @@ import { DataLoader } from "../../src/data-loader/dataLoader.js";
 import { InvalidChangeset } from "../../src/internal.js";
 
 describe("DataLoader", () => {
+    let dataLoader: DataLoader;
     const mockProjectRepository = {
         insertProject: vi.fn(),
         updateProject: vi.fn(),
@@ -44,8 +47,14 @@ describe("DataLoader", () => {
         info: vi.fn(),
         warn: vi.fn(),
     };
-    const createDataLoader = (): DataLoader =>
-        new DataLoader(
+
+    const mockTx = { query: vi.fn() } as unknown as TransactionConnection;
+    const mockTransactionManager = {
+        runInTransaction: async (fn) => await fn(mockTx),
+    } as ITransactionManager;
+
+    beforeEach(() => {
+        dataLoader = new DataLoader(
             {
                 project: mockProjectRepository,
                 round: mockRoundRepository,
@@ -53,16 +62,17 @@ describe("DataLoader", () => {
                 donation: mockDonationRepository,
                 applicationPayout: mockApplicationPayoutRepository,
             },
+            mockTransactionManager,
             logger,
         );
+    });
 
-    beforeEach(() => {
+    afterEach(() => {
         vi.clearAllMocks();
     });
 
     describe("applyChanges", () => {
         it("successfully process multiple changesets", async () => {
-            const dataLoader = createDataLoader();
             const changesets = [
                 {
                     type: "InsertProject",
@@ -74,18 +84,21 @@ describe("DataLoader", () => {
                 } as unknown as Changeset,
             ];
 
-            const result = await dataLoader.applyChanges(changesets);
+            await dataLoader.applyChanges(changesets);
 
-            expect(result.numExecuted).toBe(2);
-            expect(result.numSuccessful).toBe(2);
-            expect(result.numFailed).toBe(0);
-            expect(result.errors).toHaveLength(0);
             expect(mockProjectRepository.insertProject).toHaveBeenCalledTimes(1);
+            expect(mockProjectRepository.insertProject).toHaveBeenCalledWith(
+                { id: "1", name: "Test Project" },
+                mockTx,
+            );
             expect(mockRoundRepository.insertRound).toHaveBeenCalledTimes(1);
+            expect(mockRoundRepository.insertRound).toHaveBeenCalledWith(
+                { id: "1", name: "Test Round" },
+                mockTx,
+            );
         });
 
         it("throw InvalidChangeset when encountering unknown changeset type", async () => {
-            const dataLoader = createDataLoader();
             const changesets = [
                 {
                     type: "UnknownType",
@@ -97,8 +110,7 @@ describe("DataLoader", () => {
             );
         });
 
-        it("stops processing changesets on first error", async () => {
-            const dataLoader = createDataLoader();
+        it("throws an error if the database operation fails", async () => {
             const error = new Error("Database error");
             vi.spyOn(mockProjectRepository, "insertProject").mockRejectedValueOnce(error);
 
@@ -113,13 +125,14 @@ describe("DataLoader", () => {
                 } as unknown as Changeset,
             ];
 
-            const result = await dataLoader.applyChanges(changesets);
+            await expect(dataLoader.applyChanges(changesets)).rejects.toThrow(error);
 
-            expect(result.numExecuted).toBe(1);
-            expect(result.numSuccessful).toBe(0);
-            expect(result.numFailed).toBe(1);
-            expect(result.errors).toHaveLength(1);
-            expect(result.errors[0]).toContain("Database error");
+            expect(logger.debug).toHaveBeenLastCalledWith(
+                `Error applying changeset InsertProject. Rolling back transaction with 2 changesets`,
+                {
+                    className: DataLoader.name,
+                },
+            );
             expect(mockRoundRepository.insertRound).not.toHaveBeenCalled();
         });
     });

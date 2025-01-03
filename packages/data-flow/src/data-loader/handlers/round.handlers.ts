@@ -17,24 +17,28 @@ export type RoundHandlers = {
  * @returns An object containing all round-related handlers
  */
 export const createRoundHandlers = (repository: IRoundRepository): RoundHandlers => ({
-    InsertRound: (async (changeset): Promise<void> => {
+    InsertRound: (async (changeset, txConnection): Promise<void> => {
         const { round } = changeset.args;
-        await repository.insertRound(round);
+        await repository.insertRound(round, txConnection);
     }) satisfies ChangesetHandler<"InsertRound">,
 
-    UpdateRound: (async (changeset): Promise<void> => {
+    UpdateRound: (async (changeset, txConnection): Promise<void> => {
         const { chainId, roundId, round } = changeset.args;
-        await repository.updateRound({ id: roundId, chainId }, round);
+        await repository.updateRound({ id: roundId, chainId }, round, txConnection);
     }) satisfies ChangesetHandler<"UpdateRound">,
 
-    UpdateRoundByStrategyAddress: (async (changeset): Promise<void> => {
+    UpdateRoundByStrategyAddress: (async (changeset, txConnection): Promise<void> => {
         const { chainId, strategyAddress, round } = changeset.args;
         if (round) {
-            await repository.updateRound({ strategyAddress, chainId: chainId }, round);
+            await repository.updateRound(
+                { strategyAddress, chainId: chainId },
+                round,
+                txConnection,
+            );
         }
     }) satisfies ChangesetHandler<"UpdateRoundByStrategyAddress">,
 
-    IncrementRoundFundedAmount: (async (changeset): Promise<void> => {
+    IncrementRoundFundedAmount: (async (changeset, txConnection): Promise<void> => {
         const { chainId, roundId, fundedAmount, fundedAmountInUsd } = changeset.args;
         await repository.incrementRoundFunds(
             {
@@ -43,10 +47,11 @@ export const createRoundHandlers = (repository: IRoundRepository): RoundHandlers
             },
             fundedAmount,
             fundedAmountInUsd,
+            txConnection,
         );
     }) satisfies ChangesetHandler<"IncrementRoundFundedAmount">,
 
-    IncrementRoundTotalDistributed: (async (changeset): Promise<void> => {
+    IncrementRoundTotalDistributed: (async (changeset, txConnection): Promise<void> => {
         const { chainId, roundId, amount } = changeset.args;
         await repository.incrementRoundTotalDistributed(
             {
@@ -54,26 +59,33 @@ export const createRoundHandlers = (repository: IRoundRepository): RoundHandlers
                 roundId,
             },
             amount,
+            txConnection,
         );
     }) satisfies ChangesetHandler<"IncrementRoundTotalDistributed">,
 
-    InsertPendingRoundRole: (async (changeset): Promise<void> => {
+    InsertPendingRoundRole: (async (changeset, txConnection): Promise<void> => {
         const { pendingRoundRole } = changeset.args;
-        await repository.insertPendingRoundRole(pendingRoundRole);
+        await repository.insertPendingRoundRole(pendingRoundRole, txConnection);
     }) satisfies ChangesetHandler<"InsertPendingRoundRole">,
 
-    DeletePendingRoundRoles: (async (changeset): Promise<void> => {
+    DeletePendingRoundRoles: (async (changeset, txConnection): Promise<void> => {
         const { ids } = changeset.args;
-        await repository.deleteManyPendingRoundRoles(ids);
+        await repository.deleteManyPendingRoundRoles(ids, txConnection);
     }) satisfies ChangesetHandler<"DeletePendingRoundRoles">,
 
-    InsertRoundRole: (async (changeset): Promise<void> => {
+    InsertRoundRole: (async (changeset, txConnection): Promise<void> => {
         const { roundRole } = changeset.args;
-        await repository.insertRoundRole(roundRole);
+        await repository.insertRoundRole(roundRole, txConnection);
     }) satisfies ChangesetHandler<"InsertRoundRole">,
 
-    DeleteAllRoundRolesByRoleAndAddress: (async (changeset): Promise<void> => {
+    DeleteAllRoundRolesByRoleAndAddress: (async (changeset, txConnection): Promise<void> => {
         const { chainId, roundId, role, address } = changeset.args.roundRole;
-        await repository.deleteManyRoundRolesByRoleAndAddress(chainId, roundId, role, address);
+        await repository.deleteManyRoundRolesByRoleAndAddress(
+            chainId,
+            roundId,
+            role,
+            address,
+            txConnection,
+        );
     }) satisfies ChangesetHandler<"DeleteAllRoundRolesByRoleAndAddress">,
 });

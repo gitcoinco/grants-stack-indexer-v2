@@ -5,6 +5,7 @@ import { Address, ChainId, stringify } from "@grants-stack-indexer/shared";
 import {
     Database,
     IRoundRepository,
+    KyselyTransaction,
     NewPendingRoundRole,
     NewRound,
     NewRoundRole,
@@ -17,7 +18,7 @@ import {
     RoundRoleNames,
 } from "../../internal.js";
 
-export class KyselyRoundRepository implements IRoundRepository {
+export class KyselyRoundRepository implements IRoundRepository<KyselyTransaction> {
     constructor(
         private readonly db: Kysely<Database>,
         private readonly schemaName: string,
@@ -114,19 +115,21 @@ export class KyselyRoundRepository implements IRoundRepository {
     }
 
     /* @inheritdoc */
-    async insertRound(round: NewRound): Promise<void> {
-        await this.db.withSchema(this.schemaName).insertInto("rounds").values(round).execute();
+    async insertRound(round: NewRound, tx?: KyselyTransaction): Promise<void> {
+        const _round = this.formatRound(round);
+        const queryBuilder = (tx || this.db).withSchema(this.schemaName);
+        await queryBuilder.insertInto("rounds").values(_round).execute();
     }
 
     /* @inheritdoc */
     async updateRound(
         where: { id: string; chainId: ChainId } | { chainId: ChainId; strategyAddress: Address },
         round: PartialRound,
+        tx?: KyselyTransaction,
     ): Promise<void> {
         const _round = this.formatRound(round);
-
-        const query = this.db
-            .withSchema(this.schemaName)
+        const queryBuilder = (tx || this.db).withSchema(this.schemaName);
+        const query = queryBuilder
             .updateTable("rounds")
             .set(_round)
             .where("chainId", "=", where.chainId);
@@ -140,15 +143,13 @@ export class KyselyRoundRepository implements IRoundRepository {
 
     /* @inheritdoc */
     async incrementRoundFunds(
-        where: {
-            chainId: ChainId;
-            roundId: string;
-        },
+        where: { chainId: ChainId; roundId: string },
         amount: bigint,
         amountInUsd: string,
+        tx?: KyselyTransaction,
     ): Promise<void> {
-        await this.db
-            .withSchema(this.schemaName)
+        const queryBuilder = (tx || this.db).withSchema(this.schemaName);
+        await queryBuilder
             .updateTable("rounds")
             .set((eb) => ({
                 fundedAmount: eb("fundedAmount", "+", amount),
@@ -161,14 +162,12 @@ export class KyselyRoundRepository implements IRoundRepository {
 
     /* @inheritdoc */
     async incrementRoundTotalDistributed(
-        where: {
-            chainId: ChainId;
-            roundId: string;
-        },
+        where: { chainId: ChainId; roundId: string },
         amount: bigint,
+        tx?: KyselyTransaction,
     ): Promise<void> {
-        await this.db
-            .withSchema(this.schemaName)
+        const queryBuilder = (tx || this.db).withSchema(this.schemaName);
+        await queryBuilder
             .updateTable("rounds")
             .set((eb) => ({
                 totalDistributed: eb("totalDistributed", "+", amount),
@@ -186,12 +185,9 @@ export class KyselyRoundRepository implements IRoundRepository {
     }
 
     /* @inheritdoc */
-    async insertRoundRole(roundRole: NewRoundRole): Promise<void> {
-        await this.db
-            .withSchema(this.schemaName)
-            .insertInto("roundRoles")
-            .values(roundRole)
-            .execute();
+    async insertRoundRole(roundRole: NewRoundRole, tx?: KyselyTransaction): Promise<void> {
+        const queryBuilder = (tx || this.db).withSchema(this.schemaName);
+        await queryBuilder.insertInto("roundRoles").values(roundRole).execute();
     }
 
     /* @inheritdoc */
@@ -200,9 +196,10 @@ export class KyselyRoundRepository implements IRoundRepository {
         roundId: string,
         role: RoundRoleNames,
         address: Address,
+        tx?: KyselyTransaction,
     ): Promise<void> {
-        await this.db
-            .withSchema(this.schemaName)
+        const queryBuilder = (tx || this.db).withSchema(this.schemaName);
+        await queryBuilder
             .deleteFrom("roundRoles")
             .where("chainId", "=", chainId)
             .where("roundId", "=", roundId)
@@ -228,21 +225,18 @@ export class KyselyRoundRepository implements IRoundRepository {
     }
 
     /* @inheritdoc */
-    async insertPendingRoundRole(pendingRoundRole: NewPendingRoundRole): Promise<void> {
-        await this.db
-            .withSchema(this.schemaName)
-            .insertInto("pendingRoundRoles")
-            .values(pendingRoundRole)
-            .execute();
+    async insertPendingRoundRole(
+        pendingRoundRole: NewPendingRoundRole,
+        tx?: KyselyTransaction,
+    ): Promise<void> {
+        const queryBuilder = (tx || this.db).withSchema(this.schemaName);
+        await queryBuilder.insertInto("pendingRoundRoles").values(pendingRoundRole).execute();
     }
 
     /* @inheritdoc */
-    async deleteManyPendingRoundRoles(ids: number[]): Promise<void> {
-        await this.db
-            .withSchema(this.schemaName)
-            .deleteFrom("pendingRoundRoles")
-            .where("id", "in", ids)
-            .execute();
+    async deleteManyPendingRoundRoles(ids: number[], tx?: KyselyTransaction): Promise<void> {
+        const queryBuilder = (tx || this.db).withSchema(this.schemaName);
+        await queryBuilder.deleteFrom("pendingRoundRoles").where("id", "in", ids).execute();
     }
 
     /**
