@@ -70,7 +70,14 @@ export class EnvioIndexerClient implements IIndexerClient {
             if (error instanceof InvalidIndexerResponse) {
                 throw error;
             }
-            throw new IndexerClientError(stringify(error, Object.getOwnPropertyNames(error)));
+            throw new IndexerClientError(
+                stringify(error, Object.getOwnPropertyNames(error)),
+                {
+                    className: EnvioIndexerClient.name,
+                    methodName: "getEventsAfterBlockNumberAndLogIndex",
+                },
+                error as Error,
+            );
         }
     }
 
