@@ -102,6 +102,7 @@ export class ProcessingService {
                     checkpointRepository: strategyProcessingCheckpointRepository,
                 },
                 chain.fetchLimit,
+                retryStrategy,
                 logger,
             );
 
