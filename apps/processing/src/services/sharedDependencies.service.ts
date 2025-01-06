@@ -93,10 +93,10 @@ export class SharedDependenciesService {
         );
 
         const retryStrategy = new ExponentialBackoff({
-            maxAttempts: 3,
-            baseDelay: 1000,
-            maxDelay: 3 * 60 * 1000,
-            factor: 2,
+            maxAttempts: env.RETRY_MAX_ATTEMPTS,
+            baseDelay: env.RETRY_BASE_DELAY_MS,
+            maxDelay: env.RETRY_MAX_DELAY_MS,
+            factor: env.RETRY_FACTOR,
         });
 
         return {

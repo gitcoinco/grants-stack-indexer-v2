@@ -36,6 +36,10 @@ const baseSchema = z.object({
     IPFS_GATEWAYS_URL: stringToJSONSchema
         .pipe(z.array(z.string().url()))
         .default('["https://ipfs.io"]'),
+    RETRY_MAX_ATTEMPTS: z.coerce.number().int().min(1).default(3),
+    RETRY_BASE_DELAY_MS: z.coerce.number().int().min(1).default(3000), // 3 seconds
+    RETRY_FACTOR: z.coerce.number().int().min(1).default(2),
+    RETRY_MAX_DELAY_MS: z.coerce.number().int().min(1).optional(), // 5 minute
 });
 
 const dummyPricingSchema = baseSchema.extend({
