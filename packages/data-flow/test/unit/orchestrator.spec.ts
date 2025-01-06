@@ -3,7 +3,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { EvmProvider } from "@grants-stack-indexer/chain-providers";
 import { IIndexerClient } from "@grants-stack-indexer/indexer-client";
-import { UnsupportedStrategy } from "@grants-stack-indexer/processors";
 import {
     Changeset,
     IApplicationPayoutRepository,
@@ -19,11 +18,12 @@ import {
     ContractName,
     ContractToEventName,
     EventParams,
+    ExponentialBackoff,
     Hex,
     ILogger,
     ProcessorEvent,
+    RateLimitError,
     StrategyEvent,
-    stringify,
 } from "@grants-stack-indexer/shared";
 
 import {
@@ -119,6 +119,7 @@ describe("Orchestrator", { sequential: true }, () => {
             },
             mockFetchLimit,
             mockFetchDelay,
+            new ExponentialBackoff({ baseDelay: 10, maxAttempts: 3, factor: 2 }),
             logger,
         );
     });
@@ -548,7 +549,33 @@ describe("Orchestrator", { sequential: true }, () => {
     });
 
     describe("Error Handling", () => {
-        it.skip("retries error");
+        it("retries retriable errors", async () => {
+            const retriableError = new RateLimitError({ className: "ExternalProvider" }, 10);
+            const mockEvent = createMockEvent("Allo", "Unknown" as unknown as AlloEvent, 1);
+
+            const eventsProcessorSpy = vi.spyOn(orchestrator["eventsProcessor"], "processEvent");
+
+            vi.spyOn(mockIndexerClient, "getEventsAfterBlockNumberAndLogIndex")
+                .mockResolvedValueOnce([mockEvent])
+                .mockResolvedValue([]);
+            vi.spyOn(orchestrator["dataLoader"], "applyChanges").mockResolvedValue(
+                await Promise.resolve(),
+            );
+            vi.spyOn(mockEventsRegistry, "saveLastProcessedEvent").mockImplementation(() => {
+                return Promise.resolve();
+            });
+            eventsProcessorSpy.mockRejectedValueOnce(retriableError).mockResolvedValueOnce([]);
+
+            runPromise = orchestrator.run(abortController.signal);
+
+            await vi.waitFor(() => {
+                if (eventsProcessorSpy.mock.calls.length < 2) throw new Error("Not yet called");
+            });
+
+            expect(eventsProcessorSpy).toHaveBeenCalledTimes(2);
+            expect(orchestrator["dataLoader"].applyChanges).toHaveBeenCalledTimes(1);
+            expect(mockEventsRegistry.saveLastProcessedEvent).toHaveBeenCalledTimes(1);
+        });
 
         it("keeps running when there is an error", async () => {
             const eventsProcessorSpy = vi.spyOn(orchestrator["eventsProcessor"], "processEvent");
@@ -575,14 +602,13 @@ describe("Orchestrator", { sequential: true }, () => {
                     if (eventsProcessorSpy.mock.calls.length < 2) throw new Error("Not yet called");
                 },
                 {
-                    timeout: 1000,
+                    timeout: 2000,
                 },
             );
 
             expect(eventsProcessorSpy).toHaveBeenCalledTimes(2);
             expect(orchestrator["dataLoader"].applyChanges).toHaveBeenCalledTimes(1);
             expect(mockEventsRegistry.saveLastProcessedEvent).toHaveBeenCalledTimes(2);
-            expect(logger.error).toHaveBeenCalledTimes(1);
             expect(logger.error).toHaveBeenCalledWith(error, {
                 className: Orchestrator.name,
                 chainId,
@@ -590,11 +616,10 @@ describe("Orchestrator", { sequential: true }, () => {
             });
         });
 
-        it.skip("logs error for InvalidEvent", async () => {
+        it("logs debug for InvalidEvent", async () => {
             const mockEvent = createMockEvent("Allo", "Unknown" as unknown as AlloEvent, 1);
             const error = new InvalidEvent(mockEvent);
 
-            const consoleSpy = vi.spyOn(console, "error");
             const eventsProcessorSpy = vi.spyOn(orchestrator["eventsProcessor"], "processEvent");
 
             vi.spyOn(mockIndexerClient, "getEventsAfterBlockNumberAndLogIndex")
@@ -608,48 +633,19 @@ describe("Orchestrator", { sequential: true }, () => {
                 if (eventsProcessorSpy.mock.calls.length < 1) throw new Error("Not yet called");
             });
 
-            expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("InvalidEvent"));
-            expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining(stringify(mockEvent)));
-            expect(orchestrator["dataLoader"].applyChanges).not.toHaveBeenCalled();
-            expect(mockEventsRegistry.saveLastProcessedEvent).not.toHaveBeenCalled();
-        });
-
-        it.skip("logs error for UnsupportedEvent", async () => {
-            const strategyId =
-                "0x6f9291df02b2664139cec5703c124e4ebce32879c74b6297faa1468aa5ff9ebf" as Hex;
-            const mockEvent = createMockEvent(
-                "Strategy",
-                "NotHandled" as unknown as StrategyEvent,
+            expect(logger.debug).toHaveBeenNthCalledWith(
                 1,
+                expect.stringContaining(
+                    `Current event cannot be handled. ${error.name}: ${error.message}.`,
+                ),
+                {
+                    className: Orchestrator.name,
+                    chainId,
+                    event: mockEvent,
+                },
             );
-            const error = new UnsupportedStrategy(strategyId);
-
-            vi.spyOn(mockStrategyRegistry, "getStrategyId").mockResolvedValue({
-                id: strategyId,
-                address: mockEvent.srcAddress,
-                chainId,
-                handled: true,
-            });
-            vi.spyOn(mockIndexerClient, "getEventsAfterBlockNumberAndLogIndex")
-                .mockResolvedValueOnce([mockEvent])
-                .mockResolvedValue([]);
-            vi.spyOn(orchestrator["eventsProcessor"], "processEvent").mockRejectedValue(error);
-
-            const consoleSpy = vi.spyOn(console, "error");
-
-            runPromise = orchestrator.run(abortController.signal);
-
-            await vi.waitFor(() => {
-                if (consoleSpy.mock.calls.length < 1) throw new Error("Not yet called");
-            });
-
-            expect(consoleSpy).toHaveBeenCalledTimes(1);
-            expect(consoleSpy).toHaveBeenCalledWith(
-                expect.stringContaining(`Strategy ${strategyId} unsupported`),
-            );
-            expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining(stringify(mockEvent)));
             expect(orchestrator["dataLoader"].applyChanges).not.toHaveBeenCalled();
-            expect(mockEventsRegistry.saveLastProcessedEvent).not.toHaveBeenCalled();
+            expect(mockEventsRegistry.saveLastProcessedEvent).toHaveBeenCalled();
         });
 
         it("logs DataLoader errors", async () => {

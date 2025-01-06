@@ -19,8 +19,10 @@ const mocks = vi.hoisted(() => {
     };
 });
 
-vi.mock("@grants-stack-indexer/shared", () => {
+vi.mock("@grants-stack-indexer/shared", async (importActual) => {
+    const actual = await importActual<typeof import("@grants-stack-indexer/shared")>();
     return {
+        ...actual,
         Logger: {
             getInstance: vi.fn().mockReturnValue(mocks.logger),
         },

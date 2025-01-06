@@ -17,7 +17,7 @@ import {
     KyselyStrategyRegistryRepository,
     KyselyTransactionManager,
 } from "@grants-stack-indexer/repository";
-import { ILogger, Logger } from "@grants-stack-indexer/shared";
+import { ExponentialBackoff, ILogger, Logger, RetryStrategy } from "@grants-stack-indexer/shared";
 
 import { Environment } from "../config/index.js";
 
@@ -30,6 +30,7 @@ export type SharedDependencies = {
     };
     indexerClient: EnvioIndexerClient;
     kyselyDatabase: ReturnType<typeof createKyselyDatabase>;
+    retryStrategy: RetryStrategy;
     logger: ILogger;
 };
 
@@ -91,6 +92,13 @@ export class SharedDependenciesService {
             env.INDEXER_ADMIN_SECRET,
         );
 
+        const retryStrategy = new ExponentialBackoff({
+            maxAttempts: 3,
+            baseDelay: 1000,
+            maxDelay: 3 * 60 * 1000,
+            factor: 2,
+        });
+
         return {
             core: {
                 projectRepository,
@@ -109,6 +117,7 @@ export class SharedDependenciesService {
             },
             indexerClient,
             kyselyDatabase,
+            retryStrategy,
             logger,
         };
     }
