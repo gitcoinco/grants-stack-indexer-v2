@@ -1,12 +1,18 @@
-import axios, { AxiosInstance, isAxiosError } from "axios";
+import axios, { AxiosError, AxiosInstance, isAxiosError } from "axios";
 
-import { ILogger, stringify, TokenCode } from "@grants-stack-indexer/shared";
+import {
+    ILogger,
+    NetworkError,
+    NonRetriableError,
+    RateLimitError,
+    stringify,
+    TokenCode,
+} from "@grants-stack-indexer/shared";
 
 import { IPricingProvider } from "../interfaces/index.js";
 import {
     CoingeckoPriceChartData,
     CoingeckoTokenId,
-    NetworkException,
     TokenPrice,
     UnknownPricingException,
     UnsupportedToken,
@@ -90,7 +96,10 @@ export class CoingeckoProvider implements IPricingProvider {
     ): Promise<TokenPrice | undefined> {
         const tokenId = TokenMapping[tokenCode];
         if (!tokenId) {
-            throw new UnsupportedToken(tokenCode);
+            throw new UnsupportedToken(tokenCode, {
+                className: CoingeckoProvider.name,
+                methodName: "getTokenPrice",
+            });
         }
 
         if (!endTimestampMs) {
@@ -103,7 +112,6 @@ export class CoingeckoProvider implements IPricingProvider {
 
         const path = `/coins/${tokenId}/market_chart/range?vs_currency=usd&from=${startTimestampMs}&to=${endTimestampMs}&precision=full`;
 
-        //TODO: handle retries
         try {
             const { data } = await this.axios.get<CoingeckoPriceChartData>(path);
 
@@ -117,25 +125,58 @@ export class CoingeckoProvider implements IPricingProvider {
                 priceUsd: closestEntry[1],
             };
         } catch (error: unknown) {
-            //TODO: notify
             if (isAxiosError(error)) {
-                if (error.status! >= 400 && error.status! < 500) {
-                    this.logger.error(error, {
-                        className: CoingeckoProvider.name,
-                        path: `${error.response?.config.baseURL}${path}`,
-                    });
-                    return undefined;
-                }
-
-                if (error.status! >= 500 || error.message === "Network Error") {
-                    throw new NetworkException(error.message, error.status!);
-                }
+                this.handleAxiosError(error, path);
             }
+
             const errorMessage =
-                `Coingecko API error: failed to fetch token price ` +
+                `Unknown Coingecko API error: failed to fetch token price ` +
                 stringify(error, Object.getOwnPropertyNames(error));
-            this.logger.error(errorMessage);
-            throw new UnknownPricingException(errorMessage);
+
+            throw new UnknownPricingException(errorMessage, {
+                className: CoingeckoProvider.name,
+                methodName: "getTokenPrice",
+                additionalData: {
+                    path,
+                },
+            });
+        }
+    }
+
+    private handleAxiosError(error: AxiosError, path: string): void {
+        const errorContext = {
+            className: CoingeckoProvider.name,
+            methodName: "getTokenPrice",
+            additionalData: {
+                path,
+            },
+        };
+
+        if (error.status! >= 400 && error.status! < 500) {
+            if (error.status === 429) {
+                throw new RateLimitError(
+                    errorContext,
+                    error.response?.headers["retry-after"] * 1000 || 60000,
+                );
+            } else {
+                throw new NonRetriableError(
+                    `${error.status} ${error.code} - Coingecko API error: failed to fetch token price`,
+                    errorContext,
+                    error,
+                );
+            }
+        }
+
+        if (error.status! > 10000) {
+            throw new NonRetriableError(
+                `${error.status} Coingecko API error: please check your credentials or consider upgrading your plan`,
+                errorContext,
+                error,
+            );
+        }
+
+        if (error.status! >= 500 || error.message === "Network Error") {
+            throw new NetworkError(errorContext, { statusCode: error.status }, error);
         }
     }
 }
