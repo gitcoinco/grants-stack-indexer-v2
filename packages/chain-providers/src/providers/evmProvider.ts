@@ -22,10 +22,12 @@ import {
     HttpTransport,
     MulticallParameters,
     MulticallReturnType,
+    RpcError,
+    TimeoutError,
     toHex,
 } from "viem";
 
-import { ILogger } from "@grants-stack-indexer/shared";
+import { ILogger, NonRetriableError, RetriableError } from "@grants-stack-indexer/shared";
 
 import {
     AbiWithConstructor,
@@ -67,7 +69,11 @@ export class EvmProvider {
     }
 
     async getTransaction(hash: Hex): Promise<GetTransactionReturnType> {
-        return this.client.getTransaction({ hash });
+        try {
+            return await this.client.getTransaction({ hash });
+        } catch (e) {
+            throw this.wrapError(e, "getTransaction", "Failed to get transaction", { hash });
+        }
     }
 
     /**
@@ -76,7 +82,11 @@ export class EvmProvider {
      * @returns {Promise<bigint>} A Promise that resolves to the balance of the address.
      */
     async getBalance(address: Address): Promise<bigint> {
-        return this.client.getBalance({ address });
+        try {
+            return await this.client.getBalance({ address });
+        } catch (e) {
+            throw this.wrapError(e, "getBalance", "Failed to get balance", { address });
+        }
     }
 
     /**
@@ -84,7 +94,11 @@ export class EvmProvider {
      * @returns {Promise<bigint>} A Promise that resolves to the latest block number.
      */
     async getBlockNumber(): Promise<bigint> {
-        return this.client.getBlockNumber();
+        try {
+            return await this.client.getBlockNumber();
+        } catch (e) {
+            throw this.wrapError(e, "getBlockNumber", "Failed to get block number");
+        }
     }
 
     /**
@@ -92,7 +106,13 @@ export class EvmProvider {
      * @returns {Promise<GetBlockReturnType>} Latest block number.
      */
     async getBlockByNumber(blockNumber: bigint): Promise<GetBlockReturnType> {
-        return this.client.getBlock({ blockNumber });
+        try {
+            return await this.client.getBlock({ blockNumber });
+        } catch (e) {
+            throw this.wrapError(e, "getBlockByNumber", "Failed to get block", {
+                blockNumber: blockNumber.toString(),
+            });
+        }
     }
 
     /**
@@ -100,11 +120,19 @@ export class EvmProvider {
      * @returns {Promise<bigint>} A Promise that resolves to the current gas price.
      */
     async getGasPrice(): Promise<bigint> {
-        return this.client.getGasPrice();
+        try {
+            return await this.client.getGasPrice();
+        } catch (e) {
+            throw this.wrapError(e, "getGasPrice", "Failed to get gas price");
+        }
     }
 
     async estimateGas(args: EstimateGasParameters<typeof this.chain>): Promise<bigint> {
-        return this.client.estimateGas(args);
+        try {
+            return await this.client.estimateGas(args);
+        } catch (e) {
+            throw this.wrapError(e, "estimateGas", "Failed to estimate gas", args);
+        }
     }
 
     /**
@@ -121,10 +149,14 @@ export class EvmProvider {
             );
         }
 
-        return this.client.getStorageAt({
-            address,
-            slot: typeof slot === "string" ? slot : toHex(slot),
-        });
+        try {
+            return await this.client.getStorageAt({
+                address,
+                slot: typeof slot === "string" ? slot : toHex(slot),
+            });
+        } catch (e) {
+            throw this.wrapError(e, "getStorageAt", "Failed to get storage", { address, slot });
+        }
     }
 
     /**
@@ -137,27 +169,28 @@ export class EvmProvider {
      */
     async readContract<
         TAbi extends Abi,
-        TFunctionName extends ContractFunctionName<TAbi, "pure" | "view"> = ContractFunctionName<
-            TAbi,
-            "pure" | "view"
-        >,
-        TArgs extends ContractFunctionArgs<
-            TAbi,
-            "pure" | "view",
-            TFunctionName
-        > = ContractFunctionArgs<TAbi, "pure" | "view", TFunctionName>,
+        TFunctionName extends ContractFunctionName<TAbi, "pure" | "view">,
+        TArgs extends ContractFunctionArgs<TAbi, "pure" | "view", TFunctionName>,
     >(
         contractAddress: Address,
         abi: TAbi,
         functionName: TFunctionName,
         args?: TArgs,
     ): Promise<ContractFunctionReturnType<TAbi, "pure" | "view", TFunctionName, TArgs>> {
-        return this.client.readContract({
-            address: contractAddress,
-            abi,
-            functionName,
-            args,
-        });
+        try {
+            return await this.client.readContract({
+                address: contractAddress,
+                abi,
+                functionName,
+                args,
+            });
+        } catch (e) {
+            throw this.wrapError(e, "readContract", "Failed to read contract", {
+                contractAddress,
+                functionName,
+                args,
+            });
+        }
     }
 
     /**
@@ -177,19 +210,27 @@ export class EvmProvider {
     ): Promise<DecodeAbiParametersReturnType<ReturnType>> {
         const deploymentData = args ? encodeDeployData({ abi, bytecode, args }) : bytecode;
 
-        const { data: returnData } = await this.client.call({
-            data: deploymentData,
-        });
-
-        if (!returnData) {
-            throw new DataDecodeException("No return data");
-        }
-
         try {
-            const decoded = decodeAbiParameters(constructorReturnParams, returnData);
-            return decoded;
+            const { data: returnData } = await this.client.call({
+                data: deploymentData,
+            });
+
+            if (!returnData) {
+                throw new DataDecodeException("No return data");
+            }
+
+            try {
+                return decodeAbiParameters(constructorReturnParams, returnData);
+            } catch (e) {
+                throw new DataDecodeException(
+                    "Error decoding return data with given AbiParameters",
+                );
+            }
         } catch (e) {
-            throw new DataDecodeException("Error decoding return data with given AbiParameters");
+            if (e instanceof DataDecodeException) {
+                throw e;
+            }
+            throw this.wrapError(e, "batchRequest", "Failed to execute batch request", { args });
         }
     }
 
@@ -208,6 +249,40 @@ export class EvmProvider {
     ): Promise<MulticallReturnType<contracts, allowFailure>> {
         if (!this.chain?.contracts?.multicall3?.address) throw new MulticallNotFound();
 
-        return this.client.multicall<contracts, allowFailure>(args);
+        try {
+            return await this.client.multicall<contracts, allowFailure>(args);
+        } catch (e) {
+            throw this.wrapError(e, "multicall", "Failed to execute multicall", { args });
+        }
+    }
+
+    private wrapError(
+        error: unknown,
+        methodName: Exclude<
+            keyof typeof EvmProvider.prototype,
+            "constructor" | "wrapError" | "logger" | "chain" | "client"
+        >,
+        errorMessage: string,
+        additionalData?: Record<string, unknown>,
+    ): RetriableError | NonRetriableError {
+        const err = error as Error;
+        if (err instanceof TimeoutError || err instanceof RpcError) {
+            return new RetriableError(errorMessage, {
+                className: EvmProvider.name,
+                methodName,
+                chainId: this.chain?.id?.toString(),
+                additionalData,
+            });
+        }
+        return new NonRetriableError(
+            err.message,
+            {
+                className: "EvmProvider",
+                methodName,
+                chainId: this.chain?.id?.toString(),
+                additionalData,
+            },
+            err,
+        );
     }
 }
