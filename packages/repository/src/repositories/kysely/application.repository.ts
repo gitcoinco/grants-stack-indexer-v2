@@ -6,6 +6,7 @@ import {
     Application,
     ApplicationNotFound,
     Database,
+    handlePostgresError,
     IApplicationRepository,
     KyselyTransaction,
     NewApplication,
@@ -99,9 +100,19 @@ export class KyselyApplicationRepository implements IApplicationRepository<Kysel
     /* @inheritdoc */
     async insertApplication(application: NewApplication, tx?: KyselyTransaction): Promise<void> {
         const _application = this.formatApplication(application);
-        const queryBuilder = (tx || this.db).withSchema(this.schemaName);
+        try {
+            const queryBuilder = (tx || this.db).withSchema(this.schemaName);
 
-        await queryBuilder.insertInto("applications").values(_application).execute();
+            await queryBuilder.insertInto("applications").values(_application).execute();
+        } catch (error) {
+            throw handlePostgresError(error, {
+                className: KyselyApplicationRepository.name,
+                methodName: "insertApplication",
+                additionalData: {
+                    application: _application,
+                },
+            });
+        }
     }
 
     /* @inheritdoc */
@@ -111,15 +122,30 @@ export class KyselyApplicationRepository implements IApplicationRepository<Kysel
         tx?: KyselyTransaction,
     ): Promise<void> {
         const _application = this.formatApplication(application);
-        const queryBuilder = (tx || this.db).withSchema(this.schemaName);
+        try {
+            const queryBuilder = (tx || this.db).withSchema(this.schemaName);
 
-        await queryBuilder
-            .updateTable("applications")
-            .set(_application)
-            .where("id", "=", where.id)
-            .where("chainId", "=", where.chainId)
-            .where("roundId", "=", where.roundId)
-            .execute();
+            await queryBuilder
+                .updateTable("applications")
+                .set(_application)
+                .where("id", "=", where.id)
+                .where("chainId", "=", where.chainId)
+                .where("roundId", "=", where.roundId)
+                .execute();
+        } catch (error) {
+            throw handlePostgresError(error, {
+                className: KyselyApplicationRepository.name,
+                methodName: "updateApplication",
+                additionalData: {
+                    params: {
+                        chainId: where.chainId,
+                        roundId: where.roundId,
+                        applicationId: where.id,
+                    },
+                    application: _application,
+                },
+            });
+        }
     }
 
     /**

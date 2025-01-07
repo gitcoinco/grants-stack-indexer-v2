@@ -3,7 +3,12 @@ import { Kysely } from "kysely";
 import { ChainId } from "@grants-stack-indexer/shared";
 
 import { IEventRegistryRepository } from "../../interfaces/index.js";
-import { Database, NewProcessedEvent, ProcessedEvent } from "../../internal.js";
+import {
+    Database,
+    handlePostgresError,
+    NewProcessedEvent,
+    ProcessedEvent,
+} from "../../internal.js";
 
 export class KyselyEventRegistryRepository implements IEventRegistryRepository {
     constructor(
@@ -24,19 +29,30 @@ export class KyselyEventRegistryRepository implements IEventRegistryRepository {
     /** @inheritdoc */
     async saveLastProcessedEvent(chainId: ChainId, event: NewProcessedEvent): Promise<void> {
         const { blockNumber, blockTimestamp, logIndex, rawEvent } = event; // Extract only the fields from NewProcessedEvent
-        await this.db
-            .withSchema(this.schemaName)
-            .insertInto("eventsRegistry")
-            .values({ blockNumber, blockTimestamp, logIndex, chainId, rawEvent })
-            .onConflict((oc) =>
-                oc.columns(["chainId"]).doUpdateSet({
-                    blockNumber,
-                    blockTimestamp,
-                    logIndex,
-                    rawEvent,
+        try {
+            await this.db
+                .withSchema(this.schemaName)
+                .insertInto("eventsRegistry")
+                .values({ blockNumber, blockTimestamp, logIndex, chainId, rawEvent })
+                .onConflict((oc) =>
+                    oc.columns(["chainId"]).doUpdateSet({
+                        blockNumber,
+                        blockTimestamp,
+                        logIndex,
+                        rawEvent,
+                        chainId,
+                    }),
+                )
+                .execute();
+        } catch (error) {
+            throw handlePostgresError(error, {
+                className: KyselyEventRegistryRepository.name,
+                methodName: "saveLastProcessedEvent",
+                additionalData: {
                     chainId,
-                }),
-            )
-            .execute();
+                    event,
+                },
+            });
+        }
     }
 }

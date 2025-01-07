@@ -3,7 +3,7 @@ import { Kysely } from "kysely";
 import { Address, ChainId } from "@grants-stack-indexer/shared";
 
 import { IStrategyRegistryRepository } from "../../interfaces/index.js";
-import { Database, Strategy } from "../../internal.js";
+import { Database, handlePostgresError, Strategy } from "../../internal.js";
 
 export class KyselyStrategyRegistryRepository implements IStrategyRegistryRepository {
     constructor(
@@ -27,12 +27,22 @@ export class KyselyStrategyRegistryRepository implements IStrategyRegistryReposi
 
     /** @inheritdoc */
     async saveStrategy(strategy: Strategy): Promise<void> {
-        await this.db
-            .withSchema(this.schemaName)
-            .insertInto("strategiesRegistry")
-            .values(strategy)
-            .onConflict((oc) => oc.columns(["chainId", "address"]).doUpdateSet(strategy))
-            .execute();
+        try {
+            await this.db
+                .withSchema(this.schemaName)
+                .insertInto("strategiesRegistry")
+                .values(strategy)
+                .onConflict((oc) => oc.columns(["chainId", "address"]).doUpdateSet(strategy))
+                .execute();
+        } catch (error) {
+            throw handlePostgresError(error, {
+                className: KyselyStrategyRegistryRepository.name,
+                methodName: "saveStrategy",
+                additionalData: {
+                    strategy,
+                },
+            });
+        }
     }
 
     /** @inheritdoc */
