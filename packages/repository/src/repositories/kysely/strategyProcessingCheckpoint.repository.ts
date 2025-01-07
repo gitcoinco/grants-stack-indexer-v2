@@ -4,6 +4,7 @@ import { ChainId, Hex } from "@grants-stack-indexer/shared";
 
 import {
     Database,
+    handlePostgresError,
     IStrategyProcessingCheckpointRepository,
     NewStrategyProcessingCheckpoint,
     StrategyProcessingCheckpoint,
@@ -33,31 +34,52 @@ export class KyselyStrategyProcessingCheckpointRepository
 
     /** @inheritdoc */
     async upsertCheckpoint(checkpoint: NewStrategyProcessingCheckpoint): Promise<void> {
-        await this.db
-            .withSchema(this.schemaName)
-            .insertInto("strategyProcessingCheckpoints")
-            .values({
-                ...checkpoint,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            })
-            .onConflict((oc) =>
-                oc.columns(["chainId", "strategyId"]).doUpdateSet({
-                    lastProcessedBlockNumber: checkpoint.lastProcessedBlockNumber,
-                    lastProcessedLogIndex: checkpoint.lastProcessedLogIndex,
+        try {
+            await this.db
+                .withSchema(this.schemaName)
+                .insertInto("strategyProcessingCheckpoints")
+                .values({
+                    ...checkpoint,
+                    createdAt: new Date(),
                     updatedAt: new Date(),
-                }),
-            )
-            .execute();
+                })
+                .onConflict((oc) =>
+                    oc.columns(["chainId", "strategyId"]).doUpdateSet({
+                        lastProcessedBlockNumber: checkpoint.lastProcessedBlockNumber,
+                        lastProcessedLogIndex: checkpoint.lastProcessedLogIndex,
+                        updatedAt: new Date(),
+                    }),
+                )
+                .execute();
+        } catch (error) {
+            throw handlePostgresError(error, {
+                className: KyselyStrategyProcessingCheckpointRepository.name,
+                methodName: "upsertCheckpoint",
+                additionalData: {
+                    checkpoint,
+                },
+            });
+        }
     }
 
     /** @inheritdoc */
     async deleteCheckpoint(chainId: ChainId, strategyId: Hex): Promise<void> {
-        await this.db
-            .withSchema(this.schemaName)
-            .deleteFrom("strategyProcessingCheckpoints")
-            .where("chainId", "=", chainId)
-            .where("strategyId", "=", strategyId)
-            .execute();
+        try {
+            await this.db
+                .withSchema(this.schemaName)
+                .deleteFrom("strategyProcessingCheckpoints")
+                .where("chainId", "=", chainId)
+                .where("strategyId", "=", strategyId)
+                .execute();
+        } catch (error) {
+            throw handlePostgresError(error, {
+                className: KyselyStrategyProcessingCheckpointRepository.name,
+                methodName: "deleteCheckpoint",
+                additionalData: {
+                    chainId,
+                    strategyId,
+                },
+            });
+        }
     }
 }

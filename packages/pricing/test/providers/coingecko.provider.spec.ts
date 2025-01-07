@@ -1,9 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { ILogger, TokenCode } from "@grants-stack-indexer/shared";
+import {
+    ILogger,
+    NetworkError,
+    NonRetriableError,
+    RateLimitError,
+    TokenCode,
+} from "@grants-stack-indexer/shared";
 
 import type { TokenPrice } from "../../src/external.js";
-import { CoingeckoProvider, NetworkException, UnsupportedToken } from "../../src/external.js";
+import { CoingeckoProvider, UnsupportedToken } from "../../src/external.js";
 
 const mock = vi.hoisted(() => ({
     get: vi.fn(),
@@ -117,20 +123,31 @@ describe("CoingeckoProvider", () => {
             expect(result).toBeUndefined();
         });
 
-        it("return undefined if 400 family error", async () => {
+        it("return RateLimitError if 429 error", async () => {
+            mock.get.mockRejectedValueOnce({
+                status: 429,
+                data: "Rate limit exceeded",
+                isAxiosError: true,
+                headers: {
+                    "retry-after": 60,
+                },
+            });
+
+            await expect(
+                provider.getTokenPrice("ETH" as TokenCode, 1609459200000, 1609545600000),
+            ).rejects.toThrow(RateLimitError);
+        });
+
+        it("throw NonRetriableError for 400 family error", async () => {
             mock.get.mockRejectedValueOnce({
                 status: 400,
                 data: "Bad Request",
                 isAxiosError: true,
             });
 
-            const result = await provider.getTokenPrice(
-                "ETH" as TokenCode,
-                1609459200000,
-                1609545600000,
-            );
-
-            expect(result).toBeUndefined();
+            await expect(
+                provider.getTokenPrice("ETH" as TokenCode, 1609459200000, 1609545600000),
+            ).rejects.toThrow(NonRetriableError);
         });
 
         it("throw UnsupportedTokenException for unsupported token", async () => {
@@ -147,7 +164,7 @@ describe("CoingeckoProvider", () => {
             });
             await expect(
                 provider.getTokenPrice("ETH" as TokenCode, 1609459200000, 1609545600000),
-            ).rejects.toThrow(NetworkException);
+            ).rejects.toThrow(NetworkError);
         });
 
         it("throw NetworkException for network errors", async () => {
@@ -159,7 +176,7 @@ describe("CoingeckoProvider", () => {
 
             await expect(
                 provider.getTokenPrice("ETH" as TokenCode, 1609459200000, 1609545600000),
-            ).rejects.toThrow(NetworkException);
+            ).rejects.toThrow(NetworkError);
         });
     });
 });

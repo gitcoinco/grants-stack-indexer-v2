@@ -1,6 +1,6 @@
-import { ContractName } from "@grants-stack-indexer/shared";
+import { ContractName, NonRetriableError } from "@grants-stack-indexer/shared";
 
-export class UnsupportedEventException extends Error {
+export class UnsupportedEventException extends NonRetriableError {
     constructor(
         contract: ContractName,
         public readonly eventName: string,

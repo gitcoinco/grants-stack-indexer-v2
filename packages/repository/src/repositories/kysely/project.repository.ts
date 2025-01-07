@@ -5,6 +5,7 @@ import { Address, ChainId } from "@grants-stack-indexer/shared";
 import { IProjectRepository } from "../../interfaces/projectRepository.interface.js";
 import {
     Database,
+    handlePostgresError,
     KyselyTransaction,
     NewPendingProjectRole,
     NewProject,
@@ -75,8 +76,18 @@ export class KyselyProjectRepository implements IProjectRepository<KyselyTransac
 
     /* @inheritdoc */
     async insertProject(project: NewProject, tx?: KyselyTransaction): Promise<void> {
-        const queryBuilder = (tx || this.db).withSchema(this.schemaName);
-        await queryBuilder.insertInto("projects").values(project).execute();
+        try {
+            const queryBuilder = (tx || this.db).withSchema(this.schemaName);
+            await queryBuilder.insertInto("projects").values(project).execute();
+        } catch (error) {
+            throw handlePostgresError(error, {
+                className: KyselyProjectRepository.name,
+                methodName: "insertProject",
+                additionalData: {
+                    project,
+                },
+            });
+        }
     }
 
     /* @inheritdoc */
@@ -85,21 +96,42 @@ export class KyselyProjectRepository implements IProjectRepository<KyselyTransac
         project: PartialProject,
         tx?: KyselyTransaction,
     ): Promise<void> {
-        const queryBuilder = (tx || this.db).withSchema(this.schemaName);
-        await queryBuilder
-            .updateTable("projects")
-            .set(project)
-            .where("id", "=", where.id)
-            .where("chainId", "=", where.chainId)
-            .execute();
+        try {
+            const queryBuilder = (tx || this.db).withSchema(this.schemaName);
+            await queryBuilder
+                .updateTable("projects")
+                .set(project)
+                .where("id", "=", where.id)
+                .where("chainId", "=", where.chainId)
+                .execute();
+        } catch (error) {
+            throw handlePostgresError(error, {
+                className: KyselyProjectRepository.name,
+                methodName: "updateProject",
+                additionalData: {
+                    where,
+                    project,
+                },
+            });
+        }
     }
 
     // ============================ PROJECT ROLES ============================
 
     /* @inheritdoc */
     async insertProjectRole(projectRole: NewProjectRole, tx?: KyselyTransaction): Promise<void> {
-        const queryBuilder = (tx || this.db).withSchema(this.schemaName);
-        await queryBuilder.insertInto("projectRoles").values(projectRole).execute();
+        try {
+            const queryBuilder = (tx || this.db).withSchema(this.schemaName);
+            await queryBuilder.insertInto("projectRoles").values(projectRole).execute();
+        } catch (error) {
+            throw handlePostgresError(error, {
+                className: KyselyProjectRepository.name,
+                methodName: "insertProjectRole",
+                additionalData: {
+                    projectRole,
+                },
+            });
+        }
     }
 
     /* @inheritdoc */
@@ -110,18 +142,31 @@ export class KyselyProjectRepository implements IProjectRepository<KyselyTransac
         address?: Address,
         tx?: KyselyTransaction,
     ): Promise<void> {
-        const queryBuilder = (tx || this.db).withSchema(this.schemaName);
-        const query = queryBuilder
-            .deleteFrom("projectRoles")
-            .where("chainId", "=", chainId)
-            .where("projectId", "=", projectId)
-            .where("role", "=", role);
+        try {
+            const queryBuilder = (tx || this.db).withSchema(this.schemaName);
+            const query = queryBuilder
+                .deleteFrom("projectRoles")
+                .where("chainId", "=", chainId)
+                .where("projectId", "=", projectId)
+                .where("role", "=", role);
 
-        if (address) {
-            query.where("address", "=", address);
+            if (address) {
+                query.where("address", "=", address);
+            }
+
+            await query.execute();
+        } catch (error) {
+            throw handlePostgresError(error, {
+                className: KyselyProjectRepository.name,
+                methodName: "deleteManyProjectRoles",
+                additionalData: {
+                    chainId,
+                    projectId,
+                    role,
+                    address,
+                },
+            });
         }
-
-        await query.execute();
     }
 
     // ============================ PENDING PROJECT ROLES ============================
@@ -154,13 +199,36 @@ export class KyselyProjectRepository implements IProjectRepository<KyselyTransac
         pendingProjectRole: NewPendingProjectRole,
         tx?: KyselyTransaction,
     ): Promise<void> {
-        const queryBuilder = (tx || this.db).withSchema(this.schemaName);
-        await queryBuilder.insertInto("pendingProjectRoles").values(pendingProjectRole).execute();
+        try {
+            const queryBuilder = (tx || this.db).withSchema(this.schemaName);
+            await queryBuilder
+                .insertInto("pendingProjectRoles")
+                .values(pendingProjectRole)
+                .execute();
+        } catch (error) {
+            throw handlePostgresError(error, {
+                className: KyselyProjectRepository.name,
+                methodName: "insertPendingProjectRole",
+                additionalData: {
+                    pendingProjectRole,
+                },
+            });
+        }
     }
 
     /* @inheritdoc */
     async deleteManyPendingProjectRoles(ids: number[], tx?: KyselyTransaction): Promise<void> {
-        const queryBuilder = (tx || this.db).withSchema(this.schemaName);
-        await queryBuilder.deleteFrom("pendingProjectRoles").where("id", "in", ids).execute();
+        try {
+            const queryBuilder = (tx || this.db).withSchema(this.schemaName);
+            await queryBuilder.deleteFrom("pendingProjectRoles").where("id", "in", ids).execute();
+        } catch (error) {
+            throw handlePostgresError(error, {
+                className: KyselyProjectRepository.name,
+                methodName: "deleteManyPendingProjectRoles",
+                additionalData: {
+                    ids,
+                },
+            });
+        }
     }
 }

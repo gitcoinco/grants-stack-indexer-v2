@@ -12,7 +12,6 @@ export type {
 
 export {
     UnsupportedChainException,
-    NetworkException,
     UnknownPricingException,
     UnsupportedToken,
     InvalidPricingSource,

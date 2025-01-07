@@ -2,6 +2,7 @@ import { Kysely } from "kysely";
 
 import {
     Database,
+    handlePostgresError,
     IApplicationPayoutRepository,
     KyselyTransaction,
     NewApplicationPayout,
@@ -20,7 +21,20 @@ export class KyselyApplicationPayoutRepository
         applicationPayout: NewApplicationPayout,
         tx?: KyselyTransaction,
     ): Promise<void> {
-        const queryBuilder = (tx || this.db).withSchema(this.schemaName);
-        await queryBuilder.insertInto("applicationsPayouts").values(applicationPayout).execute();
+        try {
+            const queryBuilder = (tx || this.db).withSchema(this.schemaName);
+            await queryBuilder
+                .insertInto("applicationsPayouts")
+                .values(applicationPayout)
+                .execute();
+        } catch (error) {
+            throw handlePostgresError(error, {
+                className: KyselyApplicationPayoutRepository.name,
+                methodName: "insertApplicationPayout",
+                additionalData: {
+                    applicationPayout,
+                },
+            });
+        }
     }
 }

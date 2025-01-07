@@ -4,6 +4,7 @@ import { Address, ChainId, stringify } from "@grants-stack-indexer/shared";
 
 import {
     Database,
+    handlePostgresError,
     IRoundRepository,
     KyselyTransaction,
     NewPendingRoundRole,
@@ -117,8 +118,18 @@ export class KyselyRoundRepository implements IRoundRepository<KyselyTransaction
     /* @inheritdoc */
     async insertRound(round: NewRound, tx?: KyselyTransaction): Promise<void> {
         const _round = this.formatRound(round);
-        const queryBuilder = (tx || this.db).withSchema(this.schemaName);
-        await queryBuilder.insertInto("rounds").values(_round).execute();
+        try {
+            const queryBuilder = (tx || this.db).withSchema(this.schemaName);
+            await queryBuilder.insertInto("rounds").values(_round).execute();
+        } catch (error) {
+            throw handlePostgresError(error, {
+                className: KyselyRoundRepository.name,
+                methodName: "insertRound",
+                additionalData: {
+                    round: _round,
+                },
+            });
+        }
     }
 
     /* @inheritdoc */
@@ -128,16 +139,27 @@ export class KyselyRoundRepository implements IRoundRepository<KyselyTransaction
         tx?: KyselyTransaction,
     ): Promise<void> {
         const _round = this.formatRound(round);
-        const queryBuilder = (tx || this.db).withSchema(this.schemaName);
-        const query = queryBuilder
-            .updateTable("rounds")
-            .set(_round)
-            .where("chainId", "=", where.chainId);
+        try {
+            const queryBuilder = (tx || this.db).withSchema(this.schemaName);
+            const query = queryBuilder
+                .updateTable("rounds")
+                .set(_round)
+                .where("chainId", "=", where.chainId);
 
-        if ("id" in where) {
-            await query.where("id", "=", where.id).execute();
-        } else {
-            await query.where("strategyAddress", "=", where.strategyAddress).execute();
+            if ("id" in where) {
+                await query.where("id", "=", where.id).execute();
+            } else {
+                await query.where("strategyAddress", "=", where.strategyAddress).execute();
+            }
+        } catch (error) {
+            throw handlePostgresError(error, {
+                className: KyselyRoundRepository.name,
+                methodName: "updateRound",
+                additionalData: {
+                    where,
+                    round: _round,
+                },
+            });
         }
     }
 
@@ -148,16 +170,28 @@ export class KyselyRoundRepository implements IRoundRepository<KyselyTransaction
         amountInUsd: string,
         tx?: KyselyTransaction,
     ): Promise<void> {
-        const queryBuilder = (tx || this.db).withSchema(this.schemaName);
-        await queryBuilder
-            .updateTable("rounds")
-            .set((eb) => ({
-                fundedAmount: eb("fundedAmount", "+", amount),
-                fundedAmountInUsd: eb("fundedAmountInUsd", "+", amountInUsd),
-            }))
-            .where("chainId", "=", where.chainId)
-            .where("id", "=", where.roundId)
-            .execute();
+        try {
+            const queryBuilder = (tx || this.db).withSchema(this.schemaName);
+            await queryBuilder
+                .updateTable("rounds")
+                .set((eb) => ({
+                    fundedAmount: eb("fundedAmount", "+", amount),
+                    fundedAmountInUsd: eb("fundedAmountInUsd", "+", amountInUsd),
+                }))
+                .where("chainId", "=", where.chainId)
+                .where("id", "=", where.roundId)
+                .execute();
+        } catch (error) {
+            throw handlePostgresError(error, {
+                className: KyselyRoundRepository.name,
+                methodName: "incrementRoundFunds",
+                additionalData: {
+                    where,
+                    amount,
+                    amountInUsd,
+                },
+            });
+        }
     }
 
     /* @inheritdoc */
@@ -166,15 +200,26 @@ export class KyselyRoundRepository implements IRoundRepository<KyselyTransaction
         amount: bigint,
         tx?: KyselyTransaction,
     ): Promise<void> {
-        const queryBuilder = (tx || this.db).withSchema(this.schemaName);
-        await queryBuilder
-            .updateTable("rounds")
-            .set((eb) => ({
-                totalDistributed: eb("totalDistributed", "+", amount),
-            }))
-            .where("chainId", "=", where.chainId)
-            .where("id", "=", where.roundId)
-            .execute();
+        try {
+            const queryBuilder = (tx || this.db).withSchema(this.schemaName);
+            await queryBuilder
+                .updateTable("rounds")
+                .set((eb) => ({
+                    totalDistributed: eb("totalDistributed", "+", amount),
+                }))
+                .where("chainId", "=", where.chainId)
+                .where("id", "=", where.roundId)
+                .execute();
+        } catch (error) {
+            throw handlePostgresError(error, {
+                className: KyselyRoundRepository.name,
+                methodName: "incrementRoundTotalDistributed",
+                additionalData: {
+                    where,
+                    amount,
+                },
+            });
+        }
     }
 
     // ============================ ROUND ROLES ============================
@@ -186,8 +231,18 @@ export class KyselyRoundRepository implements IRoundRepository<KyselyTransaction
 
     /* @inheritdoc */
     async insertRoundRole(roundRole: NewRoundRole, tx?: KyselyTransaction): Promise<void> {
-        const queryBuilder = (tx || this.db).withSchema(this.schemaName);
-        await queryBuilder.insertInto("roundRoles").values(roundRole).execute();
+        try {
+            const queryBuilder = (tx || this.db).withSchema(this.schemaName);
+            await queryBuilder.insertInto("roundRoles").values(roundRole).execute();
+        } catch (error) {
+            throw handlePostgresError(error, {
+                className: KyselyRoundRepository.name,
+                methodName: "insertRoundRole",
+                additionalData: {
+                    roundRole,
+                },
+            });
+        }
     }
 
     /* @inheritdoc */
@@ -198,14 +253,27 @@ export class KyselyRoundRepository implements IRoundRepository<KyselyTransaction
         address: Address,
         tx?: KyselyTransaction,
     ): Promise<void> {
-        const queryBuilder = (tx || this.db).withSchema(this.schemaName);
-        await queryBuilder
-            .deleteFrom("roundRoles")
-            .where("chainId", "=", chainId)
-            .where("roundId", "=", roundId)
-            .where("role", "=", role)
-            .where("address", "=", address)
-            .execute();
+        try {
+            const queryBuilder = (tx || this.db).withSchema(this.schemaName);
+            await queryBuilder
+                .deleteFrom("roundRoles")
+                .where("chainId", "=", chainId)
+                .where("roundId", "=", roundId)
+                .where("role", "=", role)
+                .where("address", "=", address)
+                .execute();
+        } catch (error) {
+            throw handlePostgresError(error, {
+                className: KyselyRoundRepository.name,
+                methodName: "deleteManyRoundRolesByRoleAndAddress",
+                additionalData: {
+                    chainId,
+                    roundId,
+                    role,
+                    address,
+                },
+            });
+        }
     }
 
     // ============================ PENDING ROUND ROLES ============================
@@ -229,14 +297,34 @@ export class KyselyRoundRepository implements IRoundRepository<KyselyTransaction
         pendingRoundRole: NewPendingRoundRole,
         tx?: KyselyTransaction,
     ): Promise<void> {
-        const queryBuilder = (tx || this.db).withSchema(this.schemaName);
-        await queryBuilder.insertInto("pendingRoundRoles").values(pendingRoundRole).execute();
+        try {
+            const queryBuilder = (tx || this.db).withSchema(this.schemaName);
+            await queryBuilder.insertInto("pendingRoundRoles").values(pendingRoundRole).execute();
+        } catch (error) {
+            throw handlePostgresError(error, {
+                className: KyselyRoundRepository.name,
+                methodName: "insertPendingRoundRole",
+                additionalData: {
+                    pendingRoundRole,
+                },
+            });
+        }
     }
 
     /* @inheritdoc */
     async deleteManyPendingRoundRoles(ids: number[], tx?: KyselyTransaction): Promise<void> {
-        const queryBuilder = (tx || this.db).withSchema(this.schemaName);
-        await queryBuilder.deleteFrom("pendingRoundRoles").where("id", "in", ids).execute();
+        try {
+            const queryBuilder = (tx || this.db).withSchema(this.schemaName);
+            await queryBuilder.deleteFrom("pendingRoundRoles").where("id", "in", ids).execute();
+        } catch (error) {
+            throw handlePostgresError(error, {
+                className: KyselyRoundRepository.name,
+                methodName: "deleteManyPendingRoundRoles",
+                additionalData: {
+                    ids,
+                },
+            });
+        }
     }
 
     /**
