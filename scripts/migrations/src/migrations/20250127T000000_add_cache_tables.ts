@@ -22,6 +22,6 @@ export async function up(db: Kysely<unknown>): Promise<void> {
 }
 
 export async function down(db: Kysely<unknown>): Promise<void> {
-    await db.schema.dropTable("pricingCache").execute();
+    await db.schema.dropTable("priceCache").execute();
     await db.schema.dropTable("metadataCache").execute();
 }
