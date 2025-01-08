@@ -12,6 +12,11 @@ export type Token = {
     voteAmountCap?: bigint;
 };
 
+export type TokenPrice = {
+    timestampMs: number;
+    priceUsd: number;
+};
+
 export const TOKENS: {
     [chainId: number]: {
         [tokenAddress: Address]: Token;

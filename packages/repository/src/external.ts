@@ -73,4 +73,9 @@ export type { StrategyProcessingCheckpoint, NewStrategyProcessingCheckpoint } fr
 export type { ITransactionManager, TransactionConnection } from "./internal.js";
 export { KyselyTransactionManager } from "./internal.js";
 
+export type { ICache } from "./internal.js";
+export type { Metadata, NewMetadata, PartialMetadata } from "./internal.js";
+export type { Price, NewPrice, PartialPrice, PriceCacheKey } from "./internal.js";
+export { KyselyMetadataCache, KyselyPricingCache } from "./internal.js";
+
 export { createKyselyPostgresDb as createKyselyDatabase } from "./internal.js";

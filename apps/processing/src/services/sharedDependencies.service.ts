@@ -1,7 +1,7 @@
 import { CoreDependencies } from "@grants-stack-indexer/data-flow";
 import { EnvioIndexerClient } from "@grants-stack-indexer/indexer-client";
-import { IpfsProvider } from "@grants-stack-indexer/metadata";
-import { PricingProviderFactory } from "@grants-stack-indexer/pricing";
+import { CachingMetadataProvider, IpfsProvider } from "@grants-stack-indexer/metadata";
+import { CachingPricingProvider, PricingProviderFactory } from "@grants-stack-indexer/pricing";
 import {
     createKyselyDatabase,
     IEventRegistryRepository,
@@ -11,6 +11,8 @@ import {
     KyselyApplicationRepository,
     KyselyDonationRepository,
     KyselyEventRegistryRepository,
+    KyselyMetadataCache,
+    KyselyPricingCache,
     KyselyProjectRepository,
     KyselyRoundRepository,
     KyselyStrategyProcessingCheckpointRepository,
@@ -68,11 +70,23 @@ export class SharedDependenciesService {
             kyselyDatabase,
             env.DATABASE_SCHEMA,
         );
-        const pricingProvider = PricingProviderFactory.create(env, {
+        const pricingRepository = new KyselyPricingCache(kyselyDatabase, env.DATABASE_SCHEMA);
+        const _pricingProvider = PricingProviderFactory.create(env, {
             logger,
         });
+        const pricingProvider = new CachingPricingProvider(
+            _pricingProvider,
+            pricingRepository,
+            logger,
+        );
 
-        const metadataProvider = new IpfsProvider(env.IPFS_GATEWAYS_URL, logger);
+        const metadataRepository = new KyselyMetadataCache(kyselyDatabase, env.DATABASE_SCHEMA);
+        const _metadataProvider = new IpfsProvider(env.IPFS_GATEWAYS_URL, logger);
+        const metadataProvider = new CachingMetadataProvider(
+            _metadataProvider,
+            metadataRepository,
+            logger,
+        );
 
         const eventRegistryRepository = new KyselyEventRegistryRepository(
             kyselyDatabase,
