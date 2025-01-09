@@ -6,12 +6,19 @@ import { Database, handlePostgresError, ICache } from "../../internal.js";
 
 export type PriceCacheKey = { tokenCode: TokenCode; timestampMs: number };
 
+/**
+ * A cache for token prices using Kysely.
+ * This cache is used to store and retrieve token prices for a given token and timestamp.
+ * It uses the `priceCache` table in the database to store the prices.
+ * Note: no eviction strategy is implemented since is not needed for the current use case.
+ */
 export class KyselyPricingCache implements ICache<PriceCacheKey, TokenPrice> {
     constructor(
         private readonly db: Kysely<Database>,
         private readonly schema: string,
     ) {}
 
+    /** @inheritdoc */
     async get(key: { tokenCode: TokenCode; timestampMs: number }): Promise<TokenPrice | undefined> {
         const { tokenCode, timestampMs } = key;
 

@@ -71,19 +71,19 @@ export class SharedDependenciesService {
             env.DATABASE_SCHEMA,
         );
         const pricingRepository = new KyselyPricingCache(kyselyDatabase, env.DATABASE_SCHEMA);
-        const _pricingProvider = PricingProviderFactory.create(env, {
+        const pricingProvider = PricingProviderFactory.create(env, {
             logger,
         });
-        const pricingProvider = new CachingPricingProvider(
-            _pricingProvider,
+        const cachedPricingProvider = new CachingPricingProvider(
+            pricingProvider,
             pricingRepository,
             logger,
         );
 
         const metadataRepository = new KyselyMetadataCache(kyselyDatabase, env.DATABASE_SCHEMA);
-        const _metadataProvider = new IpfsProvider(env.IPFS_GATEWAYS_URL, logger);
-        const metadataProvider = new CachingMetadataProvider(
-            _metadataProvider,
+        const metadataProvider = new IpfsProvider(env.IPFS_GATEWAYS_URL, logger);
+        const cachedMetadataProvider = new CachingMetadataProvider(
+            metadataProvider,
             metadataRepository,
             logger,
         );
@@ -118,9 +118,9 @@ export class SharedDependenciesService {
                 projectRepository,
                 roundRepository,
                 applicationRepository,
-                pricingProvider,
+                pricingProvider: cachedPricingProvider,
                 donationRepository,
-                metadataProvider,
+                metadataProvider: cachedMetadataProvider,
                 applicationPayoutRepository,
                 transactionManager,
             },
