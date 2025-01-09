@@ -206,11 +206,13 @@ export class Orchestrator {
         error: Error,
         event: ProcessorEvent<ContractName, AnyEvent>,
     ): boolean {
-        if (
-            (error instanceof RoundNotFound || error instanceof RoundNotFoundForId) &&
-            (event?.eventName === "TimestampsUpdated" ||
-                event?.eventName === "TimestampsUpdatedWithRegistrationAndAllocation")
-        ) {
+        const canIgnoreErrorClass =
+            error instanceof RoundNotFound || error instanceof RoundNotFoundForId;
+        const canIgnoreEventName =
+            event?.eventName === "TimestampsUpdated" ||
+            event?.eventName === "TimestampsUpdatedWithRegistrationAndAllocation";
+
+        if (canIgnoreErrorClass && canIgnoreEventName) {
             const events = this.eventsByBlockContext.get(event.blockNumber);
             return (
                 events
