@@ -6,8 +6,7 @@ import {
     UnsupportedEventException,
     UnsupportedStrategy,
 } from "@grants-stack-indexer/processors";
-import { RoundNotFound } from "@grants-stack-indexer/repository";
-import { RoundNotFoundForId } from "@grants-stack-indexer/repository/dist/src/exceptions/roundNotFound.exception.js";
+import { RoundNotFound, RoundNotFoundForId } from "@grants-stack-indexer/repository";
 import {
     Address,
     AnyEvent,
