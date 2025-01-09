@@ -54,22 +54,22 @@ describe("EventsFetcher", () => {
         const chainId = 1 as ChainId;
         const blockNumber = 1000;
         const logIndex = 0;
-        const limit = 100;
 
         indexerClientMock.getEventsAfterBlockNumberAndLogIndex.mockResolvedValue(mockEvents);
 
-        const result = await eventsFetcher.fetchEventsByBlockNumberAndLogIndex(
+        const result = await eventsFetcher.fetchEventsByBlockNumberAndLogIndex({
             chainId,
             blockNumber,
             logIndex,
-        );
+        });
 
-        expect(indexerClientMock.getEventsAfterBlockNumberAndLogIndex).toHaveBeenCalledWith(
+        expect(indexerClientMock.getEventsAfterBlockNumberAndLogIndex).toHaveBeenCalledWith({
             chainId,
             blockNumber,
             logIndex,
-            limit,
-        );
+            limit: 100,
+            lastBlockComplete: false,
+        });
         expect(result).toEqual(mockEvents);
     });
 
@@ -83,7 +83,11 @@ describe("EventsFetcher", () => {
         );
 
         await expect(
-            eventsFetcher.fetchEventsByBlockNumberAndLogIndex(chainId, blockNumber, logIndex),
+            eventsFetcher.fetchEventsByBlockNumberAndLogIndex({
+                chainId,
+                blockNumber,
+                logIndex,
+            }),
         ).rejects.toThrow("Network error");
     });
 });

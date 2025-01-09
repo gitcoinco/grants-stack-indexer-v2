@@ -6,9 +6,12 @@ import {
     UnsupportedEventException,
     UnsupportedStrategy,
 } from "@grants-stack-indexer/processors";
+import { RoundNotFound } from "@grants-stack-indexer/repository";
+import { RoundNotFoundForId } from "@grants-stack-indexer/repository/dist/src/exceptions/roundNotFound.exception.js";
 import {
     Address,
     AnyEvent,
+    AnyIndexerFetchedEvent,
     ChainId,
     ContractName,
     Hex,
@@ -57,6 +60,7 @@ import { CoreDependencies, DataLoader, delay, IQueue, iStrategyAbi, Queue } from
  */
 export class Orchestrator {
     private readonly eventsQueue: IQueue<ProcessorEvent<ContractName, AnyEvent>>;
+    private readonly eventsByBlockContext: Map<number, AnyIndexerFetchedEvent[]>;
     private readonly eventsFetcher: IEventsFetcher;
     private readonly eventsProcessor: EventsProcessor;
     private readonly eventsRegistry: IEventsRegistry;
@@ -105,6 +109,7 @@ export class Orchestrator {
             this.logger,
         );
         this.eventsQueue = new Queue<ProcessorEvent<ContractName, AnyEvent>>(fetchLimit);
+        this.eventsByBlockContext = new Map<number, AnyIndexerFetchedEvent[]>();
         this.retryHandler = new RetryHandler(retryStrategy, this.logger);
     }
 
@@ -163,11 +168,17 @@ export class Orchestrator {
                             chainId: this.chainId,
                         });
                     } else if (error instanceof Error || isNativeError(error)) {
-                        this.logger.error(error, {
-                            event,
-                            className: Orchestrator.name,
-                            chainId: this.chainId,
-                        });
+                        const shouldIgnoreError = this.shouldIgnoreTimestampsUpdatedError(
+                            error,
+                            event!,
+                        );
+                        if (!shouldIgnoreError) {
+                            this.logger.error(error, {
+                                event,
+                                className: Orchestrator.name,
+                                chainId: this.chainId,
+                            });
+                        }
                     } else {
                         this.logger.error(
                             new Error(`Error processing event: ${stringify(event)} ${error}`),
@@ -188,6 +199,31 @@ export class Orchestrator {
     }
 
     /**
+     * Sometimes the TimestampsUpdated event is part of the _initialize() function of a strategy.
+     * In this case, the event is emitted before the PoolCreated event. We can safely ignore the error
+     * if the PoolCreated event is present in the same block.
+     */
+    private shouldIgnoreTimestampsUpdatedError(
+        error: Error,
+        event: ProcessorEvent<ContractName, AnyEvent>,
+    ): boolean {
+        if (
+            (error instanceof RoundNotFound || error instanceof RoundNotFoundForId) &&
+            (event?.eventName === "TimestampsUpdated" ||
+                event?.eventName === "TimestampsUpdatedWithRegistrationAndAllocation")
+        ) {
+            const events = this.eventsByBlockContext.get(event.blockNumber);
+            return (
+                events
+                    ?.filter((e) => e.logIndex > event.logIndex)
+                    .some((event) => event.eventName === "PoolCreated") ?? false
+            );
+        }
+
+        return false;
+    }
+
+    /**
      * Enqueue new events from the events fetcher using the last processed event as a starting point
      */
     private async enqueueEvents(): Promise<void> {
@@ -195,12 +231,22 @@ export class Orchestrator {
         const blockNumber = lastProcessedEvent?.blockNumber ?? 0;
         const logIndex = lastProcessedEvent?.logIndex ?? 0;
 
-        const events = await this.eventsFetcher.fetchEventsByBlockNumberAndLogIndex(
-            this.chainId,
+        const events = await this.eventsFetcher.fetchEventsByBlockNumberAndLogIndex({
+            chainId: this.chainId,
             blockNumber,
             logIndex,
-            this.fetchLimit,
-        );
+            limit: this.fetchLimit,
+            lastBlockComplete: true,
+        });
+
+        // Clear previous context
+        this.eventsByBlockContext.clear();
+        for (const event of events) {
+            if (!this.eventsByBlockContext.has(event.blockNumber)) {
+                this.eventsByBlockContext.set(event.blockNumber, []);
+            }
+            this.eventsByBlockContext.get(event.blockNumber)!.push(event);
+        }
 
         this.eventsQueue.push(...events);
     }
