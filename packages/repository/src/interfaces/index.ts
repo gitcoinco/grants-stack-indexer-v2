@@ -8,3 +8,4 @@ export * from "./eventsRepository.interface.js";
 export * from "./strategyProcessingCheckpointRepository.interface.js";
 export * from "./transactionManager.interface.js";
 export * from "./pgError.interface.js";
+export * from "./cache.interface.js";

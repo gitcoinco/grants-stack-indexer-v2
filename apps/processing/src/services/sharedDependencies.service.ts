@@ -1,7 +1,7 @@
 import { CoreDependencies } from "@grants-stack-indexer/data-flow";
 import { EnvioIndexerClient } from "@grants-stack-indexer/indexer-client";
-import { IpfsProvider } from "@grants-stack-indexer/metadata";
-import { PricingProviderFactory } from "@grants-stack-indexer/pricing";
+import { CachingMetadataProvider, IpfsProvider } from "@grants-stack-indexer/metadata";
+import { CachingPricingProvider, PricingProviderFactory } from "@grants-stack-indexer/pricing";
 import {
     createKyselyDatabase,
     IEventRegistryRepository,
@@ -11,6 +11,8 @@ import {
     KyselyApplicationRepository,
     KyselyDonationRepository,
     KyselyEventRegistryRepository,
+    KyselyMetadataCache,
+    KyselyPricingCache,
     KyselyProjectRepository,
     KyselyRoundRepository,
     KyselyStrategyProcessingCheckpointRepository,
@@ -68,11 +70,23 @@ export class SharedDependenciesService {
             kyselyDatabase,
             env.DATABASE_SCHEMA,
         );
+        const pricingRepository = new KyselyPricingCache(kyselyDatabase, env.DATABASE_SCHEMA);
         const pricingProvider = PricingProviderFactory.create(env, {
             logger,
         });
+        const cachedPricingProvider = new CachingPricingProvider(
+            pricingProvider,
+            pricingRepository,
+            logger,
+        );
 
+        const metadataRepository = new KyselyMetadataCache(kyselyDatabase, env.DATABASE_SCHEMA);
         const metadataProvider = new IpfsProvider(env.IPFS_GATEWAYS_URL, logger);
+        const cachedMetadataProvider = new CachingMetadataProvider(
+            metadataProvider,
+            metadataRepository,
+            logger,
+        );
 
         const eventRegistryRepository = new KyselyEventRegistryRepository(
             kyselyDatabase,
@@ -104,9 +118,9 @@ export class SharedDependenciesService {
                 projectRepository,
                 roundRepository,
                 applicationRepository,
-                pricingProvider,
+                pricingProvider: cachedPricingProvider,
                 donationRepository,
-                metadataProvider,
+                metadataProvider: cachedMetadataProvider,
                 applicationPayoutRepository,
                 transactionManager,
             },
