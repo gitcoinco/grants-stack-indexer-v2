@@ -7,7 +7,7 @@ export type GetEventsAfterBlockNumberAndLogIndexParams = {
     blockNumber: number;
     logIndex: number;
     limit?: number;
-    lastBlockComplete?: boolean;
+    allowPartialLastBlock?: boolean;
 };
 
 /**
@@ -20,7 +20,7 @@ export interface IIndexerClient {
      * @param blockNumber Block number to start fetching events from
      * @param logIndex Log index in the block
      * @param limit Limit of events to fetch
-     * @param lastBlockComplete Whether to fetch the last block completely
+     * @param allowPartialLastBlock Whether last block is allowed to be partially fetched
      */
     getEventsAfterBlockNumberAndLogIndex(
         params: GetEventsAfterBlockNumberAndLogIndexParams,

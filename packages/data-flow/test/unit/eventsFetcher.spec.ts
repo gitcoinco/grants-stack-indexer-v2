@@ -68,7 +68,7 @@ describe("EventsFetcher", () => {
             blockNumber,
             logIndex,
             limit: 100,
-            lastBlockComplete: false,
+            allowPartialLastBlock: true,
         });
         expect(result).toEqual(mockEvents);
     });

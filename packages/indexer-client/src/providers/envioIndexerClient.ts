@@ -25,7 +25,7 @@ export class EnvioIndexerClient implements IIndexerClient {
         blockNumber,
         logIndex,
         limit = 100,
-        lastBlockComplete = false,
+        allowPartialLastBlock = true,
     }: GetEventsAfterBlockNumberAndLogIndexParams): Promise<AnyIndexerFetchedEvent[]> {
         try {
             const response = (await this.client.request(
@@ -69,7 +69,7 @@ export class EnvioIndexerClient implements IIndexerClient {
             const events = response?.raw_events;
 
             if (events) {
-                if (!lastBlockComplete || events.length === 0) {
+                if (allowPartialLastBlock || events.length === 0) {
                     return events;
                 } else {
                     const lastBlockNumber = events[events.length - 1]!.blockNumber;

@@ -15,14 +15,14 @@ export class EventsFetcher implements IEventsFetcher {
         blockNumber,
         logIndex,
         limit = 100,
-        lastBlockComplete = false,
+        allowPartialLastBlock = true,
     }: GetEventsAfterBlockNumberAndLogIndexParams): Promise<AnyIndexerFetchedEvent[]> {
         return await this.indexerClient.getEventsAfterBlockNumberAndLogIndex({
             chainId,
             blockNumber,
             logIndex,
             limit,
-            lastBlockComplete,
+            allowPartialLastBlock,
         });
     }
 

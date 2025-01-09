@@ -235,7 +235,7 @@ export class Orchestrator {
             blockNumber,
             logIndex,
             limit: this.fetchLimit,
-            lastBlockComplete: true,
+            allowPartialLastBlock: false,
         });
 
         // Clear previous context

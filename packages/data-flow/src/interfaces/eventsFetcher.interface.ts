@@ -14,7 +14,7 @@ export interface IEventsFetcher {
      * @param blockNumber block number to fetch events from
      * @param logIndex log index in the block to fetch events from
      * @param limit limit of events to fetch\
-     * @param lastBlockComplete Whether to fetch the last block completely
+     * @param allowPartialLastBlock Whether last block is allowed to be partially fetched
      */
     fetchEventsByBlockNumberAndLogIndex(
         params: GetEventsAfterBlockNumberAndLogIndexParams,

@@ -274,7 +274,7 @@ describe("EnvioIndexerClient", () => {
             expect(result).toEqual([]);
         });
 
-        it("discards events from the last block if lastBlockComplete is true", async () => {
+        it("discards events from the last block if allowPartialLastBlock is false", async () => {
             // Mock the request implementation to simulate database querying
             graphqlClient.request
                 .mockImplementationOnce(
@@ -318,7 +318,7 @@ describe("EnvioIndexerClient", () => {
                 blockNumber: 100,
                 logIndex: 0,
                 limit: 3,
-                lastBlockComplete: true,
+                allowPartialLastBlock: false,
             });
 
             expect(result).toHaveLength(2);
