@@ -63,6 +63,7 @@ export {
 
 export {
     RoundNotFound,
+    RoundNotFoundForId,
     ApplicationNotFound,
     ProjectNotFound,
     ProjectByRoleNotFound,

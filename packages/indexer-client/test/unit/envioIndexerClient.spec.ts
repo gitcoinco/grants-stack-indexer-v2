@@ -148,12 +148,12 @@ describe("EnvioIndexerClient", () => {
         });
 
         it("returns events after the specified block number", async () => {
-            const result = await envioIndexerClient.getEventsAfterBlockNumberAndLogIndex(
-                1 as ChainId,
-                100,
-                0,
-                100,
-            );
+            const result = await envioIndexerClient.getEventsAfterBlockNumberAndLogIndex({
+                chainId: 1 as ChainId,
+                blockNumber: 100,
+                logIndex: 0,
+                limit: 100,
+            });
 
             expect(result).toHaveLength(3);
             expect(result).toEqual(
@@ -166,12 +166,12 @@ describe("EnvioIndexerClient", () => {
         });
 
         it("returns only events after the specified log index within the same block", async () => {
-            const result = await envioIndexerClient.getEventsAfterBlockNumberAndLogIndex(
-                1 as ChainId,
-                100,
-                2,
-                100,
-            );
+            const result = await envioIndexerClient.getEventsAfterBlockNumberAndLogIndex({
+                chainId: 1 as ChainId,
+                blockNumber: 100,
+                logIndex: 2,
+                limit: 100,
+            });
 
             expect(result).toHaveLength(2);
             expect(result).toEqual(
@@ -183,23 +183,23 @@ describe("EnvioIndexerClient", () => {
         });
 
         it("respects the limit parameter", async () => {
-            const result = await envioIndexerClient.getEventsAfterBlockNumberAndLogIndex(
-                1 as ChainId,
-                100,
-                0,
-                2,
-            );
+            const result = await envioIndexerClient.getEventsAfterBlockNumberAndLogIndex({
+                chainId: 1 as ChainId,
+                blockNumber: 100,
+                logIndex: 0,
+                limit: 2,
+            });
 
             expect(result).toHaveLength(2);
         });
 
         it("returns empty array when no matching events found", async () => {
-            const result = await envioIndexerClient.getEventsAfterBlockNumberAndLogIndex(
-                1 as ChainId,
-                102,
-                0,
-                100,
-            );
+            const result = await envioIndexerClient.getEventsAfterBlockNumberAndLogIndex({
+                chainId: 1 as ChainId,
+                blockNumber: 102,
+                logIndex: 0,
+                limit: 100,
+            });
 
             expect(result).toHaveLength(0);
         });
@@ -215,7 +215,12 @@ describe("EnvioIndexerClient", () => {
             graphqlClient.request.mockResolvedValue(mockedResponse);
 
             await expect(
-                envioIndexerClient.getEventsAfterBlockNumberAndLogIndex(1 as ChainId, 12345, 0),
+                envioIndexerClient.getEventsAfterBlockNumberAndLogIndex({
+                    chainId: 1 as ChainId,
+                    blockNumber: 12345,
+                    logIndex: 0,
+                    limit: 100,
+                }),
             ).rejects.toThrow(InvalidIndexerResponse);
         });
 
@@ -224,7 +229,12 @@ describe("EnvioIndexerClient", () => {
             graphqlClient.request.mockRejectedValue(error);
 
             await expect(
-                envioIndexerClient.getEventsAfterBlockNumberAndLogIndex(1 as ChainId, 12345, 0),
+                envioIndexerClient.getEventsAfterBlockNumberAndLogIndex({
+                    chainId: 1 as ChainId,
+                    blockNumber: 12345,
+                    logIndex: 0,
+                    limit: 100,
+                }),
             ).rejects.toThrow(IndexerClientError);
         });
 
@@ -237,11 +247,11 @@ describe("EnvioIndexerClient", () => {
             graphqlClient.request.mockResolvedValue(mockedResponse);
 
             // Call the method without the limit argument
-            const result = await envioIndexerClient.getEventsAfterBlockNumberAndLogIndex(
-                1 as ChainId,
-                12345,
-                0,
-            );
+            const result = await envioIndexerClient.getEventsAfterBlockNumberAndLogIndex({
+                chainId: 1 as ChainId,
+                blockNumber: 12345,
+                logIndex: 0,
+            });
 
             expect(result).toEqual(testEvents);
             expect(graphqlClient.request).toHaveBeenCalledWith(
@@ -256,12 +266,68 @@ describe("EnvioIndexerClient", () => {
         });
 
         it("returns an empty array when no events are found", async () => {
-            const result = await envioIndexerClient.getEventsAfterBlockNumberAndLogIndex(
-                1 as ChainId,
-                10_000,
-                0,
-            );
+            const result = await envioIndexerClient.getEventsAfterBlockNumberAndLogIndex({
+                chainId: 1 as ChainId,
+                blockNumber: 10_000,
+                logIndex: 0,
+            });
             expect(result).toEqual([]);
+        });
+
+        it("discards events from the last block if allowPartialLastBlock is false", async () => {
+            // Mock the request implementation to simulate database querying
+            graphqlClient.request
+                .mockImplementationOnce(
+                    async (
+                        _document: RequestDocument | RequestOptions<object, object>,
+                        ...args: object[]
+                    ) => {
+                        const variables = args[0] as {
+                            chainId: ChainId;
+                            blockNumber: number;
+                            logIndex: number;
+                            limit: number;
+                        };
+                        const { chainId, blockNumber, logIndex, limit } = variables;
+
+                        const filteredEvents = testEvents
+                            .filter((event) => {
+                                // Match chainId
+                                if (event.chainId !== chainId) return false;
+
+                                // Implement the _or condition from the GraphQL query
+                                return (
+                                    event.blockNumber > blockNumber ||
+                                    (event.blockNumber === blockNumber && event.logIndex > logIndex)
+                                );
+                            })
+                            .slice(0, limit); // Apply limit
+
+                        return { raw_events: filteredEvents };
+                    },
+                )
+                .mockResolvedValueOnce({
+                    last_block_events: {
+                        aggregate: { count: 5 },
+                        nodes: [],
+                    },
+                });
+
+            const result = await envioIndexerClient.getEventsAfterBlockNumberAndLogIndex({
+                chainId: 1 as ChainId,
+                blockNumber: 100,
+                logIndex: 0,
+                limit: 3,
+                allowPartialLastBlock: false,
+            });
+
+            expect(result).toHaveLength(2);
+            expect(result).toEqual(testEvents.slice(0, 2));
+            expect(graphqlClient.request).toHaveBeenCalledTimes(2);
+            expect(graphqlClient.request).toHaveBeenNthCalledWith(2, expect.any(String), {
+                chainId: 1,
+                blockNumber: 101,
+            });
         });
     });
 

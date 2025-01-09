@@ -11,7 +11,9 @@ import {
     IProjectRepository,
     IRoundRepository,
     ITransactionManager,
+    RoundNotFound,
 } from "@grants-stack-indexer/repository";
+import { RoundNotFoundForId } from "@grants-stack-indexer/repository/dist/src/internal.js";
 import {
     AlloEvent,
     ChainId,
@@ -692,6 +694,65 @@ describe("Orchestrator", { sequential: true }, () => {
                 chainId,
             });
             expect(dataLoaderSpy).toHaveBeenCalledTimes(1);
+        });
+
+        it("ignores TimestampsUpdated errors if PoolCreated is in the same block", async () => {
+            const strategyAddress = "0x123" as Address;
+            const strategyId =
+                "0x6f9291df02b2664139cec5703c124e4ebce32879c74b6297faa1468aa5ff9ebf" as Hex;
+            const timestampsUpdatedEvent = createMockEvent("Strategy", "TimestampsUpdated", 1);
+            timestampsUpdatedEvent.logIndex = 0;
+            const timestampUpdatedEvent2 = createMockEvent(
+                "Strategy",
+                "TimestampsUpdatedWithRegistrationAndAllocation",
+                1,
+            );
+            timestampUpdatedEvent2.logIndex = 1;
+            const poolCreatedEvent = createMockEvent("Allo", "PoolCreated", 1, {
+                strategy: strategyAddress,
+                poolId: "1",
+                profileId: "0x123",
+                token: "0x123",
+                amount: "100",
+                metadata: ["1", "1"],
+            });
+            poolCreatedEvent.logIndex = 3;
+
+            const eventsProcessorSpy = vi.spyOn(orchestrator["eventsProcessor"], "processEvent");
+
+            vi.spyOn(mockEventsRegistry, "getLastProcessedEvent").mockResolvedValue(undefined);
+            vi.spyOn(mockIndexerClient, "getEventsAfterBlockNumberAndLogIndex")
+                .mockResolvedValueOnce([
+                    timestampsUpdatedEvent,
+                    timestampUpdatedEvent2,
+                    poolCreatedEvent,
+                ])
+                .mockResolvedValue([]);
+
+            vi.spyOn(mockStrategyRegistry, "getStrategyId").mockResolvedValue(undefined);
+            vi.spyOn(mockEvmProvider, "readContract").mockResolvedValue(strategyId);
+
+            eventsProcessorSpy
+                .mockRejectedValueOnce(new RoundNotFound(chainId, strategyAddress))
+                .mockRejectedValueOnce(new RoundNotFoundForId(chainId, "1"))
+                .mockResolvedValueOnce([]);
+
+            vi.spyOn(mockEventsRegistry, "saveLastProcessedEvent").mockImplementation(() => {
+                return Promise.resolve();
+            });
+
+            vi.spyOn(orchestrator["dataLoader"], "applyChanges").mockResolvedValue(
+                await Promise.resolve(),
+            );
+
+            runPromise = orchestrator.run(abortController.signal);
+
+            await vi.waitFor(() => {
+                if (eventsProcessorSpy.mock.calls.length < 3) throw new Error("Not yet called");
+            });
+
+            expect(orchestrator["eventsProcessor"].processEvent).toHaveBeenCalledTimes(3);
+            expect(logger.error).not.toHaveBeenCalled();
         });
     });
 });
