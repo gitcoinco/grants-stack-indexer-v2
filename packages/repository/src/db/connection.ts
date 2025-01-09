@@ -16,8 +16,10 @@ import {
     Donation as DonationTable,
     ProcessedEvent as EventRegistryTable,
     MatchingDistribution,
+    Metadata as MetadataCacheTable,
     PendingProjectRole as PendingProjectRoleTable,
     PendingRoundRole as PendingRoundRoleTable,
+    Price as PriceCacheTable,
     ProjectRole as ProjectRoleTable,
     Project as ProjectTable,
     Round,
@@ -67,6 +69,8 @@ export interface Database {
     strategiesRegistry: StrategyRegistryTable;
     eventsRegistry: EventRegistryTable;
     strategyProcessingCheckpoints: StrategyProcessingCheckpointTable;
+    metadataCache: MetadataCacheTable;
+    priceCache: PriceCacheTable;
 }
 
 /**

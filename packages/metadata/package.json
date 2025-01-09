@@ -28,6 +28,7 @@
         "test:cov": "vitest run --config vitest.config.ts --coverage"
     },
     "dependencies": {
+        "@grants-stack-indexer/repository": "workspace:*",
         "@grants-stack-indexer/shared": "workspace:*",
         "axios": "1.7.7",
         "zod": "3.23.8"
