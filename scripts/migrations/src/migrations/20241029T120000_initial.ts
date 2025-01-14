@@ -208,6 +208,14 @@ export async function up(db: Kysely<any>): Promise<void> {
 
         .addPrimaryKeyConstraint("applications_pkey", ["chainId", "roundId", "id"])
         .addForeignKeyConstraint(
+            "applications_projects_fkey",
+            ["chainId", "projectId"],
+            "projects",
+            ["chainId", "id"],
+            (cb) => cb.onDelete("cascade"),
+        )
+
+        .addForeignKeyConstraint(
             "applications_rounds_fkey",
             ["roundId", "chainId"],
             "rounds",
@@ -290,28 +298,8 @@ export async function up(db: Kysely<any>): Promise<void> {
         .addUniqueConstraint("unique_v2ProjectId", ["v2ProjectId"])
         .execute();
 
-    // Computed fields
+    // Project search function
     await sql`
-        create function ${ref("applications_project")}(a ${ref(
-            "applications",
-        )} ) returns ${ref("projects")} as $$
-            select *
-            from ${ref("projects")}
-            where id = a.project_id
-            and (chain_id = a.chain_id or true)
-            order by
-            case when chain_id = a.chain_id then 0 else 1 end,
-            id
-            limit 1;
-        $$ language sql stable;
-
-        create function ${ref("projects_applications")}(p ${ref(
-            "projects",
-        )} ) returns setof ${ref("applications")} as $$
-            select *
-            from ${ref("applications")}
-            where project_id = p.id;
-        $$ language sql stable;
 
         create function ${ref("search_projects")}(search_term text)
         returns setof ${ref("projects")} as $$
@@ -319,16 +307,6 @@ export async function up(db: Kysely<any>): Promise<void> {
             from ${ref("projects")}
             where to_tsvector(name) @@ to_tsquery(search_term)
             order by ts_rank_cd(to_tsvector(name), to_tsquery(search_term)) desc;
-        $$ language sql stable;
-
-        create function ${ref("applications_canonical_project")}(a ${ref(
-            "applications",
-        )} ) returns ${ref("projects")} as $$
-            select *
-            from ${ref("projects")}
-            where id = a.project_id
-            and project_type = 'canonical'
-            limit 1;
         $$ language sql stable;
      `.execute(db);
 }
