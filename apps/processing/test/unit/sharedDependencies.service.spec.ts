@@ -19,8 +19,10 @@ const mocks = vi.hoisted(() => {
     };
 });
 
-vi.mock("@grants-stack-indexer/shared", () => {
+vi.mock("@grants-stack-indexer/shared", async (importActual) => {
+    const actual = await importActual<typeof import("@grants-stack-indexer/shared")>();
     return {
+        ...actual,
         Logger: {
             getInstance: vi.fn().mockReturnValue(mocks.logger),
         },
@@ -42,16 +44,21 @@ vi.mock("@grants-stack-indexer/repository", () => ({
     })),
     KyselyEventRegistryRepository: vi.fn(),
     KyselyStrategyProcessingCheckpointRepository: vi.fn(),
+    KyselyTransactionManager: vi.fn(),
+    KyselyPricingCache: vi.fn(),
+    KyselyMetadataCache: vi.fn(),
 }));
 
 vi.mock("@grants-stack-indexer/pricing", () => ({
     PricingProviderFactory: {
         create: vi.fn(),
     },
+    CachingPricingProvider: vi.fn(),
 }));
 
 vi.mock("@grants-stack-indexer/metadata", () => ({
     IpfsProvider: vi.fn(),
+    CachingMetadataProvider: vi.fn(),
 }));
 
 vi.mock("@grants-stack-indexer/indexer-client", () => ({
@@ -145,6 +152,7 @@ describe("SharedDependenciesService", () => {
         expect(dependencies.core).toHaveProperty("donationRepository");
         expect(dependencies.core).toHaveProperty("metadataProvider");
         expect(dependencies.core).toHaveProperty("applicationPayoutRepository");
+        expect(dependencies.core).toHaveProperty("transactionManager");
 
         // Verify registries
         expect(dependencies.registriesRepositories).toHaveProperty("eventRegistryRepository");

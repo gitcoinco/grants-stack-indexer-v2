@@ -9,6 +9,7 @@ import {
     IProjectRepository,
     IRoundRepository,
     IStrategyProcessingCheckpointRepository,
+    ITransactionManager,
     Strategy,
 } from "@grants-stack-indexer/repository";
 import {
@@ -16,10 +17,12 @@ import {
     ContractToEventName,
     DeepPartial,
     EventParams,
+    ExponentialBackoff,
     Hex,
     ILogger,
     mergeDeep,
     ProcessorEvent,
+    RateLimitError,
 } from "@grants-stack-indexer/shared";
 
 import {
@@ -138,6 +141,7 @@ describe("RetroactiveProcessor", () => {
             applicationRepository: {} as IApplicationRepository,
             donationRepository: {} as IDonationRepository,
             applicationPayoutRepository: {} as IApplicationPayoutRepository,
+            transactionManager: {} as ITransactionManager,
             pricingProvider: {
                 getTokenPrice: vi.fn(),
             },
@@ -156,6 +160,7 @@ describe("RetroactiveProcessor", () => {
                 checkpointRepository: mockCheckpointRepository,
             },
             mockFetchLimit,
+            new ExponentialBackoff({ baseDelay: 100, maxAttempts: 3, factor: 2 }),
             mockLogger,
         );
 
@@ -216,13 +221,7 @@ describe("RetroactiveProcessor", () => {
                 .mockResolvedValueOnce([mockEvent])
                 .mockResolvedValue([]);
             vi.spyOn(mockEventsProcessor, "processEvent").mockResolvedValue([]);
-            vi.spyOn(mockDataLoader, "applyChanges").mockResolvedValue({
-                numFailed: 0,
-                errors: [],
-                changesets: [],
-                numExecuted: 1,
-                numSuccessful: 1,
-            });
+            vi.spyOn(mockDataLoader, "applyChanges").mockResolvedValue(await Promise.resolve());
             vi.spyOn(mockStrategyRegistry, "saveStrategyId").mockResolvedValue();
 
             await processor.processRetroactiveStrategies();
@@ -271,13 +270,7 @@ describe("RetroactiveProcessor", () => {
                 return [];
             });
             vi.spyOn(mockEventsProcessor, "processEvent").mockResolvedValue([]);
-            vi.spyOn(mockDataLoader, "applyChanges").mockResolvedValue({
-                numFailed: 0,
-                errors: [],
-                changesets: [],
-                numExecuted: 1,
-                numSuccessful: 1,
-            });
+            vi.spyOn(mockDataLoader, "applyChanges").mockResolvedValue(await Promise.resolve());
             vi.spyOn(mockStrategyRegistry, "saveStrategyId").mockResolvedValue();
 
             await processor.processRetroactiveStrategies();
@@ -325,13 +318,7 @@ describe("RetroactiveProcessor", () => {
                 .mockResolvedValueOnce([mockEvent])
                 .mockResolvedValue([]);
             vi.spyOn(mockEventsProcessor, "processEvent").mockResolvedValue([]);
-            vi.spyOn(mockDataLoader, "applyChanges").mockResolvedValue({
-                numFailed: 0,
-                errors: [],
-                changesets: [],
-                numExecuted: 1,
-                numSuccessful: 1,
-            });
+            vi.spyOn(mockDataLoader, "applyChanges").mockResolvedValue(await Promise.resolve());
             vi.spyOn(mockStrategyRegistry, "saveStrategyId").mockResolvedValue();
 
             await processor.processRetroactiveStrategies();
@@ -372,13 +359,7 @@ describe("RetroactiveProcessor", () => {
             vi.spyOn(processor["eventsFetcher"], "fetchEvents").mockResolvedValueOnce([mockEvent]);
 
             vi.spyOn(mockEventsProcessor, "processEvent").mockResolvedValue([]);
-            vi.spyOn(mockDataLoader, "applyChanges").mockResolvedValue({
-                numFailed: 0,
-                errors: [],
-                changesets: [],
-                numExecuted: 1,
-                numSuccessful: 1,
-            });
+            vi.spyOn(mockDataLoader, "applyChanges").mockResolvedValue(await Promise.resolve());
             vi.spyOn(mockStrategyRegistry, "saveStrategyId").mockResolvedValue();
 
             await processor.processRetroactiveStrategies();
@@ -417,13 +398,7 @@ describe("RetroactiveProcessor", () => {
                 .mockResolvedValue([]);
 
             vi.spyOn(mockEventsProcessor, "processEvent").mockResolvedValue([]);
-            vi.spyOn(mockDataLoader, "applyChanges").mockResolvedValue({
-                numFailed: 0,
-                errors: [],
-                changesets: [],
-                numExecuted: 1,
-                numSuccessful: 1,
-            });
+            vi.spyOn(mockDataLoader, "applyChanges").mockResolvedValue(await Promise.resolve());
             vi.spyOn(mockStrategyRegistry, "saveStrategyId").mockResolvedValue();
 
             await processor.processRetroactiveStrategies();
@@ -464,13 +439,7 @@ describe("RetroactiveProcessor", () => {
                     .mockRejectedValueOnce(new InvalidEvent(mockEvent1))
                     .mockResolvedValueOnce([]);
 
-                vi.spyOn(mockDataLoader, "applyChanges").mockResolvedValue({
-                    numFailed: 0,
-                    errors: [],
-                    changesets: [],
-                    numExecuted: 1,
-                    numSuccessful: 1,
-                });
+                vi.spyOn(mockDataLoader, "applyChanges").mockResolvedValue(await Promise.resolve());
 
                 await processor.processRetroactiveStrategies();
 
@@ -522,6 +491,41 @@ describe("RetroactiveProcessor", () => {
                         chainId,
                     },
                 );
+            });
+
+            it("retries on retriable errors", async () => {
+                const retriableError = new RateLimitError({ className: "ExternalProvider" }, 100);
+                vi.spyOn(mockEventsProcessor, "processEvent").mockRejectedValueOnce(retriableError);
+
+                const mockEvent = createMockEvent(eventName, defaultParams, existentStrategyId, {
+                    blockNumber: 50,
+                    logIndex: 0,
+                });
+
+                vi.spyOn(mockStrategyRegistry, "getStrategies").mockResolvedValue(
+                    mockValidStrategies,
+                );
+                vi.spyOn(mockEventsRegistry, "getLastProcessedEvent").mockResolvedValue({
+                    blockNumber: 100,
+                    logIndex: 1,
+                    chainId,
+                    blockTimestamp: 1234567890,
+                });
+
+                vi.spyOn(mockEventsFetcher, "fetchEvents")
+                    .mockResolvedValueOnce([mockEvent])
+                    .mockResolvedValue([]);
+
+                const processEventSpy = vi.spyOn(mockEventsProcessor, "processEvent");
+                processEventSpy.mockRejectedValueOnce(retriableError).mockResolvedValue([]);
+
+                vi.spyOn(mockDataLoader, "applyChanges").mockResolvedValue(await Promise.resolve());
+
+                await processor.processRetroactiveStrategies();
+
+                expect(processEventSpy).toHaveBeenCalledTimes(2); // 1st attempt failed, 2nd attempt succeeded
+                expect(mockLogger.error).not.toHaveBeenCalled();
+                expect(mockDataLoader.applyChanges).toHaveBeenCalledTimes(1);
             });
         });
     });

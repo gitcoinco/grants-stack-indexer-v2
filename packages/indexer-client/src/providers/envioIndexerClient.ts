@@ -3,7 +3,11 @@ import { gql, GraphQLClient } from "graphql-request";
 import { AnyIndexerFetchedEvent, ChainId, stringify } from "@grants-stack-indexer/shared";
 
 import { IndexerClientError, InvalidIndexerResponse } from "../exceptions/index.js";
-import { GetEventsFilters, IIndexerClient } from "../internal.js";
+import {
+    GetEventsAfterBlockNumberAndLogIndexParams,
+    GetEventsFilters,
+    IIndexerClient,
+} from "../internal.js";
 
 /**
  * Indexer client for the Envio indexer service
@@ -16,12 +20,13 @@ export class EnvioIndexerClient implements IIndexerClient {
         this.client.setHeader("x-hasura-admin-secret", secret);
     }
     /* @inheritdoc */
-    public async getEventsAfterBlockNumberAndLogIndex(
-        chainId: ChainId,
-        blockNumber: number,
-        logIndex: number,
-        limit: number = 100,
-    ): Promise<AnyIndexerFetchedEvent[]> {
+    public async getEventsAfterBlockNumberAndLogIndex({
+        chainId,
+        blockNumber,
+        logIndex,
+        limit = 100,
+        allowPartialLastBlock = true,
+    }: GetEventsAfterBlockNumberAndLogIndexParams): Promise<AnyIndexerFetchedEvent[]> {
         try {
             const response = (await this.client.request(
                 gql`
@@ -61,16 +66,82 @@ export class EnvioIndexerClient implements IIndexerClient {
                 `,
                 { chainId, blockNumber, logIndex, limit },
             )) as { raw_events: AnyIndexerFetchedEvent[] };
-            if (response?.raw_events) {
-                return response.raw_events;
+            const events = response?.raw_events;
+
+            if (events) {
+                if (allowPartialLastBlock || events.length === 0) {
+                    return events;
+                } else {
+                    const lastBlockNumber = events[events.length - 1]!.blockNumber;
+                    const countLastBlockEvents = events.filter(
+                        (e) => e.blockNumber === lastBlockNumber,
+                    ).length;
+                    const { lastBlockEvents } = await this.getTotalEventsInBlock(
+                        chainId,
+                        lastBlockNumber,
+                    );
+
+                    // If the last event's block has more events than what we fetched,
+                    // we need to exclude that block's events
+                    return lastBlockEvents.aggregate.count > countLastBlockEvents
+                        ? events.filter((e) => e.blockNumber < lastBlockNumber)
+                        : events;
+                }
             } else {
                 throw new InvalidIndexerResponse(stringify(response));
             }
         } catch (error) {
-            if (error instanceof InvalidIndexerResponse) {
-                throw error;
-            }
-            throw new IndexerClientError(stringify(error, Object.getOwnPropertyNames(error)));
+            throw this.handleError(error, "getEventsAfterBlockNumberAndLogIndex");
+        }
+    }
+
+    /**
+     * Get the total number of events in a block
+     * @param chainId - The chain ID
+     * @param blockNumber - The block number
+     * @returns The total number of events in the block
+     */
+    private async getTotalEventsInBlock(
+        chainId: ChainId,
+        blockNumber: number,
+    ): Promise<{
+        lastBlockEvents: {
+            aggregate: { count: number };
+            nodes: { block_number: number }[];
+        };
+    }> {
+        try {
+            const response = (await this.client.request(
+                gql`
+                    query getTotalEventsInBlock($chainId: Int!, $blockNumber: Int!) {
+                        last_block_events: raw_events_aggregate(
+                            where: {
+                                chain_id: { _eq: $chainId }
+                                block_number: { _eq: $blockNumber }
+                            }
+                        ) {
+                            aggregate {
+                                count
+                            }
+                            nodes {
+                                block_number
+                            }
+                        }
+                    }
+                `,
+                { chainId, blockNumber },
+            )) as {
+                last_block_events: {
+                    aggregate: { count: number };
+                    nodes: { block_number: number }[];
+                };
+            };
+
+            return {
+                lastBlockEvents: response.last_block_events,
+            };
+        } catch (error) {
+            throw this.handleError(error, "getTotalEventsInBlock");
         }
     }
 
@@ -167,10 +238,17 @@ export class EnvioIndexerClient implements IIndexerClient {
                 throw new InvalidIndexerResponse(stringify(response));
             }
         } catch (error) {
-            if (error instanceof InvalidIndexerResponse) {
-                throw error;
-            }
-            throw new IndexerClientError(stringify(error, Object.getOwnPropertyNames(error)));
+            throw this.handleError(error, "getEvents");
         }
+    }
+
+    private handleError(error: unknown, methodName: string): Error {
+        if (error instanceof InvalidIndexerResponse) {
+            return error;
+        }
+        return new IndexerClientError(stringify(error, Object.getOwnPropertyNames(error)), {
+            className: EnvioIndexerClient.name,
+            methodName,
+        });
     }
 }

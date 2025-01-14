@@ -1,7 +1,7 @@
 import { CoreDependencies } from "@grants-stack-indexer/data-flow";
 import { EnvioIndexerClient } from "@grants-stack-indexer/indexer-client";
-import { IpfsProvider } from "@grants-stack-indexer/metadata";
-import { PricingProviderFactory } from "@grants-stack-indexer/pricing";
+import { CachingMetadataProvider, IpfsProvider } from "@grants-stack-indexer/metadata";
+import { CachingPricingProvider, PricingProviderFactory } from "@grants-stack-indexer/pricing";
 import {
     createKyselyDatabase,
     IEventRegistryRepository,
@@ -11,12 +11,15 @@ import {
     KyselyApplicationRepository,
     KyselyDonationRepository,
     KyselyEventRegistryRepository,
+    KyselyMetadataCache,
+    KyselyPricingCache,
     KyselyProjectRepository,
     KyselyRoundRepository,
     KyselyStrategyProcessingCheckpointRepository,
     KyselyStrategyRegistryRepository,
+    KyselyTransactionManager,
 } from "@grants-stack-indexer/repository";
-import { ILogger, Logger } from "@grants-stack-indexer/shared";
+import { ExponentialBackoff, ILogger, Logger, RetryStrategy } from "@grants-stack-indexer/shared";
 
 import { Environment } from "../config/index.js";
 
@@ -29,6 +32,7 @@ export type SharedDependencies = {
     };
     indexerClient: EnvioIndexerClient;
     kyselyDatabase: ReturnType<typeof createKyselyDatabase>;
+    retryStrategy: RetryStrategy;
     logger: ILogger;
 };
 
@@ -50,6 +54,8 @@ export class SharedDependenciesService {
             logger,
         );
 
+        const transactionManager = new KyselyTransactionManager(kyselyDatabase);
+
         const projectRepository = new KyselyProjectRepository(kyselyDatabase, env.DATABASE_SCHEMA);
         const roundRepository = new KyselyRoundRepository(kyselyDatabase, env.DATABASE_SCHEMA);
         const applicationRepository = new KyselyApplicationRepository(
@@ -64,11 +70,23 @@ export class SharedDependenciesService {
             kyselyDatabase,
             env.DATABASE_SCHEMA,
         );
+        const pricingRepository = new KyselyPricingCache(kyselyDatabase, env.DATABASE_SCHEMA);
         const pricingProvider = PricingProviderFactory.create(env, {
             logger,
         });
+        const cachedPricingProvider = new CachingPricingProvider(
+            pricingProvider,
+            pricingRepository,
+            logger,
+        );
 
+        const metadataRepository = new KyselyMetadataCache(kyselyDatabase, env.DATABASE_SCHEMA);
         const metadataProvider = new IpfsProvider(env.IPFS_GATEWAYS_URL, logger);
+        const cachedMetadataProvider = new CachingMetadataProvider(
+            metadataProvider,
+            metadataRepository,
+            logger,
+        );
 
         const eventRegistryRepository = new KyselyEventRegistryRepository(
             kyselyDatabase,
@@ -88,15 +106,23 @@ export class SharedDependenciesService {
             env.INDEXER_ADMIN_SECRET,
         );
 
+        const retryStrategy = new ExponentialBackoff({
+            maxAttempts: env.RETRY_MAX_ATTEMPTS,
+            baseDelay: env.RETRY_BASE_DELAY_MS,
+            maxDelay: env.RETRY_MAX_DELAY_MS,
+            factor: env.RETRY_FACTOR,
+        });
+
         return {
             core: {
                 projectRepository,
                 roundRepository,
                 applicationRepository,
-                pricingProvider,
+                pricingProvider: cachedPricingProvider,
                 donationRepository,
-                metadataProvider,
+                metadataProvider: cachedMetadataProvider,
                 applicationPayoutRepository,
+                transactionManager,
             },
             registriesRepositories: {
                 eventRegistryRepository,
@@ -105,6 +131,7 @@ export class SharedDependenciesService {
             },
             indexerClient,
             kyselyDatabase,
+            retryStrategy,
             logger,
         };
     }

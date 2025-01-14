@@ -36,6 +36,10 @@ Available options:
 | `DUMMY_PRICE` | Dummy price | 1 | No | Only if PRICING_SOURCE is dummy |
 | `COINGECKO_API_KEY` | API key for CoinGecko service | N/A | Yes | |
 | `COINGECKO_API_TYPE` | CoinGecko API tier (demo or pro) | pro | No | |
+| `RETRY_MAX_ATTEMPTS` | Maximum number of retry attempts | 3 | No | |
+| `RETRY_BASE_DELAY_MS` | Base delay for retry attempts | 3000 | No | |
+| `RETRY_FACTOR` | Delay factor for retry attempts | 2 | No | |
+| `RETRY_MAX_DELAY_MS` | Maximum delay for retry attempts | 300000 | No | |
 
 ## Available Scripts
 

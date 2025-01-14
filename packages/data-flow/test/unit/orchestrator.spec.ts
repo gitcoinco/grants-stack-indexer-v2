@@ -3,7 +3,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { EvmProvider } from "@grants-stack-indexer/chain-providers";
 import { IIndexerClient } from "@grants-stack-indexer/indexer-client";
-import { UnsupportedStrategy } from "@grants-stack-indexer/processors";
 import {
     Changeset,
     IApplicationPayoutRepository,
@@ -11,18 +10,22 @@ import {
     IDonationRepository,
     IProjectRepository,
     IRoundRepository,
+    ITransactionManager,
+    RoundNotFound,
 } from "@grants-stack-indexer/repository";
+import { RoundNotFoundForId } from "@grants-stack-indexer/repository/dist/src/internal.js";
 import {
     AlloEvent,
     ChainId,
     ContractName,
     ContractToEventName,
     EventParams,
+    ExponentialBackoff,
     Hex,
     ILogger,
     ProcessorEvent,
+    RateLimitError,
     StrategyEvent,
-    stringify,
 } from "@grants-stack-indexer/shared";
 
 import {
@@ -92,6 +95,7 @@ describe("Orchestrator", { sequential: true }, () => {
 
         const dependencies: CoreDependencies = {
             evmProvider: mockEvmProvider,
+            transactionManager: {} as unknown as ITransactionManager,
             projectRepository: {} as unknown as IProjectRepository,
             roundRepository: {} as unknown as IRoundRepository,
             applicationRepository: {} as unknown as IApplicationRepository,
@@ -117,6 +121,7 @@ describe("Orchestrator", { sequential: true }, () => {
             },
             mockFetchLimit,
             mockFetchDelay,
+            new ExponentialBackoff({ baseDelay: 10, maxAttempts: 3, factor: 2 }),
             logger,
         );
     });
@@ -151,13 +156,9 @@ describe("Orchestrator", { sequential: true }, () => {
                 .mockResolvedValueOnce(mockEvents)
                 .mockResolvedValue([]);
             eventsProcessorSpy.mockResolvedValue([]);
-            vi.spyOn(orchestrator["dataLoader"], "applyChanges").mockResolvedValue({
-                numFailed: 0,
-                errors: [],
-                changesets: [],
-                numExecuted: 1,
-                numSuccessful: 1,
-            });
+            vi.spyOn(orchestrator["dataLoader"], "applyChanges").mockResolvedValue(
+                await Promise.resolve(),
+            );
             vi.spyOn(mockEventsRegistry, "saveLastProcessedEvent").mockImplementation(() => {
                 return Promise.resolve();
             });
@@ -246,13 +247,9 @@ describe("Orchestrator", { sequential: true }, () => {
                 return Promise.resolve();
             });
 
-            vi.spyOn(orchestrator["dataLoader"], "applyChanges").mockResolvedValue({
-                numFailed: 0,
-                errors: [],
-                changesets: ["InsertProject", "InsertRoundRole", "DeletePendingRoundRoles"],
-                numExecuted: 3,
-                numSuccessful: 3,
-            });
+            vi.spyOn(orchestrator["dataLoader"], "applyChanges").mockResolvedValue(
+                await Promise.resolve(),
+            );
 
             runPromise = orchestrator.run(abortController.signal);
 
@@ -374,13 +371,9 @@ describe("Orchestrator", { sequential: true }, () => {
                 vi.spyOn(mockEventsRegistry, "saveLastProcessedEvent").mockImplementation(() => {
                     return Promise.resolve();
                 });
-                vi.spyOn(orchestrator["dataLoader"], "applyChanges").mockResolvedValue({
-                    numFailed: 0,
-                    errors: [],
-                    changesets: ["InsertApplication"],
-                    numExecuted: 1,
-                    numSuccessful: 1,
-                });
+                vi.spyOn(orchestrator["dataLoader"], "applyChanges").mockResolvedValue(
+                    await Promise.resolve(),
+                );
 
                 runPromise = orchestrator.run(abortController.signal);
 
@@ -485,13 +478,9 @@ describe("Orchestrator", { sequential: true }, () => {
                 .mockResolvedValue([]);
 
             eventsProcessorSpy.mockResolvedValue([]);
-            vi.spyOn(orchestrator["dataLoader"], "applyChanges").mockResolvedValue({
-                numFailed: 0,
-                errors: [],
-                changesets: [],
-                numExecuted: 1,
-                numSuccessful: 1,
-            });
+            vi.spyOn(orchestrator["dataLoader"], "applyChanges").mockResolvedValue(
+                await Promise.resolve(),
+            );
             vi.spyOn(mockEventsRegistry, "saveLastProcessedEvent").mockImplementation(() => {
                 return Promise.resolve();
             });
@@ -544,13 +533,9 @@ describe("Orchestrator", { sequential: true }, () => {
                 return Promise.resolve();
             });
 
-            vi.spyOn(orchestrator["dataLoader"], "applyChanges").mockResolvedValue({
-                numFailed: 0,
-                errors: [],
-                changesets: ["InsertPendingRoundRole"],
-                numExecuted: 1,
-                numSuccessful: 1,
-            });
+            vi.spyOn(orchestrator["dataLoader"], "applyChanges").mockResolvedValue(
+                await Promise.resolve(),
+            );
 
             runPromise = orchestrator.run(abortController.signal);
 
@@ -566,7 +551,33 @@ describe("Orchestrator", { sequential: true }, () => {
     });
 
     describe("Error Handling", () => {
-        it.skip("retries error");
+        it("retries retriable errors", async () => {
+            const retriableError = new RateLimitError({ className: "ExternalProvider" }, 10);
+            const mockEvent = createMockEvent("Allo", "Unknown" as unknown as AlloEvent, 1);
+
+            const eventsProcessorSpy = vi.spyOn(orchestrator["eventsProcessor"], "processEvent");
+
+            vi.spyOn(mockIndexerClient, "getEventsAfterBlockNumberAndLogIndex")
+                .mockResolvedValueOnce([mockEvent])
+                .mockResolvedValue([]);
+            vi.spyOn(orchestrator["dataLoader"], "applyChanges").mockResolvedValue(
+                await Promise.resolve(),
+            );
+            vi.spyOn(mockEventsRegistry, "saveLastProcessedEvent").mockImplementation(() => {
+                return Promise.resolve();
+            });
+            eventsProcessorSpy.mockRejectedValueOnce(retriableError).mockResolvedValueOnce([]);
+
+            runPromise = orchestrator.run(abortController.signal);
+
+            await vi.waitFor(() => {
+                if (eventsProcessorSpy.mock.calls.length < 2) throw new Error("Not yet called");
+            });
+
+            expect(eventsProcessorSpy).toHaveBeenCalledTimes(2);
+            expect(orchestrator["dataLoader"].applyChanges).toHaveBeenCalledTimes(1);
+            expect(mockEventsRegistry.saveLastProcessedEvent).toHaveBeenCalledTimes(1);
+        });
 
         it("keeps running when there is an error", async () => {
             const eventsProcessorSpy = vi.spyOn(orchestrator["eventsProcessor"], "processEvent");
@@ -579,13 +590,9 @@ describe("Orchestrator", { sequential: true }, () => {
                 .mockResolvedValue([]);
 
             eventsProcessorSpy.mockRejectedValueOnce(error).mockResolvedValueOnce([]);
-            vi.spyOn(orchestrator["dataLoader"], "applyChanges").mockResolvedValue({
-                numFailed: 0,
-                errors: [],
-                changesets: [],
-                numExecuted: 1,
-                numSuccessful: 1,
-            });
+            vi.spyOn(orchestrator["dataLoader"], "applyChanges").mockResolvedValue(
+                await Promise.resolve(),
+            );
             vi.spyOn(mockEventsRegistry, "saveLastProcessedEvent").mockImplementation(() => {
                 return Promise.resolve();
             });
@@ -597,14 +604,13 @@ describe("Orchestrator", { sequential: true }, () => {
                     if (eventsProcessorSpy.mock.calls.length < 2) throw new Error("Not yet called");
                 },
                 {
-                    timeout: 1000,
+                    timeout: 2000,
                 },
             );
 
             expect(eventsProcessorSpy).toHaveBeenCalledTimes(2);
             expect(orchestrator["dataLoader"].applyChanges).toHaveBeenCalledTimes(1);
             expect(mockEventsRegistry.saveLastProcessedEvent).toHaveBeenCalledTimes(2);
-            expect(logger.error).toHaveBeenCalledTimes(1);
             expect(logger.error).toHaveBeenCalledWith(error, {
                 className: Orchestrator.name,
                 chainId,
@@ -612,11 +618,10 @@ describe("Orchestrator", { sequential: true }, () => {
             });
         });
 
-        it.skip("logs error for InvalidEvent", async () => {
+        it("logs debug for InvalidEvent", async () => {
             const mockEvent = createMockEvent("Allo", "Unknown" as unknown as AlloEvent, 1);
             const error = new InvalidEvent(mockEvent);
 
-            const consoleSpy = vi.spyOn(console, "error");
             const eventsProcessorSpy = vi.spyOn(orchestrator["eventsProcessor"], "processEvent");
 
             vi.spyOn(mockIndexerClient, "getEventsAfterBlockNumberAndLogIndex")
@@ -630,85 +635,124 @@ describe("Orchestrator", { sequential: true }, () => {
                 if (eventsProcessorSpy.mock.calls.length < 1) throw new Error("Not yet called");
             });
 
-            expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("InvalidEvent"));
-            expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining(stringify(mockEvent)));
-            expect(orchestrator["dataLoader"].applyChanges).not.toHaveBeenCalled();
-            expect(mockEventsRegistry.saveLastProcessedEvent).not.toHaveBeenCalled();
-        });
-
-        it.skip("logs error for UnsupportedEvent", async () => {
-            const strategyId =
-                "0x6f9291df02b2664139cec5703c124e4ebce32879c74b6297faa1468aa5ff9ebf" as Hex;
-            const mockEvent = createMockEvent(
-                "Strategy",
-                "NotHandled" as unknown as StrategyEvent,
+            expect(logger.debug).toHaveBeenNthCalledWith(
                 1,
+                expect.stringContaining(
+                    `Current event cannot be handled. ${error.name}: ${error.message}.`,
+                ),
+                {
+                    className: Orchestrator.name,
+                    chainId,
+                    event: mockEvent,
+                },
             );
-            const error = new UnsupportedStrategy(strategyId);
-
-            vi.spyOn(mockStrategyRegistry, "getStrategyId").mockResolvedValue({
-                id: strategyId,
-                address: mockEvent.srcAddress,
-                chainId,
-                handled: true,
-            });
-            vi.spyOn(mockIndexerClient, "getEventsAfterBlockNumberAndLogIndex")
-                .mockResolvedValueOnce([mockEvent])
-                .mockResolvedValue([]);
-            vi.spyOn(orchestrator["eventsProcessor"], "processEvent").mockRejectedValue(error);
-
-            const consoleSpy = vi.spyOn(console, "error");
-
-            runPromise = orchestrator.run(abortController.signal);
-
-            await vi.waitFor(() => {
-                if (consoleSpy.mock.calls.length < 1) throw new Error("Not yet called");
-            });
-
-            expect(consoleSpy).toHaveBeenCalledTimes(1);
-            expect(consoleSpy).toHaveBeenCalledWith(
-                expect.stringContaining(`Strategy ${strategyId} unsupported`),
-            );
-            expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining(stringify(mockEvent)));
             expect(orchestrator["dataLoader"].applyChanges).not.toHaveBeenCalled();
-            expect(mockEventsRegistry.saveLastProcessedEvent).not.toHaveBeenCalled();
+            expect(mockEventsRegistry.saveLastProcessedEvent).toHaveBeenCalled();
         });
 
-        it.skip("logs DataLoader errors", async () => {
-            const mockEvent = createMockEvent("Allo", "PoolCreated", 1);
-            const mockChangesets: Changeset[] = [
-                { type: "UpdateProject", args: { chainId, projectId: "1", project: {} } },
+        it("logs DataLoader errors", async () => {
+            const mockEvent = createMockEvent("Registry", "ProfileCreated", 1, undefined);
+            const changesets = [
+                {
+                    type: "InsertPendingRoundRole",
+                    args: { chainId, roundId: "1", roundRole: {} },
+                } as unknown as Changeset,
             ];
 
-            const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-            const dataLoaderSpy = vi.spyOn(orchestrator["dataLoader"], "applyChanges");
+            const eventsProcessorSpy = vi.spyOn(orchestrator["eventsProcessor"], "processEvent");
 
+            vi.spyOn(mockEventsRegistry, "getLastProcessedEvent").mockResolvedValue(undefined);
             vi.spyOn(mockIndexerClient, "getEventsAfterBlockNumberAndLogIndex")
                 .mockResolvedValueOnce([mockEvent])
                 .mockResolvedValue([]);
-            vi.spyOn(orchestrator["eventsProcessor"], "processEvent").mockResolvedValue(
-                mockChangesets,
-            );
-            dataLoaderSpy.mockResolvedValue({
-                numFailed: 1,
-                errors: ["Failed to update project"],
-                changesets: ["UpdateProject"],
-                numExecuted: 1,
-                numSuccessful: 0,
+
+            eventsProcessorSpy.mockResolvedValue(changesets);
+
+            vi.spyOn(mockEventsRegistry, "saveLastProcessedEvent").mockImplementation(() => {
+                return Promise.resolve();
+            });
+
+            const dataLoaderSpy = vi.spyOn(orchestrator["dataLoader"], "applyChanges");
+            const error = new Error("Failed to apply changesets");
+            dataLoaderSpy.mockRejectedValue(error);
+
+            runPromise = orchestrator.run(abortController.signal);
+
+            await vi.waitFor(() => {
+                if (eventsProcessorSpy.mock.calls.length < 1) throw new Error("Not yet called");
             });
 
             runPromise = orchestrator.run(abortController.signal);
 
             await vi.waitFor(() => {
-                if (dataLoaderSpy.mock.calls.length < 1) throw new Error("Not yet called");
+                if (eventsProcessorSpy.mock.calls.length < 1) throw new Error("Not yet called");
             });
 
-            expect(consoleSpy).toHaveBeenCalledWith(
-                expect.stringContaining("Failed to apply changesets"),
-            );
-            expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining(stringify(mockEvent)));
+            expect(logger.error).toHaveBeenCalledWith(error, {
+                event: mockEvent,
+                className: Orchestrator.name,
+                chainId,
+            });
             expect(dataLoaderSpy).toHaveBeenCalledTimes(1);
-            expect(mockEventsRegistry.saveLastProcessedEvent).not.toHaveBeenCalled();
+        });
+
+        it("ignores TimestampsUpdated errors if PoolCreated is in the same block", async () => {
+            const strategyAddress = "0x123" as Address;
+            const strategyId =
+                "0x6f9291df02b2664139cec5703c124e4ebce32879c74b6297faa1468aa5ff9ebf" as Hex;
+            const timestampsUpdatedEvent = createMockEvent("Strategy", "TimestampsUpdated", 1);
+            timestampsUpdatedEvent.logIndex = 0;
+            const timestampUpdatedEvent2 = createMockEvent(
+                "Strategy",
+                "TimestampsUpdatedWithRegistrationAndAllocation",
+                1,
+            );
+            timestampUpdatedEvent2.logIndex = 1;
+            const poolCreatedEvent = createMockEvent("Allo", "PoolCreated", 1, {
+                strategy: strategyAddress,
+                poolId: "1",
+                profileId: "0x123",
+                token: "0x123",
+                amount: "100",
+                metadata: ["1", "1"],
+            });
+            poolCreatedEvent.logIndex = 3;
+
+            const eventsProcessorSpy = vi.spyOn(orchestrator["eventsProcessor"], "processEvent");
+
+            vi.spyOn(mockEventsRegistry, "getLastProcessedEvent").mockResolvedValue(undefined);
+            vi.spyOn(mockIndexerClient, "getEventsAfterBlockNumberAndLogIndex")
+                .mockResolvedValueOnce([
+                    timestampsUpdatedEvent,
+                    timestampUpdatedEvent2,
+                    poolCreatedEvent,
+                ])
+                .mockResolvedValue([]);
+
+            vi.spyOn(mockStrategyRegistry, "getStrategyId").mockResolvedValue(undefined);
+            vi.spyOn(mockEvmProvider, "readContract").mockResolvedValue(strategyId);
+
+            eventsProcessorSpy
+                .mockRejectedValueOnce(new RoundNotFound(chainId, strategyAddress))
+                .mockRejectedValueOnce(new RoundNotFoundForId(chainId, "1"))
+                .mockResolvedValueOnce([]);
+
+            vi.spyOn(mockEventsRegistry, "saveLastProcessedEvent").mockImplementation(() => {
+                return Promise.resolve();
+            });
+
+            vi.spyOn(orchestrator["dataLoader"], "applyChanges").mockResolvedValue(
+                await Promise.resolve(),
+            );
+
+            runPromise = orchestrator.run(abortController.signal);
+
+            await vi.waitFor(() => {
+                if (eventsProcessorSpy.mock.calls.length < 3) throw new Error("Not yet called");
+            });
+
+            expect(orchestrator["eventsProcessor"].processEvent).toHaveBeenCalledTimes(3);
+            expect(logger.error).not.toHaveBeenCalled();
         });
     });
 });

@@ -22,7 +22,7 @@ export type ApplicationPayoutHandlers = {
 export const createApplicationPayoutHandlers = (
     repository: IApplicationPayoutRepository,
 ): ApplicationPayoutHandlers => ({
-    InsertApplicationPayout: (async (changeset): Promise<void> => {
-        await repository.insertApplicationPayout(changeset.args.applicationPayout);
+    InsertApplicationPayout: (async (changeset, txConnection): Promise<void> => {
+        await repository.insertApplicationPayout(changeset.args.applicationPayout, txConnection);
     }) satisfies ChangesetHandler<"InsertApplicationPayout">,
 });

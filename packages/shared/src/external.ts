@@ -16,8 +16,14 @@ export { Logger } from "./logger/logger.js";
 export { BigNumber } from "./internal.js";
 export type { BigNumberType } from "./internal.js";
 
-export type { TokenCode, Token } from "./internal.js";
+export type { TokenCode, Token, TokenPrice } from "./internal.js";
 export { TOKENS, getToken, getTokenOrThrow, UnknownToken } from "./internal.js";
 
 export { isAlloEvent, isRegistryEvent, isStrategyEvent } from "./internal.js";
 export { stringify } from "./internal.js";
+
+export { RetriableError, NonRetriableError, RateLimitError, NetworkError } from "./internal.js";
+export type { RetryMetadata, ErrorContext } from "./internal.js";
+
+export { ExponentialBackoff, RetryHandler } from "./internal.js";
+export type { RetryStrategy, RetryStrategyOptions } from "./internal.js";

@@ -186,6 +186,9 @@ importers:
 
     packages/metadata:
         dependencies:
+            "@grants-stack-indexer/repository":
+                specifier: workspace:*
+                version: link:../repository
             "@grants-stack-indexer/shared":
                 specifier: workspace:*
                 version: link:../shared
@@ -202,6 +205,9 @@ importers:
 
     packages/pricing:
         dependencies:
+            "@grants-stack-indexer/repository":
+                specifier: workspace:*
+                version: link:../repository
             "@grants-stack-indexer/shared":
                 specifier: workspace:*
                 version: link:../shared

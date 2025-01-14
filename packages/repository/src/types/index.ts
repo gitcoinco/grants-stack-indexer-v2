@@ -7,3 +7,6 @@ export * from "./applicationPayout.types.js";
 export * from "./strategy.types.js";
 export * from "./event.types.js";
 export * from "./strategyProcessingCheckpoint.types.js";
+export * from "./transaction.types.js";
+export * from "./metadata.types.js";
+export * from "./price.types.js";

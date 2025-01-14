@@ -6,3 +6,5 @@ export * from "./constants/index.js";
 export * from "./utils/testing.js";
 export * from "./logger/index.js";
 export * from "./tokens/tokens.js";
+export * from "./exceptions/index.js";
+export * from "./retry/index.js";

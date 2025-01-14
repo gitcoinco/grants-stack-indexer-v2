@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { IApplicationRepository, NewApplication } from "@grants-stack-indexer/repository";
+import {
+    IApplicationRepository,
+    NewApplication,
+    TransactionConnection,
+} from "@grants-stack-indexer/repository";
 import { ChainId } from "@grants-stack-indexer/shared";
 
 import { createApplicationHandlers } from "../../../src/data-loader/handlers/application.handlers.js";
@@ -10,6 +14,7 @@ describe("Application Handlers", () => {
         insertApplication: vi.fn(),
         updateApplication: vi.fn(),
     } as unknown as IApplicationRepository;
+    const mockTxConnection = { query: vi.fn() } as unknown as TransactionConnection;
 
     const handlers = createApplicationHandlers(mockRepository);
 
@@ -24,7 +29,7 @@ describe("Application Handlers", () => {
             args: application,
         });
 
-        expect(mockRepository.insertApplication).toHaveBeenCalledWith(application);
+        expect(mockRepository.insertApplication).toHaveBeenCalledWith(application, undefined);
     });
 
     it("handle UpdateApplication changeset", async () => {
@@ -38,11 +43,12 @@ describe("Application Handlers", () => {
             },
         } as const;
 
-        await handlers.UpdateApplication(update);
+        await handlers.UpdateApplication(update, mockTxConnection);
 
         expect(mockRepository.updateApplication).toHaveBeenCalledWith(
             { chainId: 1, roundId: "round1", id: "app1" },
             { status: "APPROVED" },
+            mockTxConnection,
         );
     });
 });

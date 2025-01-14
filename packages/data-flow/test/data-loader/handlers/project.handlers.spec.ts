@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { IProjectRepository, NewProject } from "@grants-stack-indexer/repository";
+import {
+    IProjectRepository,
+    NewProject,
+    TransactionConnection,
+} from "@grants-stack-indexer/repository";
 import { Address, ChainId } from "@grants-stack-indexer/shared";
 
 import { createProjectHandlers } from "../../../src/data-loader/handlers/project.handlers.js";
@@ -14,6 +18,7 @@ describe("Project Handlers", () => {
         insertProjectRole: vi.fn(),
         deleteManyProjectRoles: vi.fn(),
     } as unknown as IProjectRepository;
+    const mockTxConnection = { query: vi.fn() } as unknown as TransactionConnection;
 
     const handlers = createProjectHandlers(mockRepository);
 
@@ -39,12 +44,15 @@ describe("Project Handlers", () => {
             projectType: "canonical",
         } as NewProject;
 
-        await handlers.InsertProject({
-            type: "InsertProject",
-            args: { project },
-        });
+        await handlers.InsertProject(
+            {
+                type: "InsertProject",
+                args: { project },
+            },
+            mockTxConnection,
+        );
 
-        expect(mockRepository.insertProject).toHaveBeenCalledWith(project);
+        expect(mockRepository.insertProject).toHaveBeenCalledWith(project, mockTxConnection);
     });
 
     it("handle UpdateProject changeset", async () => {
@@ -65,6 +73,7 @@ describe("Project Handlers", () => {
         expect(mockRepository.updateProject).toHaveBeenCalledWith(
             { id: "project-1", chainId: 1 },
             { name: "Updated Project", updatedAtBlock: 200n },
+            undefined,
         );
     });
 
@@ -81,7 +90,10 @@ describe("Project Handlers", () => {
             args: { pendingProjectRole: pendingRole },
         });
 
-        expect(mockRepository.insertPendingProjectRole).toHaveBeenCalledWith(pendingRole);
+        expect(mockRepository.insertPendingProjectRole).toHaveBeenCalledWith(
+            pendingRole,
+            undefined,
+        );
     });
 
     it("handle DeletePendingProjectRoles changeset", async () => {
@@ -94,7 +106,10 @@ describe("Project Handlers", () => {
 
         await handlers.DeletePendingProjectRoles(changeset);
 
-        expect(mockRepository.deleteManyPendingProjectRoles).toHaveBeenCalledWith([1, 2, 3]);
+        expect(mockRepository.deleteManyPendingProjectRoles).toHaveBeenCalledWith(
+            [1, 2, 3],
+            undefined,
+        );
     });
 
     it("handle InsertProjectRole changeset", async () => {
@@ -111,7 +126,7 @@ describe("Project Handlers", () => {
             args: { projectRole },
         });
 
-        expect(mockRepository.insertProjectRole).toHaveBeenCalledWith(projectRole);
+        expect(mockRepository.insertProjectRole).toHaveBeenCalledWith(projectRole, undefined);
     });
 
     it("handle DeleteAllProjectRolesByRole changeset", async () => {
@@ -132,6 +147,8 @@ describe("Project Handlers", () => {
             changeset.args.projectRole.chainId,
             changeset.args.projectRole.projectId,
             changeset.args.projectRole.role,
+            undefined,
+            undefined,
         );
     });
 
@@ -155,6 +172,7 @@ describe("Project Handlers", () => {
             changeset.args.projectRole.projectId,
             changeset.args.projectRole.role,
             changeset.args.projectRole.address,
+            undefined,
         );
     });
 });

@@ -17,11 +17,11 @@ export type DonationHandlers = {
  * @returns An object containing all application-related handlers
  */
 export const createDonationHandlers = (repository: IDonationRepository): DonationHandlers => ({
-    InsertDonation: (async (changeset): Promise<void> => {
-        await repository.insertDonation(changeset.args.donation);
+    InsertDonation: (async (changeset, txConnection): Promise<void> => {
+        await repository.insertDonation(changeset.args.donation, txConnection);
     }) satisfies ChangesetHandler<"InsertDonation">,
 
-    InsertManyDonations: (async (changeset): Promise<void> => {
-        await repository.insertManyDonations(changeset.args.donations);
+    InsertManyDonations: (async (changeset, txConnection): Promise<void> => {
+        await repository.insertManyDonations(changeset.args.donations, txConnection);
     }) satisfies ChangesetHandler<"InsertManyDonations">,
 });

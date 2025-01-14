@@ -6,9 +6,11 @@ import {
     UnsupportedEventException,
     UnsupportedStrategy,
 } from "@grants-stack-indexer/processors";
+import { RoundNotFound, RoundNotFoundForId } from "@grants-stack-indexer/repository";
 import {
     Address,
     AnyEvent,
+    AnyIndexerFetchedEvent,
     ChainId,
     ContractName,
     Hex,
@@ -16,6 +18,9 @@ import {
     isAlloEvent,
     isStrategyEvent,
     ProcessorEvent,
+    RetriableError,
+    RetryHandler,
+    RetryStrategy,
     StrategyEvent,
     stringify,
 } from "@grants-stack-indexer/shared";
@@ -46,18 +51,21 @@ import { CoreDependencies, DataLoader, delay, IQueue, iStrategyAbi, Queue } from
  * The Orchestrator provides fault tolerance and performance optimization through:
  * - Configurable batch sizes for event fetching
  * - Delayed processing to prevent overwhelming the system
- * - Error handling and logging for various failure scenarios
+ * - Retry handling with exponential backoff for transient failures
+ * - Comprehensive error handling and logging for various failure scenarios
  * - Registry tracking of supported/unsupported strategies and events
  *
- * TODO: Enhance the error handling/retries, logging and observability
+ * TODO: Enhance logging and observability
  */
 export class Orchestrator {
     private readonly eventsQueue: IQueue<ProcessorEvent<ContractName, AnyEvent>>;
+    private readonly eventsByBlockContext: Map<number, AnyIndexerFetchedEvent[]>;
     private readonly eventsFetcher: IEventsFetcher;
     private readonly eventsProcessor: EventsProcessor;
     private readonly eventsRegistry: IEventsRegistry;
     private readonly strategyRegistry: IStrategyRegistry;
     private readonly dataLoader: DataLoader;
+    private readonly retryHandler: RetryHandler;
 
     /**
      * @param chainId - The chain id
@@ -65,6 +73,7 @@ export class Orchestrator {
      * @param indexerClient - The indexer client
      * @param registries - The registries
      * @param fetchLimit - The fetch limit
+     * @param retryStrategy - The retry strategy
      * @param fetchDelayInMs - The fetch delay in milliseconds
      */
     constructor(
@@ -77,6 +86,7 @@ export class Orchestrator {
         },
         private fetchLimit: number = 1000,
         private fetchDelayInMs: number = 10000,
+        private retryStrategy: RetryStrategy,
         private logger: ILogger,
     ) {
         this.eventsFetcher = new EventsFetcher(this.indexerClient);
@@ -94,9 +104,12 @@ export class Orchestrator {
                 donation: this.dependencies.donationRepository,
                 applicationPayout: this.dependencies.applicationPayoutRepository,
             },
+            this.dependencies.transactionManager,
             this.logger,
         );
         this.eventsQueue = new Queue<ProcessorEvent<ContractName, AnyEvent>>(fetchLimit);
+        this.eventsByBlockContext = new Map<number, AnyIndexerFetchedEvent[]>();
+        this.retryHandler = new RetryHandler(retryStrategy, this.logger);
     }
 
     async run(signal: AbortSignal): Promise<void> {
@@ -118,64 +131,53 @@ export class Orchestrator {
                     await delay(this.fetchDelayInMs);
                     continue;
                 }
+
                 await this.eventsRegistry.saveLastProcessedEvent(this.chainId, {
                     ...event,
                     rawEvent: event,
                 });
 
-                event = await this.enhanceStrategyId(event);
-                if (this.isPoolCreated(event)) {
-                    const handleable = existsHandler(event.strategyId);
-                    await this.strategyRegistry.saveStrategyId(
-                        this.chainId,
-                        event.params.strategy,
-                        event.strategyId,
-                        handleable,
-                    );
-                } else if (event.contractName === "Strategy" && "strategyId" in event) {
-                    if (!existsHandler(event.strategyId)) {
-                        this.logger.debug("Skipping event", {
-                            event,
-                            className: Orchestrator.name,
-                            chainId: this.chainId,
-                        });
-                        // we skip the event if the strategy id is not handled yet
-                        continue;
-                    }
-                }
-
-                const changesets = await this.eventsProcessor.processEvent(event);
-                const executionResult = await this.dataLoader.applyChanges(changesets);
-
-                if (executionResult.numFailed > 0) {
-                    //TODO: should we retry the failed changesets?
-                    this.logger.error(
-                        `Failed to apply changesets. ${executionResult.errors.join("\n")} Event: ${stringify(
-                            event,
-                        )}`,
-                        {
-                            className: Orchestrator.name,
-                            chainId: this.chainId,
-                        },
-                    );
-                }
+                await this.retryHandler.execute(
+                    async () => {
+                        await this.handleEvent(event!);
+                    },
+                    { abortSignal: signal },
+                );
             } catch (error: unknown) {
-                // TODO: improve error handling, retries and notify
+                // TODO: notify
                 if (
                     error instanceof UnsupportedStrategy ||
                     error instanceof InvalidEvent ||
                     error instanceof UnsupportedEventException
                 ) {
-                    // this.logger.error(
-                    //     `Current event cannot be handled. ${error.name}: ${error.message}. Event: ${stringify(event)}`,
-                    // );
+                    this.logger.debug(
+                        `Current event cannot be handled. ${error.name}: ${error.message}.`,
+                        {
+                            className: Orchestrator.name,
+                            chainId: this.chainId,
+                            event,
+                        },
+                    );
                 } else {
-                    if (error instanceof Error || isNativeError(error)) {
+                    if (error instanceof RetriableError) {
+                        error.message = `Error processing event after retries. ${error.message}`;
                         this.logger.error(error, {
                             event,
                             className: Orchestrator.name,
                             chainId: this.chainId,
                         });
+                    } else if (error instanceof Error || isNativeError(error)) {
+                        const shouldIgnoreError = this.shouldIgnoreTimestampsUpdatedError(
+                            error,
+                            event!,
+                        );
+                        if (!shouldIgnoreError) {
+                            this.logger.error(error, {
+                                event,
+                                className: Orchestrator.name,
+                                chainId: this.chainId,
+                            });
+                        }
                     } else {
                         this.logger.error(
                             new Error(`Error processing event: ${stringify(event)} ${error}`),
@@ -196,6 +198,33 @@ export class Orchestrator {
     }
 
     /**
+     * Sometimes the TimestampsUpdated event is part of the _initialize() function of a strategy.
+     * In this case, the event is emitted before the PoolCreated event. We can safely ignore the error
+     * if the PoolCreated event is present in the same block.
+     */
+    private shouldIgnoreTimestampsUpdatedError(
+        error: Error,
+        event: ProcessorEvent<ContractName, AnyEvent>,
+    ): boolean {
+        const canIgnoreErrorClass =
+            error instanceof RoundNotFound || error instanceof RoundNotFoundForId;
+        const canIgnoreEventName =
+            event?.eventName === "TimestampsUpdated" ||
+            event?.eventName === "TimestampsUpdatedWithRegistrationAndAllocation";
+
+        if (canIgnoreErrorClass && canIgnoreEventName) {
+            const events = this.eventsByBlockContext.get(event.blockNumber);
+            return (
+                events
+                    ?.filter((e) => e.logIndex > event.logIndex)
+                    .some((event) => event.eventName === "PoolCreated") ?? false
+            );
+        }
+
+        return false;
+    }
+
+    /**
      * Enqueue new events from the events fetcher using the last processed event as a starting point
      */
     private async enqueueEvents(): Promise<void> {
@@ -203,14 +232,50 @@ export class Orchestrator {
         const blockNumber = lastProcessedEvent?.blockNumber ?? 0;
         const logIndex = lastProcessedEvent?.logIndex ?? 0;
 
-        const events = await this.eventsFetcher.fetchEventsByBlockNumberAndLogIndex(
-            this.chainId,
+        const events = await this.eventsFetcher.fetchEventsByBlockNumberAndLogIndex({
+            chainId: this.chainId,
             blockNumber,
             logIndex,
-            this.fetchLimit,
-        );
+            limit: this.fetchLimit,
+            allowPartialLastBlock: false,
+        });
+
+        // Clear previous context
+        this.eventsByBlockContext.clear();
+        for (const event of events) {
+            if (!this.eventsByBlockContext.has(event.blockNumber)) {
+                this.eventsByBlockContext.set(event.blockNumber, []);
+            }
+            this.eventsByBlockContext.get(event.blockNumber)!.push(event);
+        }
 
         this.eventsQueue.push(...events);
+    }
+
+    private async handleEvent(event: ProcessorEvent<ContractName, AnyEvent>): Promise<void> {
+        event = await this.enhanceStrategyId(event);
+        if (this.isPoolCreated(event)) {
+            const handleable = existsHandler(event.strategyId);
+            await this.strategyRegistry.saveStrategyId(
+                this.chainId,
+                event.params.strategy,
+                event.strategyId,
+                handleable,
+            );
+        } else if (event.contractName === "Strategy" && "strategyId" in event) {
+            if (!existsHandler(event.strategyId)) {
+                this.logger.debug("Skipping event", {
+                    event,
+                    className: Orchestrator.name,
+                    chainId: this.chainId,
+                });
+                // we skip the event if the strategy id is not handled yet
+                return;
+            }
+        }
+
+        const changesets = await this.eventsProcessor.processEvent(event);
+        await this.dataLoader.applyChanges(changesets);
     }
 
     /**

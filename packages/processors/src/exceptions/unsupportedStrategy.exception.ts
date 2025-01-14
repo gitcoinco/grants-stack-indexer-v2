@@ -1,6 +1,8 @@
 import { Hex } from "viem";
 
-export class UnsupportedStrategy extends Error {
+import { NonRetriableError } from "@grants-stack-indexer/shared";
+
+export class UnsupportedStrategy extends NonRetriableError {
     constructor(strategyId: Hex) {
         super(`Strategy ${strategyId} unsupported`);
     }

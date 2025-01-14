@@ -45,8 +45,14 @@ export class ProcessingService {
     static async initialize(env: Environment): Promise<ProcessingService> {
         const sharedDependencies = await SharedDependenciesService.initialize(env);
         const { CHAINS: chains } = env;
-        const { core, registriesRepositories, indexerClient, kyselyDatabase, logger } =
-            sharedDependencies;
+        const {
+            core,
+            registriesRepositories,
+            indexerClient,
+            kyselyDatabase,
+            logger,
+            retryStrategy,
+        } = sharedDependencies;
         const {
             eventRegistryRepository,
             strategyRegistryRepository,
@@ -83,6 +89,7 @@ export class ProcessingService {
                 },
                 chain.fetchLimit,
                 chain.fetchDelayMs,
+                retryStrategy,
                 logger,
             );
             const retroactiveProcessor = new RetroactiveProcessor(
@@ -95,6 +102,7 @@ export class ProcessingService {
                     checkpointRepository: strategyProcessingCheckpointRepository,
                 },
                 chain.fetchLimit,
+                retryStrategy,
                 logger,
             );
 

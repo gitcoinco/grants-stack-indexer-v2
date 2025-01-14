@@ -17,38 +17,38 @@ export type ProjectHandlers = {
  * @returns An object containing all project-related handlers
  */
 export const createProjectHandlers = (repository: IProjectRepository): ProjectHandlers => ({
-    InsertProject: (async (changeset): Promise<void> => {
+    InsertProject: (async (changeset, txConnection): Promise<void> => {
         const { project } = changeset.args;
-        await repository.insertProject(project);
+        await repository.insertProject(project, txConnection);
     }) satisfies ChangesetHandler<"InsertProject">,
 
-    UpdateProject: (async (changeset): Promise<void> => {
+    UpdateProject: (async (changeset, txConnection): Promise<void> => {
         const { chainId, projectId, project } = changeset.args;
-        await repository.updateProject({ id: projectId, chainId }, project);
+        await repository.updateProject({ id: projectId, chainId }, project, txConnection);
     }) satisfies ChangesetHandler<"UpdateProject">,
 
-    InsertPendingProjectRole: (async (changeset): Promise<void> => {
+    InsertPendingProjectRole: (async (changeset, txConnection): Promise<void> => {
         const { pendingProjectRole } = changeset.args;
-        await repository.insertPendingProjectRole(pendingProjectRole);
+        await repository.insertPendingProjectRole(pendingProjectRole, txConnection);
     }) satisfies ChangesetHandler<"InsertPendingProjectRole">,
 
-    DeletePendingProjectRoles: (async (changeset): Promise<void> => {
+    DeletePendingProjectRoles: (async (changeset, txConnection): Promise<void> => {
         const { ids } = changeset.args;
-        await repository.deleteManyPendingProjectRoles(ids);
+        await repository.deleteManyPendingProjectRoles(ids, txConnection);
     }) satisfies ChangesetHandler<"DeletePendingProjectRoles">,
 
-    InsertProjectRole: (async (changeset): Promise<void> => {
+    InsertProjectRole: (async (changeset, txConnection): Promise<void> => {
         const { projectRole } = changeset.args;
-        await repository.insertProjectRole(projectRole);
+        await repository.insertProjectRole(projectRole, txConnection);
     }) satisfies ChangesetHandler<"InsertProjectRole">,
 
-    DeleteAllProjectRolesByRole: (async (changeset): Promise<void> => {
+    DeleteAllProjectRolesByRole: (async (changeset, txConnection): Promise<void> => {
         const { chainId, projectId, role } = changeset.args.projectRole;
-        await repository.deleteManyProjectRoles(chainId, projectId, role);
+        await repository.deleteManyProjectRoles(chainId, projectId, role, undefined, txConnection);
     }) satisfies ChangesetHandler<"DeleteAllProjectRolesByRole">,
 
-    DeleteAllProjectRolesByRoleAndAddress: (async (changeset): Promise<void> => {
+    DeleteAllProjectRolesByRoleAndAddress: (async (changeset, txConnection): Promise<void> => {
         const { chainId, projectId, role, address } = changeset.args.projectRole;
-        await repository.deleteManyProjectRoles(chainId, projectId, role, address);
+        await repository.deleteManyProjectRoles(chainId, projectId, role, address, txConnection);
     }) satisfies ChangesetHandler<"DeleteAllProjectRolesByRoleAndAddress">,
 });

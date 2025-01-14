@@ -9,6 +9,8 @@ import {
     Hex,
     ILogger,
     ProcessorEvent,
+    RetryHandler,
+    RetryStrategy,
     stringify,
 } from "@grants-stack-indexer/shared";
 
@@ -62,6 +64,7 @@ export class RetroactiveProcessor {
     private readonly strategyRegistry: IStrategyRegistry;
     private readonly dataLoader: DataLoader;
     private readonly checkpointRepository: IStrategyProcessingCheckpointRepository;
+    private readonly retryHandler: RetryHandler;
 
     /**
      * Creates a new instance of RetroactiveProcessor
@@ -70,6 +73,7 @@ export class RetroactiveProcessor {
      * @param indexerClient - Client for fetching blockchain events
      * @param registries - Event and strategy registries for tracking processing state
      * @param fetchLimit - Maximum number of events to fetch in a single batch (default: 1000)
+     * @param retryStrategy - The retry strategy
      * @param logger - Logger instance for debugging and monitoring
      */
     constructor(
@@ -82,6 +86,7 @@ export class RetroactiveProcessor {
             checkpointRepository: IStrategyProcessingCheckpointRepository;
         },
         private fetchLimit: number = 1000,
+        private retryStrategy: RetryStrategy,
         private logger: ILogger,
     ) {
         this.eventsFetcher = new EventsFetcher(this.indexerClient);
@@ -100,8 +105,10 @@ export class RetroactiveProcessor {
                 donation: this.dependencies.donationRepository,
                 applicationPayout: this.dependencies.applicationPayoutRepository,
             },
+            this.dependencies.transactionManager,
             this.logger,
         );
+        this.retryHandler = new RetryHandler(retryStrategy, this.logger);
     }
 
     /**
@@ -207,18 +214,11 @@ export class RetroactiveProcessor {
                 if (this.hasReachedLastEvent(currentPointer, lastEventPointer)) break;
 
                 event.strategyId = strategyId;
-                const changesets = await this.eventsProcessor.processEvent(event);
-                const executionResult = await this.dataLoader.applyChanges(changesets);
 
-                if (executionResult.numFailed > 0) {
-                    this.logger.error(
-                        `Failed to apply changesets. ${executionResult.errors.join("\n")} Event: ${stringify(event)}`,
-                        {
-                            className: RetroactiveProcessor.name,
-                            chainId: this.chainId,
-                        },
-                    );
-                }
+                await this.retryHandler.execute(async () => {
+                    const changesets = await this.eventsProcessor.processEvent(event!);
+                    await this.dataLoader.applyChanges(changesets);
+                });
             } catch (error) {
                 if (error instanceof InvalidEvent || error instanceof UnsupportedEventException) {
                     // Expected errors that we can safely ignore

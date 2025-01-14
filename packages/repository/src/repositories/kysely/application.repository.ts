@@ -6,12 +6,14 @@ import {
     Application,
     ApplicationNotFound,
     Database,
+    handlePostgresError,
     IApplicationRepository,
+    KyselyTransaction,
     NewApplication,
     PartialApplication,
 } from "../../internal.js";
 
-export class KyselyApplicationRepository implements IApplicationRepository {
+export class KyselyApplicationRepository implements IApplicationRepository<KyselyTransaction> {
     constructor(
         private readonly db: Kysely<Database>,
         private readonly schemaName: string,
@@ -96,31 +98,54 @@ export class KyselyApplicationRepository implements IApplicationRepository {
     }
 
     /* @inheritdoc */
-    async insertApplication(application: NewApplication): Promise<void> {
+    async insertApplication(application: NewApplication, tx?: KyselyTransaction): Promise<void> {
         const _application = this.formatApplication(application);
+        try {
+            const queryBuilder = (tx || this.db).withSchema(this.schemaName);
 
-        await this.db
-            .withSchema(this.schemaName)
-            .insertInto("applications")
-            .values(_application)
-            .execute();
+            await queryBuilder.insertInto("applications").values(_application).execute();
+        } catch (error) {
+            throw handlePostgresError(error, {
+                className: KyselyApplicationRepository.name,
+                methodName: "insertApplication",
+                additionalData: {
+                    application: _application,
+                },
+            });
+        }
     }
 
     /* @inheritdoc */
     async updateApplication(
         where: { id: string; chainId: ChainId; roundId: string },
         application: PartialApplication,
+        tx?: KyselyTransaction,
     ): Promise<void> {
         const _application = this.formatApplication(application);
+        try {
+            const queryBuilder = (tx || this.db).withSchema(this.schemaName);
 
-        await this.db
-            .withSchema(this.schemaName)
-            .updateTable("applications")
-            .set(_application)
-            .where("id", "=", where.id)
-            .where("chainId", "=", where.chainId)
-            .where("roundId", "=", where.roundId)
-            .execute();
+            await queryBuilder
+                .updateTable("applications")
+                .set(_application)
+                .where("id", "=", where.id)
+                .where("chainId", "=", where.chainId)
+                .where("roundId", "=", where.roundId)
+                .execute();
+        } catch (error) {
+            throw handlePostgresError(error, {
+                className: KyselyApplicationRepository.name,
+                methodName: "updateApplication",
+                additionalData: {
+                    params: {
+                        chainId: where.chainId,
+                        roundId: where.roundId,
+                        applicationId: where.id,
+                    },
+                    application: _application,
+                },
+            });
+        }
     }
 
     /**

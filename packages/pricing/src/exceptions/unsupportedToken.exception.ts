@@ -1,7 +1,7 @@
-import { TokenCode } from "@grants-stack-indexer/shared";
+import { ErrorContext, NonRetriableError, TokenCode } from "@grants-stack-indexer/shared";
 
-export class UnsupportedToken extends Error {
-    constructor(tokenCode: TokenCode) {
-        super(`Unsupported token: ${tokenCode}`);
+export class UnsupportedToken extends NonRetriableError {
+    constructor(tokenCode: TokenCode, context: ErrorContext) {
+        super(`Unsupported token: ${tokenCode}`, context);
     }
 }

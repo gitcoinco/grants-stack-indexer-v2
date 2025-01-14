@@ -1,6 +1,7 @@
 import { Address, ChainId } from "@grants-stack-indexer/shared";
 
 import { Application, NewApplication, PartialApplication } from "../types/application.types.js";
+import { TransactionConnection } from "../types/transaction.types.js";
 
 export interface IApplicationReadRepository {
     /**
@@ -65,22 +66,27 @@ export interface IApplicationReadRepository {
     getApplicationsByRoundId(chainId: ChainId, roundId: string): Promise<Application[]>;
 }
 
-export interface IApplicationRepository extends IApplicationReadRepository {
+export interface IApplicationRepository<
+    TxConnection extends TransactionConnection = TransactionConnection,
+> extends IApplicationReadRepository {
     /**
      * Inserts a new application into the repository.
      * @param application The new application to insert.
+     * @param tx Optional transaction connection
      * @returns A promise that resolves when the insertion is complete.
      */
-    insertApplication(application: NewApplication): Promise<void>;
+    insertApplication(application: NewApplication, tx?: TxConnection): Promise<void>;
 
     /**
      * Updates an existing application in the repository.
      * @param where An object containing the (id, chainId, and roundId) of the application to update.
      * @param application The partial application data to update.
+     * @param tx Optional transaction connection
      * @returns A promise that resolves when the update is complete.
      */
     updateApplication(
         where: { id: string; chainId: ChainId; roundId: string },
         application: PartialApplication,
+        tx?: TxConnection,
     ): Promise<void>;
 }
