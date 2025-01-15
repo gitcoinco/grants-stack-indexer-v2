@@ -6,6 +6,6 @@ COPY . /app
 WORKDIR /app
 
 RUN --mount=type=cache,id=pnpm,target=$PNPM_HOME/store pnpm install --frozen-lockfile
-RUN pnpm dlx envio codegen
+RUN pnpm envio codegen
 
-CMD pnpm dlx envio local db-migrate up && pnpm dlx envio start
+CMD pnpm envio local db-migrate up && pnpm envio start

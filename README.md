@@ -55,31 +55,35 @@ cp .env.example .env
 docker-compose up -d --build
 ```
 
-3. Copy the Example Environment File on `apps/migration-scripts` and edit the `.env` file
+3. Copy the Example Environment File on `scripts/migrations` and edit the `.env` file
 
 ```
-cp apps/migration-scripts/.env.example apps/migration-scripts/.env
+cp scripts/migrations/.env.example scripts/migrations/.env
 ```
 
 4. After starting Docker Compose, run the following command to apply the database migrations:
 
 ```
-pnpm script:db:migrate
+pnpm db:migrate
 ```
 
-5. Navigate to the processing service directory and start it with:
+5. Copy the Example Environment File on `apps/processing` and edit the `.env` file
+
+cp apps/processing/.env.example apps/processing/.env
+
+6. Start the Processing service with:
 
 ```
-cd apps/processing && pnpm dev
+pnpm dev
 ```
 
 Once the setup is completed you can access Hasura by navigating to:
 
 ```
-http://localhost:8080/
+http://localhost:8082/
 ```
 
-Use the default password: `testing`.
+Use the default password: `my-admin-secret`.
 
 ## Contributing
 

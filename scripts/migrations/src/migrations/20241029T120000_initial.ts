@@ -1,4 +1,4 @@
-import { Kysely, sql } from "kysely";
+import { Kysely, RawBuilder, sql } from "kysely";
 
 import { getSchemaName } from "../utils/index.js";
 
@@ -16,6 +16,7 @@ export async function up(db: Kysely<any>): Promise<void> {
     const CURRENCY_TYPE = sql`numeric(18,2)`;
 
     const schema = getSchemaName(db.schema);
+    const ref = (name: string): RawBuilder<unknown> => sql.table(`${schema}.${name}`);
     await db.schema.createType("project_type").asEnum(["canonical", "linked"]).execute();
 
     console.log("schema", schema);
@@ -207,6 +208,14 @@ export async function up(db: Kysely<any>): Promise<void> {
 
         .addPrimaryKeyConstraint("applications_pkey", ["chainId", "roundId", "id"])
         .addForeignKeyConstraint(
+            "applications_projects_fkey",
+            ["chainId", "projectId"],
+            "projects",
+            ["chainId", "id"],
+            (cb) => cb.onDelete("cascade"),
+        )
+
+        .addForeignKeyConstraint(
             "applications_rounds_fkey",
             ["roundId", "chainId"],
             "rounds",
@@ -288,6 +297,18 @@ export async function up(db: Kysely<any>): Promise<void> {
         .addUniqueConstraint("unique_v1ProjectId", ["v1ProjectId"])
         .addUniqueConstraint("unique_v2ProjectId", ["v2ProjectId"])
         .execute();
+
+    // Project search function
+    await sql`
+
+        create function ${ref("search_projects")}(search_term text)
+        returns setof ${ref("projects")} as $$
+            select *
+            from ${ref("projects")}
+            where to_tsvector(name) @@ to_tsquery(search_term)
+            order by ts_rank_cd(to_tsvector(name), to_tsquery(search_term)) desc;
+        $$ language sql stable;
+     `.execute(db);
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
