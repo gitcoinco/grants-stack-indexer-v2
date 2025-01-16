@@ -26,3 +26,12 @@ export interface IPricingProvider {
         endTimestampMs?: number,
     ): Promise<TokenPrice | undefined>;
 }
+
+export interface ICacheablePricingProvider extends IPricingProvider {
+    /**
+     * Clear all cached prices entries.
+     * This is only implemented by providers that support caching.
+     * @throws If there is an error clearing the cache
+     */
+    clearCache?(): Promise<void>;
+}

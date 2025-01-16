@@ -3,7 +3,7 @@ import { z } from "zod";
 import { ICache } from "@grants-stack-indexer/repository";
 import { ILogger } from "@grants-stack-indexer/shared";
 
-import { IMetadataProvider } from "../internal.js";
+import { ICacheableMetadataProvider, IMetadataProvider } from "../internal.js";
 
 /**
  * A metadata provider that caches metadata lookups from the underlying provider.
@@ -11,7 +11,7 @@ import { IMetadataProvider } from "../internal.js";
  * If not found in cache, fetches from the underlying provider and caches the result before returning.
  * Cache failures (both reads and writes) are logged but do not prevent the provider from functioning.
  */
-export class CachingMetadataProvider implements IMetadataProvider {
+export class CachingMetadataProvider implements ICacheableMetadataProvider {
     constructor(
         private readonly provider: IMetadataProvider,
         private readonly cache: ICache<string, unknown>,
@@ -49,5 +49,16 @@ export class CachingMetadataProvider implements IMetadataProvider {
         }
 
         return metadata;
+    }
+
+    /** @inheritdoc */
+    async clearCache(): Promise<void> {
+        try {
+            await this.cache.clearAll();
+        } catch (error) {
+            this.logger.debug(`Failed to clear metadata cache`, {
+                error,
+            });
+        }
     }
 }

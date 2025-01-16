@@ -63,4 +63,9 @@ export class KyselyMetadataCache implements ICache<string> {
             });
         }
     }
+
+    /** @inheritdoc */
+    async clearAll(): Promise<void> {
+        // No-op since we don't want to clear the cache
+    }
 }

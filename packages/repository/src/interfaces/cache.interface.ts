@@ -19,4 +19,10 @@ export interface ICache<Key, Value = unknown> {
      * @throws If there is an error setting the value.
      */
     set(key: Key, value: Value): Promise<void>;
+
+    /**
+     * Clear all values from the cache.
+     * @throws If there is an error clearing the cache.
+     */
+    clearAll(): Promise<void>;
 }

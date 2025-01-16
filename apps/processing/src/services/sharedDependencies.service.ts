@@ -5,6 +5,8 @@ import { CachingPricingProvider, PricingProviderFactory } from "@grants-stack-in
 import {
     createKyselyDatabase,
     IEventRegistryRepository,
+    InMemoryMetadataCache,
+    InMemoryPricingCache,
     IStrategyProcessingCheckpointRepository,
     IStrategyRegistryRepository,
     KyselyApplicationPayoutRepository,
@@ -74,17 +76,28 @@ export class SharedDependenciesService {
         const pricingProvider = PricingProviderFactory.create(env, {
             logger,
         });
-        const cachedPricingProvider = new CachingPricingProvider(
+        const dbCachedPricingProvider = new CachingPricingProvider(
             pricingProvider,
             pricingRepository,
             logger,
         );
 
+        const inMemoryCachedPricingProvider = new CachingPricingProvider(
+            dbCachedPricingProvider,
+            new InMemoryPricingCache(),
+            logger,
+        );
+
         const metadataRepository = new KyselyMetadataCache(kyselyDatabase, env.DATABASE_SCHEMA);
         const metadataProvider = new IpfsProvider(env.IPFS_GATEWAYS_URL, logger);
-        const cachedMetadataProvider = new CachingMetadataProvider(
+        const dbCachedMetadataProvider = new CachingMetadataProvider(
             metadataProvider,
             metadataRepository,
+            logger,
+        );
+        const inMemoryCachedMetadataProvider = new CachingMetadataProvider(
+            dbCachedMetadataProvider,
+            new InMemoryMetadataCache(),
             logger,
         );
 
@@ -118,9 +131,9 @@ export class SharedDependenciesService {
                 projectRepository,
                 roundRepository,
                 applicationRepository,
-                pricingProvider: cachedPricingProvider,
+                pricingProvider: inMemoryCachedPricingProvider,
                 donationRepository,
-                metadataProvider: cachedMetadataProvider,
+                metadataProvider: inMemoryCachedMetadataProvider,
                 applicationPayoutRepository,
                 transactionManager,
             },
