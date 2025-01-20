@@ -313,7 +313,11 @@ export async function up(db: Kysely<any>): Promise<void> {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function down(db: Kysely<any>): Promise<void> {
+    const schema = getSchemaName(db.schema);
+    const ref = (name: string): RawBuilder<unknown> => sql.table(`${schema}.${name}`);
+
     // Drop everything in reverse order
+    await sql`drop function if exists ${ref("search_projects")}`.execute(db);
     await db.schema.dropTable("legacy_projects").execute();
     await db.schema.dropTable("donations").execute();
     await db.schema.dropTable("applications_payouts").execute();
