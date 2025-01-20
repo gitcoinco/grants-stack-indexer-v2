@@ -1,6 +1,7 @@
 import { isNativeError } from "util/types";
 
 import { IIndexerClient } from "@grants-stack-indexer/indexer-client";
+import { TokenPrice } from "@grants-stack-indexer/pricing";
 import {
     existsHandler,
     UnsupportedEventException,
@@ -13,6 +14,7 @@ import {
     AnyIndexerFetchedEvent,
     ChainId,
     ContractName,
+    getToken,
     Hex,
     ILogger,
     isAlloEvent,
@@ -23,6 +25,7 @@ import {
     RetryStrategy,
     StrategyEvent,
     stringify,
+    Token,
 } from "@grants-stack-indexer/shared";
 
 import type { IEventsFetcher, IEventsRegistry, IStrategyRegistry } from "./interfaces/index.js";
@@ -30,6 +33,12 @@ import { EventsFetcher } from "./eventsFetcher.js";
 import { EventsProcessor } from "./eventsProcessor.js";
 import { InvalidEvent } from "./exceptions/index.js";
 import { CoreDependencies, DataLoader, delay, IQueue, iStrategyAbi, Queue } from "./internal.js";
+
+type TokenWithTimestamps = {
+    token: Token;
+    minTimestamp: number;
+    maxTimestamp: number;
+};
 
 /**
  * The Orchestrator is the central coordinator of the data flow system, managing the interaction between
@@ -116,7 +125,11 @@ export class Orchestrator {
         while (!signal.aborted) {
             let event: ProcessorEvent<ContractName, AnyEvent> | undefined;
             try {
-                if (this.eventsQueue.isEmpty()) await this.enqueueEvents();
+                if (this.eventsQueue.isEmpty()) {
+                    const events = await this.getNextEventsBatch();
+                    await this.bulkFetchMetadataAndPricesForBatch(events);
+                    await this.enqueueEvents(events);
+                }
 
                 event = this.eventsQueue.pop();
 
@@ -197,6 +210,49 @@ export class Orchestrator {
         });
     }
 
+    private async getMetadataFromEvents(events: AnyIndexerFetchedEvent[]): Promise<string[]> {
+        const ids = new Set<string>();
+
+        for (const event of events) {
+            if ("metadata" in event.params) {
+                ids.add(event.params.metadata[1]);
+            }
+        }
+
+        return Array.from(ids);
+    }
+
+    private async getTokensFromEvents(
+        events: AnyIndexerFetchedEvent[],
+    ): Promise<TokenWithTimestamps[]> {
+        const tokenMap = new Map<string, TokenWithTimestamps>();
+
+        for (const event of events) {
+            if (
+                "token" in event.params &&
+                "amount" in event.params &&
+                BigInt(event.params.amount) > 0n
+            ) {
+                const token = getToken(this.chainId, event.params.token);
+                if (!token) continue;
+
+                const existing = tokenMap.get(token.address);
+                if (existing) {
+                    existing.minTimestamp = Math.min(existing.minTimestamp, event.blockTimestamp);
+                    existing.maxTimestamp = Math.max(existing.maxTimestamp, event.blockTimestamp);
+                } else {
+                    tokenMap.set(token.address, {
+                        token,
+                        minTimestamp: event.blockTimestamp,
+                        maxTimestamp: event.blockTimestamp,
+                    });
+                }
+            }
+        }
+
+        return Array.from(tokenMap.values());
+    }
+
     /**
      * Sometimes the TimestampsUpdated event is part of the _initialize() function of a strategy.
      * In this case, the event is emitted before the PoolCreated event. We can safely ignore the error
@@ -224,10 +280,7 @@ export class Orchestrator {
         return false;
     }
 
-    /**
-     * Enqueue new events from the events fetcher using the last processed event as a starting point
-     */
-    private async enqueueEvents(): Promise<void> {
+    private async getNextEventsBatch(): Promise<AnyIndexerFetchedEvent[]> {
         const lastProcessedEvent = await this.eventsRegistry.getLastProcessedEvent(this.chainId);
         const blockNumber = lastProcessedEvent?.blockNumber ?? 0;
         const logIndex = lastProcessedEvent?.logIndex ?? 0;
@@ -240,6 +293,33 @@ export class Orchestrator {
             allowPartialLastBlock: false,
         });
 
+        return events;
+    }
+
+    /**
+     * Clear caches and fetch metadata and prices for the batch
+     */
+    private async bulkFetchMetadataAndPricesForBatch(
+        events: AnyIndexerFetchedEvent[],
+    ): Promise<void> {
+        // Clear caches
+        if (this.dependencies.metadataProvider.clearCache) {
+            await this.dependencies.metadataProvider.clearCache();
+        }
+
+        const metadataIds = await this.getMetadataFromEvents(events);
+        const tokens = await this.getTokensFromEvents(events);
+
+        await Promise.allSettled([
+            this.bulkFetchMetadata(metadataIds),
+            this.bulkFetchTokens(tokens),
+        ]);
+    }
+
+    /**
+     * Enqueue events and updates new context for the batch
+     */
+    private async enqueueEvents(events: AnyIndexerFetchedEvent[]): Promise<void> {
         // Clear previous context
         this.eventsByBlockContext.clear();
         for (const event of events) {
@@ -250,6 +330,69 @@ export class Orchestrator {
         }
 
         this.eventsQueue.push(...events);
+    }
+
+    /**
+     * Fetch all possible metadata for the batch
+     */
+    private async bulkFetchMetadata(metadataIds: string[]): Promise<unknown[]> {
+        const results = await Promise.allSettled(
+            metadataIds.map((id) =>
+                this.retryHandler.execute(() =>
+                    this.dependencies.metadataProvider.getMetadata<unknown>(id),
+                ),
+            ),
+        );
+
+        const metadata: unknown[] = [];
+        for (const result of results) {
+            if (result.status === "fulfilled" && result.value) {
+                metadata.push(result.value);
+            }
+        }
+
+        return metadata;
+    }
+
+    /**
+     * Fetch all possible prices for the batch
+     */
+    private async bulkFetchTokens(tokens: TokenWithTimestamps[]): Promise<TokenPrice[]> {
+        const results = await Promise.allSettled(
+            tokens.map(({ token, minTimestamp, maxTimestamp }) =>
+                this.retryHandler.execute(async () => {
+                    // Get all unique timestamps between min and max
+                    const events = this.eventsByBlockContext.values();
+                    const timestamps = Array.from(events)
+                        .flat()
+                        .filter(
+                            (e) =>
+                                e.blockTimestamp >= minTimestamp &&
+                                e.blockTimestamp <= maxTimestamp,
+                        )
+                        .map((e) => e.blockTimestamp);
+
+                    // Remove duplicates and sort
+                    const uniqueTimestamps = [...new Set(timestamps)].sort();
+
+                    // Get prices for all timestamps in the range
+                    const prices = await this.dependencies.pricingProvider.getTokenPrices(
+                        token.priceSourceCode,
+                        uniqueTimestamps,
+                    );
+                    return prices;
+                }),
+            ),
+        );
+
+        const tokenPrices: TokenPrice[] = [];
+        for (const result of results) {
+            if (result.status === "fulfilled" && result.value) {
+                tokenPrices.push(...result.value);
+            }
+        }
+
+        return tokenPrices;
     }
 
     private async handleEvent(event: ProcessorEvent<ContractName, AnyEvent>): Promise<void> {

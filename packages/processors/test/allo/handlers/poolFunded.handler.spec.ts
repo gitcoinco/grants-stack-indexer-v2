@@ -56,6 +56,7 @@ describe("PoolFundedHandler", () => {
         } as unknown as IRoundReadRepository;
         mockPricingProvider = {
             getTokenPrice: vi.fn(),
+            getTokenPrices: vi.fn(),
         };
         mockLogger = {
             error: vi.fn(),

@@ -144,6 +144,7 @@ describe("RetroactiveProcessor", () => {
             transactionManager: {} as ITransactionManager,
             pricingProvider: {
                 getTokenPrice: vi.fn(),
+                getTokenPrices: vi.fn(),
             },
             metadataProvider: {
                 getMetadata: vi.fn(),

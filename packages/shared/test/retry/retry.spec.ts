@@ -29,10 +29,11 @@ describe("RetryHandler", () => {
         const handler = new RetryHandler(new ExponentialBackoff(), mockLogger);
         const operation = vi.fn().mockResolvedValue("success");
 
-        await handler.execute(operation);
+        const result = await handler.execute(operation);
 
         expect(operation).toHaveBeenCalledTimes(1);
         expect(mockLogger.debug).not.toHaveBeenCalled();
+        expect(result).toBe("success");
     });
 
     it("retries on RetriableError and succeeds", async () => {

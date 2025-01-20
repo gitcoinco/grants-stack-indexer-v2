@@ -41,6 +41,7 @@ describe("DirectAllocatedHandler", () => {
         } as unknown as IRoundReadRepository;
         mockPricingProvider = {
             getTokenPrice: vi.fn(),
+            getTokenPrices: vi.fn(),
         } as IPricingProvider;
         mockProjectRepository = {
             getProjectByIdOrThrow: vi.fn(),

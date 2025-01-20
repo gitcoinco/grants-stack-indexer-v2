@@ -103,6 +103,7 @@ describe("Orchestrator", { sequential: true }, () => {
             applicationPayoutRepository: {} as unknown as IApplicationPayoutRepository,
             pricingProvider: {
                 getTokenPrice: vi.fn(),
+                getTokenPrices: vi.fn(),
             },
             metadataProvider: {
                 getMetadata: vi.fn(),

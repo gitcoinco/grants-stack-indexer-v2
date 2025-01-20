@@ -13,6 +13,7 @@ import { IPricingProvider } from "../interfaces/index.js";
 import {
     CoingeckoPriceChartData,
     CoingeckoTokenId,
+    MIN_GRANULARITY_MS,
     TokenPrice,
     UnknownPricingException,
     UnsupportedToken,
@@ -124,6 +125,58 @@ export class CoingeckoProvider implements IPricingProvider {
                 timestampMs: closestEntry[0],
                 priceUsd: closestEntry[1],
             };
+        } catch (error: unknown) {
+            if (isAxiosError(error)) {
+                this.handleAxiosError(error, path);
+            }
+
+            const errorMessage =
+                `Unknown Coingecko API error: failed to fetch token price ` +
+                stringify(error, Object.getOwnPropertyNames(error));
+
+            throw new UnknownPricingException(errorMessage, {
+                className: CoingeckoProvider.name,
+                methodName: "getTokenPrice",
+                additionalData: {
+                    path,
+                },
+            });
+        }
+    }
+
+    /* @inheritdoc */
+    async getTokenPrices(tokenCode: TokenCode, timestamps: number[]): Promise<TokenPrice[]> {
+        const tokenId = TokenMapping[tokenCode];
+        if (!tokenId) {
+            throw new UnsupportedToken(tokenCode, {
+                className: CoingeckoProvider.name,
+                methodName: "getTokenPrice",
+            });
+        }
+
+        if (timestamps.length === 0) {
+            return [];
+        }
+
+        const effectiveMin = Math.min(...timestamps);
+        let effectiveMax = Math.max(...timestamps);
+
+        if (effectiveMin === effectiveMax || effectiveMin > effectiveMax) {
+            return [];
+        }
+
+        if (effectiveMax - effectiveMin < MIN_GRANULARITY_MS) {
+            effectiveMax = effectiveMin + MIN_GRANULARITY_MS;
+        }
+
+        const path = `/coins/${tokenId}/market_chart/range?vs_currency=usd&from=${effectiveMin}&to=${effectiveMax}&precision=full&interval=5m`;
+
+        try {
+            const { data } = await this.axios.get<CoingeckoPriceChartData>(path);
+            return data.prices.map(([timestampMs, priceUsd]) => ({
+                timestampMs,
+                priceUsd,
+            }));
         } catch (error: unknown) {
             if (isAxiosError(error)) {
                 this.handleAxiosError(error, path);

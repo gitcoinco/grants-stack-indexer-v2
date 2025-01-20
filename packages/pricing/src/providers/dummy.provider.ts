@@ -21,4 +21,12 @@ export class DummyPricingProvider implements IPricingProvider {
             timestampMs: startTimestampMs,
         });
     }
+
+    /* @inheritdoc */
+    async getTokenPrices(_tokenCode: TokenCode, timestamps: number[]): Promise<TokenPrice[]> {
+        return timestamps.map((timestampMs) => ({
+            priceUsd: this.dummyPrice,
+            timestampMs,
+        }));
+    }
 }

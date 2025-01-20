@@ -28,11 +28,12 @@ export class RetryHandler {
     async execute<T>(
         operation: () => Promise<T>,
         params: { abortSignal?: AbortSignal } = {},
-    ): Promise<void> {
+    ): Promise<T | undefined> {
+        let result: T | undefined;
         let attemptCount = 0;
         while (true && !params.abortSignal?.aborted) {
             try {
-                await operation();
+                result = await operation();
                 break;
             } catch (error) {
                 if (!(error instanceof RetriableError)) {
@@ -61,5 +62,7 @@ export class RetryHandler {
         if (params.abortSignal?.aborted) {
             throw new Error("Operation aborted");
         }
+
+        return result;
     }
 }

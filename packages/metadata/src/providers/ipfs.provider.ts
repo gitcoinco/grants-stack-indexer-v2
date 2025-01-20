@@ -8,6 +8,7 @@ import { EmptyGatewaysUrlsException, InvalidContentException, isValidCid } from 
 
 export class IpfsProvider implements IMetadataProvider {
     private readonly axiosInstance: AxiosInstance;
+    private currentGatewayIndex: number = 0;
 
     constructor(
         private readonly gateways: string[],
@@ -21,6 +22,12 @@ export class IpfsProvider implements IMetadataProvider {
         this.axiosInstance = axios.create();
     }
 
+    private getNextGateway(): string {
+        const gateway = this.gateways[this.currentGatewayIndex]!;
+        this.currentGatewayIndex = (this.currentGatewayIndex + 1) % this.gateways.length;
+        return gateway;
+    }
+
     /* @inheritdoc */
     async getMetadata<T>(
         ipfsCid: string,
@@ -30,7 +37,12 @@ export class IpfsProvider implements IMetadataProvider {
             return undefined;
         }
 
-        for (const gateway of this.gateways) {
+        // Create array of gateways starting from current index
+        const orderedGateways = Array.from({ length: this.gateways.length }, () =>
+            this.getNextGateway(),
+        );
+
+        for (const gateway of orderedGateways) {
             const url = `${gateway}/ipfs/${ipfsCid}`;
             try {
                 //TODO: retry policy for each gateway
