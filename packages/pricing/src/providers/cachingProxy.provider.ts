@@ -70,7 +70,7 @@ export class CachingPricingProvider implements IPricingProvider, ICacheable {
         try {
             await this.cache.clearCache?.();
         } catch (error) {
-            this.logger.debug(`Failed to clear metadata cache`, {
+            this.logger.debug(`Failed to clear pricing cache`, {
                 error,
             });
         }
