@@ -5,8 +5,9 @@ import { IPricingProvider } from "@grants-stack-indexer/pricing";
 import {
     Application,
     ApplicationNotFound,
-    IApplicationRepository,
-    IRoundRepository,
+    Donation,
+    IApplicationReadRepository,
+    IRoundReadRepository,
     Round,
     RoundNotFound,
 } from "@grants-stack-indexer/repository";
@@ -21,8 +22,8 @@ import { createMockEvent } from "../../../mocks/index.js";
 
 describe("DVMDAllocatedHandler", () => {
     let handler: DVMDAllocatedHandler;
-    let mockRoundRepository: IRoundRepository;
-    let mockApplicationRepository: IApplicationRepository;
+    let mockRoundRepository: IRoundReadRepository;
+    let mockApplicationRepository: IApplicationReadRepository;
     let mockPricingProvider: IPricingProvider;
     let mockEvent: ProcessorEvent<"Strategy", "AllocatedWithOrigin">;
     const chainId = 10 as ChainId;
@@ -40,13 +41,13 @@ describe("DVMDAllocatedHandler", () => {
     beforeEach(() => {
         mockRoundRepository = {
             getRoundByStrategyAddressOrThrow: vi.fn(),
-        } as unknown as IRoundRepository;
+        } as unknown as IRoundReadRepository;
         mockApplicationRepository = {
             getApplicationByAnchorAddressOrThrow: vi.fn(),
-        } as unknown as IApplicationRepository;
+        } as unknown as IApplicationReadRepository;
         mockPricingProvider = {
             getTokenPrice: vi.fn(),
-        } as IPricingProvider;
+        } as unknown as IPricingProvider;
     });
 
     it("handle a valid allocated event", async () => {
@@ -358,5 +359,81 @@ describe("DVMDAllocatedHandler", () => {
         });
 
         await expect(handler.handle()).rejects.toThrow(MetadataParsingFailed);
+    });
+
+    describe("Timestamp handling within DVMDAllocatedHandler", () => {
+        const mockRound = {
+            id: "round1",
+            matchTokenAddress: "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1",
+        } as unknown as Round;
+
+        const mockApplication = {
+            id: "app1",
+            projectId: "project1",
+            metadata: {
+                application: {
+                    recipient: "0x1234567890123456789012345678901234567890",
+                    round: mockRound.id,
+                },
+            },
+        } as unknown as Application;
+
+        beforeEach(() => {
+            vi.spyOn(mockRoundRepository, "getRoundByStrategyAddressOrThrow").mockResolvedValue(
+                mockRound,
+            );
+            vi.spyOn(
+                mockApplicationRepository,
+                "getApplicationByAnchorAddressOrThrow",
+            ).mockResolvedValue(mockApplication);
+        });
+
+        it("correctly converts pricing provider timestamp (ms) to donation timestamp", async () => {
+            // Setup pricing provider to return a specific timestamp in milliseconds
+            const priceTimestampMs = 1704067200000; // 2024-01-01 00:00:00.000Z in milliseconds
+            vi.spyOn(mockPricingProvider, "getTokenPrice").mockResolvedValue({
+                timestampMs: priceTimestampMs,
+                priceUsd: 1.0,
+            });
+
+            mockEvent = createMockEvent(eventName, defaultParams, defaultStrategyId);
+
+            handler = new DVMDAllocatedHandler(mockEvent, chainId, {
+                roundRepository: mockRoundRepository,
+                applicationRepository: mockApplicationRepository,
+                pricingProvider: mockPricingProvider,
+            });
+
+            const result = await handler.handle();
+            const donation = (result[0] as { type: "InsertDonation"; args: { donation: Donation } })
+                .args.donation;
+
+            // Verify the timestamp is correctly converted
+            expect(donation.timestamp).toEqual(new Date("2024-01-01T00:00:00.000Z"));
+            expect(donation.timestamp.getTime()).toBe(priceTimestampMs);
+        });
+
+        it("falls back to epoch start when timestamp conversion fails", async () => {
+            // Setup pricing provider to return an invalid timestamp
+            vi.spyOn(mockPricingProvider, "getTokenPrice").mockResolvedValue({
+                timestampMs: -1, // Invalid timestamp
+                priceUsd: 1.0,
+            });
+
+            mockEvent = createMockEvent(eventName, defaultParams, defaultStrategyId);
+
+            handler = new DVMDAllocatedHandler(mockEvent, chainId, {
+                roundRepository: mockRoundRepository,
+                applicationRepository: mockApplicationRepository,
+                pricingProvider: mockPricingProvider,
+            });
+
+            const result = await handler.handle();
+            const donation = (result[0] as { type: "InsertDonation"; args: { donation: Donation } })
+                .args.donation;
+
+            // Verify it falls back to epoch start (1970-01-01T00:00:00.000Z)
+            expect(donation.timestamp).toEqual(new Date(0));
+        });
     });
 });
