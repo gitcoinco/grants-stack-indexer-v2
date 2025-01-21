@@ -73,29 +73,29 @@ export class SharedDependenciesService {
             env.DATABASE_SCHEMA,
         );
         const pricingRepository = new KyselyPricingCache(kyselyDatabase, env.DATABASE_SCHEMA);
-        const pricingProvider = PricingProviderFactory.create(env, {
+        const internalPricingProvider = PricingProviderFactory.create(env, {
             logger,
         });
         const dbCachedPricingProvider = new CachingPricingProvider(
-            pricingProvider,
+            internalPricingProvider,
             pricingRepository,
             logger,
         );
 
-        const inMemoryCachedPricingProvider = new CachingPricingProvider(
+        const pricingProvider = new CachingPricingProvider(
             dbCachedPricingProvider,
             new InMemoryPricingCache(),
             logger,
         );
 
         const metadataRepository = new KyselyMetadataCache(kyselyDatabase, env.DATABASE_SCHEMA);
-        const metadataProvider = new IpfsProvider(env.IPFS_GATEWAYS_URL, logger);
+        const internalMetadataProvider = new IpfsProvider(env.IPFS_GATEWAYS_URL, logger);
         const dbCachedMetadataProvider = new CachingMetadataProvider(
-            metadataProvider,
+            internalMetadataProvider,
             metadataRepository,
             logger,
         );
-        const inMemoryCachedMetadataProvider = new CachingMetadataProvider(
+        const metadataProvider = new CachingMetadataProvider(
             dbCachedMetadataProvider,
             new InMemoryMetadataCache(),
             logger,
@@ -131,9 +131,9 @@ export class SharedDependenciesService {
                 projectRepository,
                 roundRepository,
                 applicationRepository,
-                pricingProvider: inMemoryCachedPricingProvider,
+                pricingProvider,
                 donationRepository,
-                metadataProvider: inMemoryCachedMetadataProvider,
+                metadataProvider,
                 applicationPayoutRepository,
                 transactionManager,
             },
