@@ -3,11 +3,7 @@ import { getAddress } from "viem";
 import { Changeset, Donation } from "@grants-stack-indexer/repository";
 import { ChainId, getTokenOrThrow, ProcessorEvent } from "@grants-stack-indexer/shared";
 
-import {
-    getDateFromTimestamp,
-    getTokenAmountInUsd,
-    getUsdInTokenAmount,
-} from "../../../../helpers/index.js";
+import { getTokenAmountInUsd, getUsdInTokenAmount } from "../../../../helpers/index.js";
 import {
     IEventHandler,
     MetadataParsingFailed,
@@ -104,8 +100,7 @@ export class DVMDAllocatedHandler implements IEventHandler<"Strategy", "Allocate
             amount: amount,
             amountInUsd,
             amountInRoundMatchToken,
-            timestamp:
-                getDateFromTimestamp(BigInt(Math.floor(priceTimestamp / 1000))) ?? new Date(0), // TODO: Ask Gitcoin if this is correct; should fallback to epoch start?
+            timestamp: priceTimestamp >= 0 ? new Date(priceTimestamp) : new Date(0), // TODO: Ask Gitcoin if this is correct; should fallback to epoch start?
         };
 
         return [
