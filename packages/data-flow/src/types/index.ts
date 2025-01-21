@@ -1,3 +1,5 @@
+import { IMetadataProvider } from "@grants-stack-indexer/metadata";
+import { IPricingProvider } from "@grants-stack-indexer/pricing";
 import { ProcessorDependencies } from "@grants-stack-indexer/processors";
 import {
     IApplicationPayoutRepository,
@@ -7,6 +9,7 @@ import {
     IRoundRepository,
     ITransactionManager,
 } from "@grants-stack-indexer/repository";
+import { ICacheable } from "@grants-stack-indexer/shared";
 
 /**
  * The core dependencies for the data flow
@@ -19,6 +22,8 @@ export type CoreDependencies = Pick<
     ProcessorDependencies,
     "evmProvider" | "pricingProvider" | "metadataProvider"
 > & {
+    pricingProvider: IPricingProvider & Partial<ICacheable>;
+    metadataProvider: IMetadataProvider & Partial<ICacheable>;
     roundRepository: IRoundRepository;
     projectRepository: IProjectRepository;
     applicationRepository: IApplicationRepository;

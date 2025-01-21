@@ -1,7 +1,7 @@
 import { ICache, PriceCacheKey } from "@grants-stack-indexer/repository";
-import { ILogger, TokenCode } from "@grants-stack-indexer/shared";
+import { ICacheable, ILogger, TokenCode } from "@grants-stack-indexer/shared";
 
-import { ICacheablePricingProvider, IPricingProvider, TokenPrice } from "../internal.js";
+import { IPricingProvider, TokenPrice } from "../internal.js";
 
 /**
  * A pricing provider that caches token price lookups from the underlying provider.
@@ -9,10 +9,10 @@ import { ICacheablePricingProvider, IPricingProvider, TokenPrice } from "../inte
  * If not found in cache, fetches from the underlying provider and caches the result before returning.
  * Cache failures (both reads and writes) are logged but do not prevent the provider from functioning.
  */
-export class CachingPricingProvider implements ICacheablePricingProvider {
+export class CachingPricingProvider implements IPricingProvider, ICacheable {
     constructor(
         private readonly provider: IPricingProvider,
-        private readonly cache: ICache<PriceCacheKey, TokenPrice>,
+        private readonly cache: ICache<PriceCacheKey, TokenPrice> & Partial<ICacheable>,
         private readonly logger: ILogger,
     ) {}
 
@@ -68,7 +68,7 @@ export class CachingPricingProvider implements ICacheablePricingProvider {
     /** @inheritdoc */
     async clearCache(): Promise<void> {
         try {
-            await this.cache.clearAll();
+            await this.cache.clearCache?.();
         } catch (error) {
             this.logger.debug(`Failed to clear metadata cache`, {
                 error,

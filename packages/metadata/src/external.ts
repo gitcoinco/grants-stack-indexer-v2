@@ -6,4 +6,4 @@ export {
     InvalidContentException,
 } from "./internal.js";
 
-export type { IMetadataProvider, ICacheableMetadataProvider } from "./internal.js";
+export type { IMetadataProvider } from "./internal.js";

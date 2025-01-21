@@ -1,4 +1,4 @@
-export type { TokenPrice, IPricingProvider, ICacheablePricingProvider } from "./internal.js";
+export type { TokenPrice, IPricingProvider } from "./internal.js";
 
 export { CoingeckoProvider, DummyPricingProvider, CachingPricingProvider } from "./internal.js";
 

@@ -27,3 +27,5 @@ export type { RetryMetadata, ErrorContext } from "./internal.js";
 
 export { ExponentialBackoff, RetryHandler } from "./internal.js";
 export type { RetryStrategy, RetryStrategyOptions } from "./internal.js";
+
+export type { ICacheable } from "./internal.js";
