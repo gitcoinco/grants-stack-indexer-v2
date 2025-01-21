@@ -389,7 +389,6 @@ describe("DVMDAllocatedHandler", () => {
         });
 
         it("correctly converts pricing provider timestamp (ms) to donation timestamp", async () => {
-            // Setup pricing provider to return a specific timestamp in milliseconds
             const priceTimestampMs = 1704067200000; // 2024-01-01 00:00:00.000Z in milliseconds
             vi.spyOn(mockPricingProvider, "getTokenPrice").mockResolvedValue({
                 timestampMs: priceTimestampMs,
@@ -408,13 +407,11 @@ describe("DVMDAllocatedHandler", () => {
             const donation = (result[0] as { type: "InsertDonation"; args: { donation: Donation } })
                 .args.donation;
 
-            // Verify the timestamp is correctly converted
             expect(donation.timestamp).toEqual(new Date("2024-01-01T00:00:00.000Z"));
             expect(donation.timestamp.getTime()).toBe(priceTimestampMs);
         });
 
         it("falls back to epoch start when timestamp conversion fails", async () => {
-            // Setup pricing provider to return an invalid timestamp
             vi.spyOn(mockPricingProvider, "getTokenPrice").mockResolvedValue({
                 timestampMs: -1, // Invalid timestamp
                 priceUsd: 1.0,
@@ -432,7 +429,6 @@ describe("DVMDAllocatedHandler", () => {
             const donation = (result[0] as { type: "InsertDonation"; args: { donation: Donation } })
                 .args.donation;
 
-            // Verify it falls back to epoch start (1970-01-01T00:00:00.000Z)
             expect(donation.timestamp).toEqual(new Date(0));
         });
     });
