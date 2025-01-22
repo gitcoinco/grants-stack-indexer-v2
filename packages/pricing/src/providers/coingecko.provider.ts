@@ -127,7 +127,7 @@ export class CoingeckoProvider implements IPricingProvider {
             };
         } catch (error: unknown) {
             if (isAxiosError(error)) {
-                this.handleAxiosError(error, path);
+                this.handleAxiosError(error, path, "getTokenPrice");
             }
 
             const errorMessage =
@@ -150,7 +150,7 @@ export class CoingeckoProvider implements IPricingProvider {
         if (!tokenId) {
             throw new UnsupportedToken(tokenCode, {
                 className: CoingeckoProvider.name,
-                methodName: "getTokenPrice",
+                methodName: "getTokenPrices",
             });
         }
 
@@ -175,7 +175,7 @@ export class CoingeckoProvider implements IPricingProvider {
             }));
         } catch (error: unknown) {
             if (isAxiosError(error)) {
-                this.handleAxiosError(error, path);
+                this.handleAxiosError(error, path, "getTokenPrices");
             }
 
             const errorMessage =
@@ -184,7 +184,7 @@ export class CoingeckoProvider implements IPricingProvider {
 
             throw new UnknownPricingException(errorMessage, {
                 className: CoingeckoProvider.name,
-                methodName: "getTokenPrice",
+                methodName: "getTokenPrices",
                 additionalData: {
                     path,
                 },
@@ -192,10 +192,10 @@ export class CoingeckoProvider implements IPricingProvider {
         }
     }
 
-    private handleAxiosError(error: AxiosError, path: string): void {
+    private handleAxiosError(error: AxiosError, path: string, methodName: string): void {
         const errorContext = {
             className: CoingeckoProvider.name,
-            methodName: "getTokenPrice",
+            methodName,
             additionalData: {
                 path,
             },
