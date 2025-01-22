@@ -22,12 +22,6 @@ export class IpfsProvider implements IMetadataProvider {
         this.axiosInstance = axios.create();
     }
 
-    private getNextGateway(): string {
-        const gateway = this.gateways[this.currentGatewayIndex]!;
-        this.currentGatewayIndex = (this.currentGatewayIndex + 1) % this.gateways.length;
-        return gateway;
-    }
-
     /* @inheritdoc */
     async getMetadata<T>(
         ipfsCid: string,
