@@ -121,6 +121,12 @@ export class CachingPricingProvider implements IPricingProvider, ICacheable {
             .filter((price): price is TokenPrice => !!price);
     }
 
+    /**
+     * Fetches cached prices for the given token and timestamps.
+     * @param tokenCode - The token code
+     * @param timestamps - The timestamps
+     * @returns {PromiseSettledResult<CacheResult>[]} - The cached prices
+     */
     private async getCachedPrices(
         tokenCode: TokenCode,
         timestamps: number[],
@@ -143,6 +149,12 @@ export class CachingPricingProvider implements IPricingProvider, ICacheable {
         );
     }
 
+    /**
+     * Gets the timestamps that need to be fetched from the provider.
+     * @param timestamps - The timestamps
+     * @param cachedPrices - The cached prices PromiseSettledResult
+     * @returns The timestamps that need to be fetched
+     */
     private getTimestampsToFetch(
         timestamps: number[],
         cachedPrices: PromiseSettledResult<CacheResult>[],
@@ -154,6 +166,13 @@ export class CachingPricingProvider implements IPricingProvider, ICacheable {
         });
     }
 
+    /**
+     * Gets the closest price from the fetched prices. Updates the cache accordingly.
+     * @param tokenCode - The token code
+     * @param timestampsToFetch - The timestamps that need to be fetched
+     * @param sortedFetchedPrices - The sorted fetched prices
+     * @returns The closest prices
+     */
     private getClosestPricesWithCache(
         tokenCode: TokenCode,
         timestampsToFetch: number[],
@@ -184,6 +203,12 @@ export class CachingPricingProvider implements IPricingProvider, ICacheable {
             .filter((price): price is TokenPrice => price !== null);
     }
 
+    /**
+     * Builds a price map from cached and fetched prices.
+     * @param cachedPrices - The cached prices
+     * @param closestPrices - The fetched prices
+     * @returns The price map with all prices
+     */
     private buildPriceMap(
         cachedPrices: PromiseSettledResult<CacheResult>[],
         closestPrices: TokenPrice[],

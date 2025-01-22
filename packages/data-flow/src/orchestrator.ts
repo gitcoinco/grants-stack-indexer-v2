@@ -50,6 +50,7 @@ type TokenWithTimestamps = {
  * The Orchestrator implements a continuous processing loop that:
  *
  * 1. Fetches batches of events from the indexer and stores them in an internal queue
+ * 1.5 Bulk fetches metadata and prices for the batch, improving performance by reducing the number of requests and parallelizing them
  * 2. Processes each event from the queue:
  *    - For strategy events and PoolCreated from Allo contract, enhances them with strategyId
  *    - Forwards the event to the Events Processor which is in charge of delagating the processing of the event to the correct handler
@@ -209,7 +210,12 @@ export class Orchestrator {
         });
     }
 
-    private async getMetadataFromEvents(events: AnyIndexerFetchedEvent[]): Promise<string[]> {
+    /**
+     * Extracts unique metadata ids from the events batch.
+     * @param events - Array of indexer fetched events to process
+     * @returns Array of unique metadata ids found in the events
+     */
+    private getMetadataFromEvents(events: AnyIndexerFetchedEvent[]): string[] {
         const ids = new Set<string>();
 
         for (const event of events) {
@@ -221,9 +227,12 @@ export class Orchestrator {
         return Array.from(ids);
     }
 
-    private async getTokensFromEvents(
-        events: AnyIndexerFetchedEvent[],
-    ): Promise<TokenWithTimestamps[]> {
+    /**
+     * Extracts unique tokens from the events batch. Leaves out tokens with zero amount and sorts the timestamps.
+     * @param events - Array of indexer fetched events to process
+     * @returns Array of unique tokens with timestamps found in the events
+     */
+    private getTokensFromEvents(events: AnyIndexerFetchedEvent[]): TokenWithTimestamps[] {
         const tokenMap = new Map<string, TokenWithTimestamps>();
 
         for (const event of events) {
@@ -258,6 +267,9 @@ export class Orchestrator {
      * Sometimes the TimestampsUpdated event is part of the _initialize() function of a strategy.
      * In this case, the event is emitted before the PoolCreated event. We can safely ignore the error
      * if the PoolCreated event is present in the same block.
+     * @param error - The error
+     * @param event - The event
+     * @returns True if the error should be ignored, false otherwise
      */
     private shouldIgnoreTimestampsUpdatedError(
         error: Error,
@@ -281,6 +293,10 @@ export class Orchestrator {
         return false;
     }
 
+    /**
+     * Fetches the next events batch from the indexer
+     * @returns The next events batch
+     */
     private async getNextEventsBatch(): Promise<AnyIndexerFetchedEvent[]> {
         const lastProcessedEvent = await this.eventsRegistry.getLastProcessedEvent(this.chainId);
         const blockNumber = lastProcessedEvent?.blockNumber ?? 0;
@@ -298,18 +314,18 @@ export class Orchestrator {
     }
 
     /**
-     * Clear caches and fetch metadata and prices for the batch
+     * Clear pricing and metadata caches and bulk fetch metadata and prices for the batch
+     * @param events - The events batch
      */
     private async bulkFetchMetadataAndPricesForBatch(
         events: AnyIndexerFetchedEvent[],
     ): Promise<void> {
-        // Clear caches
-        if (this.dependencies.metadataProvider.clearCache) {
-            await this.dependencies.metadataProvider.clearCache();
-        }
+        // Clear caches if the provider supports it
+        await this.dependencies.metadataProvider.clearCache?.();
+        await this.dependencies.pricingProvider.clearCache?.();
 
-        const metadataIds = await this.getMetadataFromEvents(events);
-        const tokens = await this.getTokensFromEvents(events);
+        const metadataIds = this.getMetadataFromEvents(events);
+        const tokens = this.getTokensFromEvents(events);
 
         await Promise.allSettled([
             this.bulkFetchMetadata(metadataIds),
@@ -318,7 +334,8 @@ export class Orchestrator {
     }
 
     /**
-     * Enqueue events and updates new context for the batch
+     * Enqueue events and updates new context of events by block number for the batch
+     * @param events - The events batch
      */
     private async enqueueEvents(events: AnyIndexerFetchedEvent[]): Promise<void> {
         // Clear previous context
@@ -334,7 +351,9 @@ export class Orchestrator {
     }
 
     /**
-     * Fetch all possible metadata for the batch
+     * Fetch all possible metadata for the batch.
+     * @param metadataIds - The metadata ids
+     * @returns The metadata
      */
     private async bulkFetchMetadata(metadataIds: string[]): Promise<unknown[]> {
         const results = await Promise.allSettled(
@@ -356,7 +375,9 @@ export class Orchestrator {
     }
 
     /**
-     * Fetch all possible prices for the batch
+     * Fetch all tokens prices
+     * @param tokens - The tokens with timestamps
+     * @returns The token prices
      */
     private async bulkFetchTokens(tokens: TokenWithTimestamps[]): Promise<TokenPrice[]> {
         const results = await Promise.allSettled(
