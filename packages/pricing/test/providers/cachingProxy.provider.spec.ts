@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ICache, PriceCacheKey } from "@grants-stack-indexer/repository";
-import { ILogger, TokenCode } from "@grants-stack-indexer/shared";
+import { ICacheable, ILogger, TokenCode } from "@grants-stack-indexer/shared";
 
 import { IPricingProvider, TokenPrice } from "../../src/internal.js";
 import { CachingPricingProvider } from "../../src/providers/cachingProxy.provider.js";
@@ -9,11 +9,14 @@ import { CachingPricingProvider } from "../../src/providers/cachingProxy.provide
 describe("CachingPricingProvider", () => {
     const mockProvider = {
         getTokenPrice: vi.fn(),
-    } as unknown as IPricingProvider;
+        getTokenPrices: vi.fn(),
+        clearCache: vi.fn(),
+    } as unknown as IPricingProvider & ICacheable;
 
     const mockCache = {
         get: vi.fn(),
-        set: vi.fn(),
+        set: vi.fn().mockImplementation(() => Promise.resolve()),
+        clearCache: vi.fn(),
     } as unknown as ICache<PriceCacheKey, TokenPrice>;
 
     const mockLogger = {

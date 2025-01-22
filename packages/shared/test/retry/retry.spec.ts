@@ -36,6 +36,16 @@ describe("RetryHandler", () => {
         expect(result).toBe("success");
     });
 
+    it("handles undefined result from operation", async () => {
+        const handler = new RetryHandler(new ExponentialBackoff(), mockLogger);
+        const operation = vi.fn().mockResolvedValue(undefined);
+
+        const result = await handler.execute(operation);
+
+        expect(result).toBeUndefined();
+        expect(operation).toHaveBeenCalledTimes(1);
+    });
+
     it("retries on RetriableError and succeeds", async () => {
         vi.useFakeTimers();
         const handler = new RetryHandler(new ExponentialBackoff(), mockLogger);

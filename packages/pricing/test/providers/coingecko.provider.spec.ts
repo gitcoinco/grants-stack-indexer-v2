@@ -179,4 +179,45 @@ describe("CoingeckoProvider", () => {
             ).rejects.toThrow(NetworkError);
         });
     });
+
+    describe("getTokenPrices", () => {
+        it("handles empty timestamps array", async () => {
+            const result = await provider.getTokenPrices("ETH" as TokenCode, []);
+            expect(result).toEqual([]);
+        });
+
+        it("fetches prices within minimum granularity", async () => {
+            const timestamps = [1000, 1100]; // Less than MIN_GRANULARITY_MS apart
+            mock.get.mockResolvedValue({
+                data: {
+                    prices: [
+                        [1000, 1500],
+                        [1100, 1600],
+                    ],
+                },
+            });
+
+            await provider.getTokenPrices("ETH" as TokenCode, timestamps);
+            expect(mock.get).toHaveBeenCalledWith(expect.stringContaining(`&interval=5m`));
+        });
+
+        it("throws UnsupportedToken for unknown token", async () => {
+            await expect(provider.getTokenPrices("UNKNOWN" as TokenCode, [1000])).rejects.toThrow(
+                UnsupportedToken,
+            );
+        });
+
+        it("handles rate limiting errors", async () => {
+            mock.get.mockRejectedValueOnce({
+                status: 429,
+                data: "Rate limit exceeded",
+                isAxiosError: true,
+                response: { headers: { "retry-after": "60" } },
+            });
+
+            await expect(provider.getTokenPrices("ETH" as TokenCode, [1000])).rejects.toThrow(
+                RateLimitError,
+            );
+        });
+    });
 });

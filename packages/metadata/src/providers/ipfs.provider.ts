@@ -37,12 +37,9 @@ export class IpfsProvider implements IMetadataProvider {
             return undefined;
         }
 
-        // Create array of gateways starting from current index
-        const orderedGateways = Array.from({ length: this.gateways.length }, () =>
-            this.getNextGateway(),
-        );
-
-        for (const gateway of orderedGateways) {
+        const startIndex = this.currentGatewayIndex;
+        for (let i = 0; i < this.gateways.length; i++) {
+            const gateway = this.gateways[(startIndex + i) % this.gateways.length]!;
             const url = `${gateway}/ipfs/${ipfsCid}`;
             try {
                 //TODO: retry policy for each gateway

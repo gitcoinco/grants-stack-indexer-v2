@@ -36,8 +36,7 @@ import { CoreDependencies, DataLoader, delay, IQueue, iStrategyAbi, Queue } from
 
 type TokenWithTimestamps = {
     token: Token;
-    minTimestamp: number;
-    maxTimestamp: number;
+    timestamps: number[];
 };
 
 /**
@@ -238,19 +237,21 @@ export class Orchestrator {
 
                 const existing = tokenMap.get(token.address);
                 if (existing) {
-                    existing.minTimestamp = Math.min(existing.minTimestamp, event.blockTimestamp);
-                    existing.maxTimestamp = Math.max(existing.maxTimestamp, event.blockTimestamp);
+                    existing.timestamps.push(event.blockTimestamp);
                 } else {
                     tokenMap.set(token.address, {
                         token,
-                        minTimestamp: event.blockTimestamp,
-                        maxTimestamp: event.blockTimestamp,
+                        timestamps: [event.blockTimestamp],
                     });
                 }
             }
         }
 
-        return Array.from(tokenMap.values());
+        // Convert timestamps to unique sorted arrays
+        return Array.from(tokenMap.values()).map(({ token, timestamps }) => ({
+            token,
+            timestamps: [...new Set(timestamps)].sort((a, b) => a - b),
+        }));
     }
 
     /**
@@ -359,26 +360,11 @@ export class Orchestrator {
      */
     private async bulkFetchTokens(tokens: TokenWithTimestamps[]): Promise<TokenPrice[]> {
         const results = await Promise.allSettled(
-            tokens.map(({ token, minTimestamp, maxTimestamp }) =>
+            tokens.map(({ token, timestamps }) =>
                 this.retryHandler.execute(async () => {
-                    // Get all unique timestamps between min and max
-                    const events = this.eventsByBlockContext.values();
-                    const timestamps = Array.from(events)
-                        .flat()
-                        .filter(
-                            (e) =>
-                                e.blockTimestamp >= minTimestamp &&
-                                e.blockTimestamp <= maxTimestamp,
-                        )
-                        .map((e) => e.blockTimestamp);
-
-                    // Remove duplicates and sort
-                    const uniqueTimestamps = [...new Set(timestamps)].sort();
-
-                    // Get prices for all timestamps in the range
                     const prices = await this.dependencies.pricingProvider.getTokenPrices(
                         token.priceSourceCode,
-                        uniqueTimestamps,
+                        timestamps,
                     );
                     return prices;
                 }),

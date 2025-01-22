@@ -161,10 +161,6 @@ export class CoingeckoProvider implements IPricingProvider {
         const effectiveMin = Math.min(...timestamps);
         let effectiveMax = Math.max(...timestamps);
 
-        if (effectiveMin === effectiveMax || effectiveMin > effectiveMax) {
-            return [];
-        }
-
         if (effectiveMax - effectiveMin < MIN_GRANULARITY_MS) {
             effectiveMax = effectiveMin + MIN_GRANULARITY_MS;
         }
