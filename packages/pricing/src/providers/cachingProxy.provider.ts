@@ -1,10 +1,10 @@
 import { ICache, PriceCacheKey } from "@grants-stack-indexer/repository";
-import { ICacheable, ILogger, TokenCode } from "@grants-stack-indexer/shared";
+import { ICacheable, ILogger, TimestampMs, TokenCode } from "@grants-stack-indexer/shared";
 
 import { IPricingProvider, TokenPrice } from "../internal.js";
 
 type CacheResult = {
-    timestampMs: number;
+    timestampMs: TimestampMs;
     price: TokenPrice | undefined;
 };
 
@@ -24,8 +24,8 @@ export class CachingPricingProvider implements IPricingProvider, ICacheable {
     /** @inheritdoc */
     async getTokenPrice(
         tokenCode: TokenCode,
-        startTimestampMs: number,
-        endTimestampMs?: number,
+        startTimestampMs: TimestampMs,
+        endTimestampMs?: TimestampMs,
     ): Promise<TokenPrice | undefined> {
         let cachedPrice: TokenPrice | undefined = undefined;
         try {
@@ -87,7 +87,7 @@ export class CachingPricingProvider implements IPricingProvider, ICacheable {
      * Note: it caches the closest prices to the requested timestamps.
      * Uses binary search to find the closest price for each requested timestamp.
      */
-    async getTokenPrices(tokenCode: TokenCode, timestamps: number[]): Promise<TokenPrice[]> {
+    async getTokenPrices(tokenCode: TokenCode, timestamps: TimestampMs[]): Promise<TokenPrice[]> {
         if (timestamps.length === 0) return [];
 
         const cachedPrices = await this.getCachedPrices(tokenCode, timestamps);
@@ -129,7 +129,7 @@ export class CachingPricingProvider implements IPricingProvider, ICacheable {
      */
     private async getCachedPrices(
         tokenCode: TokenCode,
-        timestamps: number[],
+        timestamps: TimestampMs[],
     ): Promise<PromiseSettledResult<CacheResult>[]> {
         return Promise.allSettled(
             timestamps.map(async (timestampMs) => {
@@ -156,9 +156,9 @@ export class CachingPricingProvider implements IPricingProvider, ICacheable {
      * @returns The timestamps that need to be fetched
      */
     private getTimestampsToFetch(
-        timestamps: number[],
+        timestamps: TimestampMs[],
         cachedPrices: PromiseSettledResult<CacheResult>[],
-    ): number[] {
+    ): TimestampMs[] {
         return timestamps.filter((_, index) => {
             const result = cachedPrices[index];
             if (!result || result.status === "rejected") return true;
@@ -175,7 +175,7 @@ export class CachingPricingProvider implements IPricingProvider, ICacheable {
      */
     private getClosestPricesWithCache(
         tokenCode: TokenCode,
-        timestampsToFetch: number[],
+        timestampsToFetch: TimestampMs[],
         sortedFetchedPrices: TokenPrice[],
     ): TokenPrice[] {
         return timestampsToFetch

@@ -1,6 +1,6 @@
 import { Branded } from "viem";
 
-import { Address, ChainId } from "../internal.js";
+import { Address, ChainId, TimestampMs } from "../internal.js";
 
 export type TokenCode = Branded<string, "TokenCode">;
 
@@ -13,7 +13,7 @@ export type Token = {
 };
 
 export type TokenPrice = {
-    timestampMs: number;
+    timestampMs: TimestampMs;
     priceUsd: number;
 };
 

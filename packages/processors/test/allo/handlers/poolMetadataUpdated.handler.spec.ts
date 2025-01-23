@@ -107,7 +107,7 @@ describe("PoolMetadataUpdatedHandler", () => {
         };
         const mockTokenPrice = {
             priceUsd: 2.5,
-            timestampMs: 1708369911,
+            timestampMs: 1708369911 as TimestampMs,
         };
         vi.spyOn(mockMetadataProvider, "getMetadata").mockResolvedValue(metadata);
         vi.spyOn(mockRoundRepository, "getRoundByIdOrThrow").mockResolvedValue(round as Round);

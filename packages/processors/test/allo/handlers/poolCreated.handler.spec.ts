@@ -85,7 +85,7 @@ describe("PoolCreatedHandler", () => {
 
         vi.spyOn(mockPricingProvider, "getTokenPrice").mockResolvedValue({
             priceUsd: 100,
-            timestampMs: 1708369911,
+            timestampMs: 1708369911 as TimestampMs,
         });
         vi.spyOn(mockRoundRepository, "getPendingRoundRoles").mockResolvedValue([]);
 
@@ -158,7 +158,7 @@ describe("PoolCreatedHandler", () => {
 
         vi.spyOn(mockPricingProvider, "getTokenPrice").mockResolvedValue({
             priceUsd: 100,
-            timestampMs: 1708369911,
+            timestampMs: 1708369911 as TimestampMs,
         });
         vi.spyOn(mockEvmProvider, "multicall").mockResolvedValue([
             1609459200n,
@@ -246,7 +246,7 @@ describe("PoolCreatedHandler", () => {
 
         vi.spyOn(mockPricingProvider, "getTokenPrice").mockResolvedValue({
             priceUsd: 100,
-            timestampMs: 1708369911,
+            timestampMs: 1708369911 as TimestampMs,
         });
         vi.spyOn(mockRoundRepository, "getPendingRoundRoles").mockResolvedValue([]);
         vi.spyOn(mockEvmProvider, "getTransaction").mockResolvedValue({
@@ -337,7 +337,7 @@ describe("PoolCreatedHandler", () => {
         vi.spyOn(mockMetadataProvider, "getMetadata").mockResolvedValue(undefined);
         vi.spyOn(mockPricingProvider, "getTokenPrice").mockResolvedValue({
             priceUsd: 100,
-            timestampMs: 1708369911,
+            timestampMs: 1708369911 as TimestampMs,
         });
         vi.spyOn(mockEvmProvider, "multicall").mockResolvedValue([
             1609459200n,
@@ -446,7 +446,7 @@ describe("PoolCreatedHandler", () => {
         });
         vi.spyOn(mockPricingProvider, "getTokenPrice").mockResolvedValue({
             priceUsd: 2500,
-            timestampMs: 1708369911,
+            timestampMs: 1708369911 as TimestampMs,
         });
         vi.spyOn(mockEvmProvider, "multicall").mockResolvedValue([
             1609459200n,

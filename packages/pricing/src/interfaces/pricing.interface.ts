@@ -1,4 +1,4 @@
-import { TokenCode } from "@grants-stack-indexer/shared";
+import { TimestampMs, TokenCode } from "@grants-stack-indexer/shared";
 
 import { TokenPrice } from "../internal.js";
 
@@ -22,8 +22,8 @@ export interface IPricingProvider {
      */
     getTokenPrice(
         tokenCode: TokenCode,
-        startTimestampMs: number,
-        endTimestampMs?: number,
+        startTimestampMs: TimestampMs,
+        endTimestampMs?: TimestampMs,
     ): Promise<TokenPrice | undefined>;
 
     /**
@@ -33,5 +33,5 @@ export interface IPricingProvider {
      * @returns A promise that resolves to the prices of the token for each requested timestamp.
      * The returned prices may not have the exact timestamps requested. Depends on the implementation.
      */
-    getTokenPrices(tokenCode: TokenCode, timestamps: number[]): Promise<TokenPrice[]>;
+    getTokenPrices(tokenCode: TokenCode, timestamps: TimestampMs[]): Promise<TokenPrice[]>;
 }

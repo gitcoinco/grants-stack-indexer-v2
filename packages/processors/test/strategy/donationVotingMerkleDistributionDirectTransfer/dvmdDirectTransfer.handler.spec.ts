@@ -14,6 +14,7 @@ import {
     ILogger,
     ProcessorEvent,
     StrategyEvent,
+    TimestampMs,
     Token,
     TokenCode,
 } from "@grants-stack-indexer/shared";
@@ -311,7 +312,7 @@ describe("DVMDDirectTransferHandler", () => {
                 code: "ETH" as TokenCode,
                 priceSourceCode: "ETH" as TokenCode,
             };
-            const blockTimestamp = 1625097600;
+            const blockTimestamp = 1625097600 as TimestampMs;
 
             vi.spyOn(mockPricingProvider, "getTokenPrice").mockResolvedValue({
                 priceUsd: 2000,
@@ -338,7 +339,7 @@ describe("DVMDDirectTransferHandler", () => {
                 code: "ETH" as TokenCode,
                 priceSourceCode: "ETH" as TokenCode,
             };
-            const blockTimestamp = 1625097600;
+            const blockTimestamp = 1625097600 as TimestampMs;
 
             vi.spyOn(mockPricingProvider, "getTokenPrice").mockResolvedValue(undefined);
 

@@ -1,7 +1,7 @@
 import { getAddress, zeroAddress } from "viem";
 
 import type { Changeset, NewRound, PendingRoundRole } from "@grants-stack-indexer/repository";
-import type { ChainId, ProcessorEvent, Token } from "@grants-stack-indexer/shared";
+import type { ChainId, ProcessorEvent, TimestampMs, Token } from "@grants-stack-indexer/shared";
 import { getToken, isAlloNativeToken } from "@grants-stack-indexer/shared";
 
 import type { IEventHandler, ProcessorDependencies, StrategyTimings } from "../../../internal.js";
@@ -193,7 +193,7 @@ export class PoolCreatedHandler implements IEventHandler<"Allo", "PoolCreated"> 
     private async getTokenAmountInUsd(
         token: Token,
         amount: bigint,
-        timestamp: number,
+        timestamp: TimestampMs,
     ): Promise<string> {
         const { pricingProvider } = this.dependencies;
         const tokenPrice = await pricingProvider.getTokenPrice(token.priceSourceCode, timestamp);

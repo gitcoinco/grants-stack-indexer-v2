@@ -84,7 +84,7 @@ describe("PoolFundedHandler", () => {
         )[0];
         const mockPrice = {
             priceUsd: 2.5,
-            timestampMs: 1708369911,
+            timestampMs: 1708369911 as TimestampMs,
         };
         const round = {
             id: "1",
