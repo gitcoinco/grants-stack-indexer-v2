@@ -9,7 +9,13 @@ import {
     IProjectReadRepository,
     IRoundReadRepository,
 } from "@grants-stack-indexer/repository";
-import { Bytes32String, ChainId, ILogger, ProcessorEvent } from "@grants-stack-indexer/shared";
+import {
+    Bytes32String,
+    ChainId,
+    ILogger,
+    ProcessorEvent,
+    TimestampMs,
+} from "@grants-stack-indexer/shared";
 
 import { ProcessorDependencies } from "../../../src/internal.js";
 import { ProfileCreatedHandler } from "../../../src/processors/registry/handlers/index.js";
@@ -28,7 +34,7 @@ describe("ProfileCreatedHandler", () => {
     };
     beforeEach(() => {
         mockEvent = {
-            blockTimestamp: 123123123,
+            blockTimestamp: 123123123 as TimestampMs,
             chainId: 10 as ChainId,
             contractName: "Registry",
             eventName: "ProfileCreated",

@@ -1,6 +1,6 @@
 import { Hex } from "viem";
 
-import { Address } from "../../internal.js";
+import { Address, TimestampMs } from "../../internal.js";
 import {
     AlloEvent,
     AlloEventParams,
@@ -53,7 +53,7 @@ export type EventParams<T extends ContractName, E extends ContractToEventName<T>
 export type IndexerFetchedEvent<T extends ContractName, E extends ContractToEventName<T>> = {
     //TODO: make blocknumber and chainId bigints, implies implementing adapter patterns in the EventsFetcher or IndexerClient
     blockNumber: number;
-    blockTimestamp: number;
+    blockTimestamp: TimestampMs;
     chainId: number;
     contractName: T;
     eventName: E;

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { Changeset } from "@grants-stack-indexer/repository";
-import { Bytes32String, ChainId, ProcessorEvent } from "@grants-stack-indexer/shared";
+import { Bytes32String, ChainId, ProcessorEvent, TimestampMs } from "@grants-stack-indexer/shared";
 
 import { ProfileOwnerUpdatedHandler } from "../../../src/processors/registry/handlers/profileOwnerUpdated.handler.js";
 
@@ -9,7 +9,7 @@ describe("ProfileOwnerUpdatedHandler", () => {
     it("handles ProfileOwnerUpdated event correctly", async () => {
         const mockEvent: ProcessorEvent<"Registry", "ProfileOwnerUpdated"> = {
             blockNumber: 123456,
-            blockTimestamp: 123456,
+            blockTimestamp: 123456 as TimestampMs,
             chainId: 1 as ChainId,
             contractName: "Registry",
             eventName: "ProfileOwnerUpdated",

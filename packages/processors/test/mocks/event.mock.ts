@@ -6,6 +6,7 @@ import {
     Hex,
     mergeDeep,
     ProcessorEvent,
+    TimestampMs,
 } from "@grants-stack-indexer/shared";
 
 /**
@@ -20,7 +21,7 @@ import {
  * @default
  *      srcAddress: "0x1234567890123456789012345678901234567890",
  *      blockNumber: 118034410,
- *      blockTimestamp: 1000000000,
+ *      blockTimestamp: 1704067241331 as TimestampMs,
  *      chainId: 10 as ChainId,
  *      contractName: "Strategy",
  *      logIndex: 1,
@@ -41,7 +42,7 @@ export const createMockEvent = <T extends ContractToEventName<"Strategy">>(
         params,
         srcAddress: "0x1234567890123456789012345678901234567890",
         blockNumber: 118034410,
-        blockTimestamp: 1000000000,
+        blockTimestamp: 1704067241331 as TimestampMs,
         chainId: 10 as ChainId,
         contractName: "Strategy",
         logIndex: 1,

@@ -1,6 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { ChainId, ILogger, ProcessorEvent, Token } from "@grants-stack-indexer/shared";
+import type {
+    ChainId,
+    ILogger,
+    ProcessorEvent,
+    TimestampMs,
+    Token,
+} from "@grants-stack-indexer/shared";
 import { IPricingProvider } from "@grants-stack-indexer/pricing";
 import { IRoundReadRepository, Round } from "@grants-stack-indexer/repository";
 import { TOKENS, UnknownToken } from "@grants-stack-indexer/shared";
@@ -13,7 +19,7 @@ function createMockEvent(
 ): ProcessorEvent<"Allo", "PoolFunded"> {
     return {
         blockNumber: 116385567,
-        blockTimestamp: 1708369911,
+        blockTimestamp: 1708369911 as TimestampMs,
         chainId: 10 as ChainId,
         contractName: "Allo",
         eventName: "PoolFunded",

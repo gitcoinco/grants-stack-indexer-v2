@@ -5,7 +5,13 @@ import type { EvmProvider } from "@grants-stack-indexer/chain-providers";
 import type { IMetadataProvider } from "@grants-stack-indexer/metadata";
 import type { IPricingProvider } from "@grants-stack-indexer/pricing";
 import type { IRoundReadRepository, Round } from "@grants-stack-indexer/repository";
-import type { ChainId, DeepPartial, ProcessorEvent, TokenCode } from "@grants-stack-indexer/shared";
+import type {
+    ChainId,
+    DeepPartial,
+    ProcessorEvent,
+    TimestampMs,
+    TokenCode,
+} from "@grants-stack-indexer/shared";
 import { mergeDeep } from "@grants-stack-indexer/shared";
 
 import { PoolCreatedHandler } from "../../../src/processors/allo/handlers/poolCreated.handler.js";
@@ -16,7 +22,7 @@ function createMockEvent(
 ): ProcessorEvent<"Allo", "PoolCreated"> {
     const defaultEvent: ProcessorEvent<"Allo", "PoolCreated"> = {
         blockNumber: 116385567,
-        blockTimestamp: 1708369911,
+        blockTimestamp: 1708369911 as TimestampMs,
         chainId: 10 as ChainId,
         contractName: "Allo",
         eventName: "PoolCreated",

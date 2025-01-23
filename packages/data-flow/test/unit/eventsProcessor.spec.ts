@@ -7,7 +7,13 @@ import {
     StrategyProcessor,
 } from "@grants-stack-indexer/processors";
 import { Changeset } from "@grants-stack-indexer/repository";
-import { AnyEvent, ChainId, ContractName, ProcessorEvent } from "@grants-stack-indexer/shared";
+import {
+    AnyEvent,
+    ChainId,
+    ContractName,
+    ProcessorEvent,
+    TimestampMs,
+} from "@grants-stack-indexer/shared";
 
 import { EventsProcessor } from "../../src/eventsProcessor.js";
 import { InvalidEvent } from "../../src/exceptions/index.js";
@@ -97,7 +103,7 @@ describe("EventsProcessor", () => {
             contractName: "Unknown" as unknown as ContractName,
             eventName: "PoolCreated",
             blockNumber: 1,
-            blockTimestamp: 1,
+            blockTimestamp: 1704067241331 as TimestampMs,
             chainId,
             logIndex: 1,
             srcAddress: "0x0",
