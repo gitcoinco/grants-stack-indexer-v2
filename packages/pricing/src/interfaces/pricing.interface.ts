@@ -25,4 +25,13 @@ export interface IPricingProvider {
         startTimestampMs: number,
         endTimestampMs?: number,
     ): Promise<TokenPrice | undefined>;
+
+    /**
+     * Retrieves all the prices of a token for specific timestamps.
+     * @param tokenCode - The code of the token.
+     * @param timestamps - Array of timestamps for which to retrieve prices.
+     * @returns A promise that resolves to the prices of the token for each requested timestamp.
+     * The returned prices may not have the exact timestamps requested. Depends on the implementation.
+     */
+    getTokenPrices(tokenCode: TokenCode, timestamps: number[]): Promise<TokenPrice[]>;
 }

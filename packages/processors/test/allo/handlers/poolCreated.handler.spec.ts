@@ -56,6 +56,7 @@ describe("PoolCreatedHandler", () => {
         } as unknown as EvmProvider;
         mockPricingProvider = {
             getTokenPrice: vi.fn(),
+            getTokenPrices: vi.fn(),
         };
         mockMetadataProvider = {
             getMetadata: vi.fn(),

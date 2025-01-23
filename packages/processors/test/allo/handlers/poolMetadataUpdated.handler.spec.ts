@@ -68,6 +68,7 @@ describe("PoolMetadataUpdatedHandler", () => {
         } as unknown as ILogger;
         mockPricingProvider = {
             getTokenPrice: vi.fn(),
+            getTokenPrices: vi.fn(),
         };
     });
 

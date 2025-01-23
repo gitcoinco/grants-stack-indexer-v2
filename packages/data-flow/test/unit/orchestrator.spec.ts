@@ -1,8 +1,10 @@
-import { Address } from "viem";
+import { Address, zeroAddress } from "viem";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { EvmProvider } from "@grants-stack-indexer/chain-providers";
 import { IIndexerClient } from "@grants-stack-indexer/indexer-client";
+import { IMetadataProvider } from "@grants-stack-indexer/metadata";
+import { IPricingProvider } from "@grants-stack-indexer/pricing";
 import {
     Changeset,
     IApplicationPayoutRepository,
@@ -16,16 +18,20 @@ import {
 import { RoundNotFoundForId } from "@grants-stack-indexer/repository/dist/src/internal.js";
 import {
     AlloEvent,
+    AnyIndexerFetchedEvent,
     ChainId,
     ContractName,
     ContractToEventName,
     EventParams,
     ExponentialBackoff,
     Hex,
+    ICacheable,
     ILogger,
     ProcessorEvent,
     RateLimitError,
     StrategyEvent,
+    Token,
+    TokenCode,
 } from "@grants-stack-indexer/shared";
 
 import {
@@ -58,6 +64,8 @@ describe("Orchestrator", { sequential: true }, () => {
     let mockIndexerClient: IIndexerClient;
     let mockEventsRegistry: IEventsRegistry;
     let mockStrategyRegistry: IStrategyRegistry;
+    let mockPricingProvider: IPricingProvider & ICacheable;
+    let mockMetadataProvider: IMetadataProvider & ICacheable;
     let mockEvmProvider: EvmProvider;
     let abortController: AbortController;
     let runPromise: Promise<void> | undefined;
@@ -93,6 +101,17 @@ describe("Orchestrator", { sequential: true }, () => {
             readContract: vi.fn(),
         } as unknown as EvmProvider;
 
+        mockPricingProvider = {
+            getTokenPrice: vi.fn(),
+            getTokenPrices: vi.fn(),
+            clearCache: vi.fn(),
+        };
+
+        mockMetadataProvider = {
+            getMetadata: vi.fn(),
+            clearCache: vi.fn(),
+        };
+
         const dependencies: CoreDependencies = {
             evmProvider: mockEvmProvider,
             transactionManager: {} as unknown as ITransactionManager,
@@ -101,12 +120,8 @@ describe("Orchestrator", { sequential: true }, () => {
             applicationRepository: {} as unknown as IApplicationRepository,
             donationRepository: {} as unknown as IDonationRepository,
             applicationPayoutRepository: {} as unknown as IApplicationPayoutRepository,
-            pricingProvider: {
-                getTokenPrice: vi.fn(),
-            },
-            metadataProvider: {
-                getMetadata: vi.fn(),
-            },
+            pricingProvider: mockPricingProvider,
+            metadataProvider: mockMetadataProvider,
         };
 
         abortController = new AbortController();
@@ -753,6 +768,152 @@ describe("Orchestrator", { sequential: true }, () => {
 
             expect(orchestrator["eventsProcessor"].processEvent).toHaveBeenCalledTimes(3);
             expect(logger.error).not.toHaveBeenCalled();
+        });
+    });
+
+    describe("getMetadataFromEvents", () => {
+        it("extracts unique metadata IDs from events", async () => {
+            const events = [
+                {
+                    params: { metadata: [1n, "id1"] },
+                },
+                {
+                    params: { metadata: [1n, "id1"] }, // Duplicate
+                },
+                {
+                    params: { metadata: [1n, "id2"] },
+                },
+                {
+                    params: { recipientAddress: "0x123" }, // No metadata
+                },
+            ] as unknown as AnyIndexerFetchedEvent[];
+
+            const result = await orchestrator["getMetadataFromEvents"](events);
+            expect(result).toEqual(["id1", "id2"]);
+        });
+    });
+
+    describe("getTokensFromEvents", () => {
+        const mockToken: Token = {
+            address: zeroAddress,
+            decimals: 18,
+            code: "ETH" as TokenCode,
+            priceSourceCode: "ETH" as TokenCode,
+        };
+
+        it("collects unique timestamps for each token", async () => {
+            const events = [
+                {
+                    params: {
+                        token: zeroAddress,
+                        amount: "1000000000000000000", // 1 ETH
+                    },
+                    blockTimestamp: 1000,
+                },
+                {
+                    params: {
+                        token: zeroAddress,
+                        amount: "1000000000000000000",
+                    },
+                    blockTimestamp: 1000, // Duplicate timestamp
+                },
+                {
+                    params: {
+                        token: zeroAddress,
+                        amount: "1000000000000000000",
+                    },
+                    blockTimestamp: 2000,
+                },
+            ] as unknown as AnyIndexerFetchedEvent[];
+
+            const result = await orchestrator["getTokensFromEvents"](events);
+
+            expect(result).toEqual([
+                {
+                    token: mockToken,
+                    timestamps: [1000, 2000],
+                },
+            ]);
+        });
+
+        it("ignores events with zero amounts", async () => {
+            const events = [
+                {
+                    params: {
+                        token: "0x123",
+                        amount: "0",
+                    },
+                    blockTimestamp: 1000,
+                },
+            ] as unknown as AnyIndexerFetchedEvent[];
+
+            const result = await orchestrator["getTokensFromEvents"](events);
+            expect(result).toEqual([]);
+        });
+
+        it("ignores events with invalid tokens", async () => {
+            const events = [
+                {
+                    params: {
+                        token: "0xInvalid",
+                        amount: "1000000000000000000",
+                    },
+                    blockTimestamp: 1000,
+                },
+            ] as unknown as AnyIndexerFetchedEvent[];
+
+            const result = await orchestrator["getTokensFromEvents"](events);
+            expect(result).toEqual([]);
+        });
+    });
+
+    describe("bulkFetchMetadataAndPricesForBatch", () => {
+        it("clears cache and fetches metadata and prices in parallel", async () => {
+            const events = [
+                {
+                    params: {
+                        metadata: ["type", "id1"],
+                        token: zeroAddress,
+                        amount: "1000000000000000000",
+                    },
+                    blockTimestamp: 1000,
+                },
+            ] as unknown as AnyIndexerFetchedEvent[];
+
+            vi.spyOn(mockPricingProvider, "getTokenPrices").mockResolvedValue([
+                { timestampMs: 1000, priceUsd: 1500 },
+            ]);
+
+            vi.spyOn(mockMetadataProvider, "getMetadata").mockResolvedValue({ name: "Test" });
+
+            await orchestrator["bulkFetchMetadataAndPricesForBatch"](events);
+
+            expect(mockMetadataProvider.clearCache).toHaveBeenCalled();
+            expect(mockMetadataProvider.getMetadata).toHaveBeenCalledWith("id1");
+            expect(mockPricingProvider.getTokenPrices).toHaveBeenCalledWith("ETH", [1000]);
+        });
+
+        it("continues processing even if one fetch fails", async () => {
+            const events = [
+                {
+                    params: {
+                        metadata: ["type", "id1"],
+                        token: "0x123",
+                        amount: "1000000000000000000",
+                    },
+                    blockTimestamp: 1000,
+                },
+            ] as unknown as AnyIndexerFetchedEvent[];
+
+            vi.spyOn(mockMetadataProvider, "getMetadata").mockRejectedValue(
+                new Error("Fetch failed"),
+            );
+            vi.spyOn(mockPricingProvider, "getTokenPrices").mockResolvedValue([]);
+
+            // Should not throw
+            await expect(
+                orchestrator["bulkFetchMetadataAndPricesForBatch"](events),
+            ).resolves.not.toThrow();
         });
     });
 });

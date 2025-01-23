@@ -84,6 +84,7 @@ describe("DirectGrantsLiteStrategyHandler", () => {
         } as unknown as EvmProvider;
         mockPricingProvider = {
             getTokenPrice: vi.fn(),
+            getTokenPrices: vi.fn(),
         } as IPricingProvider;
         mockApplicationRepository = {} as IApplicationReadRepository;
         dependencies = {

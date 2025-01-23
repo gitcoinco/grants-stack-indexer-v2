@@ -112,6 +112,7 @@ describe("DVMDDirectTransferHandler", () => {
         } as unknown as EvmProvider;
         mockPricingProvider = {
             getTokenPrice: vi.fn(),
+            getTokenPrices: vi.fn(),
         } as IPricingProvider;
         mockApplicationRepository = {} as IApplicationReadRepository;
         handler = new DVMDDirectTransferStrategyHandler(mockChainId, {

@@ -46,6 +46,7 @@ describe("DVMDAllocatedHandler", () => {
         } as unknown as IApplicationRepository;
         mockPricingProvider = {
             getTokenPrice: vi.fn(),
+            getTokenPrices: vi.fn(),
         } as IPricingProvider;
     });
 

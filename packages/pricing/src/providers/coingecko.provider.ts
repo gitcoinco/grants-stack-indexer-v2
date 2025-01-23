@@ -13,6 +13,7 @@ import { IPricingProvider } from "../interfaces/index.js";
 import {
     CoingeckoPriceChartData,
     CoingeckoTokenId,
+    MIN_GRANULARITY_MS,
     TokenPrice,
     UnknownPricingException,
     UnsupportedToken,
@@ -126,7 +127,7 @@ export class CoingeckoProvider implements IPricingProvider {
             };
         } catch (error: unknown) {
             if (isAxiosError(error)) {
-                this.handleAxiosError(error, path);
+                this.handleAxiosError(error, path, "getTokenPrice");
             }
 
             const errorMessage =
@@ -143,10 +144,58 @@ export class CoingeckoProvider implements IPricingProvider {
         }
     }
 
-    private handleAxiosError(error: AxiosError, path: string): void {
+    /* @inheritdoc */
+    async getTokenPrices(tokenCode: TokenCode, timestamps: number[]): Promise<TokenPrice[]> {
+        const tokenId = TokenMapping[tokenCode];
+        if (!tokenId) {
+            throw new UnsupportedToken(tokenCode, {
+                className: CoingeckoProvider.name,
+                methodName: "getTokenPrices",
+            });
+        }
+
+        if (timestamps.length === 0) {
+            return [];
+        }
+
+        const effectiveMin = Math.min(...timestamps);
+        let effectiveMax = Math.max(...timestamps);
+
+        if (effectiveMax - effectiveMin < MIN_GRANULARITY_MS) {
+            effectiveMax = effectiveMin + MIN_GRANULARITY_MS;
+        }
+
+        const path = `/coins/${tokenId}/market_chart/range?vs_currency=usd&from=${effectiveMin}&to=${effectiveMax}&precision=full&interval=5m`;
+
+        try {
+            const { data } = await this.axios.get<CoingeckoPriceChartData>(path);
+            return data.prices.map(([timestampMs, priceUsd]) => ({
+                timestampMs,
+                priceUsd,
+            }));
+        } catch (error: unknown) {
+            if (isAxiosError(error)) {
+                this.handleAxiosError(error, path, "getTokenPrices");
+            }
+
+            const errorMessage =
+                `Unknown Coingecko API error: failed to fetch token price ` +
+                stringify(error, Object.getOwnPropertyNames(error));
+
+            throw new UnknownPricingException(errorMessage, {
+                className: CoingeckoProvider.name,
+                methodName: "getTokenPrices",
+                additionalData: {
+                    path,
+                },
+            });
+        }
+    }
+
+    private handleAxiosError(error: AxiosError, path: string, methodName: string): void {
         const errorContext = {
             className: CoingeckoProvider.name,
-            methodName: "getTokenPrice",
+            methodName,
             additionalData: {
                 path,
             },
