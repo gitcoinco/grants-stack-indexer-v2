@@ -55,6 +55,21 @@ services:
             start_period: 5s
         networks:
             - datalayer
+    datalayer-graphql-config:
+        build:
+            context: .
+            dockerfile: scripts/hasura/Dockerfile
+        env_file:
+            - .env
+        environment:
+            HASURA_ENDPOINT: http://datalayer-graphql-api:8080
+            HASURA_ADMIN_SECRET: ${DATALAYER_HASURA_ADMIN_SECRET:-secret}
+            HASURA_SCHEMA: public
+        depends_on:
+            datalayer-graphql-api:
+                condition: service_healthy
+        networks:
+            - datalayer
     indexer-postgres-db:
         image: postgres:16
         restart: always
