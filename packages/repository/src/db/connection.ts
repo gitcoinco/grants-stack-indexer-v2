@@ -102,6 +102,9 @@ export const createKyselyPostgresDb = (
             idleTimeoutMillis: 30_000,
             keepAlive: true,
             connectionTimeoutMillis: 5_000,
+            ssl: {
+                rejectUnauthorized: false,
+            },
             ...config,
         }),
     });
