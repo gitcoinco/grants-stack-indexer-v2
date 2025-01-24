@@ -1,7 +1,7 @@
 FROM node:20-slim
-
-# Install pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable
 
 WORKDIR /app
 
@@ -21,4 +21,4 @@ WORKDIR /app/scripts/hasura
 RUN pnpm build
 
 # Run the configure script
-CMD ["pnpm", "configure"] 
+CMD ["pnpm", "api:configure"] 
