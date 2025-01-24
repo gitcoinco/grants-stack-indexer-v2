@@ -12,10 +12,10 @@
         "package.json"
     ],
     "scripts": {
+        "api:configure": "tsx src/configure-hasura.script.ts",
         "build": "tsc -p tsconfig.build.json",
         "check-types": "tsc --noEmit -p ./tsconfig.json",
         "clean": "rm -rf dist/",
-        "configure": "tsx src/configure-hasura.script.ts",
         "format": "prettier --check \"{src,test}/**/*.{js,ts,json}\"",
         "format:fix": "prettier --write \"{src,test}/**/*.{js,ts,json}\"",
         "lint": "eslint \"{src,test}/**/*.{js,ts,json}\"",

@@ -28,7 +28,7 @@ HASURA_SCHEMA=public                   # Your database schema
 Run the configuration script:
 
 ```bash
-pnpm configure
+pnpm api:configure
 ```
 
 This will:
