@@ -1,7 +1,28 @@
+import assert from "assert";
 import axios, { AxiosError, AxiosInstance, isAxiosError } from "axios";
 
 import type { CustomFunction, HasuraConfig, RelationshipConfig } from "../internal.js";
 import { HasuraApiException, NetworkException } from "../internal.js";
+
+type SuggestedRelationship = {
+    type: "array" | "object";
+    from: {
+        table: {
+            name: string;
+            schema: string;
+        };
+        columns: string[];
+        constraint_name?: string;
+    };
+    to: {
+        table: {
+            name: string;
+            schema: string;
+        };
+        columns: string[];
+        constraint_name?: string;
+    };
+};
 
 /**
  * A class to interact with the Hasura Metadata API for managing database configurations,
@@ -75,6 +96,75 @@ export class HasuraMetadataApi<Tables extends readonly string[]> {
             console.log(`✅ Tracked table: ${tableName}`);
         } catch (err) {
             this.handleError(err, `track ${tableName} table`);
+        }
+    }
+
+    /**
+     * Retrieves suggested relationships to create between tables in Hasura.
+     *
+     * @param {Tables[number][]} tables - The tables to suggest relationships for.
+     * @returns {Promise<SuggestedRelationship[]>}
+     * @throws {HasuraApiException} If the relationship suggestion fails.
+     * @throws {NetworkException} If there is a network error.
+     */
+    async suggestRelationships(tables: Tables[number][]): Promise<SuggestedRelationship[]> {
+        try {
+            const { data } = await this.axiosInstance.post<{
+                relationships: SuggestedRelationship[];
+            }>("/v1/metadata", {
+                type: "pg_suggest_relationships",
+                args: {
+                    omit_tracked: true,
+                    source: "default",
+                    tables: tables,
+                },
+            });
+
+            return data.relationships;
+        } catch (err) {
+            this.handleError(err, `suggest relationships for ${tables.join(", ")}`);
+        }
+    }
+
+    /**
+     * Creates suggested relationships between tables in Hasura.
+     *
+     * @param {Tables[number][]} tables - The tables to create relationships for.
+     * @returns {Promise<void>}
+     * @throws {HasuraApiException} If the relationship creation fails.
+     * @throws {NetworkException} If there is a network error.
+     */
+    async createSuggestedRelationships(tables: Tables[number][]): Promise<void> {
+        const relationships = await this.suggestRelationships(tables);
+        console.log(`Fetched ${relationships.length} relationships`);
+        for (const relationship of relationships) {
+            assert(
+                relationship.from.columns.length === relationship.to.columns.length,
+                "Number of columns in from and to tables must be the same",
+            );
+            const payload = {
+                name: relationship.to.table.name,
+                table: relationship.from.table,
+                source: "default",
+                using: {
+                    manual_configuration: {
+                        remote_table: relationship.to.table,
+                        source: "default",
+                        column_mapping: Object.fromEntries(
+                            relationship.from.columns.map((col, i) => [
+                                col,
+                                relationship.to.columns[i]!,
+                            ]),
+                        ),
+                    },
+                },
+            };
+
+            if (relationship.type === "array") {
+                await this.createArrayRelationship(payload);
+            } else {
+                await this.createObjectRelationship(payload);
+            }
         }
     }
 
@@ -192,7 +282,7 @@ export class HasuraMetadataApi<Tables extends readonly string[]> {
         const error = err as Error | AxiosError;
         let errorMessage = `❌ Failed to ${operation}`;
 
-        if (isAxiosError(error)) {
+        if (isAxiosError<{ error: string; code: string }>(error)) {
             if (!error.response) {
                 // Network error
                 throw new NetworkException(`Network error while ${operation}: ${error.message}`);
@@ -204,7 +294,7 @@ export class HasuraMetadataApi<Tables extends readonly string[]> {
                 );
             }
             // Other API errors
-            errorMessage += `: ${error.response.data || error.message}`;
+            errorMessage += `: ${error.response.data.error}`;
         } else {
             errorMessage += `: ${error.message}`;
         }
