@@ -19,7 +19,7 @@ function createMockEvent(
 ): ProcessorEvent<"Allo", "PoolFunded"> {
     return {
         blockNumber: 116385567,
-        blockTimestamp: 1708369911 as TimestampMs,
+        blockTimestamp: 1708369911000 as TimestampMs,
         chainId: 10 as ChainId,
         contractName: "Allo",
         eventName: "PoolFunded",
@@ -84,7 +84,7 @@ describe("PoolFundedHandler", () => {
         )[0];
         const mockPrice = {
             priceUsd: 2.5,
-            timestampMs: 1708369911 as TimestampMs,
+            timestampMs: 1708369911000 as TimestampMs,
         };
         const round = {
             id: "1",

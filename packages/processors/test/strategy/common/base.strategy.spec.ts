@@ -46,7 +46,7 @@ describe("BaseStrategyHandler", () => {
                 code: "ETH" as TokenCode,
                 priceSourceCode: "ETH" as TokenCode,
             };
-            const blockTimestamp = 1625097600 as TimestampMs; // Example timestamp
+            const blockTimestamp = 1625097600000 as TimestampMs; // Example timestamp
 
             const result = await handler.fetchMatchAmount(
                 matchingFundsAvailable,

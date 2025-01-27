@@ -9,7 +9,7 @@ describe("ProfileOwnerUpdatedHandler", () => {
     it("handles ProfileOwnerUpdated event correctly", async () => {
         const mockEvent: ProcessorEvent<"Registry", "ProfileOwnerUpdated"> = {
             blockNumber: 123456,
-            blockTimestamp: 123456 as TimestampMs,
+            blockTimestamp: 1234560000000 as TimestampMs,
             chainId: 1 as ChainId,
             contractName: "Registry",
             eventName: "ProfileOwnerUpdated",
