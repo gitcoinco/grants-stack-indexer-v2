@@ -2,7 +2,7 @@ import { getAddress } from "viem";
 import { describe, expect, it, vi } from "vitest";
 
 import { Changeset } from "@grants-stack-indexer/repository";
-import { Bytes32String, ChainId, ProcessorEvent } from "@grants-stack-indexer/shared";
+import { Bytes32String, ChainId, ProcessorEvent, TimestampMs } from "@grants-stack-indexer/shared";
 
 import { ProfileNameUpdatedHandler } from "../../../src/processors/registry/handlers/profileNameUpdated.handler.js";
 
@@ -16,7 +16,7 @@ describe("ProfileNameUpdatedHandler", () => {
             anchor: "0x5aD1D85Bb68791Cb3cE598f56E00F5D5694FAd14",
         },
         blockNumber: 1,
-        blockTimestamp: 1,
+        blockTimestamp: 1 as TimestampMs,
         chainId: 1 as ChainId,
         logIndex: 1,
         srcAddress: "0x0",

@@ -30,6 +30,7 @@ import {
     ProcessorEvent,
     RateLimitError,
     StrategyEvent,
+    TimestampMs,
     Token,
     TokenCode,
 } from "@grants-stack-indexer/shared";
@@ -881,7 +882,7 @@ describe("Orchestrator", { sequential: true }, () => {
             ] as unknown as AnyIndexerFetchedEvent[];
 
             vi.spyOn(mockPricingProvider, "getTokenPrices").mockResolvedValue([
-                { timestampMs: 1000, priceUsd: 1500 },
+                { timestampMs: 1000 as TimestampMs, priceUsd: 1500 },
             ]);
 
             vi.spyOn(mockMetadataProvider, "getMetadata").mockResolvedValue({ name: "Test" });

@@ -1,10 +1,10 @@
 import { Kysely } from "kysely";
 
-import { TokenCode, TokenPrice } from "@grants-stack-indexer/shared";
+import { TimestampMs, TokenCode, TokenPrice } from "@grants-stack-indexer/shared";
 
 import { Database, handlePostgresError, ICache } from "../../internal.js";
 
-export type PriceCacheKey = { tokenCode: TokenCode; timestampMs: number };
+export type PriceCacheKey = { tokenCode: TokenCode; timestampMs: TimestampMs };
 
 /**
  * A cache for token prices using Kysely.
@@ -19,7 +19,10 @@ export class KyselyPricingCache implements ICache<PriceCacheKey, TokenPrice> {
     ) {}
 
     /** @inheritdoc */
-    async get(key: { tokenCode: TokenCode; timestampMs: number }): Promise<TokenPrice | undefined> {
+    async get(key: {
+        tokenCode: TokenCode;
+        timestampMs: TimestampMs;
+    }): Promise<TokenPrice | undefined> {
         const { tokenCode, timestampMs } = key;
 
         try {
@@ -36,7 +39,7 @@ export class KyselyPricingCache implements ICache<PriceCacheKey, TokenPrice> {
             }
 
             return {
-                timestampMs: result.timestampMs,
+                timestampMs: result.timestampMs as TimestampMs,
                 priceUsd: result.priceUsd,
             };
         } catch (error) {
@@ -52,7 +55,7 @@ export class KyselyPricingCache implements ICache<PriceCacheKey, TokenPrice> {
 
     /** @inheritdoc */
     async set(
-        key: { tokenCode: TokenCode; timestampMs: number },
+        key: { tokenCode: TokenCode; timestampMs: TimestampMs },
         value: TokenPrice,
     ): Promise<void> {
         const { tokenCode, timestampMs } = key;

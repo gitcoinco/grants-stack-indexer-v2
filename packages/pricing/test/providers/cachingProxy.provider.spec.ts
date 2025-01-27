@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ICache, PriceCacheKey } from "@grants-stack-indexer/repository";
-import { ICacheable, ILogger, TokenCode } from "@grants-stack-indexer/shared";
+import { ICacheable, ILogger, TimestampMs, TokenCode } from "@grants-stack-indexer/shared";
 
 import { IPricingProvider, TokenPrice } from "../../src/internal.js";
 import { CachingPricingProvider } from "../../src/providers/cachingProxy.provider.js";
@@ -37,8 +37,8 @@ describe("CachingPricingProvider", () => {
             address: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
             decimals: 6,
         };
-        const testStartTime = 1234567890000;
-        const testEndTime = 1234567899999;
+        const testStartTime = 1234567890000 as TimestampMs;
+        const testEndTime = 1234567899999 as TimestampMs;
         const testPrice: TokenPrice = {
             priceUsd: 0.99,
             timestampMs: testStartTime,

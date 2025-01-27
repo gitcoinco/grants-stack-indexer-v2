@@ -83,7 +83,7 @@ const price = await coingecko.getTokenPrice(
 
 Available methods
 
--   `getTokenPrice(chainId: number, tokenAddress: Address, startTimestampMs: number, endTimestampMs: number): Promise<TokenPrice | undefined>`
+-   `getTokenPrice(chainId: number, tokenAddress: Address, startTimestampMs: TimestampMs, endTimestampMs: TimestampMs): Promise<TokenPrice | undefined>`
 
 ## References
 

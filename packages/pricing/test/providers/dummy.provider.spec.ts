@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { TokenCode } from "@grants-stack-indexer/shared";
+import { TimestampMs, TokenCode } from "@grants-stack-indexer/shared";
 
 import { DummyPricingProvider } from "../../src/providers/dummy.provider.js";
 
@@ -8,18 +8,21 @@ describe("DummyPricingProvider", () => {
     it("return 1 for all token prices", async () => {
         const provider = new DummyPricingProvider();
 
-        const response = await provider.getTokenPrice("ETH" as TokenCode, 11111111);
+        const response = await provider.getTokenPrice(
+            "ETH" as TokenCode,
+            1111111100000 as TimestampMs,
+        );
 
         expect(response).toEqual({
             priceUsd: 1,
-            timestampMs: 11111111,
+            timestampMs: 1111111100000,
         });
     });
 
     describe("getTokenPrices", () => {
         it("returns dummy prices for all timestamps", async () => {
             const provider = new DummyPricingProvider(1);
-            const timestamps = [1000, 2000, 3000];
+            const timestamps = [1111111100000, 1111111200000, 1111111300000] as TimestampMs[];
 
             const result = await provider.getTokenPrices("ETH" as TokenCode, timestamps);
             expect(result).toEqual(

@@ -13,7 +13,7 @@ export async function up(db: Kysely<any>): Promise<void> {
         .createTable("events_registry")
         .addColumn("chainId", CHAIN_ID_TYPE)
         .addColumn("blockNumber", "integer")
-        .addColumn("blockTimestamp", "integer")
+        .addColumn("blockTimestamp", "bigint")
         .addColumn("logIndex", "integer")
         .addColumn("rawEvent", "jsonb")
         .addPrimaryKeyConstraint("events_registry_pkey", ["chainId"])

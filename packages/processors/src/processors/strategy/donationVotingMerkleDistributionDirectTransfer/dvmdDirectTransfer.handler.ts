@@ -6,6 +6,7 @@ import {
     ChainId,
     ProcessorEvent,
     StrategyEvent,
+    TimestampMs,
     Token,
 } from "@grants-stack-indexer/shared";
 
@@ -120,7 +121,7 @@ export class DVMDDirectTransferStrategyHandler extends BaseStrategyHandler {
     override async fetchMatchAmount(
         matchingFundsAvailable: number,
         token: Token,
-        blockTimestamp: number,
+        blockTimestamp: TimestampMs,
     ): Promise<{ matchAmount: bigint; matchAmountInUsd: string }> {
         const matchAmount = parseUnits(matchingFundsAvailable.toString(), token.decimals);
 
@@ -193,7 +194,7 @@ export class DVMDDirectTransferStrategyHandler extends BaseStrategyHandler {
     private async getTokenAmountInUsd(
         token: Token,
         amount: bigint,
-        timestamp: number,
+        timestamp: TimestampMs,
     ): Promise<string> {
         const { pricingProvider } = this.dependencies;
         const tokenPrice = await pricingProvider.getTokenPrice(token.priceSourceCode, timestamp);

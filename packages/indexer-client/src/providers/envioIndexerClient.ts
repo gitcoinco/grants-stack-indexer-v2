@@ -1,6 +1,11 @@
 import { gql, GraphQLClient } from "graphql-request";
 
-import { AnyIndexerFetchedEvent, ChainId, stringify } from "@grants-stack-indexer/shared";
+import {
+    AnyIndexerFetchedEvent,
+    ChainId,
+    stringify,
+    TimestampMs,
+} from "@grants-stack-indexer/shared";
 
 import { IndexerClientError, InvalidIndexerResponse } from "../exceptions/index.js";
 import {
@@ -69,6 +74,11 @@ export class EnvioIndexerClient implements IIndexerClient {
             const events = response?.raw_events;
 
             if (events) {
+                // Convert timestamps from seconds to milliseconds
+                events.forEach((event) => {
+                    event.blockTimestamp = (event.blockTimestamp * 1000) as TimestampMs;
+                });
+
                 if (allowPartialLastBlock || events.length === 0) {
                     return events;
                 } else {
@@ -233,6 +243,10 @@ export class EnvioIndexerClient implements IIndexerClient {
             )) as { raw_events: AnyIndexerFetchedEvent[] };
 
             if (response?.raw_events) {
+                // Convert timestamps from seconds to milliseconds
+                response.raw_events.forEach((event) => {
+                    event.blockTimestamp = (event.blockTimestamp * 1000) as TimestampMs;
+                });
                 return response.raw_events;
             } else {
                 throw new InvalidIndexerResponse(stringify(response));
