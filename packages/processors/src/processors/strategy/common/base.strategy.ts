@@ -1,5 +1,11 @@
 import { Changeset } from "@grants-stack-indexer/repository";
-import { Address, ProcessorEvent, StrategyEvent, Token } from "@grants-stack-indexer/shared";
+import {
+    Address,
+    ProcessorEvent,
+    StrategyEvent,
+    TimestampMs,
+    Token,
+} from "@grants-stack-indexer/shared";
 
 import { IStrategyHandler, StrategyTimings } from "../../../internal.js";
 
@@ -31,7 +37,7 @@ export abstract class BaseStrategyHandler implements IStrategyHandler<StrategyEv
     async fetchMatchAmount(
         _matchingFundsAvailable: number,
         _token: Token,
-        _blockTimestamp: number,
+        _blockTimestamp: TimestampMs,
     ): Promise<{ matchAmount: bigint; matchAmountInUsd: string }> {
         return {
             matchAmount: 0n,

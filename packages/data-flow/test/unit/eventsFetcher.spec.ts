@@ -1,7 +1,12 @@
 import { beforeEach, describe, expect, it, Mocked, vi } from "vitest";
 
 import { IIndexerClient } from "@grants-stack-indexer/indexer-client";
-import { AnyIndexerFetchedEvent, ChainId, PoolCreatedParams } from "@grants-stack-indexer/shared";
+import {
+    AnyIndexerFetchedEvent,
+    ChainId,
+    PoolCreatedParams,
+    TimestampMs,
+} from "@grants-stack-indexer/shared";
 
 import { EventsFetcher } from "../../src/eventsFetcher.js";
 
@@ -23,7 +28,7 @@ describe("EventsFetcher", () => {
             {
                 chainId: 1,
                 blockNumber: 12345,
-                blockTimestamp: 123123123,
+                blockTimestamp: 123123123000 as TimestampMs,
                 contractName: "Allo",
                 eventName: "PoolCreated",
                 srcAddress: "0x1234567890123456789012345678901234567890",
@@ -38,7 +43,7 @@ describe("EventsFetcher", () => {
             {
                 chainId: 1,
                 blockNumber: 12345,
-                blockTimestamp: 123123123,
+                blockTimestamp: 123123123000 as TimestampMs,
                 contractName: "Allo",
                 eventName: "PoolCreated",
                 srcAddress: "0x1234567890123456789012345678901234567890",

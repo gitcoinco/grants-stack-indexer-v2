@@ -10,7 +10,7 @@ import {
     Round,
     RoundNotFound,
 } from "@grants-stack-indexer/repository";
-import { ChainId, ProcessorEvent, UnknownToken } from "@grants-stack-indexer/shared";
+import { ChainId, ProcessorEvent, TimestampMs, UnknownToken } from "@grants-stack-indexer/shared";
 
 import {
     MetadataParsingFailed,
@@ -78,7 +78,7 @@ describe("DVMDAllocatedHandler", () => {
             "getApplicationByAnchorAddressOrThrow",
         ).mockResolvedValue(mockApplication);
         vi.spyOn(mockPricingProvider, "getTokenPrice").mockResolvedValue({
-            timestampMs: 1000000000,
+            timestampMs: 1000000000 as TimestampMs,
             priceUsd: 2000,
         });
 
@@ -142,13 +142,14 @@ describe("DVMDAllocatedHandler", () => {
             mockApplicationRepository,
             "getApplicationByAnchorAddressOrThrow",
         ).mockResolvedValue(mockApplication);
+        const timestampMs = 1000000000 as TimestampMs;
         vi.spyOn(mockPricingProvider, "getTokenPrice")
             .mockResolvedValueOnce({
-                timestampMs: 1000000000,
+                timestampMs,
                 priceUsd: 1,
             })
             .mockResolvedValueOnce({
-                timestampMs: 1000000000,
+                timestampMs,
                 priceUsd: 2000,
             });
 
@@ -170,7 +171,7 @@ describe("DVMDAllocatedHandler", () => {
                         amount: BigInt(amount),
                         amountInUsd: "1500",
                         amountInRoundMatchToken: parseEther("0.75"),
-                        timestamp: new Date(1000000000),
+                        timestamp: new Date(timestampMs),
                     }),
                 },
             },
@@ -348,7 +349,7 @@ describe("DVMDAllocatedHandler", () => {
             "getApplicationByAnchorAddressOrThrow",
         ).mockResolvedValue(mockApplication);
         vi.spyOn(mockPricingProvider, "getTokenPrice").mockResolvedValue({
-            timestampMs: 1000000000,
+            timestampMs: 1000000000 as TimestampMs,
             priceUsd: 2000,
         });
 

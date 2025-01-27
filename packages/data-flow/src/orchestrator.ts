@@ -25,6 +25,7 @@ import {
     RetryStrategy,
     StrategyEvent,
     stringify,
+    TimestampMs,
     Token,
 } from "@grants-stack-indexer/shared";
 
@@ -36,7 +37,7 @@ import { CoreDependencies, DataLoader, delay, IQueue, iStrategyAbi, Queue } from
 
 type TokenWithTimestamps = {
     token: Token;
-    timestamps: number[];
+    timestamps: TimestampMs[];
 };
 
 /**

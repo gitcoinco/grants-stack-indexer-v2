@@ -6,6 +6,7 @@ import {
     NonRetriableError,
     RateLimitError,
     stringify,
+    TimestampMs,
     TokenCode,
 } from "@grants-stack-indexer/shared";
 
@@ -92,8 +93,8 @@ export class CoingeckoProvider implements IPricingProvider {
     /* @inheritdoc */
     async getTokenPrice(
         tokenCode: TokenCode,
-        startTimestampMs: number,
-        endTimestampMs?: number,
+        startTimestampMs: TimestampMs,
+        endTimestampMs?: TimestampMs,
     ): Promise<TokenPrice | undefined> {
         const tokenId = TokenMapping[tokenCode];
         if (!tokenId) {
@@ -104,7 +105,7 @@ export class CoingeckoProvider implements IPricingProvider {
         }
 
         if (!endTimestampMs) {
-            endTimestampMs = startTimestampMs + TIME_DELTA;
+            endTimestampMs = (startTimestampMs + TIME_DELTA) as TimestampMs;
         }
 
         if (startTimestampMs > endTimestampMs) {
@@ -122,7 +123,7 @@ export class CoingeckoProvider implements IPricingProvider {
             }
 
             return {
-                timestampMs: closestEntry[0],
+                timestampMs: closestEntry[0] as TimestampMs,
                 priceUsd: closestEntry[1],
             };
         } catch (error: unknown) {

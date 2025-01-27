@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { Changeset } from "@grants-stack-indexer/repository";
-import { Address, Token, TokenCode } from "@grants-stack-indexer/shared";
+import { Address, TimestampMs, Token, TokenCode } from "@grants-stack-indexer/shared";
 
 import { BaseStrategyHandler } from "../../../src/processors/strategy/common/base.strategy.js";
 
@@ -46,7 +46,7 @@ describe("BaseStrategyHandler", () => {
                 code: "ETH" as TokenCode,
                 priceSourceCode: "ETH" as TokenCode,
             };
-            const blockTimestamp = 1625097600; // Example timestamp
+            const blockTimestamp = 1625097600000 as TimestampMs; // Example timestamp
 
             const result = await handler.fetchMatchAmount(
                 matchingFundsAvailable,

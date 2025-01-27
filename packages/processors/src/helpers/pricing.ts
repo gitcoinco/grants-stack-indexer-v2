@@ -1,5 +1,5 @@
 import { IPricingProvider } from "@grants-stack-indexer/pricing";
-import { Token } from "@grants-stack-indexer/shared";
+import { TimestampMs, Token } from "@grants-stack-indexer/shared";
 
 import { TokenPriceNotFoundError } from "../internal.js";
 import { calculateAmountInToken, calculateAmountInUsd } from "./index.js";
@@ -17,9 +17,9 @@ export const getTokenAmountInUsd = async (
     pricingProvider: IPricingProvider,
     token: Token,
     amount: bigint,
-    timestamp: number,
-    timestampEnd?: number,
-): Promise<{ amountInUsd: string; timestamp: number }> => {
+    timestamp: TimestampMs,
+    timestampEnd?: TimestampMs,
+): Promise<{ amountInUsd: string; timestamp: TimestampMs }> => {
     const tokenPrice = await pricingProvider.getTokenPrice(
         token.priceSourceCode,
         timestamp,
@@ -49,8 +49,8 @@ export const getUsdInTokenAmount = async (
     pricingProvider: IPricingProvider,
     token: Token,
     amountInUSD: string,
-    timestamp: number,
-    timestampEnd?: number,
+    timestamp: TimestampMs,
+    timestampEnd?: TimestampMs,
 ): Promise<{ amount: bigint; price: number; timestamp: Date }> => {
     const closestPrice = await pricingProvider.getTokenPrice(
         token.priceSourceCode,

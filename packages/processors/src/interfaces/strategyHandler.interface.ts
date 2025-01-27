@@ -3,6 +3,7 @@ import type {
     Address,
     ContractToEventName,
     ProcessorEvent,
+    TimestampMs,
     Token,
 } from "@grants-stack-indexer/shared";
 
@@ -42,7 +43,7 @@ export interface IStrategyHandler<E extends ContractToEventName<"Strategy">> {
     fetchMatchAmount(
         matchingFundsAvailable: number,
         token: Token,
-        blockTimestamp: number,
+        blockTimestamp: TimestampMs,
     ): Promise<{
         matchAmount: bigint;
         matchAmountInUsd: string;

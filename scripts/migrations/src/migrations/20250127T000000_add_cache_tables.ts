@@ -5,7 +5,7 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     await db.schema
         .createTable("priceCache")
         .addColumn("tokenCode", "text", (col) => col.notNull())
-        .addColumn("timestampMs", "integer", (col) => col.notNull())
+        .addColumn("timestampMs", "bigint", (col) => col.notNull())
         .addColumn("priceUsd", "decimal(36, 18)", (col) => col.notNull())
         .addColumn("createdAt", "timestamptz", (col) => col.defaultTo(sql`now()`))
         .addPrimaryKeyConstraint("pricing_cache_pkey", ["tokenCode", "timestampMs"])
