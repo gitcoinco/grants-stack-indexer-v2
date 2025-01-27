@@ -4,7 +4,6 @@ import { EvmProvider } from "@grants-stack-indexer/chain-providers";
 import {
     DatabaseEventRegistry,
     DatabaseStrategyRegistry,
-    InMemoryCachedEventRegistry,
     InMemoryCachedStrategyRegistry,
     Orchestrator,
     RetroactiveProcessor,
@@ -67,12 +66,6 @@ export class ProcessingService {
             // Initialize EVM provider
             const evmProvider = new EvmProvider(chain.rpcUrls, optimism, logger);
 
-            // Initialize events registry for the chain
-            const cachedEventsRegistry = await InMemoryCachedEventRegistry.initialize(
-                logger,
-                eventsRegistry,
-                [chain.id as ChainId],
-            );
             const cachedStrategyRegistry = await InMemoryCachedStrategyRegistry.initialize(
                 logger,
                 strategyRegistry,
@@ -84,7 +77,7 @@ export class ProcessingService {
                 { ...core, evmProvider },
                 indexerClient,
                 {
-                    eventsRegistry: cachedEventsRegistry,
+                    eventsRegistry,
                     strategyRegistry: cachedStrategyRegistry,
                 },
                 chain.fetchLimit,
@@ -97,7 +90,7 @@ export class ProcessingService {
                 { ...core, evmProvider },
                 indexerClient,
                 {
-                    eventsRegistry: cachedEventsRegistry,
+                    eventsRegistry,
                     strategyRegistry: cachedStrategyRegistry,
                     checkpointRepository: strategyProcessingCheckpointRepository,
                 },

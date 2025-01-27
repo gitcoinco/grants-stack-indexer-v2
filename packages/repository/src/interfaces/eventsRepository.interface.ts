@@ -1,8 +1,10 @@
 import { ChainId } from "@grants-stack-indexer/shared";
 
-import { NewProcessedEvent, ProcessedEvent } from "../types/index.js";
+import { NewProcessedEvent, ProcessedEvent, TransactionConnection } from "../types/index.js";
 
-export interface IEventRegistryRepository {
+export interface IEventRegistryRepository<
+    TxConnection extends TransactionConnection = TransactionConnection,
+> {
     /**
      * Get the last processed event for a given chain.
      * @param chainId - The chain ID.
@@ -15,5 +17,9 @@ export interface IEventRegistryRepository {
      * @param chainId - The chain ID.
      * @param event - The new processed event to save.
      */
-    saveLastProcessedEvent: (chainId: ChainId, event: NewProcessedEvent) => Promise<void>;
+    saveLastProcessedEvent: (
+        chainId: ChainId,
+        event: NewProcessedEvent,
+        txConnection?: TxConnection,
+    ) => Promise<void>;
 }

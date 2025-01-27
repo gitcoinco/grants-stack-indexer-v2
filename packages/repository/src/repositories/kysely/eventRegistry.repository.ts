@@ -6,11 +6,12 @@ import { IEventRegistryRepository } from "../../interfaces/index.js";
 import {
     Database,
     handlePostgresError,
+    KyselyTransaction,
     NewProcessedEvent,
     ProcessedEvent,
 } from "../../internal.js";
 
-export class KyselyEventRegistryRepository implements IEventRegistryRepository {
+export class KyselyEventRegistryRepository implements IEventRegistryRepository<KyselyTransaction> {
     constructor(
         private readonly db: Kysely<Database>,
         private readonly schemaName: string,
@@ -27,10 +28,14 @@ export class KyselyEventRegistryRepository implements IEventRegistryRepository {
     }
 
     /** @inheritdoc */
-    async saveLastProcessedEvent(chainId: ChainId, event: NewProcessedEvent): Promise<void> {
+    async saveLastProcessedEvent(
+        chainId: ChainId,
+        event: NewProcessedEvent,
+        txConnection?: KyselyTransaction,
+    ): Promise<void> {
         const { blockNumber, blockTimestamp, logIndex, rawEvent } = event; // Extract only the fields from NewProcessedEvent
         try {
-            await this.db
+            await (txConnection || this.db)
                 .withSchema(this.schemaName)
                 .insertInto("eventsRegistry")
                 .values({ blockNumber, blockTimestamp, logIndex, chainId, rawEvent })

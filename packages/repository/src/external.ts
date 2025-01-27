@@ -48,6 +48,7 @@ export type {
     ApplicationChangeset,
     DonationChangeset,
     ApplicationPayoutChangeset,
+    ProcessedEventChangeset,
 } from "./types/index.js";
 
 export {

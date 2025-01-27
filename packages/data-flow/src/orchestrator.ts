@@ -7,7 +7,12 @@ import {
     UnsupportedEventException,
     UnsupportedStrategy,
 } from "@grants-stack-indexer/processors";
-import { RoundNotFound, RoundNotFoundForId } from "@grants-stack-indexer/repository";
+import {
+    Changeset,
+    IEventRegistryRepository,
+    RoundNotFound,
+    RoundNotFoundForId,
+} from "@grants-stack-indexer/repository";
 import {
     Address,
     AnyEvent,
@@ -29,7 +34,7 @@ import {
     Token,
 } from "@grants-stack-indexer/shared";
 
-import type { IEventsFetcher, IEventsRegistry, IStrategyRegistry } from "./interfaces/index.js";
+import type { IEventsFetcher, IStrategyRegistry } from "./interfaces/index.js";
 import { EventsFetcher } from "./eventsFetcher.js";
 import { EventsProcessor } from "./eventsProcessor.js";
 import { InvalidEvent } from "./exceptions/index.js";
@@ -72,7 +77,7 @@ export class Orchestrator {
     private readonly eventsByBlockContext: Map<number, AnyIndexerFetchedEvent[]>;
     private readonly eventsFetcher: IEventsFetcher;
     private readonly eventsProcessor: EventsProcessor;
-    private readonly eventsRegistry: IEventsRegistry;
+    private readonly eventsRegistry: IEventRegistryRepository;
     private readonly strategyRegistry: IStrategyRegistry;
     private readonly dataLoader: DataLoader;
     private readonly retryHandler: RetryHandler;
@@ -91,7 +96,7 @@ export class Orchestrator {
         private dependencies: Readonly<CoreDependencies>,
         private indexerClient: IIndexerClient,
         private registries: {
-            eventsRegistry: IEventsRegistry;
+            eventsRegistry: IEventRegistryRepository;
             strategyRegistry: IStrategyRegistry;
         },
         private fetchLimit: number = 1000,
@@ -113,6 +118,7 @@ export class Orchestrator {
                 application: this.dependencies.applicationRepository,
                 donation: this.dependencies.donationRepository,
                 applicationPayout: this.dependencies.applicationPayoutRepository,
+                eventRegistry: this.eventsRegistry,
             },
             this.dependencies.transactionManager,
             this.logger,
@@ -146,18 +152,34 @@ export class Orchestrator {
                     continue;
                 }
 
-                await this.eventsRegistry.saveLastProcessedEvent(this.chainId, {
-                    ...event,
-                    rawEvent: event,
-                });
-
                 await this.retryHandler.execute(
                     async () => {
-                        await this.handleEvent(event!);
+                        const changesets = await this.handleEvent(event!);
+                        if (changesets) {
+                            await this.dataLoader.applyChanges([
+                                ...changesets,
+                                {
+                                    type: "InsertProcessedEvent",
+                                    args: {
+                                        chainId: this.chainId,
+                                        processedEvent: {
+                                            ...event!,
+                                            rawEvent: event,
+                                        },
+                                    },
+                                },
+                            ]);
+                        }
                     },
                     { abortSignal: signal },
                 );
             } catch (error: unknown) {
+                if (event) {
+                    await this.eventsRegistry.saveLastProcessedEvent(this.chainId, {
+                        ...event,
+                        rawEvent: event,
+                    });
+                }
                 // TODO: notify
                 if (
                     error instanceof UnsupportedStrategy ||
@@ -403,7 +425,9 @@ export class Orchestrator {
         return tokenPrices;
     }
 
-    private async handleEvent(event: ProcessorEvent<ContractName, AnyEvent>): Promise<void> {
+    private async handleEvent(
+        event: ProcessorEvent<ContractName, AnyEvent>,
+    ): Promise<Changeset[] | undefined> {
         event = await this.enhanceStrategyId(event);
         if (this.isPoolCreated(event)) {
             const handleable = existsHandler(event.strategyId);
@@ -421,12 +445,11 @@ export class Orchestrator {
                     chainId: this.chainId,
                 });
                 // we skip the event if the strategy id is not handled yet
-                return;
+                return undefined;
             }
         }
 
-        const changesets = await this.eventsProcessor.processEvent(event);
-        await this.dataLoader.applyChanges(changesets);
+        return this.eventsProcessor.processEvent(event);
     }
 
     /**
