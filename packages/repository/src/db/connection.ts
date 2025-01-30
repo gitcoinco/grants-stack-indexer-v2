@@ -33,6 +33,12 @@ const { Pool } = pg;
 
 export interface DatabaseConfig extends pg.PoolConfig {
     connectionString: string;
+    /**
+     * Whether the database is in production mode. If true, SSL is enabled.
+     *
+     * @default false
+     */
+    isProduction: boolean;
     withSchema?: string;
 }
 
@@ -102,9 +108,11 @@ export const createKyselyPostgresDb = (
             idleTimeoutMillis: 30_000,
             keepAlive: true,
             connectionTimeoutMillis: 5_000,
-            ssl: {
-                rejectUnauthorized: false,
-            },
+            ssl: config.isProduction
+                ? {
+                      rejectUnauthorized: false,
+                  }
+                : undefined,
             ...config,
         }),
     });

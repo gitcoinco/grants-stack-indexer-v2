@@ -33,7 +33,7 @@ configDotenv();
  */
 
 export const main = async (): Promise<void> => {
-    const { DATABASE_URL } = getDatabaseConfigFromEnv();
+    const { DATABASE_URL, NODE_ENV } = getDatabaseConfigFromEnv();
     const { schema } = parseArguments();
 
     const logger = Logger.getInstance();
@@ -42,6 +42,7 @@ export const main = async (): Promise<void> => {
         {
             connectionString: DATABASE_URL,
             withSchema: schema,
+            isProduction: NODE_ENV === "production" || NODE_ENV === "staging",
         },
         logger,
     );

@@ -15,7 +15,7 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     await db.schema
         .createTable("metadataCache")
         .addColumn("id", "text", (col) => col.notNull())
-        .addColumn("metadata", "jsonb", (col) => col.notNull())
+        .addColumn("metadata", "jsonb")
         .addColumn("createdAt", "timestamptz", (col) => col.defaultTo(sql`now()`))
         .addPrimaryKeyConstraint("metadata_cache_pkey", ["id"])
         .execute();
