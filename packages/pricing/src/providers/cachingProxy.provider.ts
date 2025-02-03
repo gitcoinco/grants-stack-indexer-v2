@@ -41,6 +41,7 @@ export class CachingPricingProvider implements IPricingProvider, ICacheable {
         }
 
         if (cachedPrice) {
+            // console.log("Cached price", cachedPrice);
             return cachedPrice;
         }
 
@@ -49,6 +50,8 @@ export class CachingPricingProvider implements IPricingProvider, ICacheable {
             startTimestampMs,
             endTimestampMs,
         );
+
+        // console.log("Fetched price", price);
 
         if (price) {
             // we don't await this, because it's not critical
@@ -99,8 +102,7 @@ export class CachingPricingProvider implements IPricingProvider, ICacheable {
                     (result): result is PromiseFulfilledResult<CacheResult> =>
                         result.status === "fulfilled" && !!result.value.price,
                 )
-                .map((result) => result.value.price)
-                .filter((price): price is TokenPrice => !!price);
+                .map((result) => result.value.price as TokenPrice);
         }
 
         const fetchedPrices = await this.provider.getTokenPrices(tokenCode, timestampsToFetch);
@@ -117,7 +119,7 @@ export class CachingPricingProvider implements IPricingProvider, ICacheable {
         const priceMap = this.buildPriceMap(cachedPrices, closestPrices);
 
         return timestamps
-            .map((timestampMs) => priceMap.get(timestampMs))
+            .map((timestampMs) => ({ ...priceMap.get(timestampMs), tokenCode }) as TokenPrice)
             .filter((price): price is TokenPrice => !!price);
     }
 
@@ -187,6 +189,14 @@ export class CachingPricingProvider implements IPricingProvider, ICacheable {
                     timestampMs,
                     priceUsd: closestPrice.priceUsd,
                 };
+
+                // Calcular la diferencia de tiempo en minutos
+                // const timeDifference = (timestampMs - closestPrice.timestampMs) / 60000; // en minutos
+                // if (timeDifference > 60) {
+                //     console.log(
+                //         `Diferencia de tiempo: ${timeDifference} minutos para el timestamp ${timestampMs}`,
+                //     );
+                // }
 
                 // Fire and forget cache operation
                 this.cache.set({ tokenCode, timestampMs }, price).catch((error) => {

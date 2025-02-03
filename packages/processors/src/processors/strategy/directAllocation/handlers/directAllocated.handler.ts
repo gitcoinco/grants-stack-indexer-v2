@@ -57,7 +57,7 @@ export class DirectAllocatedHandler implements IEventHandler<"Strategy", "Direct
         const token = getTokenOrThrow(this.chainId, this.event.params.token);
         const sender = getAddress(this.event.params.sender);
 
-        const { amountInUsd, timestamp: priceTimestamp } = await getTokenAmountInUsd(
+        const { amountInUsd } = await getTokenAmountInUsd(
             pricingProvider,
             token,
             amount,
@@ -78,7 +78,7 @@ export class DirectAllocatedHandler implements IEventHandler<"Strategy", "Direct
             amount: amount,
             amountInUsd,
             amountInRoundMatchToken: 0n,
-            timestamp: new Date(priceTimestamp),
+            timestamp: new Date(this.event.blockTimestamp * 1000),
         };
 
         return [

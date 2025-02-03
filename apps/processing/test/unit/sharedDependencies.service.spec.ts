@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { EnvioIndexerClient } from "@grants-stack-indexer/indexer-client";
-import { IpfsProvider } from "@grants-stack-indexer/metadata";
+import { PublicGatewayProvider } from "@grants-stack-indexer/metadata";
 import { PricingProviderFactory } from "@grants-stack-indexer/pricing";
 import { createKyselyDatabase } from "@grants-stack-indexer/repository";
 
@@ -103,17 +103,17 @@ describe("SharedDependenciesService", () => {
         Environment,
         | "DATABASE_URL"
         | "DATABASE_SCHEMA"
-        | "IPFS_GATEWAYS_URL"
         | "INDEXER_GRAPHQL_URL"
         | "INDEXER_ADMIN_SECRET"
         | "PRICING_SOURCE"
+        | "METADATA_SOURCE"
     > = {
         DATABASE_URL: "postgresql://localhost:5432/test",
         DATABASE_SCHEMA: "public",
-        IPFS_GATEWAYS_URL: ["https://ipfs.io"],
         INDEXER_GRAPHQL_URL: "http://localhost:8080",
         INDEXER_ADMIN_SECRET: "secret",
         PRICING_SOURCE: "dummy",
+        METADATA_SOURCE: "public-gateway",
     };
 
     it("initializes all dependencies correctly", async () => {
@@ -131,7 +131,7 @@ describe("SharedDependenciesService", () => {
         expect(PricingProviderFactory.create).toHaveBeenCalledWith(mockEnv, {
             logger: mocks.logger,
         });
-        expect(IpfsProvider).toHaveBeenCalledWith(mockEnv.IPFS_GATEWAYS_URL, mocks.logger);
+        expect(PublicGatewayProvider).toHaveBeenCalledWith(mockEnv, mocks.logger);
 
         // Verify indexer client initialization
         expect(EnvioIndexerClient).toHaveBeenCalledWith(

@@ -9,7 +9,7 @@ export {
 } from "./constants/index.js";
 
 export type { DeepPartial } from "./utils/testing.js";
-export { mergeDeep } from "./utils/testing.js";
+export { mergeDeep, isJSON } from "./utils/testing.js";
 export type { ILogger } from "./logger/logger.interface.js";
 export { Logger } from "./logger/logger.js";
 
@@ -17,7 +17,13 @@ export { BigNumber } from "./internal.js";
 export type { BigNumberType } from "./internal.js";
 
 export type { TokenCode, Token, TokenPrice } from "./internal.js";
-export { TOKENS, getToken, getTokenOrThrow, UnknownToken } from "./internal.js";
+export {
+    TOKENS,
+    TOKENS_SOURCE_CODES,
+    getToken,
+    getTokenOrThrow,
+    UnknownToken,
+} from "./internal.js";
 
 export { isAlloEvent, isRegistryEvent, isStrategyEvent } from "./internal.js";
 export { stringify } from "./internal.js";

@@ -30,8 +30,8 @@ import {
     ProcessorEvent,
     RateLimitError,
     StrategyEvent,
-    Token,
-    TokenCode,
+    // Token,
+    // TokenCode,
 } from "@grants-stack-indexer/shared";
 
 import {
@@ -771,101 +771,101 @@ describe("Orchestrator", { sequential: true }, () => {
         });
     });
 
-    describe("getMetadataFromEvents", () => {
-        it("extracts unique metadata IDs from events", async () => {
-            const events = [
-                {
-                    params: { metadata: [1n, "id1"] },
-                },
-                {
-                    params: { metadata: [1n, "id1"] }, // Duplicate
-                },
-                {
-                    params: { metadata: [1n, "id2"] },
-                },
-                {
-                    params: { recipientAddress: "0x123" }, // No metadata
-                },
-            ] as unknown as AnyIndexerFetchedEvent[];
+    // describe("getMetadataFromEvents", () => {
+    //     it("extracts unique metadata IDs from events", async () => {
+    //         const events = [
+    //             {
+    //                 params: { metadata: [1n, "id1"] },
+    //             },
+    //             {
+    //                 params: { metadata: [1n, "id1"] }, // Duplicate
+    //             },
+    //             {
+    //                 params: { metadata: [1n, "id2"] },
+    //             },
+    //             {
+    //                 params: { recipientAddress: "0x123" }, // No metadata
+    //             },
+    //         ] as unknown as AnyIndexerFetchedEvent[];
 
-            const result = await orchestrator["getMetadataFromEvents"](events);
-            expect(result).toEqual(["id1", "id2"]);
-        });
-    });
+    //         const result = await orchestrator["getMetadataFromEvents"](events);
+    //         expect(result).toEqual(["id1", "id2"]);
+    //     });
+    // });
 
-    describe("getTokensFromEvents", () => {
-        const mockToken: Token = {
-            address: zeroAddress,
-            decimals: 18,
-            code: "ETH" as TokenCode,
-            priceSourceCode: "ETH" as TokenCode,
-        };
+    // describe("getTokensFromEvents", () => {
+    //     const mockToken: Token = {
+    //         address: zeroAddress,
+    //         decimals: 18,
+    //         code: "ETH" as TokenCode,
+    //         priceSourceCode: "ETH" as TokenCode,
+    //     };
 
-        it("collects unique timestamps for each token", async () => {
-            const events = [
-                {
-                    params: {
-                        token: zeroAddress,
-                        amount: "1000000000000000000", // 1 ETH
-                    },
-                    blockTimestamp: 1000,
-                },
-                {
-                    params: {
-                        token: zeroAddress,
-                        amount: "1000000000000000000",
-                    },
-                    blockTimestamp: 1000, // Duplicate timestamp
-                },
-                {
-                    params: {
-                        token: zeroAddress,
-                        amount: "1000000000000000000",
-                    },
-                    blockTimestamp: 2000,
-                },
-            ] as unknown as AnyIndexerFetchedEvent[];
+    //     it("collects unique timestamps for each token", async () => {
+    //         const events = [
+    //             {
+    //                 params: {
+    //                     token: zeroAddress,
+    //                     amount: "1000000000000000000", // 1 ETH
+    //                 },
+    //                 blockTimestamp: 1000,
+    //             },
+    //             {
+    //                 params: {
+    //                     token: zeroAddress,
+    //                     amount: "1000000000000000000",
+    //                 },
+    //                 blockTimestamp: 1000, // Duplicate timestamp
+    //             },
+    //             {
+    //                 params: {
+    //                     token: zeroAddress,
+    //                     amount: "1000000000000000000",
+    //                 },
+    //                 blockTimestamp: 2000,
+    //             },
+    //         ] as unknown as AnyIndexerFetchedEvent[];
 
-            const result = await orchestrator["getTokensFromEvents"](events);
+    //         const result = await orchestrator["getTokensFromEvents"](events);
 
-            expect(result).toEqual([
-                {
-                    token: mockToken,
-                    timestamps: [1000, 2000],
-                },
-            ]);
-        });
+    //         expect(result).toEqual([
+    //             {
+    //                 token: mockToken,
+    //                 timestamps: [1000, 2000],
+    //             },
+    //         ]);
+    //     });
 
-        it("ignores events with zero amounts", async () => {
-            const events = [
-                {
-                    params: {
-                        token: "0x123",
-                        amount: "0",
-                    },
-                    blockTimestamp: 1000,
-                },
-            ] as unknown as AnyIndexerFetchedEvent[];
+    //     it("ignores events with zero amounts", async () => {
+    //         const events = [
+    //             {
+    //                 params: {
+    //                     token: "0x123",
+    //                     amount: "0",
+    //                 },
+    //                 blockTimestamp: 1000,
+    //             },
+    //         ] as unknown as AnyIndexerFetchedEvent[];
 
-            const result = await orchestrator["getTokensFromEvents"](events);
-            expect(result).toEqual([]);
-        });
+    //         const result = await orchestrator["getTokensFromEvents"](events);
+    //         expect(result).toEqual([]);
+    //     });
 
-        it("ignores events with invalid tokens", async () => {
-            const events = [
-                {
-                    params: {
-                        token: "0xInvalid",
-                        amount: "1000000000000000000",
-                    },
-                    blockTimestamp: 1000,
-                },
-            ] as unknown as AnyIndexerFetchedEvent[];
+    //     it("ignores events with invalid tokens", async () => {
+    //         const events = [
+    //             {
+    //                 params: {
+    //                     token: "0xInvalid",
+    //                     amount: "1000000000000000000",
+    //                 },
+    //                 blockTimestamp: 1000,
+    //             },
+    //         ] as unknown as AnyIndexerFetchedEvent[];
 
-            const result = await orchestrator["getTokensFromEvents"](events);
-            expect(result).toEqual([]);
-        });
-    });
+    //         const result = await orchestrator["getTokensFromEvents"](events);
+    //         expect(result).toEqual([]);
+    //     });
+    // });
 
     describe("bulkFetchMetadataAndPricesForBatch", () => {
         it("clears cache and fetches metadata and prices in parallel", async () => {

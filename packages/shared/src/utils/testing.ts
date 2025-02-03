@@ -41,3 +41,13 @@ export function mergeDeep<T extends ObjectType>(target: T, source: DeepPartial<T
 function isObject(item: unknown): item is ObjectType {
     return item !== null && typeof item === "object" && !Array.isArray(item);
 }
+
+export function isJSON(item: unknown): item is ObjectType {
+    try {
+        JSON.parse(item as string);
+        return true;
+    } catch (e) {
+        console.log(e);
+        return false;
+    }
+}

@@ -22,23 +22,23 @@ export class CachingMetadataProvider implements IMetadataProvider, ICacheable {
     async getMetadata<T>(
         ipfsCid: string,
         validateContent?: z.ZodSchema<T>,
-    ): Promise<T | undefined> {
-        let cachedMetadata: T | undefined = undefined;
+    ): Promise<T | undefined | null> {
+        let cachedMetadata: T | undefined | null = undefined;
         try {
-            cachedMetadata = (await this.cache.get(ipfsCid)) as T | undefined;
+            cachedMetadata = (await this.cache.get(ipfsCid)) as T | undefined | null;
         } catch (error) {
             this.logger.debug(`Failed to get cached metadata for IPFS CID ${ipfsCid}`, {
                 error,
             });
         }
 
-        if (cachedMetadata) {
+        if (cachedMetadata || cachedMetadata === null) {
             return cachedMetadata;
         }
 
         const metadata = await this.provider.getMetadata<T>(ipfsCid, validateContent);
 
-        if (metadata) {
+        if (metadata || metadata === null) {
             try {
                 await this.cache.set(ipfsCid, metadata);
             } catch (error) {

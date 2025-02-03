@@ -12,3 +12,6 @@ export * from "./processors/allo/index.js";
 // Strategy
 export * from "./processors/strategy/index.js";
 export * from "./processors/registry/index.js";
+
+// Decoders
+export * from "./processors/strategy/helpers/decoder.js";

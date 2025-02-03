@@ -9,3 +9,4 @@ export * from "./registries/index.js";
 export * from "./eventsProcessor.js";
 export * from "./orchestrator.js";
 export * from "./retroactiveProcessor.js";
+export * from "./helpers/index.js";

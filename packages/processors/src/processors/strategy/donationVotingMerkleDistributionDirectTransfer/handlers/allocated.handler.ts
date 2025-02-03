@@ -65,7 +65,7 @@ export class DVMDAllocatedHandler implements IEventHandler<"Strategy", "Allocate
         const token = getTokenOrThrow(this.chainId, _token);
         const matchToken = getTokenOrThrow(this.chainId, round.matchTokenAddress);
 
-        const { amountInUsd, timestamp: priceTimestamp } = await getTokenAmountInUsd(
+        const { amountInUsd } = await getTokenAmountInUsd(
             this.dependencies.pricingProvider,
             token,
             amount,
@@ -100,7 +100,7 @@ export class DVMDAllocatedHandler implements IEventHandler<"Strategy", "Allocate
             amount: amount,
             amountInUsd,
             amountInRoundMatchToken,
-            timestamp: new Date(priceTimestamp), //TODO: ask Gitcoin if this is correct
+            timestamp: new Date(this.event.blockTimestamp * 1000),
         };
 
         return [

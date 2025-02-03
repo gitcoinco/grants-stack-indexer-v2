@@ -7,9 +7,12 @@ export interface IMetadataProvider {
     /**
      * Get metadata from IPFS
      * @param ipfsCid - IPFS CID
-     * @returns - Metadata
+     * @returns - Metadata or undefined if not found or null if the CID is invalid
      * @throws - InvalidCidException if the CID is invalid
      * @throws - InvalidContentException if the retrieved content is invalid
      */
-    getMetadata<T>(ipfsCid: string, validateContent?: z.ZodSchema<T>): Promise<T | undefined>;
+    getMetadata<T>(
+        ipfsCid: string,
+        validateContent?: z.ZodSchema<T>,
+    ): Promise<T | undefined | null>;
 }

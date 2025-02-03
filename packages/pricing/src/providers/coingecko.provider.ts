@@ -13,7 +13,7 @@ import { IPricingProvider } from "../interfaces/index.js";
 import {
     CoingeckoPriceChartData,
     CoingeckoTokenId,
-    MIN_GRANULARITY_MS,
+    // MIN_GRANULARITY_MS,
     TokenPrice,
     UnknownPricingException,
     UnsupportedToken,
@@ -35,7 +35,7 @@ const TokenMapping: { [key: string]: CoingeckoTokenId | undefined } = {
     ETH: "ethereum" as CoingeckoTokenId,
     eBTC: "ebtc" as CoingeckoTokenId,
     USDGLO: "glo-dollar" as CoingeckoTokenId,
-    GIST: "dai" as CoingeckoTokenId,
+    // GIST: undefined,
     OP: "optimism" as CoingeckoTokenId,
     LYX: "lukso-token-2" as CoingeckoTokenId,
     WLYX: "wrapped-lyx-universalswaps" as CoingeckoTokenId,
@@ -43,7 +43,7 @@ const TokenMapping: { [key: string]: CoingeckoTokenId | undefined } = {
     MATIC: "polygon-ecosystem-token" as CoingeckoTokenId,
     DATA: "streamr" as CoingeckoTokenId,
     FTM: "fantom" as CoingeckoTokenId,
-    GcV: undefined,
+    // GcV: undefined,
     USDT: "tether" as CoingeckoTokenId,
     LUSD: "liquity-usd" as CoingeckoTokenId,
     MUTE: "mute" as CoingeckoTokenId,
@@ -54,7 +54,7 @@ const TokenMapping: { [key: string]: CoingeckoTokenId | undefined } = {
     CELO: "celo" as CoingeckoTokenId,
     CUSD: "celo-dollar" as CoingeckoTokenId,
     AVAX: "avalanche-2" as CoingeckoTokenId,
-    MTK: undefined,
+    // MTK: undefined,
     WSEI: "wrapped-sei" as CoingeckoTokenId,
 };
 
@@ -153,28 +153,75 @@ export class CoingeckoProvider implements IPricingProvider {
                 methodName: "getTokenPrices",
             });
         }
-
-        if (timestamps.length === 0) {
-            return [];
-        }
-
-        const effectiveMin = Math.min(...timestamps);
-        let effectiveMax = Math.max(...timestamps);
-
-        if (effectiveMax - effectiveMin < MIN_GRANULARITY_MS) {
-            effectiveMax = effectiveMin + MIN_GRANULARITY_MS;
-        }
-
-        const path = `/coins/${tokenId}/market_chart/range?vs_currency=usd&from=${effectiveMin}&to=${effectiveMax}&precision=full&interval=5m`;
-
+        let path = "";
         try {
+            if (timestamps.length === 0) {
+                return [];
+            }
+
+            const effectiveMin = Math.min(...timestamps);
+            let effectiveMax = Math.max(...timestamps);
+
+            const currentTimestampMs = Date.now();
+            const oneDayMs = 24 * 60 * 60 * 1000; // 1 day in milliseconds
+            const ninetyDaysMs = 90 * oneDayMs; // 90 days in milliseconds
+
+            // If the time range is less than 1 day, use 5 minutes granularity, otherwise use 1 hour granularity
+            const minGranularityMs =
+                currentTimestampMs - effectiveMin < oneDayMs ? 300000 : 3600000;
+
+            if (effectiveMax - effectiveMin < minGranularityMs) {
+                effectiveMax = effectiveMin + minGranularityMs;
+            }
+
+            // console.log(effectiveMax, effectiveMin, ninetyDaysMs);
+            // console.log(effectiveMax - effectiveMin);
+
+            // Log if the difference is greater than 90 days
+            if (effectiveMax - effectiveMin > ninetyDaysMs) {
+                const segments: Promise<TokenPrice[]>[] = [];
+                const segmentDuration = 88 * oneDayMs; // 88 days in milliseconds
+                let currentStart = effectiveMin;
+
+                while (currentStart < effectiveMax) {
+                    const currentEnd = Math.min(currentStart + segmentDuration, effectiveMax);
+                    // console.log(tokenId, currentStart, currentEnd);
+
+                    path = `/coins/${tokenId}/market_chart/range?vs_currency=usd&from=${currentStart}&to=${currentEnd}&precision=full`;
+                    // console.log("================================================");
+                    // console.log(`Fetching 1segment from ${currentStart} to ${currentEnd}`);
+                    // console.log(path);
+                    // console.log("================================================");
+                    // Push the promise for the current segment
+                    segments.push(
+                        this.axios.get<CoingeckoPriceChartData>(path).then(({ data }) =>
+                            data.prices.map(([timestampMs, priceUsd]) => ({
+                                timestampMs,
+                                priceUsd,
+                            })),
+                        ),
+                    );
+
+                    currentStart = currentEnd; // Move to the next segment
+                }
+
+                // Wait for all segments to resolve and merge the results
+                const results = await Promise.all(segments);
+                return results.flat(); // Flatten the array of results
+            }
+
+            path = `/coins/${tokenId}/market_chart/range?vs_currency=usd&from=${effectiveMin}&to=${effectiveMax}&precision=full`;
             const { data } = await this.axios.get<CoingeckoPriceChartData>(path);
             return data.prices.map(([timestampMs, priceUsd]) => ({
                 timestampMs,
                 priceUsd,
             }));
         } catch (error: unknown) {
+            console.log("================================================");
+            console.log(path);
+            console.log("================================================");
             if (isAxiosError(error)) {
+                console.log(error.code, error.response, error.message);
                 this.handleAxiosError(error, path, "getTokenPrices");
             }
 
