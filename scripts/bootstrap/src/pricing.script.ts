@@ -1,4 +1,5 @@
 import { pMapIterable } from "p-map";
+import { retry, RetryOptions } from "ts-retry";
 
 import { EnvioIndexerClient } from "@grants-stack-indexer/indexer-client";
 import {
@@ -73,24 +74,32 @@ export const main = async (): Promise<void> => {
         logger,
     );
 
-    // const envioIndexerClient = new EnvioIndexerClient(INDEXER_URL, INDEXER_SECRET);
+    const envioIndexerClient = new EnvioIndexerClient(INDEXER_URL, INDEXER_SECRET);
 
     const blockRanges: Record<ChainId, { from: number; to: number }> = {};
     for (const chainId of CHAIN_IDS) {
-        // blockRanges[chainId as ChainId] = await envioIndexerClient.getBlockRangeByChainId(
-        //     chainId as ChainId,
-        // );
+        blockRanges[chainId as ChainId] = await envioIndexerClient.getBlockRangeByChainId(
+            chainId as ChainId,
+        );
     }
 
+    const retryOptions: RetryOptions = {
+        maxTry: 10,
+        delay: 1000,
+    };
     for (const chainId of CHAIN_IDS) {
         for await (const tokenCode of pMapIterable(
             TOKENS_SOURCE_CODES,
             async (tokenCode) => {
                 try {
-                    await cachedPricingProvider.getTokenPrices(tokenCode, [
-                        blockRanges[chainId as ChainId]?.from as number,
-                        blockRanges[chainId as ChainId]?.to as number,
-                    ]);
+                    await retry(
+                        () =>
+                            cachedPricingProvider.getTokenPrices(tokenCode, [
+                                blockRanges[chainId as ChainId]?.from as number,
+                                blockRanges[chainId as ChainId]?.to as number,
+                            ]),
+                        retryOptions,
+                    );
                     return { status: "fullfilled", value: tokenCode };
                 } catch (error) {
                     if (error instanceof UnsupportedToken) {
