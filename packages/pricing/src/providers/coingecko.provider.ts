@@ -174,9 +174,6 @@ export class CoingeckoProvider implements IPricingProvider {
                 effectiveMax = effectiveMin + minGranularityMs;
             }
 
-            // console.log(effectiveMax, effectiveMin, ninetyDaysMs);
-            // console.log(effectiveMax - effectiveMin);
-
             // Log if the difference is greater than 90 days
             if (effectiveMax - effectiveMin > ninetyDaysMs) {
                 const segments: Promise<TokenPrice[]>[] = [];
@@ -185,13 +182,8 @@ export class CoingeckoProvider implements IPricingProvider {
 
                 while (currentStart < effectiveMax) {
                     const currentEnd = Math.min(currentStart + segmentDuration, effectiveMax);
-                    // console.log(tokenId, currentStart, currentEnd);
 
                     path = `/coins/${tokenId}/market_chart/range?vs_currency=usd&from=${currentStart}&to=${currentEnd}&precision=full`;
-                    // console.log("================================================");
-                    // console.log(`Fetching 1segment from ${currentStart} to ${currentEnd}`);
-                    // console.log(path);
-                    // console.log("================================================");
                     // Push the promise for the current segment
                     segments.push(
                         this.axios.get<CoingeckoPriceChartData>(path).then(({ data }) =>
@@ -217,11 +209,7 @@ export class CoingeckoProvider implements IPricingProvider {
                 priceUsd,
             }));
         } catch (error: unknown) {
-            console.log("================================================");
-            console.log(path);
-            console.log("================================================");
             if (isAxiosError(error)) {
-                console.log(error.code, error.response, error.message);
                 this.handleAxiosError(error, path, "getTokenPrices");
             }
 

@@ -78,7 +78,7 @@ const main = async (): Promise<void> => {
         logger,
     );
 
-    // const envioIndexerClient = new EnvioIndexerClient(INDEXER_URL, INDEXER_SECRET);
+    const envioIndexerClient = new EnvioIndexerClient(INDEXER_URL, INDEXER_SECRET);
     const cids: string[] = [];
     let hasMoreEvents = true; // Flag to control the loop
 
@@ -89,40 +89,40 @@ const main = async (): Promise<void> => {
             logIndex: number;
         }
     >();
-    // if (fs.existsSync("cids.txt")) {
-    //     cids.push(...fs.readFileSync("cids.txt", "utf-8").split("\n"));
-    // } else {
-    //     while (hasMoreEvents) {
-    //         const events = await Promise.all(
-    //             CHAIN_IDS.map(async (chainId) => {
-    //                 return envioIndexerClient.getEvents({
-    //                     chainId: chainId as ChainId,
-    //                     from: checkpointMap.get(chainId),
-    //                     limit: INDEXER_FETCH_LIMIT,
-    //                 });
-    //             }),
-    //         );
+    if (fs.existsSync("cids.txt")) {
+        cids.push(...fs.readFileSync("cids.txt", "utf-8").split("\n"));
+    } else {
+        while (hasMoreEvents) {
+            const events = await Promise.all(
+                CHAIN_IDS.map(async (chainId) => {
+                    return envioIndexerClient.getEvents({
+                        chainId: chainId as ChainId,
+                        from: checkpointMap.get(chainId),
+                        limit: INDEXER_FETCH_LIMIT,
+                    });
+                }),
+            );
 
-    //         // Save checkpoint logic here (e.g., save cids or event data)
-    //         events.forEach((events) => {
-    //             checkpointMap.set(events[0]?.chainId ?? 0, {
-    //                 blockNumber: events[events.length - 1]?.blockNumber ?? 0,
-    //                 logIndex: events[events.length - 1]?.logIndex ?? 0,
-    //             });
-    //         });
-    //         const flattedEvents = events.flat();
-    //         if (flattedEvents.length === 0) {
-    //             hasMoreEvents = false; // No more flattedEvents to process
-    //         } else {
-    //             cids.push(...getMetadataCidsFromEvents(flattedEvents));
-    //             // Save checkpoint logic here (e.g., save cids or event data)
-    //         }
-    //         fs.writeFileSync("cids.txt", cids.join("\n"));
-    //         console.log("\n");
-    //         console.log("Checkpoints by chainId:\r");
-    //         console.log(checkpointMap);
-    //     }
-    // }
+            // Save checkpoint logic here (e.g., save cids or event data)
+            events.forEach((events) => {
+                checkpointMap.set(events[0]?.chainId ?? 0, {
+                    blockNumber: events[events.length - 1]?.blockNumber ?? 0,
+                    logIndex: events[events.length - 1]?.logIndex ?? 0,
+                });
+            });
+            const flattedEvents = events.flat();
+            if (flattedEvents.length === 0) {
+                hasMoreEvents = false; // No more flattedEvents to process
+            } else {
+                cids.push(...getMetadataCidsFromEvents(flattedEvents));
+                // Save checkpoint logic here (e.g., save cids or event data)
+            }
+            fs.writeFileSync("cids.txt", cids.join("\n"));
+            console.log("\n");
+            console.log("Checkpoints by chainId:\r");
+            console.log(checkpointMap);
+        }
+    }
 
     const retryOptions: RetryOptions = {
         maxTry: 10,
