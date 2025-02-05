@@ -76,7 +76,7 @@ export { KyselyTransactionManager } from "./internal.js";
 
 export type { ICache } from "./internal.js";
 export type { Metadata, NewMetadata, PartialMetadata } from "./internal.js";
-export type { Price, NewPrice, PartialPrice, PriceCacheKey } from "./internal.js";
+export type { Price, NewPrice, PartialPrice, PriceCacheKey, IPricingCache } from "./internal.js";
 export {
     KyselyMetadataCache,
     KyselyPricingCache,

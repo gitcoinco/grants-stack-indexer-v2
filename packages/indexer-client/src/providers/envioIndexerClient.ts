@@ -267,34 +267,34 @@ export class EnvioIndexerClient implements IIndexerClient {
             methodName,
         });
     }
-    async getBlockRangeByChainId(chainId: ChainId): Promise<{ from: number; to: number }> {
+    async getBlockRangeTimestampByChainId(chainId: ChainId): Promise<{ from: number; to: number }> {
         const response = (await this.client.request(
             gql`
                 query getBlockRangeByChainId($chainId: Int!) {
                     from: raw_events(
                         where: { chain_id: { _eq: $chainId } }
-                        order_by: { block_number: asc }
+                        order_by: { block_timestamp: asc }
                         limit: 1
                     ) {
-                        block_number
+                        block_timestamp
                     }
                     to: raw_events(
                         where: { chain_id: { _eq: $chainId } }
-                        order_by: { block_number: desc }
+                        order_by: { block_timestamp: desc }
                         limit: 1
                     ) {
-                        block_number
+                        block_timestamp
                     }
                 }
             `,
             { chainId },
-        )) as { from: { block_number: number }[]; to: { block_number: number }[] };
+        )) as { from: { block_timestamp: number }[]; to: { block_timestamp: number }[] };
         if (!response.from[0] || !response.to[0]) {
             throw new Error("No block range found");
         }
         return {
-            from: response.from[0].block_number,
-            to: response.to[0].block_number,
+            from: response.from[0].block_timestamp,
+            to: response.to[0].block_timestamp,
         };
     }
 }

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { ICache, PriceCacheKey } from "@grants-stack-indexer/repository";
+import { IPricingCache } from "@grants-stack-indexer/repository";
 import { ICacheable, ILogger, TimestampMs, TokenCode } from "@grants-stack-indexer/shared";
 
 import { IPricingProvider, TokenPrice } from "../../src/internal.js";
@@ -16,8 +16,9 @@ describe("CachingPricingProvider", () => {
     const mockCache = {
         get: vi.fn(),
         set: vi.fn().mockImplementation(() => Promise.resolve()),
+        getPricesByTimeRange: vi.fn(),
         clearCache: vi.fn(),
-    } as unknown as ICache<PriceCacheKey, TokenPrice>;
+    } as unknown as IPricingCache;
 
     const mockLogger = {
         debug: vi.fn(),

@@ -14,6 +14,7 @@ import { IPricingProvider } from "../interfaces/index.js";
 import {
     CoingeckoPriceChartData,
     CoingeckoTokenId,
+    MIN_GRANULARITY_MS,
     // MIN_GRANULARITY_MS,
     TokenPrice,
     UnknownPricingException,
@@ -112,11 +113,9 @@ export class CoingeckoProvider implements IPricingProvider {
             return undefined;
         }
 
-        const path = `/coins/${tokenId}/market_chart/range?vs_currency=usd&from=${startTimestampMs}&to=${endTimestampMs}&precision=full`;
-
+        const path = `/coins/${tokenId}/market_chart/range?vs_currency=usd&from=${startTimestampMs / 1000}&to=${endTimestampMs / 1000}&precision=full`;
         try {
             const { data } = await this.axios.get<CoingeckoPriceChartData>(path);
-
             const closestEntry = data.prices.at(0);
             if (!closestEntry) {
                 return undefined;
@@ -146,7 +145,7 @@ export class CoingeckoProvider implements IPricingProvider {
     }
 
     /* @inheritdoc */
-    async getTokenPrices(tokenCode: TokenCode, timestamps: number[]): Promise<TokenPrice[]> {
+    async getTokenPrices(tokenCode: TokenCode, timestamps: TimestampMs[]): Promise<TokenPrice[]> {
         const tokenId = TokenMapping[tokenCode];
         if (!tokenId) {
             throw new UnsupportedToken(tokenCode, {
@@ -159,17 +158,14 @@ export class CoingeckoProvider implements IPricingProvider {
             if (timestamps.length === 0) {
                 return [];
             }
+            const effectiveMin = Math.min(...(timestamps as number[]));
+            let effectiveMax = Math.max(...(timestamps as number[]));
 
-            const effectiveMin = Math.min(...timestamps);
-            let effectiveMax = Math.max(...timestamps);
-
-            const currentTimestampMs = Date.now();
             const oneDayMs = 24 * 60 * 60 * 1000; // 1 day in milliseconds
             const ninetyDaysMs = 90 * oneDayMs; // 90 days in milliseconds
 
-            // If the time range is less than 1 day, use 5 minutes granularity, otherwise use 1 hour granularity
-            const minGranularityMs =
-                currentTimestampMs - effectiveMin < oneDayMs ? 300000 : 3600000;
+            // 1 hour granularity
+            const minGranularityMs = MIN_GRANULARITY_MS;
 
             if (effectiveMax - effectiveMin < minGranularityMs) {
                 effectiveMax = effectiveMin + minGranularityMs;
@@ -184,7 +180,7 @@ export class CoingeckoProvider implements IPricingProvider {
                 while (currentStart < effectiveMax) {
                     const currentEnd = Math.min(currentStart + segmentDuration, effectiveMax);
 
-                    path = `/coins/${tokenId}/market_chart/range?vs_currency=usd&from=${currentStart}&to=${currentEnd}&precision=full`;
+                    path = `/coins/${tokenId}/market_chart/range?vs_currency=usd&from=${currentStart / 1000}&to=${currentEnd / 1000}&precision=full`;
                     // Push the promise for the current segment
                     segments.push(
                         this.axios.get<CoingeckoPriceChartData>(path).then(({ data }) =>
@@ -202,8 +198,7 @@ export class CoingeckoProvider implements IPricingProvider {
                 const results = await Promise.all(segments);
                 return results.flat(); // Flatten the array of results
             }
-
-            path = `/coins/${tokenId}/market_chart/range?vs_currency=usd&from=${effectiveMin}&to=${effectiveMax}&precision=full`;
+            path = `/coins/${tokenId}/market_chart/range?vs_currency=usd&from=${effectiveMin / 1000}&to=${effectiveMax / 1000}&precision=full`;
             const { data } = await this.axios.get<CoingeckoPriceChartData>(path);
             return data.prices.map(([timestampMs, priceUsd]) => ({
                 timestampMs,

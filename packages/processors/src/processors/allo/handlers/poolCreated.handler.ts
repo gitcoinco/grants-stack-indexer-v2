@@ -55,7 +55,6 @@ export class PoolCreatedHandler implements IEventHandler<"Allo", "PoolCreated"> 
         const matchTokenAddress = isAlloNativeToken(checksummedTokenAddress)
             ? zeroAddress
             : checksummedTokenAddress;
-
         const strategyHandler = StrategyHandlerFactory.createHandler(
             this.chainId,
             this.dependencies as ProcessorDependencies,
@@ -70,7 +69,6 @@ export class PoolCreatedHandler implements IEventHandler<"Allo", "PoolCreated"> 
             donationsStartTime: null,
             donationsEndTime: null,
         };
-
         let matchAmountObj = {
             matchAmount: 0n,
             matchAmountInUsd: "0",
@@ -99,9 +97,7 @@ export class PoolCreatedHandler implements IEventHandler<"Allo", "PoolCreated"> 
 
         // transaction sender
         const createdBy = txFrom ?? (await evmProvider.getTransaction(txHash)).from;
-
         const roundRoles = getRoundRoles(BigInt(poolId));
-
         const newRound: NewRound = {
             chainId: this.chainId,
             id: poolId.toString(),
@@ -140,7 +136,6 @@ export class PoolCreatedHandler implements IEventHandler<"Allo", "PoolCreated"> 
         ];
 
         changes.push(...(await this.handlePendingRoles(this.chainId, poolId.toString())));
-
         return changes;
     }
 

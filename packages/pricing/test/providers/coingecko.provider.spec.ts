@@ -221,14 +221,14 @@ describe("CoingeckoProvider", () => {
                 },
             });
 
-            await provider.getTokenPrices("ETH" as TokenCode, timestamps);
+            await provider.getTokenPrices("ETH" as TokenCode, timestamps as TimestampMs[]);
             expect(mock.get).toHaveBeenCalledWith(expect.stringContaining(`&interval=5m`));
         });
 
         it("throws UnsupportedToken for unknown token", async () => {
-            await expect(provider.getTokenPrices("UNKNOWN" as TokenCode, [1000])).rejects.toThrow(
-                UnsupportedToken,
-            );
+            await expect(
+                provider.getTokenPrices("UNKNOWN" as TokenCode, [1000 as TimestampMs]),
+            ).rejects.toThrow(UnsupportedToken);
         });
 
         it("handles rate limiting errors", async () => {
@@ -239,9 +239,9 @@ describe("CoingeckoProvider", () => {
                 response: { headers: { "retry-after": "60" } },
             });
 
-            await expect(provider.getTokenPrices("ETH" as TokenCode, [1000])).rejects.toThrow(
-                RateLimitError,
-            );
+            await expect(
+                provider.getTokenPrices("ETH" as TokenCode, [1000 as TimestampMs]),
+            ).rejects.toThrow(RateLimitError);
         });
     });
 });
