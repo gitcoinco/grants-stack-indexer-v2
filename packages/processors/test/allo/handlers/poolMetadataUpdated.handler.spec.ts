@@ -2,7 +2,13 @@ import { parseUnits } from "viem";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { IRoundReadRepository, Round } from "@grants-stack-indexer/repository";
-import type { ChainId, ILogger, ProcessorEvent, Token } from "@grants-stack-indexer/shared";
+import type {
+    ChainId,
+    ILogger,
+    ProcessorEvent,
+    TimestampMs,
+    Token,
+} from "@grants-stack-indexer/shared";
 import { IMetadataProvider } from "@grants-stack-indexer/metadata";
 import { IPricingProvider } from "@grants-stack-indexer/pricing";
 import { TOKENS } from "@grants-stack-indexer/shared";
@@ -16,7 +22,7 @@ function createMockEvent(
 ): ProcessorEvent<"Allo", "PoolMetadataUpdated"> {
     return {
         blockNumber: 116385567,
-        blockTimestamp: 1708369911,
+        blockTimestamp: 1708369911 as TimestampMs,
         chainId: 10 as ChainId,
         contractName: "Allo",
         eventName: "PoolMetadataUpdated",
@@ -101,7 +107,7 @@ describe("PoolMetadataUpdatedHandler", () => {
         };
         const mockTokenPrice = {
             priceUsd: 2.5,
-            timestampMs: 1708369911,
+            timestampMs: 1708369911 as TimestampMs,
         };
         vi.spyOn(mockMetadataProvider, "getMetadata").mockResolvedValue(metadata);
         vi.spyOn(mockRoundRepository, "getRoundByIdOrThrow").mockResolvedValue(round as Round);

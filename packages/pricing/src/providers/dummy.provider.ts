@@ -1,4 +1,4 @@
-import { TokenCode } from "@grants-stack-indexer/shared";
+import { TimestampMs, TokenCode } from "@grants-stack-indexer/shared";
 
 import { IPricingProvider, TokenPrice } from "../internal.js";
 
@@ -13,8 +13,8 @@ export class DummyPricingProvider implements IPricingProvider {
     /* @inheritdoc */
     async getTokenPrice(
         _tokenCode: TokenCode,
-        startTimestampMs: number,
-        _endTimestampMs?: number,
+        startTimestampMs: TimestampMs,
+        _endTimestampMs?: TimestampMs,
     ): Promise<TokenPrice | undefined> {
         return Promise.resolve({
             priceUsd: this.dummyPrice,
@@ -23,7 +23,7 @@ export class DummyPricingProvider implements IPricingProvider {
     }
 
     /* @inheritdoc */
-    async getTokenPrices(_tokenCode: TokenCode, timestamps: number[]): Promise<TokenPrice[]> {
+    async getTokenPrices(_tokenCode: TokenCode, timestamps: TimestampMs[]): Promise<TokenPrice[]> {
         return timestamps.map((timestampMs) => ({
             priceUsd: this.dummyPrice,
             timestampMs,

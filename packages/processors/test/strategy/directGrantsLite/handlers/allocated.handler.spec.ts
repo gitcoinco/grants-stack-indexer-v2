@@ -10,7 +10,7 @@ import {
     Round,
     RoundNotFound,
 } from "@grants-stack-indexer/repository";
-import { ChainId, ProcessorEvent, UnknownToken } from "@grants-stack-indexer/shared";
+import { ChainId, ProcessorEvent, TimestampMs, UnknownToken } from "@grants-stack-indexer/shared";
 
 import { TokenPriceNotFoundError } from "../../../../src/exceptions/tokenPriceNotFound.exception.js";
 import { DGLiteAllocatedHandler } from "../../../../src/processors/strategy/directGrantsLite/handlers/allocated.handler.js";
@@ -76,7 +76,7 @@ describe("DGLiteAllocatedHandler", () => {
             "getApplicationByAnchorAddressOrThrow",
         ).mockResolvedValue(mockApplication);
         vi.spyOn(mockPricingProvider, "getTokenPrice").mockResolvedValue({
-            timestampMs: 1000000000,
+            timestampMs: 1000000000 as TimestampMs,
             priceUsd: 2000,
         });
 
@@ -349,11 +349,11 @@ describe("DGLiteAllocatedHandler", () => {
         ).mockResolvedValue(mockApplication);
         vi.spyOn(mockPricingProvider, "getTokenPrice")
             .mockResolvedValueOnce({
-                timestampMs: 1000000000,
+                timestampMs: 1000000000 as TimestampMs,
                 priceUsd: 1,
             })
             .mockResolvedValueOnce({
-                timestampMs: 1000000000,
+                timestampMs: 1000000000 as TimestampMs,
                 priceUsd: 2000,
             });
 

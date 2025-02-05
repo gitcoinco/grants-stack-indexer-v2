@@ -1,6 +1,11 @@
 import { gql, GraphQLClient } from "graphql-request";
 
-import { AnyIndexerFetchedEvent, ChainId, stringify } from "@grants-stack-indexer/shared";
+import {
+    AnyIndexerFetchedEvent,
+    ChainId,
+    stringify,
+    TimestampMs,
+} from "@grants-stack-indexer/shared";
 
 import { IndexerClientError, InvalidIndexerResponse } from "../exceptions/index.js";
 import {
@@ -71,6 +76,11 @@ export class EnvioIndexerClient implements IIndexerClient {
             const events = response?.raw_events;
 
             if (events) {
+                // Convert timestamps from seconds to milliseconds
+                events.forEach((event) => {
+                    event.blockTimestamp = (event.blockTimestamp * 1000) as TimestampMs;
+                });
+
                 if (allowPartialLastBlock || events.length === 0) {
                     return events;
                 } else {
@@ -235,6 +245,10 @@ export class EnvioIndexerClient implements IIndexerClient {
             )) as { raw_events: AnyIndexerFetchedEvent[] };
 
             if (response?.raw_events) {
+                // Convert timestamps from seconds to milliseconds
+                response.raw_events.forEach((event) => {
+                    event.blockTimestamp = (event.blockTimestamp * 1000) as TimestampMs;
+                });
                 return response.raw_events;
             } else {
                 throw new InvalidIndexerResponse(stringify(response));
@@ -253,34 +267,34 @@ export class EnvioIndexerClient implements IIndexerClient {
             methodName,
         });
     }
-    async getBlockRangeByChainId(chainId: ChainId): Promise<{ from: number; to: number }> {
+    async getBlockRangeTimestampByChainId(chainId: ChainId): Promise<{ from: number; to: number }> {
         const response = (await this.client.request(
             gql`
                 query getBlockRangeByChainId($chainId: Int!) {
                     from: raw_events(
                         where: { chain_id: { _eq: $chainId } }
-                        order_by: { block_number: asc }
+                        order_by: { block_timestamp: asc }
                         limit: 1
                     ) {
-                        block_number
+                        block_timestamp
                     }
                     to: raw_events(
                         where: { chain_id: { _eq: $chainId } }
-                        order_by: { block_number: desc }
+                        order_by: { block_timestamp: desc }
                         limit: 1
                     ) {
-                        block_number
+                        block_timestamp
                     }
                 }
             `,
             { chainId },
-        )) as { from: { block_number: number }[]; to: { block_number: number }[] };
+        )) as { from: { block_timestamp: number }[]; to: { block_timestamp: number }[] };
         if (!response.from[0] || !response.to[0]) {
             throw new Error("No block range found");
         }
         return {
-            from: response.from[0].block_number,
-            to: response.to[0].block_number,
+            from: response.from[0].block_timestamp,
+            to: response.to[0].block_timestamp,
         };
     }
 }

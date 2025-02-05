@@ -8,7 +8,13 @@ import {
     UnsupportedToken,
 } from "@grants-stack-indexer/pricing";
 import { createKyselyDatabase, KyselyPricingCache } from "@grants-stack-indexer/repository";
-import { ChainId, Logger, TokenCode, TOKENS_SOURCE_CODES } from "@grants-stack-indexer/shared";
+import {
+    ChainId,
+    Logger,
+    TimestampMs,
+    TokenCode,
+    TOKENS_SOURCE_CODES,
+} from "@grants-stack-indexer/shared";
 
 import { getDatabaseConfigFromEnv, getEnv } from "./schemas/index.js";
 import { parseArguments } from "./utils/index.js";
@@ -54,7 +60,7 @@ export const main = async (): Promise<void> => {
         logger,
     );
 
-    //This is only to try in advance if we have the tables and db in sync
+    // This is only to try in advance if we have the tables and db in sync
     await db
         .insertInto("priceCache")
         .values({
@@ -78,41 +84,44 @@ export const main = async (): Promise<void> => {
 
     const blockRanges: Record<ChainId, { from: number; to: number }> = {};
     for (const chainId of CHAIN_IDS) {
-        blockRanges[chainId as ChainId] = await envioIndexerClient.getBlockRangeByChainId(
+        blockRanges[chainId as ChainId] = await envioIndexerClient.getBlockRangeTimestampByChainId(
             chainId as ChainId,
         );
     }
+    const minFrom = Math.min(...Object.values(blockRanges).map((range) => range.from));
+    const maxTo = Math.max(...Object.values(blockRanges).map((range) => range.to));
+
+    console.log("blockRanges", blockRanges);
+    console.log(`Minimum 'from' value: ${minFrom}`);
+    console.log(`Maximum 'to' value: ${maxTo}`);
 
     const retryOptions: RetryOptions = {
         maxTry: 10,
         delay: 1000,
     };
-    for (const chainId of CHAIN_IDS) {
-        for await (const tokenCode of pMapIterable(
-            TOKENS_SOURCE_CODES,
-            async (tokenCode) => {
-                try {
-                    await retry(
-                        () =>
-                            cachedPricingProvider.getTokenPrices(tokenCode, [
-                                blockRanges[chainId as ChainId]?.from as number,
-                                blockRanges[chainId as ChainId]?.to as number,
-                            ]),
-                        retryOptions,
-                    );
-                    return { status: "fullfilled", value: tokenCode };
-                } catch (error) {
-                    if (error instanceof UnsupportedToken) {
-                        console.log(`${tokenCode} is not supported on chain ${chainId}`);
-                    }
-                    return { status: "rejected", error };
+    for await (const tokenCode of pMapIterable(
+        TOKENS_SOURCE_CODES,
+        async (tokenCode) => {
+            try {
+                await retry(
+                    () =>
+                        cachedPricingProvider.getTokenPrices(tokenCode as TokenCode, [
+                            ((minFrom as number) * 1000) as TimestampMs,
+                            ((maxTo as number) * 1000) as TimestampMs,
+                        ]),
+                    retryOptions,
+                );
+                return { status: "fullfilled", value: tokenCode };
+            } catch (error) {
+                if (error instanceof UnsupportedToken) {
+                    console.log(`${tokenCode} is not supported `);
                 }
-            },
-            { concurrency: 10 },
-        )) {
-            console.log(`${tokenCode.value} fetched from chain ${chainId}`);
-        }
-        console.log(`Finished fetching prices for chain ${chainId}`);
+                return { status: "rejected", error };
+            }
+        },
+        { concurrency: 10 },
+    )) {
+        console.log(`${JSON.stringify(tokenCode, undefined, 4)} fetched `);
     }
 
     process.exit(0);

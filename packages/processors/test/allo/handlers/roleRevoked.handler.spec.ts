@@ -1,7 +1,13 @@
 import { getAddress } from "viem";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { Bytes32String, ChainId, ILogger, ProcessorEvent } from "@grants-stack-indexer/shared";
+import type {
+    Bytes32String,
+    ChainId,
+    ILogger,
+    ProcessorEvent,
+    TimestampMs,
+} from "@grants-stack-indexer/shared";
 import { IRoundReadRepository, Round } from "@grants-stack-indexer/repository";
 
 import { RoleRevokedHandler } from "../../../src/processors/allo/handlers/roleRevoked.handler.js";
@@ -11,7 +17,7 @@ function createMockEvent(
 ): ProcessorEvent<"Allo", "RoleRevoked"> {
     return {
         blockNumber: 116385567,
-        blockTimestamp: 1708369911,
+        blockTimestamp: 1708369911 as TimestampMs,
         chainId: 10 as ChainId,
         contractName: "Allo",
         eventName: "RoleRevoked",

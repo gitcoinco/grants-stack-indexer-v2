@@ -1,7 +1,7 @@
 import { getAddress, zeroAddress } from "viem";
 
 import type { Changeset, NewRound, PendingRoundRole } from "@grants-stack-indexer/repository";
-import type { ChainId, ProcessorEvent, Token } from "@grants-stack-indexer/shared";
+import type { ChainId, ProcessorEvent, TimestampMs, Token } from "@grants-stack-indexer/shared";
 import { getToken, isAlloNativeToken } from "@grants-stack-indexer/shared";
 
 import type { IEventHandler, ProcessorDependencies, StrategyTimings } from "../../../internal.js";
@@ -55,7 +55,6 @@ export class PoolCreatedHandler implements IEventHandler<"Allo", "PoolCreated"> 
         const matchTokenAddress = isAlloNativeToken(checksummedTokenAddress)
             ? zeroAddress
             : checksummedTokenAddress;
-
         const strategyHandler = StrategyHandlerFactory.createHandler(
             this.chainId,
             this.dependencies as ProcessorDependencies,
@@ -70,7 +69,6 @@ export class PoolCreatedHandler implements IEventHandler<"Allo", "PoolCreated"> 
             donationsStartTime: null,
             donationsEndTime: null,
         };
-
         let matchAmountObj = {
             matchAmount: 0n,
             matchAmountInUsd: "0",
@@ -99,9 +97,7 @@ export class PoolCreatedHandler implements IEventHandler<"Allo", "PoolCreated"> 
 
         // transaction sender
         const createdBy = txFrom ?? (await evmProvider.getTransaction(txHash)).from;
-
         const roundRoles = getRoundRoles(BigInt(poolId));
-
         const newRound: NewRound = {
             chainId: this.chainId,
             id: poolId.toString(),
@@ -140,7 +136,6 @@ export class PoolCreatedHandler implements IEventHandler<"Allo", "PoolCreated"> 
         ];
 
         changes.push(...(await this.handlePendingRoles(this.chainId, poolId.toString())));
-
         return changes;
     }
 
@@ -193,7 +188,7 @@ export class PoolCreatedHandler implements IEventHandler<"Allo", "PoolCreated"> 
     private async getTokenAmountInUsd(
         token: Token,
         amount: bigint,
-        timestamp: number,
+        timestamp: TimestampMs,
     ): Promise<string> {
         const { pricingProvider } = this.dependencies;
         const tokenPrice = await pricingProvider.getTokenPrice(token.priceSourceCode, timestamp);

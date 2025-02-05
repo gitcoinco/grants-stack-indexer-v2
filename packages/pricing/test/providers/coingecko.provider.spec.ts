@@ -5,6 +5,7 @@ import {
     NetworkError,
     NonRetriableError,
     RateLimitError,
+    TimestampMs,
     TokenCode,
 } from "@grants-stack-indexer/shared";
 
@@ -64,12 +65,12 @@ describe("CoingeckoProvider", () => {
 
             const result = await provider.getTokenPrice(
                 "ETH" as TokenCode,
-                1609459200000,
-                1609545600000,
+                1609459200000 as TimestampMs,
+                1609545600000 as TimestampMs,
             );
 
             const expectedPrice: TokenPrice = {
-                timestampMs: 1609459200000,
+                timestampMs: 1609459200000 as TimestampMs,
                 priceUsd: 100,
             };
 
@@ -85,10 +86,13 @@ describe("CoingeckoProvider", () => {
             };
             mock.get.mockResolvedValueOnce({ status: 200, data: mockResponse });
 
-            const result = await provider.getTokenPrice("ETH" as TokenCode, 1609459200000);
+            const result = await provider.getTokenPrice(
+                "ETH" as TokenCode,
+                1609459200000 as TimestampMs,
+            );
 
             const expectedPrice: TokenPrice = {
-                timestampMs: 1609459200000,
+                timestampMs: 1609459200000 as TimestampMs,
                 priceUsd: 100,
             };
 
@@ -106,8 +110,8 @@ describe("CoingeckoProvider", () => {
 
             const result = await provider.getTokenPrice(
                 "ETH" as TokenCode,
-                1609459200000,
-                1609545600000,
+                1609459200000 as TimestampMs,
+                1609545600000 as TimestampMs,
             );
 
             expect(result).toBeUndefined();
@@ -116,8 +120,8 @@ describe("CoingeckoProvider", () => {
         it("return undefined when endTimestamp is greater than startTimestamp", async () => {
             const result = await provider.getTokenPrice(
                 "ETH" as TokenCode,
-                1609545600000, // startTimestamp
-                1609459200000, // endTimestamp
+                1609545600000 as TimestampMs, // startTimestamp
+                1609459200000 as TimestampMs, // endTimestamp
             );
 
             expect(result).toBeUndefined();
@@ -134,7 +138,11 @@ describe("CoingeckoProvider", () => {
             });
 
             await expect(
-                provider.getTokenPrice("ETH" as TokenCode, 1609459200000, 1609545600000),
+                provider.getTokenPrice(
+                    "ETH" as TokenCode,
+                    1609459200000 as TimestampMs,
+                    1609545600000 as TimestampMs,
+                ),
             ).rejects.toThrow(RateLimitError);
         });
 
@@ -146,13 +154,21 @@ describe("CoingeckoProvider", () => {
             });
 
             await expect(
-                provider.getTokenPrice("ETH" as TokenCode, 1609459200000, 1609545600000),
+                provider.getTokenPrice(
+                    "ETH" as TokenCode,
+                    1609459200000 as TimestampMs,
+                    1609545600000 as TimestampMs,
+                ),
             ).rejects.toThrow(NonRetriableError);
         });
 
         it("throw UnsupportedTokenException for unsupported token", async () => {
             await expect(() =>
-                provider.getTokenPrice("UNSUPPORTED" as TokenCode, 1609459200000, 1609545600000),
+                provider.getTokenPrice(
+                    "UNSUPPORTED" as TokenCode,
+                    1609459200000 as TimestampMs,
+                    1609545600000 as TimestampMs,
+                ),
             ).rejects.toThrow(UnsupportedToken);
         });
 
@@ -163,7 +179,11 @@ describe("CoingeckoProvider", () => {
                 isAxiosError: true,
             });
             await expect(
-                provider.getTokenPrice("ETH" as TokenCode, 1609459200000, 1609545600000),
+                provider.getTokenPrice(
+                    "ETH" as TokenCode,
+                    1609459200000 as TimestampMs,
+                    1609545600000 as TimestampMs,
+                ),
             ).rejects.toThrow(NetworkError);
         });
 
@@ -175,7 +195,11 @@ describe("CoingeckoProvider", () => {
             });
 
             await expect(
-                provider.getTokenPrice("ETH" as TokenCode, 1609459200000, 1609545600000),
+                provider.getTokenPrice(
+                    "ETH" as TokenCode,
+                    1609459200000 as TimestampMs,
+                    1609545600000 as TimestampMs,
+                ),
             ).rejects.toThrow(NetworkError);
         });
     });
@@ -197,14 +221,14 @@ describe("CoingeckoProvider", () => {
                 },
             });
 
-            await provider.getTokenPrices("ETH" as TokenCode, timestamps);
+            await provider.getTokenPrices("ETH" as TokenCode, timestamps as TimestampMs[]);
             expect(mock.get).toHaveBeenCalledWith(expect.stringContaining(`&interval=5m`));
         });
 
         it("throws UnsupportedToken for unknown token", async () => {
-            await expect(provider.getTokenPrices("UNKNOWN" as TokenCode, [1000])).rejects.toThrow(
-                UnsupportedToken,
-            );
+            await expect(
+                provider.getTokenPrices("UNKNOWN" as TokenCode, [1000 as TimestampMs]),
+            ).rejects.toThrow(UnsupportedToken);
         });
 
         it("handles rate limiting errors", async () => {
@@ -215,9 +239,9 @@ describe("CoingeckoProvider", () => {
                 response: { headers: { "retry-after": "60" } },
             });
 
-            await expect(provider.getTokenPrices("ETH" as TokenCode, [1000])).rejects.toThrow(
-                RateLimitError,
-            );
+            await expect(
+                provider.getTokenPrices("ETH" as TokenCode, [1000 as TimestampMs]),
+            ).rejects.toThrow(RateLimitError);
         });
     });
 });

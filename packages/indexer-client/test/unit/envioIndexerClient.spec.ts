@@ -23,76 +23,80 @@ vi.mock("graphql-request", async (importOriginal) => {
     };
 });
 
+type EnvioEvent = Omit<AnyIndexerFetchedEvent, "blockTimestamp"> & {
+    blockTimestamp: number;
+};
+
 describe("EnvioIndexerClient", () => {
     let envioIndexerClient: EnvioIndexerClient;
     let graphqlClient: Mocked<GraphQLClient>;
-
-    // Sample test data
-    const testEvents: AnyIndexerFetchedEvent[] = [
-        {
-            chainId: 1,
-            blockNumber: 100,
-            blockTimestamp: 123123123,
-            contractName: "Allo",
-            eventName: "PoolCreated",
-            srcAddress: "0x1234",
-            logIndex: 1,
-            params: {
-                contractAddress: "0x1234",
-                tokenAddress: "0x1234",
-                amount: 1000n,
-            } as unknown as PoolCreatedParams,
-            transactionFields: { hash: "0x123", transactionIndex: 1 },
-        },
-        {
-            chainId: 1,
-            blockNumber: 100,
-            blockTimestamp: 123123123,
-            contractName: "Allo",
-            eventName: "PoolCreated",
-            srcAddress: "0x1234",
-            logIndex: 3,
-            params: {
-                contractAddress: "0x1234",
-                tokenAddress: "0x1234",
-                amount: 1000n,
-            } as unknown as PoolCreatedParams,
-            transactionFields: { hash: "0x123", transactionIndex: 1 },
-        },
-        {
-            chainId: 1,
-            blockNumber: 101,
-            blockTimestamp: 123123124,
-            contractName: "Allo",
-            eventName: "PoolCreated",
-            srcAddress: "0x3456",
-            logIndex: 1,
-            params: {
-                contractAddress: "0x1234",
-                tokenAddress: "0x1234",
-                amount: 1000n,
-            } as unknown as PoolCreatedParams,
-            transactionFields: { hash: "0x123", transactionIndex: 1 },
-        },
-        {
-            chainId: 10,
-            blockNumber: 1200,
-            blockTimestamp: 123123123,
-            contractName: "Allo",
-            eventName: "PoolCreated",
-            srcAddress: "0x1234",
-            logIndex: 1,
-            params: {
-                contractAddress: "0x1234",
-                tokenAddress: "0x1234",
-                amount: 1000n,
-            } as unknown as PoolCreatedParams,
-            transactionFields: { hash: "0x123", transactionIndex: 1 },
-        },
-    ];
+    let testEvents: EnvioEvent[];
 
     beforeEach(() => {
-        envioIndexerClient = new EnvioIndexerClient("http://example.com/graphql");
+        // Sample test datåa
+        testEvents = [
+            {
+                chainId: 1,
+                blockNumber: 100,
+                blockTimestamp: 123123123,
+                contractName: "Allo",
+                eventName: "PoolCreated",
+                srcAddress: "0x1234",
+                logIndex: 1,
+                params: {
+                    contractAddress: "0x1234",
+                    tokenAddress: "0x1234",
+                    amount: 1000n,
+                } as unknown as PoolCreatedParams,
+                transactionFields: { hash: "0x123", transactionIndex: 1 },
+            },
+            {
+                chainId: 1,
+                blockNumber: 100,
+                blockTimestamp: 123123123,
+                contractName: "Allo",
+                eventName: "PoolCreated",
+                srcAddress: "0x1234",
+                logIndex: 3,
+                params: {
+                    contractAddress: "0x1234",
+                    tokenAddress: "0x1234",
+                    amount: 1000n,
+                } as unknown as PoolCreatedParams,
+                transactionFields: { hash: "0x123", transactionIndex: 1 },
+            },
+            {
+                chainId: 1,
+                blockNumber: 101,
+                blockTimestamp: 123123124,
+                contractName: "Allo",
+                eventName: "PoolCreated",
+                srcAddress: "0x3456",
+                logIndex: 1,
+                params: {
+                    contractAddress: "0x1234",
+                    tokenAddress: "0x1234",
+                    amount: 1000n,
+                } as unknown as PoolCreatedParams,
+                transactionFields: { hash: "0x123", transactionIndex: 1 },
+            },
+            {
+                chainId: 10,
+                blockNumber: 1200,
+                blockTimestamp: 123123123,
+                contractName: "Allo",
+                eventName: "PoolCreated",
+                srcAddress: "0x1234",
+                logIndex: 1,
+                params: {
+                    contractAddress: "0x1234",
+                    tokenAddress: "0x1234",
+                    amount: 1000n,
+                } as unknown as PoolCreatedParams,
+                transactionFields: { hash: "0x123", transactionIndex: 1 },
+            },
+        ];
+        envioIndexerClient = new EnvioIndexerClient("http://example.com/graphql", "secret");
         graphqlClient = envioIndexerClient["client"] as unknown as Mocked<GraphQLClient>;
     });
 
@@ -129,7 +133,7 @@ describe("EnvioIndexerClient", () => {
                     };
                     const { chainId, blockNumber, logIndex, limit } = variables;
 
-                    const filteredEvents = testEvents
+                    const filteredEvents = structuredClone(testEvents)
                         .filter((event) => {
                             // Match chainId
                             if (event.chainId !== chainId) return false;
@@ -290,7 +294,7 @@ describe("EnvioIndexerClient", () => {
                         };
                         const { chainId, blockNumber, logIndex, limit } = variables;
 
-                        const filteredEvents = testEvents
+                        const filteredEvents = structuredClone(testEvents)
                             .filter((event) => {
                                 // Match chainId
                                 if (event.chainId !== chainId) return false;
@@ -322,12 +326,29 @@ describe("EnvioIndexerClient", () => {
             });
 
             expect(result).toHaveLength(2);
-            expect(result).toEqual(testEvents.slice(0, 2));
+            expect(result).toEqual(
+                testEvents
+                    .slice(0, 2)
+                    .map((event) => ({ ...event, blockTimestamp: event.blockTimestamp * 1000 })),
+            );
             expect(graphqlClient.request).toHaveBeenCalledTimes(2);
             expect(graphqlClient.request).toHaveBeenNthCalledWith(2, expect.any(String), {
                 chainId: 1,
                 blockNumber: 101,
             });
+        });
+
+        it("returns events with blockTimestamp in milliseconds", async () => {
+            const result = await envioIndexerClient.getEventsAfterBlockNumberAndLogIndex({
+                chainId: 1 as ChainId,
+                blockNumber: 100,
+                logIndex: 0,
+                limit: 100,
+            });
+            expect(result).toHaveLength(3);
+            expect(result[0]!.blockTimestamp).toBe(123123123000);
+            expect(result[1]!.blockTimestamp).toBe(123123123000);
+            expect(result[2]!.blockTimestamp).toBe(123123124000);
         });
     });
 
@@ -354,7 +375,7 @@ describe("EnvioIndexerClient", () => {
                     const { chainId, limit = 100, srcAddresses } = filters;
                     const { fromBlock, fromLogIndex, toBlock, toLogIndex } = filters;
 
-                    const filteredEvents = testEvents
+                    const filteredEvents = structuredClone(testEvents)
                         .filter((event) => {
                             if (event.chainId !== chainId) return false;
 
@@ -528,6 +549,18 @@ describe("EnvioIndexerClient", () => {
                     limit: 100, // Ensure the default limit is used
                 },
             );
+        });
+
+        it("returns events with blockTimestamp in milliseconds", async () => {
+            const result = await envioIndexerClient.getEvents({
+                chainId: 1 as ChainId,
+                from: { blockNumber: 100, logIndex: 0 },
+                limit: 100,
+            });
+            expect(result).toHaveLength(3);
+            expect(result[0]!.blockTimestamp).toBe(123123123000);
+            expect(result[1]!.blockTimestamp).toBe(123123123000);
+            expect(result[2]!.blockTimestamp).toBe(123123124000);
         });
     });
 

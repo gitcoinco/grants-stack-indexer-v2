@@ -25,6 +25,7 @@ import {
     RetryStrategy,
     StrategyEvent,
     stringify,
+    TimestampMs,
     Token,
     TOKENS_SOURCE_CODES,
 } from "@grants-stack-indexer/shared";
@@ -38,7 +39,7 @@ import { CoreDependencies, DataLoader, delay, IQueue, iStrategyAbi, Queue } from
 
 type TokenWithTimestamps = {
     token: { priceSourceCode: Token["priceSourceCode"] };
-    timestamps: number[];
+    timestamps: TimestampMs[];
 };
 
 /**
@@ -125,13 +126,23 @@ export class Orchestrator {
     }
 
     async run(signal: AbortSignal): Promise<void> {
+        let totalEvents = 0;
+        let processedEvents = 0;
+
         while (!signal.aborted) {
             let event: ProcessorEvent<ContractName, AnyEvent> | undefined;
             try {
                 if (this.eventsQueue.isEmpty()) {
                     const events = await this.getNextEventsBatch();
-                    await this.bulkFetchMetadataAndPricesForBatch(events);
+                    if (
+                        events[0] &&
+                        Math.abs(new Date().getTime() - events[0].blockTimestamp!) >
+                            1000 * 60 * 60 * 0.5 // 30 minutes
+                    ) {
+                        await this.bulkFetchMetadataAndPricesForBatch(events);
+                    }
                     await this.enqueueEvents(events);
+                    totalEvents += events.length;
                 }
 
                 event = this.eventsQueue.pop();
@@ -151,13 +162,19 @@ export class Orchestrator {
                     ...event,
                     rawEvent: event,
                 });
-
+                console.time(`Processing time for event ${event.eventName}`);
                 await this.retryHandler.execute(
                     async () => {
                         await this.handleEvent(event!);
                     },
                     { abortSignal: signal },
                 );
+                console.timeEnd(`Processing time for event ${event.eventName}`);
+                processedEvents++;
+                this.logger.info(`Processed events: ${processedEvents}/${totalEvents}`, {
+                    className: Orchestrator.name,
+                    chainId: this.chainId,
+                });
             } catch (error: unknown) {
                 // TODO: notify
                 if (
@@ -248,6 +265,7 @@ export class Orchestrator {
      */
     private async getNextEventsBatch(): Promise<AnyIndexerFetchedEvent[]> {
         const lastProcessedEvent = await this.eventsRegistry.getLastProcessedEvent(this.chainId);
+
         const blockNumber = lastProcessedEvent?.blockNumber ?? 0;
         const logIndex = lastProcessedEvent?.logIndex ?? 0;
 

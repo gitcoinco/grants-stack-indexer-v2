@@ -1,7 +1,12 @@
 import { getAddress } from "viem";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { Bytes32String, ChainId, ProcessorEvent } from "@grants-stack-indexer/shared";
+import type {
+    Bytes32String,
+    ChainId,
+    ProcessorEvent,
+    TimestampMs,
+} from "@grants-stack-indexer/shared";
 import { IRoundReadRepository, Round } from "@grants-stack-indexer/repository";
 
 import { RoleGrantedHandler } from "../../../src/processors/allo/handlers/index.js";
@@ -11,7 +16,7 @@ function createMockEvent(
 ): ProcessorEvent<"Allo", "RoleGranted"> {
     return {
         blockNumber: 116385567,
-        blockTimestamp: 1708369911,
+        blockTimestamp: 1708369911000 as TimestampMs,
         chainId: 10 as ChainId,
         contractName: "Allo",
         eventName: "RoleGranted",
