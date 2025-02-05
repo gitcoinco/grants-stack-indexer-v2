@@ -34,14 +34,42 @@ export function mergeDeep<T extends ObjectType>(target: T, source: DeepPartial<T
 }
 
 /**
- * Type guard to check if a value is an object
- * @param item The value to check
- * @returns True if the value is an object, false otherwise
+ * Determines whether the provided value is a non-null object that is not an array.
+ *
+ * This type guard checks that the value is of type "object", is not null, and explicitly excludes arrays.
+ * It is useful for ensuring a value conforms to an object shape before performing object-specific operations.
+ *
+ * @param item - The value to check.
+ * @returns True if `item` is a non-null object and not an array; otherwise, false.
+ *
+ * @example
+ * ```typescript
+ * const value: unknown = { key: 'value' };
+ * if (isObject(value)) {
+ *   // Within this block, TypeScript treats `value` as an object.
+ * }
+ * ```
  */
 function isObject(item: unknown): item is ObjectType {
     return item !== null && typeof item === "object" && !Array.isArray(item);
 }
 
+/**
+ * Determines whether the provided value can be parsed as a valid JSON string.
+ *
+ * This function attempts to parse the input as a JSON string. If parsing is successful,
+ * it returns `true` (indicating that the input conforms to JSON structure and is thus considered a valid JSON object).
+ * If parsing fails, it logs the error to the console and returns `false`.
+ *
+ * @param item - The value to test for valid JSON structure.
+ * @returns `true` if the input can be successfully parsed as JSON; otherwise, `false`.
+ *
+ * @example
+ * const jsonString = '{"name": "Alice", "age": 30}';
+ * if (isJSON(jsonString)) {
+ *   // jsonString is a valid JSON and now inferred to be of ObjectType
+ * }
+ */
 export function isJSON(item: unknown): item is ObjectType {
     try {
         JSON.parse(item as string);

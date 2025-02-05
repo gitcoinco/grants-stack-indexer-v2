@@ -53,6 +53,17 @@ const env = validationSchema.safeParse(process.env);
 
 export type DbEnvConfig = z.infer<typeof dbEnvSchema>;
 
+/**
+ * Retrieves the validated database configuration from environment variables.
+ *
+ * This function uses the `dbEnvSchema` to safely parse and validate the environment variables
+ * provided in `process.env`. If the validation fails, it logs a detailed error message and throws
+ * an exception to halt further execution. On successful validation, it returns the configuration
+ * structured as defined by `DbEnvConfig`.
+ *
+ * @returns The validated database configuration.
+ * @throws Error when the environment variables do not conform to the expected schema.
+ */
 export function getDatabaseConfigFromEnv(): DbEnvConfig {
     const result = dbEnvSchema.safeParse(process.env);
 
@@ -64,6 +75,16 @@ export function getDatabaseConfigFromEnv(): DbEnvConfig {
     return result.data;
 }
 
+/**
+ * Retrieves validated environment variables.
+ *
+ * This function checks whether the environment variables have been successfully validated using `validationSchema`.
+ * If the validation fails, it logs the formatted error details and throws an exception to prevent further execution
+ * with invalid configurations. On successful validation, it returns the structured environment settings.
+ *
+ * @returns The validated environment variables conforming to `validationSchema`.
+ * @throws Error if the environment variables do not pass validation.
+ */
 export function getEnv(): z.infer<typeof validationSchema> {
     if (!env.success) {
         console.error("❌ Invalid environment variables:", env.error.format());

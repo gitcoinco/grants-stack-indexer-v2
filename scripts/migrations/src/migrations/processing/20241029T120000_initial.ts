@@ -7,7 +7,31 @@ import { getSchemaName } from "../../utils/index.js";
  * The only argument for the functions is an instance of Kysely<any>. It's important to use Kysely<any> and not Kysely<YourDatabase>.
  * ref: https://kysely.dev/docs/migrations#migration-files
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+/**
+ * Applies the database schema upgrade migration using the Kysely schema builder.
+ *
+ * This function performs a series of asynchronous schema modifications to support new application features. 
+ * It creates custom enum types, tables, indexes, foreign key constraints, and a SQL function for project search.
+ *
+ * Schema changes include:
+ * - Creating the "project_type" enum type with values "canonical" and "linked".
+ * - Creating the "projects" table with various columns and a primary key constraint on (id, chainId), along with an index on metadata.
+ * - Creating tables for pending and confirmed project roles, including the "pending_project_roles" and "project_roles" tables.
+ * - Creating the "rounds" table with multiple columns for managing rounds and associated indexes for performance.
+ * - Creating tables for pending and confirmed round roles, including the "pending_round_roles" and "round_roles" tables.
+ * - Creating the "application_status" enum type and the "applications" table with foreign key constraints to projects and rounds.
+ * - Creating the "applications_payouts" table with a foreign key linking to applications.
+ * - Creating the "donations" table with corresponding indexes for optimized queries.
+ * - Creating the "legacy_projects" table for legacy project data.
+ * - Defining a custom SQL function for project search.
+ *
+ * @param db - The Kysely database instance used to execute the schema migration commands. The database's schema
+ *             property is used to dynamically reference qualified table names.
+ *
+ * @returns A promise that resolves once the schema migration is successfully applied.
+ *
+ * @throws An error if any of the schema creation or alteration commands fail.
+ */
 export async function up(db: Kysely<any>): Promise<void> {
     const BIGINT_TYPE = sql`decimal(78,0)`;
     const ADDRESS_TYPE = "text";

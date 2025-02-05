@@ -32,12 +32,23 @@ export const getSchemaName = (schema: SchemaModule): string => {
 };
 
 /**
- * Applies all migrations to the database up to the latest version.
+ * Applies all available migrations to the database up to the latest version.
  *
- * @param config - The migration configuration.
- * @param config.db - The Kysely database instance.
- * @param config.schema - The schema to use for the migrations. Should be the same as the schema used in the Kysely database instance.
- * @returns The migration results.
+ * This function ensures that the specified schema exists and then uses file-based migrations to update the
+ * database. It creates a migrator using the provided database instance and migration configurations, including
+ * dynamically constructed migration table names based on the given domain. Each migration's status is logged,
+ * and in case of an error during the migration process, the error is logged and re-thrown.
+ *
+ * @param config - The migration configuration object.
+ * @param config.db - The Kysely database instance used to execute migration queries.
+ * @param config.schema - The name of the schema to apply migrations, which should match the database schema.
+ * @param config.migrationsFolder - The folder path containing migration files.
+ * @param config.domain - The domain string used to dynamically name the migration tables.
+ * @param logger - The logger instance for logging migration statuses and errors.
+ *
+ * @returns A promise that resolves to an array of migration result objects if migrations are applied, or undefined otherwise.
+ *
+ * @throws If an error occurs during the migration process, the error is logged and thrown.
  */
 export async function migrateToLatest<T>(
     config: MigrationConfig<T>,
@@ -77,12 +88,19 @@ export async function migrateToLatest<T>(
 }
 
 /**
- * Resets the database by rolling back all migrations.
+ * Resets the database by rolling back all applied migrations.
  *
- * @param config - The migration configuration.
- * @param config.db - The Kysely database instance.
- * @param config.schema - The schema to use for the migrations. Should be the same as the schema used in the Kysely database instance.
- * @returns The migration results.
+ * This function initializes a Migrator with a file migration provider and reverts the database
+ * state by rolling back all migrations. The migration and lock table names are dynamically constructed
+ * using the provided domain (formatted as "<domain>_migrations" and "<domain>_migrations_lock").
+ *
+ * @param config - The migration configuration, including:
+ *   - db: The Kysely database instance.
+ *   - migrationsFolder: The folder path containing migration files.
+ *   - domain: The domain used to namespace the migration tables.
+ * @param logger - The logger instance for recording migration events and errors.
+ * @returns A promise that resolves to an array of migration results if successful, or undefined.
+ * @throws Will throw an error if the migration reset process encounters an issue.
  */
 export async function resetDatabase<T>(
     config: MigrationConfig<T>,
