@@ -28,6 +28,7 @@ import {
     Hex,
     ICacheable,
     ILogger,
+    INotifier,
     ProcessorEvent,
     RateLimitError,
     StrategyEvent,
@@ -75,6 +76,9 @@ describe("Orchestrator", { sequential: true }, () => {
         error: vi.fn(),
         info: vi.fn(),
         warn: vi.fn(),
+    };
+    const notifier: INotifier = {
+        send: vi.fn(),
     };
 
     beforeEach(() => {
@@ -135,6 +139,7 @@ describe("Orchestrator", { sequential: true }, () => {
             mockFetchDelay,
             new ExponentialBackoff({ baseDelay: 10, maxAttempts: 3, factor: 2 }),
             logger,
+            notifier,
         );
     });
 

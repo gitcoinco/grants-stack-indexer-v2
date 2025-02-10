@@ -29,3 +29,11 @@ export { ExponentialBackoff, RetryHandler } from "./internal.js";
 export type { RetryStrategy, RetryStrategyOptions } from "./internal.js";
 
 export type { ICacheable } from "./internal.js";
+
+export type {
+    INotifier,
+    NotifierConfig,
+    NotifierProvider,
+    SlackNotifierConfig,
+} from "./internal.js";
+export { SlackNotifier, NullNotifier, NotifierFactory } from "./internal.js";

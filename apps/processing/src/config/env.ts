@@ -40,6 +40,9 @@ const baseSchema = z.object({
     RETRY_BASE_DELAY_MS: z.coerce.number().int().min(1).default(3000), // 3 seconds
     RETRY_FACTOR: z.coerce.number().int().min(1).default(2),
     RETRY_MAX_DELAY_MS: z.coerce.number().int().min(1).optional(), // 5 minute
+    NOTIFIER_PROVIDER: z.enum(["slack", "null"]).default("null"),
+    SLACK_WEBHOOK_URL: z.string().url().optional(),
+    LOG_LEVEL: z.enum(["error", "warn", "info", "debug"]).default("info"),
 });
 
 const dummyPricingSchema = baseSchema.extend({
@@ -66,6 +69,15 @@ const validationSchema = z
             apiType: val.COINGECKO_API_TYPE,
             ...val,
         };
+    })
+    .superRefine((data, ctx) => {
+        if (data.NOTIFIER_PROVIDER === "slack" && !data.SLACK_WEBHOOK_URL) {
+            ctx.addIssue({
+                code: "custom",
+                message: "SLACK_WEBHOOK_URL is required when NOTIFIER_PROVIDER is slack",
+                path: ["SLACK_WEBHOOK_URL"],
+            });
+        }
     });
 
 const env = validationSchema.safeParse(process.env);

@@ -264,6 +264,9 @@ importers:
 
     packages/shared:
         dependencies:
+            "@slack/webhook":
+                specifier: 7.0.4
+                version: 7.0.4
             bignumber.js:
                 specifier: 9.1.2
                 version: 9.1.2
@@ -1462,6 +1465,20 @@ packages:
                 integrity: sha512-BEEm6p8IueV/ZTfQLp/0vhw4NPnT9oWf5+28nvmeUICjP99f4vr2d+qc7AVGDDtwRep6ifR43Yed9ERVmiITzw==,
             }
 
+    "@slack/types@2.14.0":
+        resolution:
+            {
+                integrity: sha512-n0EGm7ENQRxlXbgKSrQZL69grzg1gHLAVd+GlRVQJ1NSORo0FrApR7wql/gaKdu2n4TO83Sq/AmeUOqD60aXUA==,
+            }
+        engines: { node: ">= 12.13.0", npm: ">= 6.12.0" }
+
+    "@slack/webhook@7.0.4":
+        resolution:
+            {
+                integrity: sha512-JDJte2dbJCcq1/GCMBYJH6fj+YS4n5GuPjT4tF3O1NPN6pFPCR9yA/apRh9sdfhdFG7hadiRgmiQqC4GLgNkZg==,
+            }
+        engines: { node: ">= 18", npm: ">= 8.6.0" }
+
     "@tsconfig/node10@1.0.11":
         resolution:
             {
@@ -1998,6 +2015,12 @@ packages:
         resolution:
             {
                 integrity: sha512-S4kL7XrjgBmvdGut0sN3yJxqYzrDOnivkBiN0OFs6hLiUam3UPvswUo0kqGyhqUZGEOytHyumEdXsAkgCOUf3Q==,
+            }
+
+    axios@1.7.9:
+        resolution:
+            {
+                integrity: sha512-LhLcE7Hbiryz8oMDdDptSrWowmB4Bl6RCt6sIJKpRB4XtVf0iEgewX3au/pJqm+Py1kCASkb/FFKjxQaLtxJvw==,
             }
 
     balanced-match@1.0.2:
@@ -5772,6 +5795,16 @@ snapshots:
             "@noble/hashes": 1.5.0
             "@scure/base": 1.1.9
 
+    "@slack/types@2.14.0": {}
+
+    "@slack/webhook@7.0.4":
+        dependencies:
+            "@slack/types": 2.14.0
+            "@types/node": 20.8.8
+            axios: 1.7.9
+        transitivePeerDependencies:
+            - debug
+
     "@tsconfig/node10@1.0.11": {}
 
     "@tsconfig/node12@1.0.11": {}
@@ -6146,6 +6179,14 @@ snapshots:
             is-buffer: 2.0.5
 
     axios@1.7.7:
+        dependencies:
+            follow-redirects: 1.15.9
+            form-data: 4.0.1
+            proxy-from-env: 1.1.0
+        transitivePeerDependencies:
+            - debug
+
+    axios@1.7.9:
         dependencies:
             follow-redirects: 1.15.9
             form-data: 4.0.1

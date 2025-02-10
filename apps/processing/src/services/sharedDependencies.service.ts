@@ -21,7 +21,16 @@ import {
     KyselyStrategyRegistryRepository,
     KyselyTransactionManager,
 } from "@grants-stack-indexer/repository";
-import { ExponentialBackoff, ILogger, Logger, RetryStrategy } from "@grants-stack-indexer/shared";
+import {
+    ExponentialBackoff,
+    ILogger,
+    INotifier,
+    Logger,
+    NotifierConfig,
+    NotifierFactory,
+    NotifierProvider,
+    RetryStrategy,
+} from "@grants-stack-indexer/shared";
 
 import { Environment } from "../config/index.js";
 
@@ -36,6 +45,7 @@ export type SharedDependencies = {
     kyselyDatabase: ReturnType<typeof createKyselyDatabase>;
     retryStrategy: RetryStrategy;
     logger: ILogger;
+    notifier: INotifier;
 };
 
 /**
@@ -47,6 +57,8 @@ export type SharedDependencies = {
 export class SharedDependenciesService {
     static async initialize(env: Environment): Promise<SharedDependencies> {
         const logger = Logger.getInstance();
+
+        const notifier = NotifierFactory.create(this.getNotifierOptions(env), logger);
 
         // Initialize repositories
         const kyselyDatabase = createKyselyDatabase(
@@ -146,6 +158,22 @@ export class SharedDependenciesService {
             kyselyDatabase,
             retryStrategy,
             logger,
+            notifier,
+        };
+    }
+
+    static getNotifierOptions(env: Environment): NotifierConfig<NotifierProvider> {
+        if (env.NOTIFIER_PROVIDER === "slack") {
+            return {
+                notifierProvider: env.NOTIFIER_PROVIDER,
+                opts: {
+                    webhookUrl: env.SLACK_WEBHOOK_URL!,
+                },
+            };
+        }
+
+        return {
+            notifierProvider: "null",
         };
     }
 }
