@@ -65,15 +65,7 @@ export const main = async (): Promise<void> => {
     );
 
     // This is only to try in advance if we have the tables and db in sync
-    await db
-        .insertInto("priceCache")
-        .values({
-            createdAt: new Date(),
-            priceUsd: 100,
-            timestampMs: 100,
-            tokenCode: "ETH" as TokenCode,
-        })
-        .execute();
+    await db.selectFrom("priceCache").selectAll().execute();
 
     const pricingRepository = new KyselyPricingCache(db, schema);
 
