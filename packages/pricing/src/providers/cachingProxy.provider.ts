@@ -95,8 +95,9 @@ export class CachingPricingProvider implements IPricingProvider, ICacheable {
      */
     async getTokenPrices(tokenCode: TokenCode, timestamps: TimestampMs[]): Promise<TokenPrice[]> {
         if (timestamps.length === 0) return [];
-        const fromTimestampMs = timestamps[0] as TimestampMs;
-        const toTimestampMs = timestamps[timestamps.length - 1] as TimestampMs;
+        const sortedTimestamps = timestamps.sort((a, b) => a - b);
+        const fromTimestampMs = sortedTimestamps[0] as TimestampMs;
+        const toTimestampMs = sortedTimestamps[sortedTimestamps.length - 1] as TimestampMs;
         const cachedPrices = (
             await this.getCachedPrices(
                 tokenCode,
@@ -106,11 +107,14 @@ export class CachingPricingProvider implements IPricingProvider, ICacheable {
         ).sort((a, b) => a.timestampMs - b.timestampMs);
 
         try {
-            const prices = this.getClosestPrices(timestamps, cachedPrices);
+            const prices = this.getClosestPrices(sortedTimestamps, cachedPrices);
             return prices;
         } catch (error) {
             if (error instanceof NoClosePriceFound) {
-                const fetchedPrices = await this.provider.getTokenPrices(tokenCode, timestamps);
+                const fetchedPrices = await this.provider.getTokenPrices(
+                    tokenCode,
+                    sortedTimestamps,
+                );
                 for (const price of fetchedPrices) {
                     this.cache
                         .set(
@@ -127,7 +131,7 @@ export class CachingPricingProvider implements IPricingProvider, ICacheable {
                             );
                         });
                 }
-                return this.getClosestPrices(timestamps, fetchedPrices).sort(
+                return this.getClosestPrices(sortedTimestamps, fetchedPrices).sort(
                     (a, b) => a.timestampMs - b.timestampMs,
                 );
             }

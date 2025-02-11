@@ -20,27 +20,31 @@ import { getDatabaseConfigFromEnv, getEnv } from "./schemas/index.js";
 import { parseArguments } from "./utils/index.js";
 
 /**
- * This script handles database migrations for the grants-stack-indexer project.
+ * This script manages pricing data retrieval and caching for the grants-stack-indexer project.
  *
  * It performs the following steps:
  * 1. Loads environment variables from .env file
- * 2. Gets database configuration (URL and schema name) from environment
- * 3. Creates a Kysely database connection with the specified schema
- * 4. Runs any pending migrations from packages/repository/migrations
- * 5. Reports success/failure of migrations
- * 6. Closes database connection and exits
+ * 2. Retrieves database configuration (URL and schema name) from environment
+ * 3. Establishes a Kysely database connection with the specified schema
+ * 4. Inserts a test entry into the priceCache table to verify database synchronization
+ * 5. Initializes pricing repository and providers
+ * 6. Fetches block range timestamps for each chain ID
  *
  * Environment variables required:
  * - DATABASE_URL: PostgreSQL connection string
+ * - NODE_ENV: Environment mode (production, staging, etc.)
+ * - INDEXER_URL: URL for the indexer service
+ * - INDEXER_SECRET: Secret key for indexer authentication
+ * - CHAIN_IDS: Supported blockchain chain IDs
  *
  * Script arguments:
- * - schema: Database schema name where migrations are applied
+ * - schema: Database schema name for operations
  *
  * The script will:
- * - Create the schema if it doesn't exist
- * - Run all pending migrations in order
- * - Log results of each migration
- * - Exit with code 0 on success, 1 on failure
+ * - Connect to the database and verify table existence
+ * - Initialize pricing caching and retrieval services
+ * - Fetch and process block range timestamps for each chain ID
+ * - Log the progress and results of operations
  */
 
 export const main = async (): Promise<void> => {

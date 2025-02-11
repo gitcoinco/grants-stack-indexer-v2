@@ -15,30 +15,35 @@ import { parseArguments } from "./utils/index.js";
 configDotenv();
 
 /**
- * This script handles database reset for the grants-stack-indexer project.
+ * This script manages metadata retrieval and caching for the grants-stack-indexer project.
  *
  * It performs the following steps:
  * 1. Loads environment variables from .env file
- * 2. Gets database configuration (URL and schema name) from environment
- * 3. Creates a Kysely database connection with the specified schema
- * 4. Drops and recreates the database schema
- * 5. Reports success/failure of reset operation
- * 6. Closes database connection and exits
+ * 2. Retrieves database configuration (URL and schema name) from environment
+ * 3. Establishes a Kysely database connection with the specified schema
+ * 4. Verifies database and table synchronization
+ * 5. Initializes metadata repository and providers
+ * 6. Fetches metadata CIDs from events and processes them
  *
  * Environment variables required:
  * - DATABASE_URL: PostgreSQL connection string
+ * - NODE_ENV: Environment mode (production, staging, etc.)
+ * - PUBLIC_GATEWAY_URLS: URLs for public gateway access
+ * - INDEXER_URL: URL for the indexer service
+ * - INDEXER_SECRET: Secret key for indexer authentication
+ * - CHAIN_IDS: Supported blockchain chain IDs
+ * - INDEXER_FETCH_LIMIT: Limit for fetching indexer data
  *
  * Script arguments:
- * - schema: Database schema name where migrations are applied
+ * - schema: Database schema name for operations
  *
  * The script will:
- * - Drop the schema if it exists
- * - Recreate an empty schema
- * - Log results of the reset operation
- * - Exit with code 0 on success, 1 on failure
+ * - Connect to the database and verify table existence
+ * - Initialize metadata caching and retrieval services
+ * - Fetch and process metadata CIDs from events
+ * - Log the progress and results of operations
  *
- * WARNING: This is a destructive operation that will delete all data in the schema.
- * Make sure you have backups if needed before running this script.
+ * Ensure proper configuration and backups before running this script.
  */
 
 const main = async (): Promise<void> => {
@@ -86,39 +91,36 @@ const main = async (): Promise<void> => {
             logIndex: number;
         }
     >();
-    if (fs.existsSync("cids.txt")) {
-        cids.push(...fs.readFileSync("cids.txt", "utf-8").split("\n"));
-    } else {
-        while (hasMoreEvents) {
-            const events = await Promise.all(
-                CHAIN_IDS.map(async (chainId) => {
-                    return envioIndexerClient.getEvents({
-                        chainId: chainId as ChainId,
-                        from: checkpointMap.get(chainId),
-                        limit: INDEXER_FETCH_LIMIT,
-                    });
-                }),
-            );
 
-            // Save checkpoint logic here (e.g., save cids or event data)
-            events.forEach((events) => {
-                checkpointMap.set(events[0]?.chainId ?? 0, {
-                    blockNumber: events[events.length - 1]?.blockNumber ?? 0,
-                    logIndex: events[events.length - 1]?.logIndex ?? 0,
+    while (hasMoreEvents) {
+        const events = await Promise.all(
+            CHAIN_IDS.map(async (chainId) => {
+                return envioIndexerClient.getEvents({
+                    chainId: chainId as ChainId,
+                    from: checkpointMap.get(chainId),
+                    limit: INDEXER_FETCH_LIMIT,
                 });
+            }),
+        );
+
+        // Save checkpoint logic here (e.g., save cids or event data)
+        events.forEach((events) => {
+            checkpointMap.set(events[0]?.chainId ?? 0, {
+                blockNumber: events[events.length - 1]?.blockNumber ?? 0,
+                logIndex: events[events.length - 1]?.logIndex ?? 0,
             });
-            const flattedEvents = events.flat();
-            if (flattedEvents.length === 0) {
-                hasMoreEvents = false; // No more flattedEvents to process
-            } else {
-                cids.push(...getMetadataCidsFromEvents(flattedEvents));
-                // Save checkpoint logic here (e.g., save cids or event data)
-            }
-            fs.writeFileSync("cids.txt", cids.join("\n"));
-            console.log("\n");
-            console.log("Checkpoints by chainId:\r");
-            console.log(checkpointMap);
+        });
+        const flattedEvents = events.flat();
+        if (flattedEvents.length === 0) {
+            hasMoreEvents = false; // No more flattedEvents to process
+        } else {
+            cids.push(...getMetadataCidsFromEvents(flattedEvents));
+            // Save checkpoint logic here (e.g., save cids or event data)
         }
+        fs.writeFileSync("cids.txt", cids.join("\n"));
+        console.log("\n");
+        console.log("Checkpoints by chainId:\r");
+        console.log(checkpointMap);
     }
 
     const retryOptions: RetryOptions = {

@@ -286,7 +286,7 @@ export class Orchestrator {
         await this.dependencies.metadataProvider.clearCache?.();
         await this.dependencies.pricingProvider.clearCache?.();
 
-        const metadataIds = getMetadataCidsFromEvents(events);
+        const metadataIds = getMetadataCidsFromEvents(events, this.logger);
         const tokens = TOKENS_SOURCE_CODES.map((code) => ({
             token: {
                 priceSourceCode: code,

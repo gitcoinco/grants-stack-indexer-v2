@@ -3,14 +3,17 @@ import {
     decodeDVMDApplicationData,
     decodeDVMDExtendedApplicationData,
 } from "@grants-stack-indexer/processors";
-import { AnyIndexerFetchedEvent } from "@grants-stack-indexer/shared";
+import { AnyIndexerFetchedEvent, ILogger } from "@grants-stack-indexer/shared";
 
 /**
  * Extracts unique metadata ids from the events batch.
  * @param events - Array of indexer fetched events to process
  * @returns Array of unique metadata ids found in the events
  */
-export const getMetadataCidsFromEvents = (events: AnyIndexerFetchedEvent[]): string[] => {
+export const getMetadataCidsFromEvents = (
+    events: AnyIndexerFetchedEvent[],
+    logger: ILogger,
+): string[] => {
     const ids = new Set<string>();
 
     for (const event of events) {
@@ -28,7 +31,12 @@ export const getMetadataCidsFromEvents = (events: AnyIndexerFetchedEvent[]): str
             try {
                 const decoded = decodeDVMDExtendedApplicationData(event.params.data);
                 ids.add(decoded.metadata.pointer);
-            } catch (error) {}
+            } catch (error) {
+                logger.warn("Failed to decode DVMD extended application data", {
+                    error,
+                    event,
+                });
+            }
         }
     }
 

@@ -15,7 +15,8 @@ import {
     CoingeckoPriceChartData,
     CoingeckoTokenId,
     MIN_GRANULARITY_MS,
-    // MIN_GRANULARITY_MS,
+    ninetyDaysMs,
+    oneDayMs,
     TokenPrice,
     UnknownPricingException,
     UnsupportedToken,
@@ -160,9 +161,6 @@ export class CoingeckoProvider implements IPricingProvider {
             }
             const effectiveMin = Math.min(...(timestamps as number[]));
             let effectiveMax = Math.max(...(timestamps as number[]));
-
-            const oneDayMs = 24 * 60 * 60 * 1000; // 1 day in milliseconds
-            const ninetyDaysMs = 90 * oneDayMs; // 90 days in milliseconds
 
             // 1 hour granularity
             const minGranularityMs = MIN_GRANULARITY_MS;
