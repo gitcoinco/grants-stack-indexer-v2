@@ -1,4 +1,4 @@
-import { SlackOptions } from "./slack.notifier.js";
+import { SlackOptions } from "./index.js";
 
 export type NotifierProvider = "slack" | "null";
 

@@ -34,4 +34,13 @@ describe("NotifierFactory", () => {
         const notifier = NotifierFactory.create(config, logger);
         expect(notifier).toBeInstanceOf(NullNotifier);
     });
+
+    it("creates NullNotifier for unknown provider", () => {
+        const config = {
+            notifierProvider: "unknown" as const,
+        } as unknown as NotifierConfig<"null">;
+
+        const notifier = NotifierFactory.create(config, logger);
+        expect(notifier).toBeInstanceOf(NullNotifier);
+    });
 });

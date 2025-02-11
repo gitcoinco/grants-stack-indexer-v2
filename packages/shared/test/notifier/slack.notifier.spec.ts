@@ -44,6 +44,10 @@ describe("SlackNotifier", () => {
         expect(minimalNotifier).toBeDefined();
     });
 
+    it("throws TypeError if webhook URL is invalid", () => {
+        expect(() => new SlackNotifier({ webhookUrl: "invalid-url" }, logger)).toThrow(TypeError);
+    });
+
     it("sends formatted message to Slack", async () => {
         const message = "Test error message";
         const context: NotifierContext = {

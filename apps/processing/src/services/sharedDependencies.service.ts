@@ -162,12 +162,16 @@ export class SharedDependenciesService {
         };
     }
 
-    static getNotifierOptions(env: Environment): NotifierConfig<NotifierProvider> {
+    private static getNotifierOptions(env: Environment): NotifierConfig<NotifierProvider> {
         if (env.NOTIFIER_PROVIDER === "slack") {
+            if (!env.SLACK_WEBHOOK_URL) {
+                throw new Error("SLACK_WEBHOOK_URL is required when NOTIFIER_PROVIDER is 'slack'");
+            }
+
             return {
                 notifierProvider: env.NOTIFIER_PROVIDER,
                 opts: {
-                    webhookUrl: env.SLACK_WEBHOOK_URL!,
+                    webhookUrl: env.SLACK_WEBHOOK_URL,
                 },
             };
         }

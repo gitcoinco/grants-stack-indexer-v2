@@ -44,7 +44,7 @@ import { ILogger, ProcessorEvent, stringify } from "@grants-stack-indexer/shared
 
 #### Slack
 
-Visit [Slack API docs](https://api.slack.com/messaging/webhooks) to create a Slack app and get a webhook URL. Follow the instructions for setting up a Slack app and get a webhook URL. Also, you can further customize the bot name, icons and scopes.
+Visit [Slack API docs](https://api.slack.com/messaging/webhooks) to create a Slack app and configure a webhook URL. You can customize the bot's name, icons and permissions in the app settings.
 
 #### Null
 

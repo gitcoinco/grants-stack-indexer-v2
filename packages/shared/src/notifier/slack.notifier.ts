@@ -2,7 +2,7 @@ import { isNativeError } from "util/types";
 import { IncomingWebhook, IncomingWebhookSendArguments } from "@slack/webhook";
 
 import { ILogger, stringify } from "../internal.js";
-import { INotifier, NotifierContext } from "./notifier.interface.js";
+import { INotifier, NotifierContext } from "./index.js";
 
 interface TransformableInfo {
     message: string;
@@ -48,6 +48,10 @@ export interface SlackOptions {
     formatter?: (info: TransformableInfo) => IncomingWebhookSendArguments;
 }
 
+/**
+ * Slack notifier implementation.
+ * Sends notifications to a Slack channel via a webhook.
+ */
 export class SlackNotifier implements INotifier {
     private webhook: IncomingWebhook;
     private username?: string;
@@ -62,6 +66,7 @@ export class SlackNotifier implements INotifier {
      * @param opts.iconEmoji - The emoji of the Slack bot. Defaults to ":rotating_light:".
      * @param opts.iconUrl - The URL of the Slack bot's icon.
      * @param opts.formatter - The formatter for the Slack transport. Defaults to the default formatter.
+     * @throws {TypeError} If the webhook URL is invalid.
      */
     constructor(
         opts: SlackOptions,
@@ -71,6 +76,8 @@ export class SlackNotifier implements INotifier {
         this.iconEmoji = opts.iconEmoji || ":rotating_light:";
         this.iconUrl = opts.iconUrl;
         this.formatter = opts.formatter || defaultFormatter;
+        // Validate the webhook URL
+        new URL(opts.webhookUrl);
         this.webhook = new IncomingWebhook(opts.webhookUrl);
     }
 

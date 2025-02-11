@@ -1,6 +1,5 @@
 import { ILogger, NullNotifier, SlackNotifier } from "../internal.js";
-import { INotifier } from "./notifier.interface.js";
-import { NotifierConfig, NotifierProvider } from "./notifierConfig.interface.js";
+import { INotifier, NotifierConfig, NotifierProvider } from "./index.js";
 
 /**
  * Factory class to create instances of INotifier based on configuration.
