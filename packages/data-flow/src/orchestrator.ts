@@ -332,7 +332,6 @@ export class Orchestrator {
                     );
                     return { status: "fulfilled", value: result };
                 } catch (error) {
-                    console.log("rejected", id);
                     return { status: "rejected", reason: error };
                 }
             },
