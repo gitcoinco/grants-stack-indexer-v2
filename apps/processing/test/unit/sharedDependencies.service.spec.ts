@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { EnvioIndexerClient } from "@grants-stack-indexer/indexer-client";
-import { PublicGatewayProvider } from "@grants-stack-indexer/metadata";
+import { MetadataProviderFactory, PublicGatewayProvider } from "@grants-stack-indexer/metadata";
 import { PricingProviderFactory } from "@grants-stack-indexer/pricing";
 import { createKyselyDatabase } from "@grants-stack-indexer/repository";
 
@@ -59,8 +59,10 @@ vi.mock("@grants-stack-indexer/pricing", () => ({
 }));
 
 vi.mock("@grants-stack-indexer/metadata", () => ({
-    IpfsProvider: vi.fn(),
     CachingMetadataProvider: vi.fn(),
+    MetadataProviderFactory: {
+        create: vi.fn(),
+    },
 }));
 
 vi.mock("@grants-stack-indexer/indexer-client", () => ({
@@ -107,6 +109,7 @@ describe("SharedDependenciesService", () => {
         | "INDEXER_ADMIN_SECRET"
         | "PRICING_SOURCE"
         | "METADATA_SOURCE"
+        | "NODE_ENV"
     > = {
         DATABASE_URL: "postgresql://localhost:5432/test",
         DATABASE_SCHEMA: "public",
@@ -114,6 +117,7 @@ describe("SharedDependenciesService", () => {
         INDEXER_ADMIN_SECRET: "secret",
         PRICING_SOURCE: "dummy",
         METADATA_SOURCE: "public-gateway",
+        NODE_ENV: "development",
     };
 
     it("initializes all dependencies correctly", async () => {
@@ -123,6 +127,7 @@ describe("SharedDependenciesService", () => {
         expect(createKyselyDatabase).toHaveBeenCalledWith(
             {
                 connectionString: mockEnv.DATABASE_URL,
+                isProduction: mockEnv.NODE_ENV === "production",
             },
             mocks.logger,
         );
@@ -131,8 +136,10 @@ describe("SharedDependenciesService", () => {
         expect(PricingProviderFactory.create).toHaveBeenCalledWith(mockEnv, {
             logger: mocks.logger,
         });
-        expect(PublicGatewayProvider).toHaveBeenCalledWith(mockEnv, mocks.logger);
 
+        expect(MetadataProviderFactory.create).toHaveBeenCalledWith(mockEnv, {
+            logger: mocks.logger,
+        });
         // Verify indexer client initialization
         expect(EnvioIndexerClient).toHaveBeenCalledWith(
             mockEnv.INDEXER_GRAPHQL_URL,

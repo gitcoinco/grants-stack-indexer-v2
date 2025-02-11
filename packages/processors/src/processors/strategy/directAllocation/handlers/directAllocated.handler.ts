@@ -78,7 +78,7 @@ export class DirectAllocatedHandler implements IEventHandler<"Strategy", "Direct
             amount: amount,
             amountInUsd,
             amountInRoundMatchToken: 0n,
-            timestamp: new Date(this.event.blockTimestamp * 1000),
+            timestamp: new Date(this.event.blockTimestamp),
         };
 
         return [
