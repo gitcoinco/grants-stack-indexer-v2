@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { EnvioIndexerClient } from "@grants-stack-indexer/indexer-client";
-import { MetadataProviderFactory, PublicGatewayProvider } from "@grants-stack-indexer/metadata";
+import { MetadataProviderFactory } from "@grants-stack-indexer/metadata";
 import { PricingProviderFactory } from "@grants-stack-indexer/pricing";
 import { createKyselyDatabase } from "@grants-stack-indexer/repository";
 
