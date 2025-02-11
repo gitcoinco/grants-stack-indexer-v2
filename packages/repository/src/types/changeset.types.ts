@@ -1,6 +1,6 @@
 import type { Address, ChainId } from "@grants-stack-indexer/shared";
 
-import { NewApplicationPayout } from "../internal.js";
+import { NewApplicationPayout, NewProcessedEvent } from "../internal.js";
 import { NewApplication, PartialApplication } from "./application.types.js";
 import { NewDonation } from "./donation.types.js";
 import {
@@ -167,9 +167,18 @@ export type ApplicationPayoutChangeset = {
     };
 };
 
+export type ProcessedEventChangeset = {
+    type: "InsertProcessedEvent";
+    args: {
+        chainId: ChainId;
+        processedEvent: NewProcessedEvent;
+    };
+};
+
 export type Changeset =
     | ProjectChangeset
     | RoundChangeset
     | ApplicationChangeset
     | DonationChangeset
-    | ApplicationPayoutChangeset;
+    | ApplicationPayoutChangeset
+    | ProcessedEventChangeset;

@@ -5,6 +5,7 @@ import {
     IApplicationPayoutRepository,
     IApplicationRepository,
     IDonationRepository,
+    IEventRegistryRepository,
     IProjectRepository,
     IRoundRepository,
     ITransactionManager,
@@ -41,6 +42,10 @@ describe("DataLoader", () => {
         insertApplicationPayout: vi.fn(),
     } as IApplicationPayoutRepository;
 
+    const mockEventRegistryRepository = {
+        saveLastProcessedEvent: vi.fn(),
+    } as unknown as IEventRegistryRepository;
+
     const logger: ILogger = {
         debug: vi.fn(),
         error: vi.fn(),
@@ -61,6 +66,7 @@ describe("DataLoader", () => {
                 application: mockApplicationRepository,
                 donation: mockDonationRepository,
                 applicationPayout: mockApplicationPayoutRepository,
+                eventRegistry: mockEventRegistryRepository,
             },
             mockTransactionManager,
             logger,

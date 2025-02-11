@@ -4,7 +4,6 @@ import { EvmProvider } from "@grants-stack-indexer/chain-providers";
 import {
     DatabaseEventRegistry,
     DatabaseStrategyRegistry,
-    InMemoryCachedEventRegistry,
     InMemoryCachedStrategyRegistry,
     Orchestrator,
     RetroactiveProcessor,
@@ -118,7 +117,6 @@ describe("ProcessingService", () => {
             expect(DatabaseEventRegistry).toHaveBeenCalledTimes(1);
             expect(EvmProvider).toHaveBeenCalledTimes(2);
             expect(InMemoryCachedStrategyRegistry.initialize).toHaveBeenCalledTimes(2);
-            expect(InMemoryCachedEventRegistry.initialize).toHaveBeenCalledTimes(2);
 
             // Verify orchestrators were created with correct parameters
             expect(processingService["orchestrators"].size).toBe(2);

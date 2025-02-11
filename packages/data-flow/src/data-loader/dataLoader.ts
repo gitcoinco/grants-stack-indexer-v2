@@ -3,6 +3,7 @@ import {
     IApplicationPayoutRepository,
     IApplicationRepository,
     IDonationRepository,
+    IEventRegistryRepository,
     IProjectRepository,
     IRoundRepository,
     ITransactionManager,
@@ -17,6 +18,7 @@ import {
     createProjectHandlers,
     createRoundHandlers,
 } from "./handlers/index.js";
+import { createProcessedEventHandlers } from "./handlers/processedEvent.handlers.js";
 import { ChangesetHandlers } from "./types/index.js";
 
 /**
@@ -42,6 +44,7 @@ export class DataLoader implements IDataLoader {
             application: IApplicationRepository;
             donation: IDonationRepository;
             applicationPayout: IApplicationPayoutRepository;
+            eventRegistry: IEventRegistryRepository;
         },
         private readonly transactionManager: ITransactionManager,
         private readonly logger: ILogger,
@@ -52,6 +55,7 @@ export class DataLoader implements IDataLoader {
             ...createApplicationHandlers(repositories.application),
             ...createDonationHandlers(repositories.donation),
             ...createApplicationPayoutHandlers(repositories.applicationPayout),
+            ...createProcessedEventHandlers(repositories.eventRegistry),
         };
     }
 
