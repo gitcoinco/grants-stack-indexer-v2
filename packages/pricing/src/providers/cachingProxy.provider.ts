@@ -106,15 +106,11 @@ export class CachingPricingProvider implements IPricingProvider, ICacheable {
         ).sort((a, b) => a.timestampMs - b.timestampMs);
 
         try {
-            console.log("Cached prices:", cachedPrices);
             const prices = this.getClosestPrices(timestamps, cachedPrices);
-            console.log("Prices:", prices);
             return prices;
         } catch (error) {
             if (error instanceof NoClosePriceFound) {
-                console.log("No close price found, fetching from provider");
                 const fetchedPrices = await this.provider.getTokenPrices(tokenCode, timestamps);
-                console.log("Fetched prices:", fetchedPrices);
                 for (const price of fetchedPrices) {
                     this.cache
                         .set(
@@ -131,7 +127,6 @@ export class CachingPricingProvider implements IPricingProvider, ICacheable {
                             );
                         });
                 }
-                console.log("Fetched prices antes de closest", fetchedPrices);
                 return this.getClosestPrices(timestamps, fetchedPrices).sort(
                     (a, b) => a.timestampMs - b.timestampMs,
                 );
