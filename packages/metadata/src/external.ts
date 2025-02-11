@@ -1,5 +1,4 @@
 export {
-    PinataProvider,
     PublicGatewayProvider,
     CachingMetadataProvider,
     MetadataProviderFactory,

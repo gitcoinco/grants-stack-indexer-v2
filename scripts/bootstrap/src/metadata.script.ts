@@ -65,10 +65,7 @@ const main = async (): Promise<void> => {
     );
 
     //This is only to try in advance if we have the tables and db in sync
-    await db
-        .insertInto("metadataCache")
-        .values({ id: "asd", metadata: { asd: "asd" }, createdAt: new Date() })
-        .execute();
+    await db.selectFrom("metadataCache").selectAll().execute();
 
     const metadataRepository = new KyselyMetadataCache(db, schema);
 

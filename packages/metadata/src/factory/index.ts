@@ -6,7 +6,6 @@ import {
     IMetadataProvider,
     MetadataConfig,
     MetadataProvider,
-    PinataProvider,
     PublicGatewayProvider,
 } from "../internal.js";
 import { DummyMetadataProvider } from "../providers/dummy.provider.js";
@@ -34,12 +33,6 @@ export class MetadataProviderFactory {
         switch (options.metadataSource) {
             case "dummy":
                 metadataProvider = new DummyMetadataProvider();
-                break;
-            case "pinata":
-                if (!deps?.logger) {
-                    throw new MissingDependenciesException(["logger"]);
-                }
-                metadataProvider = new PinataProvider(options.jwt, options.gateway, deps.logger);
                 break;
             case "public-gateway":
                 if (!deps?.logger) {
