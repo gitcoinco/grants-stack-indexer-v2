@@ -65,12 +65,12 @@ describe("PublicGatewayProvider", () => {
             expect(result).toEqual(mockData);
         });
 
-        it("throws if all gateways fail", async () => {
+        it("returns undefined if all gateways fail", async () => {
             gateways.forEach((gateway) => {
                 mock.onGet(`${gateway}/ipfs/${validCid}`).networkError();
             });
-
-            await expect(() => provider.getMetadata(validCid)).rejects.toThrow(Error);
+            const result = await provider.getMetadata(validCid);
+            expect(result).toBeUndefined();
         });
 
         it("validate content with provided schema", async () => {
