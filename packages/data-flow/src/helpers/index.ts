@@ -32,7 +32,7 @@ export const getMetadataCidsFromEvents = (
                 const decoded = decodeDVMDExtendedApplicationData(event.params.data);
                 ids.add(decoded.metadata.pointer);
             } catch (error) {
-                logger.warn("Failed to decode DVMD extended application data", {
+                logger.warn("Failed to decode Metadata CID from event data", {
                     error,
                     event,
                 });

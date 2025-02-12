@@ -178,7 +178,7 @@ export class CoingeckoProvider implements IPricingProvider {
                 while (currentStart < effectiveMax) {
                     const currentEnd = Math.min(currentStart + segmentDuration, effectiveMax);
 
-                    path = `/coins/${tokenId}/market_chart/range?vs_currency=usd&from=${currentStart / 1000}&to=${currentEnd / 1000}&precision=full`;
+                    path = `/coins/${tokenId}/market_chart/range?vs_currency=usd&from=${Math.floor(currentStart / 1000)}&to=${Math.floor(currentEnd / 1000)}&precision=full`;
                     // Push the promise for the current segment
                     segments.push(
                         this.axios.get<CoingeckoPriceChartData>(path).then(({ data }) =>

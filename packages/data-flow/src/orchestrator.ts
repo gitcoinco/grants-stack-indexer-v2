@@ -297,7 +297,7 @@ export class Orchestrator {
             blockNumber,
             logIndex,
             limit: this.fetchLimit,
-            // allowPartialLastBlock: false, //TODO: ask nigiri about this
+            // allowPartialLastBlock: false,
         });
 
         return events;
@@ -373,7 +373,7 @@ export class Orchestrator {
                     return { status: "rejected", reason: error };
                 }
             },
-            { concurrency: MAX_BULK_FETCH_METADATA_CONCURRENCY }, //FIXME: remove hardcoded concurrency
+            { concurrency: MAX_BULK_FETCH_METADATA_CONCURRENCY },
         );
 
         const metadata: unknown[] = [];
