@@ -32,8 +32,6 @@ import {
     RateLimitError,
     StrategyEvent,
     TimestampMs,
-    // Token,
-    // TokenCode,
 } from "@grants-stack-indexer/shared";
 
 import { CoreDependencies, InvalidEvent, IStrategyRegistry } from "../../src/internal.js";
@@ -326,13 +324,16 @@ describe("Orchestrator", { sequential: true }, () => {
                 metadata: ["1", "1"],
             });
 
+            // make private method bulkFetchMetadataAndPricesForBatch return undefined
+            orchestrator["bulkFetchMetadataAndPricesForBatch"] = vi
+                .fn()
+                .mockResolvedValue(undefined);
             const eventsProcessorSpy = vi.spyOn(orchestrator["eventsProcessor"], "processEvent");
 
             vi.spyOn(mockEventsRegistry, "getLastProcessedEvent").mockResolvedValue(undefined);
             vi.spyOn(mockIndexerClient, "getEventsAfterBlockNumberAndLogIndex")
                 .mockResolvedValueOnce([mockEvent])
                 .mockResolvedValue([]);
-
             vi.spyOn(mockStrategyRegistry, "getStrategyId").mockResolvedValue(undefined);
             vi.spyOn(mockEvmProvider, "readContract").mockResolvedValue(strategyId);
             const changesets = [
@@ -393,6 +394,9 @@ describe("Orchestrator", { sequential: true }, () => {
             });
 
             const eventsProcessorSpy = vi.spyOn(orchestrator["eventsProcessor"], "processEvent");
+            orchestrator["bulkFetchMetadataAndPricesForBatch"] = vi
+                .fn()
+                .mockResolvedValue(undefined);
             vi.spyOn(mockStrategyRegistry, "getStrategyId").mockResolvedValue(undefined);
             vi.spyOn(mockEvmProvider, "readContract")
                 .mockResolvedValueOnce(strategyId)
@@ -584,6 +588,9 @@ describe("Orchestrator", { sequential: true }, () => {
 
             const eventsProcessorSpy = vi.spyOn(orchestrator["eventsProcessor"], "processEvent");
 
+            orchestrator["bulkFetchMetadataAndPricesForBatch"] = vi
+                .fn()
+                .mockResolvedValue(undefined);
             vi.spyOn(mockStrategyRegistry, "getStrategyId")
                 .mockResolvedValueOnce(undefined)
                 .mockResolvedValue({
@@ -839,7 +846,9 @@ describe("Orchestrator", { sequential: true }, () => {
             poolCreatedEvent.logIndex = 3;
 
             const eventsProcessorSpy = vi.spyOn(orchestrator["eventsProcessor"], "processEvent");
-
+            orchestrator["bulkFetchMetadataAndPricesForBatch"] = vi
+                .fn()
+                .mockResolvedValue(undefined);
             vi.spyOn(mockEventsRegistry, "getLastProcessedEvent").mockResolvedValue(undefined);
             vi.spyOn(mockIndexerClient, "getEventsAfterBlockNumberAndLogIndex")
                 .mockResolvedValueOnce([
@@ -914,6 +923,9 @@ describe("Orchestrator", { sequential: true }, () => {
                 },
             ] as unknown as AnyIndexerFetchedEvent[];
 
+            orchestrator["bulkFetchMetadataAndPricesForBatch"] = vi
+                .fn()
+                .mockResolvedValue(undefined);
             vi.spyOn(mockMetadataProvider, "getMetadata").mockRejectedValue(
                 new Error("Fetch failed"),
             );

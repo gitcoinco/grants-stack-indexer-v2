@@ -11,15 +11,15 @@ import {
 import { DummyMetadataProvider } from "../providers/dummy.provider.js";
 
 /**
- * Factory class for creating pricing providers.
+ * Factory class for creating metadata providers.
  */
 export class MetadataProviderFactory {
     /**
-     * Creates a pricing provider based on the provided configuration.
-     * @param options - The pricing configuration.
-     * @param deps - dependencies to inject into the pricing provider.
-     * @returns The created pricing provider.
-     * @throws {InvalidMetadataSource} if the pricing source is invalid.
+     * Creates a metadata provider based on the provided configuration.
+     * @param options - The metadata configuration.
+     * @param deps - dependencies to inject into the metadata provider.
+     * @returns The created metadata provider.
+     * @throws {InvalidMetadataSource} if the metadata source is invalid.
      * @throws {MissingDependencies} if the dependencies are missing.
      */
     static create(

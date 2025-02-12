@@ -23,7 +23,7 @@ export class PublicGatewayProvider implements IMetadataProvider {
     async getMetadata<T>(
         ipfsCid: string,
         validateContent?: z.ZodSchema<T>,
-    ): Promise<T | undefined | null> {
+    ): Promise<T | undefined> {
         if (ipfsCid === "" || !isValidCid(ipfsCid)) {
             return undefined;
         }
@@ -54,7 +54,7 @@ export class PublicGatewayProvider implements IMetadataProvider {
                 }
             }
         }
-        throw new Error(`Failed to fetch IPFS data for CID ${ipfsCid} from all gateways.`);
+        return undefined;
     }
 
     /**

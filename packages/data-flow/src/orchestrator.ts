@@ -1,5 +1,7 @@
 import { isNativeError } from "util/types";
 import pMap from "p-map";
+import { retryAsyncUntilDefined } from "ts-retry";
+import { DelayParameters } from "ts-retry/lib/cjs/retry/options.js";
 
 import { IIndexerClient } from "@grants-stack-indexer/indexer-client";
 import { TokenPrice } from "@grants-stack-indexer/pricing";
@@ -36,6 +38,12 @@ import {
 } from "@grants-stack-indexer/shared";
 
 import type { IEventsFetcher, IStrategyRegistry } from "./interfaces/index.js";
+import {
+    MAX_BULK_FETCH_METADATA_CONCURRENCY,
+    MAX_BULK_FETCH_METADATA_RETRIES,
+    METADATA_BULK_FETCH_BACKOFF_FACTOR,
+    METADATA_BULK_FETCH_BASE_DELAY_MS,
+} from "./constants.js";
 import { EventsFetcher } from "./eventsFetcher.js";
 import { EventsProcessor } from "./eventsProcessor.js";
 import { InvalidEvent } from "./exceptions/index.js";
@@ -348,15 +356,24 @@ export class Orchestrator {
             metadataIds,
             async (id) => {
                 try {
-                    const result = await this.retryHandler.execute(() =>
-                        this.dependencies.metadataProvider.getMetadata<unknown>(id),
+                    const result = await retryAsyncUntilDefined(
+                        () => this.dependencies.metadataProvider.getMetadata<unknown>(id),
+                        {
+                            maxTry: MAX_BULK_FETCH_METADATA_RETRIES,
+                            delay: (params: DelayParameters<unknown>) => {
+                                return (
+                                    METADATA_BULK_FETCH_BASE_DELAY_MS *
+                                    METADATA_BULK_FETCH_BACKOFF_FACTOR ** params.currentTry
+                                );
+                            },
+                        },
                     );
                     return { status: "fulfilled", value: result };
                 } catch (error) {
                     return { status: "rejected", reason: error };
                 }
             },
-            { concurrency: 10 }, //FIXME: remove hardcoded concurrency
+            { concurrency: MAX_BULK_FETCH_METADATA_CONCURRENCY }, //FIXME: remove hardcoded concurrency
         );
 
         const metadata: unknown[] = [];

@@ -1,7 +1,7 @@
 import fs from "fs";
 import { configDotenv } from "dotenv";
 import { pMapIterable } from "p-map";
-import { retry, RetryOptions } from "ts-retry";
+import { retryAsyncUntilDefined, RetryOptions } from "ts-retry";
 
 import { getMetadataCidsFromEvents } from "@grants-stack-indexer/data-flow";
 import { EnvioIndexerClient } from "@grants-stack-indexer/indexer-client";
@@ -136,7 +136,7 @@ const main = async (): Promise<void> => {
         Array.from(cids),
         async (cid) => {
             try {
-                const metadata = await retry(
+                const metadata = await retryAsyncUntilDefined(
                     () => publicGatewayProvider.getMetadata(cid),
                     retryOptions,
                 );
