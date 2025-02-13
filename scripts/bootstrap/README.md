@@ -30,7 +30,7 @@ This package contains scripts for bootstrapping the grants-stack-indexer project
     # Indexer URL
     INDEXER_URL="localhost:5432/v1/graphql"
     # Public gateway URLs
-    PUBLIC_GATEWAY_URLS=["https://d16c97c2np8a2o.cloudfront.net", "https://ipfs.io", "https://dweb.link", "https://cloudflare-ipfs.com", "https://gateway.pinata.cloud", "https://ipfs.infura.io", "https://ipfs.fleek.co", "https://ipfs.eth.aragon.network", "https://ipfs.jes.xxx", "https://ipfs.lol", "https://ipfs.mle.party"]
+    PUBLIC_GATEWAY_URLS=["https://ipfs.io", "https://dweb.link", "https://cloudflare-ipfs.com", "https://gateway.pinata.cloud", "https://ipfs.infura.io", "https://ipfs.fleek.co", "https://ipfs.eth.aragon.network", "https://ipfs.jes.xxx", "https://ipfs.lol", "https://ipfs.mle.party"]
     # Chain IDs
     CHAIN_IDS=[1, 10, 42161]
     # Log level
