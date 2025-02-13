@@ -1,4 +1,3 @@
-import fs from "fs";
 import { configDotenv } from "dotenv";
 import { pMapIterable } from "p-map";
 import { retryAsyncUntilDefined, RetryOptions } from "ts-retry";
@@ -117,7 +116,6 @@ const main = async (): Promise<void> => {
             cids.push(...getMetadataCidsFromEvents(flattedEvents, { ...console }));
             // Save checkpoint logic here (e.g., save cids or event data)
         }
-        fs.writeFileSync("cids.txt", cids.join("\n"));
         console.log("\n");
         console.log("Checkpoints by chainId:\r");
         console.log(checkpointMap);
