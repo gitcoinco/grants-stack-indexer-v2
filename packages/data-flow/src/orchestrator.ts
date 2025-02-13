@@ -297,7 +297,6 @@ export class Orchestrator {
             blockNumber,
             logIndex,
             limit: this.fetchLimit,
-            // allowPartialLastBlock: false,
         });
 
         return events;
