@@ -33,8 +33,6 @@ import {
     RateLimitError,
     StrategyEvent,
     TimestampMs,
-    Token,
-    TokenCode,
 } from "@grants-stack-indexer/shared";
 
 import { CoreDependencies, InvalidEvent, IStrategyRegistry } from "../../src/internal.js";
@@ -331,13 +329,16 @@ describe("Orchestrator", { sequential: true }, () => {
                 metadata: ["1", "1"],
             });
 
+            // make private method bulkFetchMetadataAndPricesForBatch return undefined
+            orchestrator["bulkFetchMetadataAndPricesForBatch"] = vi
+                .fn()
+                .mockResolvedValue(undefined);
             const eventsProcessorSpy = vi.spyOn(orchestrator["eventsProcessor"], "processEvent");
 
             vi.spyOn(mockEventsRegistry, "getLastProcessedEvent").mockResolvedValue(undefined);
             vi.spyOn(mockIndexerClient, "getEventsAfterBlockNumberAndLogIndex")
                 .mockResolvedValueOnce([mockEvent])
                 .mockResolvedValue([]);
-
             vi.spyOn(mockStrategyRegistry, "getStrategyId").mockResolvedValue(undefined);
             vi.spyOn(mockEvmProvider, "readContract").mockResolvedValue(strategyId);
             const changesets = [
@@ -398,6 +399,9 @@ describe("Orchestrator", { sequential: true }, () => {
             });
 
             const eventsProcessorSpy = vi.spyOn(orchestrator["eventsProcessor"], "processEvent");
+            orchestrator["bulkFetchMetadataAndPricesForBatch"] = vi
+                .fn()
+                .mockResolvedValue(undefined);
             vi.spyOn(mockStrategyRegistry, "getStrategyId").mockResolvedValue(undefined);
             vi.spyOn(mockEvmProvider, "readContract")
                 .mockResolvedValueOnce(strategyId)
@@ -589,6 +593,9 @@ describe("Orchestrator", { sequential: true }, () => {
 
             const eventsProcessorSpy = vi.spyOn(orchestrator["eventsProcessor"], "processEvent");
 
+            orchestrator["bulkFetchMetadataAndPricesForBatch"] = vi
+                .fn()
+                .mockResolvedValue(undefined);
             vi.spyOn(mockStrategyRegistry, "getStrategyId")
                 .mockResolvedValueOnce(undefined)
                 .mockResolvedValue({
@@ -844,7 +851,9 @@ describe("Orchestrator", { sequential: true }, () => {
             poolCreatedEvent.logIndex = 3;
 
             const eventsProcessorSpy = vi.spyOn(orchestrator["eventsProcessor"], "processEvent");
-
+            orchestrator["bulkFetchMetadataAndPricesForBatch"] = vi
+                .fn()
+                .mockResolvedValue(undefined);
             vi.spyOn(mockEventsRegistry, "getLastProcessedEvent").mockResolvedValue(undefined);
             vi.spyOn(mockIndexerClient, "getEventsAfterBlockNumberAndLogIndex")
                 .mockResolvedValueOnce([
@@ -878,102 +887,6 @@ describe("Orchestrator", { sequential: true }, () => {
 
             expect(orchestrator["eventsProcessor"].processEvent).toHaveBeenCalledTimes(3);
             expect(logger.error).not.toHaveBeenCalled();
-        });
-    });
-
-    describe("getMetadataFromEvents", () => {
-        it("extracts unique metadata IDs from events", async () => {
-            const events = [
-                {
-                    params: { metadata: [1n, "id1"] },
-                },
-                {
-                    params: { metadata: [1n, "id1"] }, // Duplicate
-                },
-                {
-                    params: { metadata: [1n, "id2"] },
-                },
-                {
-                    params: { recipientAddress: "0x123" }, // No metadata
-                },
-            ] as unknown as AnyIndexerFetchedEvent[];
-
-            const result = await orchestrator["getMetadataFromEvents"](events);
-            expect(result).toEqual(["id1", "id2"]);
-        });
-    });
-
-    describe("getTokensFromEvents", () => {
-        const mockToken: Token = {
-            address: zeroAddress,
-            decimals: 18,
-            code: "ETH" as TokenCode,
-            priceSourceCode: "ETH" as TokenCode,
-        };
-
-        it("collects unique timestamps for each token", async () => {
-            const events = [
-                {
-                    params: {
-                        token: zeroAddress,
-                        amount: "1000000000000000000", // 1 ETH
-                    },
-                    blockTimestamp: 1000,
-                },
-                {
-                    params: {
-                        token: zeroAddress,
-                        amount: "1000000000000000000",
-                    },
-                    blockTimestamp: 1000, // Duplicate timestamp
-                },
-                {
-                    params: {
-                        token: zeroAddress,
-                        amount: "1000000000000000000",
-                    },
-                    blockTimestamp: 2000,
-                },
-            ] as unknown as AnyIndexerFetchedEvent[];
-
-            const result = await orchestrator["getTokensFromEvents"](events);
-
-            expect(result).toEqual([
-                {
-                    token: mockToken,
-                    timestamps: [1000, 2000],
-                },
-            ]);
-        });
-
-        it("ignores events with zero amounts", async () => {
-            const events = [
-                {
-                    params: {
-                        token: "0x123",
-                        amount: "0",
-                    },
-                    blockTimestamp: 1000,
-                },
-            ] as unknown as AnyIndexerFetchedEvent[];
-
-            const result = await orchestrator["getTokensFromEvents"](events);
-            expect(result).toEqual([]);
-        });
-
-        it("ignores events with invalid tokens", async () => {
-            const events = [
-                {
-                    params: {
-                        token: "0xInvalid",
-                        amount: "1000000000000000000",
-                    },
-                    blockTimestamp: 1000,
-                },
-            ] as unknown as AnyIndexerFetchedEvent[];
-
-            const result = await orchestrator["getTokensFromEvents"](events);
-            expect(result).toEqual([]);
         });
     });
 
@@ -1015,6 +928,9 @@ describe("Orchestrator", { sequential: true }, () => {
                 },
             ] as unknown as AnyIndexerFetchedEvent[];
 
+            orchestrator["bulkFetchMetadataAndPricesForBatch"] = vi
+                .fn()
+                .mockResolvedValue(undefined);
             vi.spyOn(mockMetadataProvider, "getMetadata").mockRejectedValue(
                 new Error("Fetch failed"),
             );

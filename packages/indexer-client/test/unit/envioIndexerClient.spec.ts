@@ -112,11 +112,16 @@ describe("EnvioIndexerClient", () => {
         it("sets the x-hasura-admin-secret header", () => {
             expect(graphqlClient.setHeader).toHaveBeenCalledWith("x-hasura-admin-secret", "secret");
         });
+        it("does not set the x-hasura-admin-secret header when not provided", () => {
+            envioIndexerClient = new EnvioIndexerClient("http://example.com/graphql");
+            graphqlClient = envioIndexerClient["client"] as unknown as Mocked<GraphQLClient>;
+            expect(graphqlClient.setHeader).not.toHaveBeenCalled();
+        });
     });
 
     describe("getEventsAfterBlockNumberAndLogIndex", () => {
         beforeEach(() => {
-            envioIndexerClient = new EnvioIndexerClient("http://example.com/graphql", "secret");
+            envioIndexerClient = new EnvioIndexerClient("http://example.com/graphql");
             graphqlClient = envioIndexerClient["client"] as unknown as Mocked<GraphQLClient>;
 
             // Mock the request implementation to simulate database querying
@@ -354,7 +359,7 @@ describe("EnvioIndexerClient", () => {
 
     describe("getEvents (old test cases)", () => {
         beforeEach(() => {
-            envioIndexerClient = new EnvioIndexerClient("http://example.com/graphql", "secret");
+            envioIndexerClient = new EnvioIndexerClient("http://example.com/graphql");
             graphqlClient = envioIndexerClient["client"] as unknown as Mocked<GraphQLClient>;
 
             // Mock the request implementation to simulate database querying
@@ -700,6 +705,35 @@ describe("EnvioIndexerClient", () => {
 
             expect(queryString).toContain("where: { chain_id: { _eq: $chainId } }");
             expect(queryVars).not.toHaveProperty("srcAddresses");
+        });
+    });
+
+    describe("getBlockRangeTimestampByChainId", () => {
+        it("returns the timestamp of the first and last block in the range", async () => {
+            graphqlClient.request.mockResolvedValue({
+                from: [{ block_timestamp: 123123123000 }],
+                to: [{ block_timestamp: 123123124000 }],
+            });
+            const result = await envioIndexerClient.getBlockRangeTimestampByChainId(1 as ChainId);
+            expect(result).toEqual({
+                from: 123123123000,
+                to: 123123124000,
+            });
+        });
+        it("throws if no block range is found", async () => {
+            graphqlClient.request.mockResolvedValue({
+                from: [],
+                to: [],
+            });
+            await expect(
+                envioIndexerClient.getBlockRangeTimestampByChainId(100 as ChainId),
+            ).rejects.toThrow(IndexerClientError);
+        });
+        it("throws if graphql request fails", async () => {
+            graphqlClient.request.mockRejectedValue(new Error("GraphQL request failed"));
+            await expect(
+                envioIndexerClient.getBlockRangeTimestampByChainId(100 as ChainId),
+            ).rejects.toThrow(IndexerClientError);
         });
     });
 });

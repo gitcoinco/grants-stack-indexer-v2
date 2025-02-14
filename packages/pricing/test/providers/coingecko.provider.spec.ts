@@ -10,7 +10,11 @@ import {
 } from "@grants-stack-indexer/shared";
 
 import type { TokenPrice } from "../../src/external.js";
-import { CoingeckoProvider, UnsupportedToken } from "../../src/external.js";
+import {
+    CoingeckoProvider,
+    UnknownPricingException,
+    UnsupportedToken,
+} from "../../src/external.js";
 
 const mock = vi.hoisted(() => ({
     get: vi.fn(),
@@ -76,7 +80,7 @@ describe("CoingeckoProvider", () => {
 
             expect(result).toEqual(expectedPrice);
             expect(mock.get).toHaveBeenCalledWith(
-                "/coins/ethereum/market_chart/range?vs_currency=usd&from=1609459200000&to=1609545600000&precision=full",
+                `/coins/ethereum/market_chart/range?vs_currency=usd&from=${1609459200000 / 1000}&to=${1609545600000 / 1000}&precision=full`,
             );
         });
 
@@ -98,7 +102,7 @@ describe("CoingeckoProvider", () => {
 
             expect(result).toEqual(expectedPrice);
             expect(mock.get).toHaveBeenCalledWith(
-                "/coins/ethereum/market_chart/range?vs_currency=usd&from=1609459200000&to=1609466400000&precision=full",
+                `/coins/ethereum/market_chart/range?vs_currency=usd&from=${1609459200000 / 1000}&to=${1609466400000 / 1000}&precision=full`,
             );
         });
 
@@ -210,25 +214,10 @@ describe("CoingeckoProvider", () => {
             expect(result).toEqual([]);
         });
 
-        it("fetches prices within minimum granularity", async () => {
-            const timestamps = [1000, 1100]; // Less than MIN_GRANULARITY_MS apart
-            mock.get.mockResolvedValue({
-                data: {
-                    prices: [
-                        [1000, 1500],
-                        [1100, 1600],
-                    ],
-                },
-            });
-
-            await provider.getTokenPrices("ETH" as TokenCode, timestamps);
-            expect(mock.get).toHaveBeenCalledWith(expect.stringContaining(`&interval=5m`));
-        });
-
         it("throws UnsupportedToken for unknown token", async () => {
-            await expect(provider.getTokenPrices("UNKNOWN" as TokenCode, [1000])).rejects.toThrow(
-                UnsupportedToken,
-            );
+            await expect(
+                provider.getTokenPrices("UNKNOWN" as TokenCode, [1000 as TimestampMs]),
+            ).rejects.toThrow(UnsupportedToken);
         });
 
         it("handles rate limiting errors", async () => {
@@ -239,9 +228,57 @@ describe("CoingeckoProvider", () => {
                 response: { headers: { "retry-after": "60" } },
             });
 
-            await expect(provider.getTokenPrices("ETH" as TokenCode, [1000])).rejects.toThrow(
-                RateLimitError,
-            );
+            await expect(
+                provider.getTokenPrices("ETH" as TokenCode, [1000 as TimestampMs]),
+            ).rejects.toThrow(RateLimitError);
+        });
+
+        it("returns prices for valid timestamps", async () => {
+            const mockResponse = {
+                prices: [
+                    [1609459200000, 100],
+                    [1609545600000, 110],
+                ],
+            };
+            mock.get.mockResolvedValueOnce({ status: 200, data: mockResponse });
+
+            const result = await provider.getTokenPrices("ETH" as TokenCode, [
+                1609459200000 as TimestampMs,
+                1609545600000 as TimestampMs,
+            ]);
+
+            expect(result).toEqual([
+                { timestampMs: 1609459200000 as TimestampMs, priceUsd: 100 },
+                { timestampMs: 1609545600000 as TimestampMs, priceUsd: 110 },
+            ]);
+        });
+
+        it("returns closest prices when exact timestamps are not available", async () => {
+            const mockResponse = {
+                prices: [
+                    [1609459200000, 100],
+                    [1609545600000, 110],
+                ],
+            };
+            mock.get.mockResolvedValueOnce({ status: 200, data: mockResponse });
+
+            const result = await provider.getTokenPrices("ETH" as TokenCode, [
+                1609459200000 as TimestampMs,
+                1609550000000 as TimestampMs, // Not available, should return closest
+            ]);
+
+            expect(result).toEqual([
+                { timestampMs: 1609459200000 as TimestampMs, priceUsd: 100 },
+                { timestampMs: 1609545600000 as TimestampMs, priceUsd: 110 }, // Closest available
+            ]);
+        });
+
+        it("handles errors gracefully when fetching prices fails", async () => {
+            mock.get.mockRejectedValueOnce(new Error("Fetch error"));
+
+            await expect(
+                provider.getTokenPrices("ETH" as TokenCode, [1000 as TimestampMs]),
+            ).rejects.toThrow(UnknownPricingException);
         });
     });
 });

@@ -2,6 +2,7 @@ import { z } from "zod";
 
 const dbEnvSchema = z.object({
     DATABASE_URL: z.string().url(),
+    NODE_ENV: z.enum(["development", "staging", "production"]).default("development"),
 });
 
 export type DbEnvConfig = z.infer<typeof dbEnvSchema>;

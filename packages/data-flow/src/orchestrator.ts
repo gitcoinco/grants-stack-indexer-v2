@@ -1,4 +1,7 @@
 import { isNativeError } from "util/types";
+import pMap from "p-map";
+import { retryAsyncUntilDefined } from "ts-retry";
+import { DelayParameters } from "ts-retry/lib/cjs/retry/options.js";
 
 import { IIndexerClient } from "@grants-stack-indexer/indexer-client";
 import { TokenPrice } from "@grants-stack-indexer/pricing";
@@ -19,7 +22,6 @@ import {
     AnyIndexerFetchedEvent,
     ChainId,
     ContractName,
-    getToken,
     Hex,
     ILogger,
     INotifier,
@@ -33,16 +35,24 @@ import {
     stringify,
     TimestampMs,
     Token,
+    TOKENS_SOURCE_CODES,
 } from "@grants-stack-indexer/shared";
 
 import type { IEventsFetcher, IStrategyRegistry } from "./interfaces/index.js";
+import {
+    MAX_BULK_FETCH_METADATA_CONCURRENCY,
+    MAX_BULK_FETCH_METADATA_RETRIES,
+    METADATA_BULK_FETCH_BACKOFF_FACTOR,
+    METADATA_BULK_FETCH_BASE_DELAY_MS,
+} from "./constants.js";
 import { EventsFetcher } from "./eventsFetcher.js";
 import { EventsProcessor } from "./eventsProcessor.js";
 import { InvalidEvent } from "./exceptions/index.js";
+import { getMetadataCidsFromEvents } from "./helpers/index.js";
 import { CoreDependencies, DataLoader, delay, IQueue, iStrategyAbi, Queue } from "./internal.js";
 
 type TokenWithTimestamps = {
-    token: Token;
+    token: { priceSourceCode: Token["priceSourceCode"] };
     timestamps: TimestampMs[];
 };
 
@@ -103,6 +113,7 @@ export class Orchestrator {
         private retryStrategy: RetryStrategy,
         private logger: ILogger,
         private notifier: INotifier,
+        private environment: "development" | "staging" | "production" = "development",
     ) {
         this.eventsFetcher = new EventsFetcher(this.indexerClient);
         this.eventsProcessor = new EventsProcessor(this.chainId, {
@@ -129,6 +140,9 @@ export class Orchestrator {
     }
 
     async run(signal: AbortSignal): Promise<void> {
+        let totalEvents = 0;
+        let processedEvents = 0;
+
         while (!signal.aborted) {
             let event: ProcessorEvent<ContractName, AnyEvent> | undefined;
             try {
@@ -136,10 +150,10 @@ export class Orchestrator {
                     const events = await this.getNextEventsBatch();
                     await this.bulkFetchMetadataAndPricesForBatch(events);
                     await this.enqueueEvents(events);
+                    totalEvents += events.length;
                 }
 
                 event = this.eventsQueue.pop();
-
                 if (!event) {
                     this.logger.debug(
                         `No event to process, sleeping for ${this.fetchDelayInMs}ms`,
@@ -173,6 +187,11 @@ export class Orchestrator {
                     },
                     { abortSignal: signal },
                 );
+                processedEvents++;
+                this.logger.info(`Processed events: ${processedEvents}/${totalEvents}`, {
+                    className: Orchestrator.name,
+                    chainId: this.chainId,
+                });
             } catch (error: unknown) {
                 if (event) {
                     await this.eventsRegistry.saveLastProcessedEvent(this.chainId, {
@@ -250,59 +269,6 @@ export class Orchestrator {
     }
 
     /**
-     * Extracts unique metadata ids from the events batch.
-     * @param events - Array of indexer fetched events to process
-     * @returns Array of unique metadata ids found in the events
-     */
-    private getMetadataFromEvents(events: AnyIndexerFetchedEvent[]): string[] {
-        const ids = new Set<string>();
-
-        for (const event of events) {
-            if ("metadata" in event.params) {
-                ids.add(event.params.metadata[1]);
-            }
-        }
-
-        return Array.from(ids);
-    }
-
-    /**
-     * Extracts unique tokens from the events batch. Leaves out tokens with zero amount and sorts the timestamps.
-     * @param events - Array of indexer fetched events to process
-     * @returns Array of unique tokens with timestamps found in the events
-     */
-    private getTokensFromEvents(events: AnyIndexerFetchedEvent[]): TokenWithTimestamps[] {
-        const tokenMap = new Map<string, TokenWithTimestamps>();
-
-        for (const event of events) {
-            if (
-                "token" in event.params &&
-                "amount" in event.params &&
-                BigInt(event.params.amount) > 0n
-            ) {
-                const token = getToken(this.chainId, event.params.token);
-                if (!token) continue;
-
-                const existing = tokenMap.get(token.address);
-                if (existing) {
-                    existing.timestamps.push(event.blockTimestamp);
-                } else {
-                    tokenMap.set(token.address, {
-                        token,
-                        timestamps: [event.blockTimestamp],
-                    });
-                }
-            }
-        }
-
-        // Convert timestamps to unique sorted arrays
-        return Array.from(tokenMap.values()).map(({ token, timestamps }) => ({
-            token,
-            timestamps: [...new Set(timestamps)].sort((a, b) => a - b),
-        }));
-    }
-
-    /**
      * Sometimes the TimestampsUpdated event is part of the _initialize() function of a strategy.
      * In this case, the event is emitted before the PoolCreated event. We can safely ignore the error
      * if the PoolCreated event is present in the same block.
@@ -338,6 +304,7 @@ export class Orchestrator {
      */
     private async getNextEventsBatch(): Promise<AnyIndexerFetchedEvent[]> {
         const lastProcessedEvent = await this.eventsRegistry.getLastProcessedEvent(this.chainId);
+
         const blockNumber = lastProcessedEvent?.blockNumber ?? 0;
         const logIndex = lastProcessedEvent?.logIndex ?? 0;
 
@@ -346,7 +313,6 @@ export class Orchestrator {
             blockNumber,
             logIndex,
             limit: this.fetchLimit,
-            allowPartialLastBlock: false,
         });
 
         return events;
@@ -359,12 +325,18 @@ export class Orchestrator {
     private async bulkFetchMetadataAndPricesForBatch(
         events: AnyIndexerFetchedEvent[],
     ): Promise<void> {
+        if (events.length === 0) return;
         // Clear caches if the provider supports it
         await this.dependencies.metadataProvider.clearCache?.();
         await this.dependencies.pricingProvider.clearCache?.();
 
-        const metadataIds = this.getMetadataFromEvents(events);
-        const tokens = this.getTokensFromEvents(events);
+        const metadataIds = getMetadataCidsFromEvents(events, this.logger);
+        const tokens = TOKENS_SOURCE_CODES.map((code) => ({
+            token: {
+                priceSourceCode: code,
+            },
+            timestamps: events.map((e) => e.blockTimestamp),
+        }));
 
         await Promise.allSettled([
             this.bulkFetchMetadata(metadataIds),
@@ -395,12 +367,28 @@ export class Orchestrator {
      * @returns The metadata
      */
     private async bulkFetchMetadata(metadataIds: string[]): Promise<unknown[]> {
-        const results = await Promise.allSettled(
-            metadataIds.map((id) =>
-                this.retryHandler.execute(() =>
-                    this.dependencies.metadataProvider.getMetadata<unknown>(id),
-                ),
-            ),
+        const results = await pMap(
+            metadataIds,
+            async (id) => {
+                try {
+                    const result = await retryAsyncUntilDefined(
+                        () => this.dependencies.metadataProvider.getMetadata<unknown>(id),
+                        {
+                            maxTry: MAX_BULK_FETCH_METADATA_RETRIES,
+                            delay: (params: DelayParameters<unknown>) => {
+                                return (
+                                    METADATA_BULK_FETCH_BASE_DELAY_MS *
+                                    METADATA_BULK_FETCH_BACKOFF_FACTOR ** params.currentTry
+                                );
+                            },
+                        },
+                    );
+                    return { status: "fulfilled", value: result };
+                } catch (error) {
+                    return { status: "rejected", reason: error };
+                }
+            },
+            { concurrency: MAX_BULK_FETCH_METADATA_CONCURRENCY },
         );
 
         const metadata: unknown[] = [];
@@ -430,14 +418,12 @@ export class Orchestrator {
                 }),
             ),
         );
-
         const tokenPrices: TokenPrice[] = [];
         for (const result of results) {
             if (result.status === "fulfilled" && result.value) {
                 tokenPrices.push(...result.value);
             }
         }
-
         return tokenPrices;
     }
 

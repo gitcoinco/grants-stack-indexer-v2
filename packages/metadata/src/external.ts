@@ -1,4 +1,8 @@
-export { IpfsProvider, CachingMetadataProvider } from "./internal.js";
+export {
+    PublicGatewayProvider,
+    CachingMetadataProvider,
+    MetadataProviderFactory,
+} from "./internal.js";
 
 export {
     EmptyGatewaysUrlsException,

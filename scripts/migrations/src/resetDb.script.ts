@@ -36,8 +36,8 @@ configDotenv();
  */
 
 const main = async (): Promise<void> => {
-    const { DATABASE_URL } = getDatabaseConfigFromEnv();
-    const { schema } = parseArguments();
+    const { DATABASE_URL, NODE_ENV } = getDatabaseConfigFromEnv();
+    const { schema, migrationsFolder } = parseArguments();
 
     const logger = Logger.getInstance();
 
@@ -45,6 +45,7 @@ const main = async (): Promise<void> => {
         {
             connectionString: DATABASE_URL,
             withSchema: schema,
+            isProduction: NODE_ENV === "production" || NODE_ENV === "staging",
         },
         logger,
     );
@@ -55,7 +56,8 @@ const main = async (): Promise<void> => {
         {
             db,
             schema,
-            migrationsFolder: getMigrationsFolder(),
+            migrationsFolder: getMigrationsFolder(migrationsFolder),
+            domain: migrationsFolder,
         },
         logger,
     );

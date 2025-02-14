@@ -16,6 +16,7 @@ export interface MigrationConfig<T> {
     db: Kysely<T>;
     schema: string;
     migrationsFolder: string;
+    domain: string;
 }
 
 /**
@@ -52,6 +53,8 @@ export async function migrateToLatest<T>(
             migrationFolder: config.migrationsFolder,
         }),
         migrationTableSchema: config.schema,
+        migrationTableName: `${config.domain}_migrations`,
+        migrationLockTableName: `${config.domain}_migrations_lock`,
     });
 
     const { error, results } = await migrator.migrateToLatest();
@@ -92,6 +95,8 @@ export async function resetDatabase<T>(
             path,
             migrationFolder: config.migrationsFolder,
         }),
+        migrationTableName: `${config.domain}_migrations`,
+        migrationLockTableName: `${config.domain}_migrations_lock`,
     });
 
     const { error, results } = await migrator.migrateTo(NO_MIGRATIONS);

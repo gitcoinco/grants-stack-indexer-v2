@@ -17,6 +17,24 @@ export type TokenPrice = {
     priceUsd: number;
 };
 
+export type TokensMap = {
+    [chainId: number]: {
+        [tokenAddress: Address]: Token;
+    };
+};
+
+export const extractAllPriceSourceCodes = (tokensMap: TokensMap): TokenCode[] => {
+    const priceSourceCodes = new Set<TokenCode>();
+
+    Object.values(tokensMap).forEach((chainTokens) => {
+        Object.values(chainTokens).forEach((token) => {
+            priceSourceCodes.add(token.priceSourceCode);
+        });
+    });
+
+    return Array.from(priceSourceCodes);
+};
+
 export const TOKENS: {
     [chainId: number]: {
         [tokenAddress: Address]: Token;
@@ -75,7 +93,7 @@ export const TOKENS: {
         },
         "0x93A5347036f69BC6f37Ed2b59CBcDDa927719217": {
             code: "GIST" as TokenCode,
-            priceSourceCode: "DAI" as TokenCode,
+            priceSourceCode: "GIST" as TokenCode,
             address: "0x93A5347036f69BC6f37Ed2b59CBcDDa927719217",
             decimals: 18,
             voteAmountCap: 10000000000000000000n,
@@ -363,10 +381,10 @@ export const TOKENS: {
             address: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
             decimals: 6,
         },
-        "0x912ce59144191c1204e64559fe8253a0e49e6548": {
+        "0x912CE59144191C1204E64559FE8253a0e49E6548": {
             code: "ARB" as TokenCode,
             priceSourceCode: "ARB" as TokenCode,
-            address: "0x912ce59144191c1204e64559fe8253a0e49e6548",
+            address: "0x912CE59144191C1204E64559FE8253a0e49E6548",
             decimals: 18,
         },
         "0x4f604735c1cf31399c6e711d5962b2b3e0225ad3": {
@@ -607,6 +625,8 @@ export const TOKENS: {
         },
     },
 } as const;
+
+export const TOKENS_SOURCE_CODES = extractAllPriceSourceCodes(TOKENS);
 
 export const getToken = (chainId: number, tokenAddress: Address): Token | undefined => {
     return TOKENS[chainId]?.[tokenAddress];

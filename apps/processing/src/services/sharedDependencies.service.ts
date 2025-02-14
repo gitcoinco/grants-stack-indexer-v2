@@ -1,6 +1,6 @@
 import { CoreDependencies } from "@grants-stack-indexer/data-flow";
 import { EnvioIndexerClient } from "@grants-stack-indexer/indexer-client";
-import { CachingMetadataProvider, IpfsProvider } from "@grants-stack-indexer/metadata";
+import { CachingMetadataProvider, MetadataProviderFactory } from "@grants-stack-indexer/metadata";
 import { CachingPricingProvider, PricingProviderFactory } from "@grants-stack-indexer/pricing";
 import {
     createKyselyDatabase,
@@ -64,6 +64,7 @@ export class SharedDependenciesService {
         const kyselyDatabase = createKyselyDatabase(
             {
                 connectionString: env.DATABASE_URL,
+                isProduction: env.NODE_ENV === "production" || env.NODE_ENV === "staging",
             },
             logger,
         );
@@ -101,7 +102,11 @@ export class SharedDependenciesService {
         );
 
         const metadataRepository = new KyselyMetadataCache(kyselyDatabase, env.DATABASE_SCHEMA);
-        const internalMetadataProvider = new IpfsProvider(env.IPFS_GATEWAYS_URL, logger);
+
+        const internalMetadataProvider = MetadataProviderFactory.create(env, {
+            logger,
+        });
+
         const dbCachedMetadataProvider = new CachingMetadataProvider(
             internalMetadataProvider,
             metadataRepository,

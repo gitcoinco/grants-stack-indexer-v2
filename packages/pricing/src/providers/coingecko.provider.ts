@@ -15,6 +15,8 @@ import {
     CoingeckoPriceChartData,
     CoingeckoTokenId,
     MIN_GRANULARITY_MS,
+    ninetyDaysMs,
+    oneDayMs,
     TokenPrice,
     UnknownPricingException,
     UnsupportedToken,
@@ -36,7 +38,7 @@ const TokenMapping: { [key: string]: CoingeckoTokenId | undefined } = {
     ETH: "ethereum" as CoingeckoTokenId,
     eBTC: "ebtc" as CoingeckoTokenId,
     USDGLO: "glo-dollar" as CoingeckoTokenId,
-    GIST: "dai" as CoingeckoTokenId,
+    // GIST: undefined,
     OP: "optimism" as CoingeckoTokenId,
     LYX: "lukso-token-2" as CoingeckoTokenId,
     WLYX: "wrapped-lyx-universalswaps" as CoingeckoTokenId,
@@ -44,7 +46,7 @@ const TokenMapping: { [key: string]: CoingeckoTokenId | undefined } = {
     MATIC: "polygon-ecosystem-token" as CoingeckoTokenId,
     DATA: "streamr" as CoingeckoTokenId,
     FTM: "fantom" as CoingeckoTokenId,
-    GcV: undefined,
+    // GcV: undefined,
     USDT: "tether" as CoingeckoTokenId,
     LUSD: "liquity-usd" as CoingeckoTokenId,
     MUTE: "mute" as CoingeckoTokenId,
@@ -55,7 +57,7 @@ const TokenMapping: { [key: string]: CoingeckoTokenId | undefined } = {
     CELO: "celo" as CoingeckoTokenId,
     CUSD: "celo-dollar" as CoingeckoTokenId,
     AVAX: "avalanche-2" as CoingeckoTokenId,
-    MTK: undefined,
+    // MTK: undefined,
     WSEI: "wrapped-sei" as CoingeckoTokenId,
 };
 
@@ -112,11 +114,9 @@ export class CoingeckoProvider implements IPricingProvider {
             return undefined;
         }
 
-        const path = `/coins/${tokenId}/market_chart/range?vs_currency=usd&from=${startTimestampMs}&to=${endTimestampMs}&precision=full`;
-
+        const path = `/coins/${tokenId}/market_chart/range?vs_currency=usd&from=${startTimestampMs / 1000}&to=${endTimestampMs / 1000}&precision=full`;
         try {
             const { data } = await this.axios.get<CoingeckoPriceChartData>(path);
-
             const closestEntry = data.prices.at(0);
             if (!closestEntry) {
                 return undefined;
@@ -146,7 +146,7 @@ export class CoingeckoProvider implements IPricingProvider {
     }
 
     /* @inheritdoc */
-    async getTokenPrices(tokenCode: TokenCode, timestamps: number[]): Promise<TokenPrice[]> {
+    async getTokenPrices(tokenCode: TokenCode, timestamps: TimestampMs[]): Promise<TokenPrice[]> {
         const tokenId = TokenMapping[tokenCode];
         if (!tokenId) {
             throw new UnsupportedToken(tokenCode, {
@@ -154,21 +154,49 @@ export class CoingeckoProvider implements IPricingProvider {
                 methodName: "getTokenPrices",
             });
         }
-
-        if (timestamps.length === 0) {
-            return [];
-        }
-
-        const effectiveMin = Math.min(...timestamps);
-        let effectiveMax = Math.max(...timestamps);
-
-        if (effectiveMax - effectiveMin < MIN_GRANULARITY_MS) {
-            effectiveMax = effectiveMin + MIN_GRANULARITY_MS;
-        }
-
-        const path = `/coins/${tokenId}/market_chart/range?vs_currency=usd&from=${effectiveMin}&to=${effectiveMax}&precision=full&interval=5m`;
-
+        let path = "";
         try {
+            if (timestamps.length === 0) {
+                return [];
+            }
+            const effectiveMin = Math.min(...(timestamps as number[]));
+            let effectiveMax = Math.max(...(timestamps as number[]));
+
+            // 1 hour granularity
+            const minGranularityMs = MIN_GRANULARITY_MS;
+
+            if (effectiveMax - effectiveMin < minGranularityMs) {
+                effectiveMax = effectiveMin + minGranularityMs;
+            }
+
+            // Log if the difference is greater than 90 days
+            if (effectiveMax - effectiveMin > ninetyDaysMs) {
+                const segments: Promise<TokenPrice[]>[] = [];
+                const segmentDuration = 88 * oneDayMs; // 88 days in milliseconds
+                let currentStart = effectiveMin;
+
+                while (currentStart < effectiveMax) {
+                    const currentEnd = Math.min(currentStart + segmentDuration, effectiveMax);
+
+                    path = `/coins/${tokenId}/market_chart/range?vs_currency=usd&from=${Math.floor(currentStart / 1000)}&to=${Math.floor(currentEnd / 1000)}&precision=full`;
+                    // Push the promise for the current segment
+                    segments.push(
+                        this.axios.get<CoingeckoPriceChartData>(path).then(({ data }) =>
+                            data.prices.map(([timestampMs, priceUsd]) => ({
+                                timestampMs,
+                                priceUsd,
+                            })),
+                        ),
+                    );
+
+                    currentStart = currentEnd; // Move to the next segment
+                }
+
+                // Wait for all segments to resolve and merge the results
+                const results = await Promise.all(segments);
+                return results.flat(); // Flatten the array of results
+            }
+            path = `/coins/${tokenId}/market_chart/range?vs_currency=usd&from=${effectiveMin / 1000}&to=${effectiveMax / 1000}&precision=full`;
             const { data } = await this.axios.get<CoingeckoPriceChartData>(path);
             return data.prices.map(([timestampMs, priceUsd]) => ({
                 timestampMs,

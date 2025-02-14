@@ -21,9 +21,9 @@ export class ExponentialBackoff implements RetryStrategy {
      */
     constructor(
         private readonly options: ExponentialBackoffOptions = {
-            baseDelay: 5000,
-            factor: 2,
-            maxAttempts: 3,
+            baseDelay: 200,
+            factor: 1.5,
+            maxAttempts: 10,
         },
     ) {}
 

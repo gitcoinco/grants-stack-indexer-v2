@@ -1,12 +1,13 @@
-import { ICache, PriceCacheKey } from "@grants-stack-indexer/repository";
+import { IPricingCache } from "@grants-stack-indexer/repository";
 import { ICacheable, ILogger, TimestampMs, TokenCode } from "@grants-stack-indexer/shared";
 
-import { IPricingProvider, TokenPrice } from "../internal.js";
-
-type CacheResult = {
-    timestampMs: TimestampMs;
-    price: TokenPrice | undefined;
-};
+import {
+    IPricingProvider,
+    MIN_GRANULARITY_MS,
+    NoClosePriceFound,
+    PROXIMITY_FACTOR,
+    TokenPrice,
+} from "../internal.js";
 
 /**
  * A pricing provider that caches token price lookups from the underlying provider.
@@ -17,7 +18,7 @@ type CacheResult = {
 export class CachingPricingProvider implements IPricingProvider, ICacheable {
     constructor(
         private readonly provider: IPricingProvider,
-        private readonly cache: ICache<PriceCacheKey, TokenPrice> & Partial<ICacheable>,
+        private readonly cache: Partial<ICacheable> & IPricingCache,
         private readonly logger: ILogger,
     ) {}
 
@@ -27,21 +28,26 @@ export class CachingPricingProvider implements IPricingProvider, ICacheable {
         startTimestampMs: TimestampMs,
         endTimestampMs?: TimestampMs,
     ): Promise<TokenPrice | undefined> {
-        let cachedPrice: TokenPrice | undefined = undefined;
+        let cachedPrices: TokenPrice[] = [];
+
         try {
-            cachedPrice = await this.cache.get({
-                tokenCode,
-                timestampMs: startTimestampMs,
-            });
+            cachedPrices = (
+                await this.cache.getPricesByTimeRange(
+                    tokenCode,
+                    ((startTimestampMs as number) -
+                        MIN_GRANULARITY_MS * PROXIMITY_FACTOR) as TimestampMs,
+                    startTimestampMs,
+                )
+            ).sort((a, b) => a.timestampMs - b.timestampMs);
         } catch (error) {
             this.logger.debug(
-                `Failed to get cached price for token ${tokenCode} at ${startTimestampMs}`,
+                `Failed to get cached prices for token ${tokenCode} at ${startTimestampMs}`,
                 { error },
             );
         }
 
-        if (cachedPrice) {
-            return cachedPrice;
+        if (cachedPrices.length > 0) {
+            return this.getClosestPrices([startTimestampMs], cachedPrices)[0];
         }
 
         const price = await this.provider.getTokenPrice(
@@ -89,145 +95,78 @@ export class CachingPricingProvider implements IPricingProvider, ICacheable {
      */
     async getTokenPrices(tokenCode: TokenCode, timestamps: TimestampMs[]): Promise<TokenPrice[]> {
         if (timestamps.length === 0) return [];
+        const sortedTimestamps = timestamps.sort((a, b) => a - b);
+        const fromTimestampMs = sortedTimestamps[0] as TimestampMs;
+        const toTimestampMs = sortedTimestamps[sortedTimestamps.length - 1] as TimestampMs;
+        const cachedPrices = (
+            await this.getCachedPrices(
+                tokenCode,
+                ((fromTimestampMs as number) - MIN_GRANULARITY_MS) as TimestampMs,
+                toTimestampMs,
+            )
+        ).sort((a, b) => a.timestampMs - b.timestampMs);
 
-        const cachedPrices = await this.getCachedPrices(tokenCode, timestamps);
-        const timestampsToFetch = this.getTimestampsToFetch(timestamps, cachedPrices);
-
-        if (timestampsToFetch.length === 0) {
-            return cachedPrices
-                .filter(
-                    (result): result is PromiseFulfilledResult<CacheResult> =>
-                        result.status === "fulfilled" && !!result.value.price,
-                )
-                .map((result) => result.value.price)
-                .filter((price): price is TokenPrice => !!price);
+        try {
+            const prices = this.getClosestPrices(sortedTimestamps, cachedPrices);
+            return prices;
+        } catch (error) {
+            if (error instanceof NoClosePriceFound) {
+                const fetchedPrices = await this.provider.getTokenPrices(
+                    tokenCode,
+                    sortedTimestamps,
+                );
+                for (const price of fetchedPrices) {
+                    this.cache
+                        .set(
+                            {
+                                tokenCode,
+                                timestampMs: price.timestampMs,
+                            },
+                            price,
+                        )
+                        .catch((error) => {
+                            this.logger.debug(
+                                `Failed to cache price for token ${tokenCode} at ${price.timestampMs}`,
+                                { error },
+                            );
+                        });
+                }
+                return this.getClosestPrices(sortedTimestamps, fetchedPrices).sort(
+                    (a, b) => a.timestampMs - b.timestampMs,
+                );
+            }
+            throw error;
         }
-
-        const fetchedPrices = await this.provider.getTokenPrices(tokenCode, timestampsToFetch);
-        const sortedFetchedPrices = [...fetchedPrices].sort(
-            (a, b) => a.timestampMs - b.timestampMs,
-        );
-
-        const closestPrices = this.getClosestPricesWithCache(
-            tokenCode,
-            timestampsToFetch,
-            sortedFetchedPrices,
-        );
-
-        const priceMap = this.buildPriceMap(cachedPrices, closestPrices);
-
-        return timestamps
-            .map((timestampMs) => priceMap.get(timestampMs))
-            .filter((price): price is TokenPrice => !!price);
     }
 
     /**
      * Fetches cached prices for the given token and timestamps.
      * @param tokenCode - The token code
      * @param timestamps - The timestamps
-     * @returns {PromiseSettledResult<CacheResult>[]} - The cached prices
+     * @returns {PromiseSettledResult<TokenPrice>[]} - The cached prices
      */
     private async getCachedPrices(
         tokenCode: TokenCode,
-        timestamps: TimestampMs[],
-    ): Promise<PromiseSettledResult<CacheResult>[]> {
-        return Promise.allSettled(
-            timestamps.map(async (timestampMs) => {
-                try {
-                    return {
-                        timestampMs,
-                        price: await this.cache.get({ tokenCode, timestampMs }),
-                    };
-                } catch (error) {
-                    this.logger.debug(
-                        `Failed to get cached price for token ${tokenCode} at ${timestampMs}`,
-                        { error },
-                    );
-                    return { timestampMs, price: undefined };
-                }
-            }),
-        );
+        fromTimestampMs: TimestampMs,
+        toTimestampMs: TimestampMs,
+    ): Promise<TokenPrice[]> {
+        return this.cache.getPricesByTimeRange(tokenCode, fromTimestampMs, toTimestampMs);
     }
 
-    /**
-     * Gets the timestamps that need to be fetched from the provider.
-     * @param timestamps - The timestamps
-     * @param cachedPrices - The cached prices PromiseSettledResult
-     * @returns The timestamps that need to be fetched
-     */
-    private getTimestampsToFetch(
-        timestamps: TimestampMs[],
-        cachedPrices: PromiseSettledResult<CacheResult>[],
-    ): TimestampMs[] {
-        return timestamps.filter((_, index) => {
-            const result = cachedPrices[index];
-            if (!result || result.status === "rejected") return true;
-            return !result.value.price;
-        });
-    }
-
-    /**
-     * Gets the closest price from the fetched prices. Updates the cache accordingly.
-     * @param tokenCode - The token code
-     * @param timestampsToFetch - The timestamps that need to be fetched
-     * @param sortedFetchedPrices - The sorted fetched prices
-     * @returns The closest prices
-     */
-    private getClosestPricesWithCache(
-        tokenCode: TokenCode,
+    private getClosestPrices(
         timestampsToFetch: TimestampMs[],
         sortedFetchedPrices: TokenPrice[],
     ): TokenPrice[] {
-        return timestampsToFetch
-            .map((timestampMs) => {
-                const closestPrice = this.findClosestPrice(sortedFetchedPrices, timestampMs);
-                if (!closestPrice) return null;
+        return timestampsToFetch.map((timestampMs) => {
+            const closestPrice = this.findClosestPrice(sortedFetchedPrices, timestampMs);
+            if (!closestPrice) throw new NoClosePriceFound();
 
-                const price = {
-                    timestampMs,
-                    priceUsd: closestPrice.priceUsd,
-                };
-
-                // Fire and forget cache operation
-                this.cache.set({ tokenCode, timestampMs }, price).catch((error) => {
-                    this.logger.debug(
-                        `Failed to cache price for token ${tokenCode} at ${timestampMs}`,
-                        {
-                            error,
-                        },
-                    );
-                });
-
-                return price;
-            })
-            .filter((price): price is TokenPrice => price !== null);
-    }
-
-    /**
-     * Builds a price map from cached and fetched prices.
-     * @param cachedPrices - The cached prices
-     * @param closestPrices - The fetched prices
-     * @returns The price map with all prices
-     */
-    private buildPriceMap(
-        cachedPrices: PromiseSettledResult<CacheResult>[],
-        closestPrices: TokenPrice[],
-    ): Map<number, TokenPrice> {
-        const priceMap = new Map<number, TokenPrice>();
-
-        // Add cached prices
-        cachedPrices.forEach((result) => {
-            if (result.status === "fulfilled" && result.value.price) {
-                priceMap.set(result.value.timestampMs, result.value.price);
-            }
+            const price = {
+                timestampMs,
+                priceUsd: closestPrice.priceUsd,
+            };
+            return price;
         });
-
-        // Add closest prices
-        closestPrices.forEach((price) => {
-            priceMap.set(price.timestampMs, price);
-        });
-
-        return priceMap;
     }
 
     /**
@@ -243,8 +182,15 @@ export class CachingPricingProvider implements IPricingProvider, ICacheable {
 
         // Handle edge cases
         if (targetTimestamp <= prices[0]!.timestampMs) return prices[0]!;
-        if (targetTimestamp >= prices[prices.length - 1]!.timestampMs)
+        if (targetTimestamp >= prices[prices.length - 1]!.timestampMs) {
+            if (
+                Math.abs(prices[prices.length - 1]!.timestampMs - targetTimestamp) >
+                MIN_GRANULARITY_MS * PROXIMITY_FACTOR
+            ) {
+                return null;
+            }
             return prices[prices.length - 1]!;
+        }
 
         // Binary search
         let left = 0;
@@ -254,6 +200,12 @@ export class CachingPricingProvider implements IPricingProvider, ICacheable {
             const mid = Math.floor((left + right) / 2);
 
             if (prices[mid]!.timestampMs === targetTimestamp) {
+                if (
+                    Math.abs(prices[mid]!.timestampMs - targetTimestamp) >
+                    MIN_GRANULARITY_MS * PROXIMITY_FACTOR
+                ) {
+                    return null;
+                }
                 return prices[mid]!;
             }
 
@@ -265,6 +217,12 @@ export class CachingPricingProvider implements IPricingProvider, ICacheable {
         }
 
         // Return the floor value (largest timestamp <= target)
+        if (
+            Math.abs(prices[left]!.timestampMs - targetTimestamp) >
+            MIN_GRANULARITY_MS * PROXIMITY_FACTOR
+        ) {
+            return null;
+        }
         return prices[left]!;
     }
 }

@@ -2,9 +2,8 @@ import { Kysely } from "kysely";
 
 import { TimestampMs, TokenCode, TokenPrice } from "@grants-stack-indexer/shared";
 
-import { Database, handlePostgresError, ICache } from "../../internal.js";
-
-export type PriceCacheKey = { tokenCode: TokenCode; timestampMs: TimestampMs };
+import { IPricingCache } from "../../index.js";
+import { Database, handlePostgresError } from "../../internal.js";
 
 /**
  * A cache for token prices using Kysely.
@@ -12,7 +11,7 @@ export type PriceCacheKey = { tokenCode: TokenCode; timestampMs: TimestampMs };
  * It uses the `priceCache` table in the database to store the prices.
  * Note: no eviction strategy is implemented since is not needed for the current use case.
  */
-export class KyselyPricingCache implements ICache<PriceCacheKey, TokenPrice> {
+export class KyselyPricingCache implements IPricingCache {
     constructor(
         private readonly db: Kysely<Database>,
         private readonly schema: string,
@@ -48,6 +47,38 @@ export class KyselyPricingCache implements ICache<PriceCacheKey, TokenPrice> {
                 methodName: "get",
                 additionalData: {
                     key,
+                },
+            });
+        }
+    }
+    /** @inheritdoc */
+    async getPricesByTimeRange(
+        tokenCode: TokenCode,
+        startTimestampMs: TimestampMs,
+        endTimestampMs: TimestampMs,
+    ): Promise<TokenPrice[]> {
+        try {
+            const result = await this.db
+                .withSchema(this.schema)
+                .selectFrom("priceCache")
+                .select(["timestampMs", "priceUsd"])
+                .where("tokenCode", "=", tokenCode)
+                .where("timestampMs", ">=", startTimestampMs)
+                .where("timestampMs", "<=", endTimestampMs)
+                .execute();
+
+            return result.map((row) => ({
+                timestampMs: row.timestampMs as TimestampMs,
+                priceUsd: row.priceUsd,
+            }));
+        } catch (error) {
+            throw handlePostgresError(error, {
+                className: KyselyPricingCache.name,
+                methodName: "getPricesByTimeRange",
+                additionalData: {
+                    tokenCode,
+                    startTimestampMs,
+                    endTimestampMs,
                 },
             });
         }

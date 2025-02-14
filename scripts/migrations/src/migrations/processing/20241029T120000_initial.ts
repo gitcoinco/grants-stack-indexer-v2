@@ -1,6 +1,6 @@
 import { Kysely, RawBuilder, sql } from "kysely";
 
-import { getSchemaName } from "../utils/index.js";
+import { getSchemaName } from "../../utils/index.js";
 
 /**
  * The up function is called when you update your database schema to the next version and down when you go back to previous version.
@@ -19,7 +19,7 @@ export async function up(db: Kysely<any>): Promise<void> {
     const ref = (name: string): RawBuilder<unknown> => sql.table(`${schema}.${name}`);
     await db.schema.createType("project_type").asEnum(["canonical", "linked"]).execute();
 
-    console.log("schema", schema);
+    // console.log("schema", schema);
 
     await db.schema
         .createTable("projects")

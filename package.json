@@ -7,10 +7,14 @@
     "author": "Wonderland",
     "type": "module",
     "scripts": {
-        "api:configure": "pnpm run --filter @grants-stack-indexer/hasura-config-scripts api:configure",
+        "api:configure": "pnpm run --filter @grants-stack-indexer/hasura-config api:configure",
+        "bootstrap:metadata": "pnpm run --filter @grants-stack-indexer/bootstrap bootstrap:metadata",
+        "bootstrap:pricing": "pnpm run --filter @grants-stack-indexer/bootstrap bootstrap:pricing",
         "build": "turbo run build",
         "check-types": "turbo run check-types",
         "clean": "turbo run clean",
+        "db:cache:migrate": "pnpm run --filter @grants-stack-indexer/migrations db:cache:migrate",
+        "db:cache:reset": "pnpm run --filter @grants-stack-indexer/migrations db:cache:reset",
         "db:migrate": "pnpm run --filter @grants-stack-indexer/migrations db:migrate",
         "db:reset": "pnpm run --filter @grants-stack-indexer/migrations db:reset",
         "dev": "turbo run dev",
@@ -49,7 +53,7 @@
         "typescript": "5.5.4",
         "vitest": "2.0.5"
     },
-    "packageManager": "pnpm@9.7.1+sha256.46f1bbc8f8020aa9869568c387198f1a813f21fb44c82f400e7d1dbde6c70b40",
+    "packageManager": "pnpm@9.12.0",
     "engines": {
         "node": "20"
     }

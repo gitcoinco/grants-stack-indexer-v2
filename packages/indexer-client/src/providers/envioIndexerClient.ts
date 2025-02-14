@@ -20,9 +20,11 @@ import {
 export class EnvioIndexerClient implements IIndexerClient {
     private client: GraphQLClient;
 
-    constructor(url: string, secret: string) {
+    constructor(url: string, secret?: string) {
         this.client = new GraphQLClient(url);
-        this.client.setHeader("x-hasura-admin-secret", secret);
+        if (secret) {
+            this.client.setHeader("x-hasura-admin-secret", secret);
+        }
     }
     /* @inheritdoc */
     public async getEventsAfterBlockNumberAndLogIndex({
@@ -264,5 +266,42 @@ export class EnvioIndexerClient implements IIndexerClient {
             className: EnvioIndexerClient.name,
             methodName,
         });
+    }
+    async getBlockRangeTimestampByChainId(chainId: ChainId): Promise<{ from: number; to: number }> {
+        try {
+            const response = (await this.client.request(
+                gql`
+                    query getBlockRangeByChainId($chainId: Int!) {
+                        from: raw_events(
+                            where: { chain_id: { _eq: $chainId } }
+                            order_by: { block_timestamp: asc }
+                            limit: 1
+                        ) {
+                            block_timestamp
+                        }
+                        to: raw_events(
+                            where: { chain_id: { _eq: $chainId } }
+                            order_by: { block_timestamp: desc }
+                            limit: 1
+                        ) {
+                            block_timestamp
+                        }
+                    }
+                `,
+                { chainId },
+            )) as { from: { block_timestamp: number }[]; to: { block_timestamp: number }[] };
+            if (!response.from[0] || !response.to[0]) {
+                throw new IndexerClientError("No block range found", {
+                    className: EnvioIndexerClient.name,
+                    methodName: "getBlockRangeTimestampByChainId",
+                });
+            }
+            return {
+                from: response.from[0].block_timestamp,
+                to: response.to[0].block_timestamp,
+            };
+        } catch (error) {
+            throw this.handleError(error, "getBlockRangeTimestampByChainId");
+        }
     }
 }

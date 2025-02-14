@@ -5,6 +5,7 @@ export {
     DatabaseEventRegistry,
     DatabaseStrategyRegistry,
     Orchestrator,
+    getMetadataCidsFromEvents,
 } from "./internal.js";
 
 export type { IEventsRegistry, IStrategyRegistry, IDataLoader } from "./internal.js";

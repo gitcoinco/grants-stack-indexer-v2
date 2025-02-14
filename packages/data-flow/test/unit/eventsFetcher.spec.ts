@@ -18,6 +18,7 @@ describe("EventsFetcher", () => {
         indexerClientMock = {
             getEventsAfterBlockNumberAndLogIndex: vi.fn(),
             getEvents: vi.fn(),
+            getBlockRangeTimestampByChainId: vi.fn(),
         };
 
         eventsFetcher = new EventsFetcher(indexerClientMock);

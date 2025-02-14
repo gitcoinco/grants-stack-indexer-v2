@@ -11,6 +11,12 @@ const zodSchema = z.object({
         .string()
         .default(DEFAULT_SCHEMA)
         .describe("Database schema name where migrations are applied"),
+    migrationsFolder: z
+        .string()
+        .refine((value) => ["processing", "external_services_cache"].includes(value), {
+            message: "Invalid migrations folder",
+        })
+        .default("processing"),
 });
 
 export const parseArguments = (): z.infer<typeof zodSchema> => {
@@ -22,6 +28,14 @@ export const parseArguments = (): z.infer<typeof zodSchema> => {
             description: "Database schema name where migrations are applied",
             default: DEFAULT_SCHEMA,
         })
+        .options("migrationsFolder", {
+            alias: "m",
+            type: "string",
+            choices: ["processing", "external_services_cache"],
+            demandOption: true,
+            description: "Migrations folder",
+            default: "processing",
+        })
         .check((argv) => {
             zodSchema.parse(argv);
             return true;
@@ -29,15 +43,19 @@ export const parseArguments = (): z.infer<typeof zodSchema> => {
         .parseSync();
 };
 
-export const getMigrationsFolder = (): string => {
-    const migrationsFolder = path.join(
-        path.dirname(new URL(import.meta.url).pathname),
-        `../migrations`,
-    );
+export const getMigrationsFolder = (type: string): string => {
+    try {
+        const migrationsFolder = path.join(
+            path.dirname(new URL(import.meta.url).pathname),
+            `../migrations/${type}`,
+        );
 
-    if (!existsSync(migrationsFolder)) {
+        if (!existsSync(migrationsFolder)) {
+            throw new Error(`Migrations folder not found`);
+        }
+
+        return migrationsFolder;
+    } catch (error) {
         throw new Error(`Migrations folder not found`);
     }
-
-    return migrationsFolder;
 };

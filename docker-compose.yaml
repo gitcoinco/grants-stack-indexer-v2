@@ -43,7 +43,7 @@ services:
             HASURA_GRAPHQL_ENABLED_LOG_TYPES: "startup, http-log, webhook-log, websocket-log, query-log"
             HASURA_GRAPHQL_ADMIN_INTERNAL_ERRORS: ${DATALAYER_HASURA_ADMIN_INTERNAL_ERRORS:-true}
             ## uncomment next line to run console offline (i.e load console assets from server instead of CDN)
-            HASURA_GRAPHQL_CONSOLE_ASSETS_DIR: null
+            # HASURA_GRAPHQL_CONSOLE_ASSETS_DIR: null
         depends_on:
             datalayer-postgres-db:
                 condition: service_healthy
@@ -55,19 +55,17 @@ services:
             start_period: 5s
         networks:
             - datalayer
-    datalayer-graphql-config:
+    processing:
         build:
             context: .
-            dockerfile: scripts/hasura/Dockerfile
+            dockerfile: Dockerfile
+            target: processing
+        restart: always
+        depends_on:
+            datalayer-postgres-db:
+                condition: service_healthy
         env_file:
             - .env
-        environment:
-            HASURA_ENDPOINT: http://datalayer-graphql-api:8080
-            HASURA_ADMIN_SECRET: ${DATALAYER_HASURA_ADMIN_SECRET:-secret}
-            HASURA_SCHEMA: public
-        depends_on:
-            datalayer-graphql-api:
-                condition: service_healthy
         networks:
             - datalayer
     indexer-postgres-db:
@@ -108,6 +106,8 @@ services:
             start_period: 5s
         networks:
             - indexer
+            - datalayer
+
     indexer:
         build:
             context: ./apps/indexer
@@ -122,7 +122,6 @@ services:
             - .env
         networks:
             - indexer
-            - datalayer
 volumes:
     db_data:
     ganache-data:

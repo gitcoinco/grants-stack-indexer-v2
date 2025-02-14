@@ -32,4 +32,11 @@ export interface IIndexerClient {
      * @returns Events fetched from the indexer service
      */
     getEvents(params: GetEventsFilters): Promise<AnyIndexerFetchedEvent[]>;
+
+    /**
+     * Get the block range timestamp by chain id from the indexer service
+     * @param chainId Id of the chain
+     * @returns Block range from the indexer service
+     */
+    getBlockRangeTimestampByChainId(chainId: ChainId): Promise<{ from: number; to: number }>;
 }
