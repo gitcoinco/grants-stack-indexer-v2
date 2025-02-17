@@ -49,15 +49,15 @@ export type RegistryEventParams<T extends RegistryEvent> = T extends "ProfileCre
 // =============================================================================
 export type ProfileCreatedParams = {
     profileId: Bytes32String;
-    nonce: bigint;
+    nonce: string; //uint256
     name: string;
-    metadata: [protocol: bigint, pointer: string];
+    metadata: [protocol: string /*uint256*/, pointer: string];
     owner: Address;
     anchor: Address;
 };
 export type ProfileMetadataUpdatedParams = {
     profileId: Bytes32String;
-    metadata: [protocol: bigint, pointer: string];
+    metadata: [protocol: string /*uint256*/, pointer: string];
 };
 export type ProfileNameUpdatedParams = {
     profileId: Bytes32String;
