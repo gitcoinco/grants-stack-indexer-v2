@@ -1,14 +1,18 @@
-import { zeroAddress } from "viem";
+import { parseUnits, zeroAddress } from "viem";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { IIndexerClient } from "@grants-stack-indexer/indexer-client";
-import { IEventRegistryRepository } from "@grants-stack-indexer/repository";
-import { ChainId, ProcessorEvent } from "@grants-stack-indexer/shared";
+import { IEventRegistryRepository, Round } from "@grants-stack-indexer/repository";
+import { Bytes32String, ChainId, ProcessorEvent } from "@grants-stack-indexer/shared";
 
 import { CoreDependencies, IStrategyRegistry } from "../../src/internal.js";
 import { Orchestrator } from "../../src/orchestrator.js";
 import { DEFAULT_STRATEGY_MAP } from "./helpers/dependencies.js";
-import { createTestAlloEvent, DEFAULT_TIMESTAMP_MS } from "./helpers/eventFactory.js";
+import {
+    createTestAlloEvent,
+    DEFAULT_FROM_ADDRESS,
+    DEFAULT_TIMESTAMP_MS,
+} from "./helpers/eventFactory.js";
 import { createTestOrchestrator } from "./helpers/setup.js";
 import { waitForProcessing } from "./helpers/testing.js";
 
@@ -77,7 +81,7 @@ describe("Orchestrator Integration - Allo Events Processing", () => {
         vi.spyOn(indexerClient, "getEventsAfterBlockNumberAndLogIndex")
             .mockResolvedValueOnce([poolCreatedEvent])
             .mockResolvedValue([]);
-        vi.spyOn(metadataProvider, "getMetadata").mockResolvedValue(undefined);
+        vi.spyOn(metadataProvider, "getMetadata").mockResolvedValue({});
         vi.spyOn(evmProvider, "readContract").mockResolvedValue(strategyTiming);
         vi.spyOn(roundRepository, "getPendingRoundRoles").mockImplementation((_, name) => {
             if (name === "admin") {
@@ -164,6 +168,390 @@ describe("Orchestrator Integration - Allo Events Processing", () => {
             {
                 ...poolCreatedEvent,
                 rawEvent: poolCreatedEvent,
+            },
+            {},
+        );
+    });
+
+    it("process PoolFunded event and apply IncrementRoundFundedAmount changeset", async () => {
+        // Create test event
+        const poolFundedEvent = createTestAlloEvent<"PoolFunded">({
+            contractName: "Allo",
+            eventName: "PoolFunded",
+            params: {
+                poolId: "13",
+                amount: "1000000000000000000", // 1 ETH
+                fee: "10000000000000000", // 0.01 ETH
+            },
+        });
+
+        const { indexerClient } = mocks;
+        const { roundRepository } = mocks.dependencies;
+        const { eventsRegistry } = mocks.registries;
+
+        const dataLoaderSpy = vi.spyOn(orchestrator["dataLoader"], "applyChanges");
+        const eventsFetcherSpy = vi.spyOn(
+            orchestrator["eventsFetcher"],
+            "fetchEventsByBlockNumberAndLogIndex",
+        );
+
+        // Mock the round data
+        vi.spyOn(roundRepository, "getRoundByIdOrThrow").mockResolvedValue({
+            id: "13",
+            chainId: chainId,
+            matchTokenAddress: zeroAddress, // ETH
+        } as unknown as Round);
+
+        // Mock indexer to return our event
+        vi.spyOn(indexerClient, "getEventsAfterBlockNumberAndLogIndex")
+            .mockResolvedValueOnce([poolFundedEvent])
+            .mockResolvedValue([]);
+
+        // Run orchestrator
+        const orchestratorPromise = orchestrator.run(abortController.signal);
+        await waitForProcessing(eventsFetcherSpy, dataLoaderSpy);
+
+        abortController.abort();
+        await orchestratorPromise;
+
+        expect(orchestrator["dataLoader"].applyChanges).toHaveBeenCalledWith(
+            expect.arrayContaining([expect.anything(), expect.anything()]),
+        );
+        expect(roundRepository.incrementRoundFunds).toHaveBeenCalledWith(
+            {
+                chainId: chainId,
+                roundId: "13",
+            },
+            BigInt("1000000000000000000"),
+            "1",
+            {},
+        );
+        expect(eventsRegistry.saveLastProcessedEvent).toHaveBeenCalledWith(
+            chainId,
+            {
+                ...poolFundedEvent,
+                rawEvent: poolFundedEvent,
+            },
+            {},
+        );
+    });
+
+    it("process PoolMetadataUpdated event and apply UpdateRound changeset", async () => {
+        const poolMetadataUpdatedEvent = createTestAlloEvent<"PoolMetadataUpdated">({
+            contractName: "Allo",
+            eventName: "PoolMetadataUpdated",
+            params: {
+                poolId: "13",
+                metadata: ["1", "bafkreiadxn64e7ibijctm67flwgbjpsy36avvfsrmzyvraffnwsg75yki4"],
+            },
+        }) as ProcessorEvent<"Allo", "PoolMetadataUpdated">;
+
+        const { indexerClient } = mocks;
+        const { roundRepository, metadataProvider } = mocks.dependencies;
+        const { eventsRegistry } = mocks.registries;
+
+        const dataLoaderSpy = vi.spyOn(orchestrator["dataLoader"], "applyChanges");
+        const eventsFetcherSpy = vi.spyOn(
+            orchestrator["eventsFetcher"],
+            "fetchEventsByBlockNumberAndLogIndex",
+        );
+
+        vi.spyOn(roundRepository, "getRoundByIdOrThrow").mockResolvedValue({
+            id: "13",
+            chainId: chainId,
+            matchTokenAddress: zeroAddress,
+            matchAmount: 0n,
+            matchAmountInUsd: "0",
+        } as unknown as Round);
+        const updatedMetadata = {
+            round: {
+                name: "QuantumStake: Revolutionizing Staking in the Crypto space | Ethereum",
+                roundType: "public",
+                quadraticFundingConfig: {
+                    matchingFundsAvailable: 209500,
+                },
+            },
+            application: {
+                version: "2.0.0",
+                lastUpdatedOn: 1716414832557,
+            },
+        };
+        vi.spyOn(metadataProvider, "getMetadata").mockResolvedValue(updatedMetadata);
+        vi.spyOn(indexerClient, "getEventsAfterBlockNumberAndLogIndex")
+            .mockResolvedValueOnce([poolMetadataUpdatedEvent])
+            .mockResolvedValue([]);
+
+        // Run orchestrator
+        const orchestratorPromise = orchestrator.run(abortController.signal);
+        await waitForProcessing(eventsFetcherSpy, dataLoaderSpy);
+        abortController.abort();
+        await orchestratorPromise;
+
+        expect(orchestrator["dataLoader"].applyChanges).toHaveBeenCalledWith(
+            expect.arrayContaining([expect.anything(), expect.anything()]),
+        );
+        expect(roundRepository.updateRound).toHaveBeenCalledWith(
+            {
+                chainId: chainId,
+                id: poolMetadataUpdatedEvent.params.poolId,
+            },
+            {
+                matchAmount: parseUnits("209500", 18),
+                matchAmountInUsd: "209500",
+                applicationMetadataCid:
+                    "bafkreiadxn64e7ibijctm67flwgbjpsy36avvfsrmzyvraffnwsg75yki4",
+                applicationMetadata: updatedMetadata.application,
+                roundMetadataCid: "bafkreiadxn64e7ibijctm67flwgbjpsy36avvfsrmzyvraffnwsg75yki4",
+                roundMetadata: updatedMetadata.round,
+            },
+            {},
+        );
+        expect(eventsRegistry.saveLastProcessedEvent).toHaveBeenCalledWith(
+            chainId,
+            {
+                ...poolMetadataUpdatedEvent,
+                rawEvent: poolMetadataUpdatedEvent,
+            },
+            {},
+        );
+    });
+
+    it("process RoleGranted event and apply InsertRoundRole changeset when role matches admin role", async () => {
+        const roleGrantedEvent = createTestAlloEvent<"RoleGranted">({
+            contractName: "Allo",
+            eventName: "RoleGranted",
+            params: {
+                role: "0x000000000000000000000000000000000000000000000000000000000000000d" as Bytes32String,
+                account: DEFAULT_FROM_ADDRESS,
+                sender: DEFAULT_FROM_ADDRESS,
+            },
+        }) as ProcessorEvent<"Allo", "RoleGranted">;
+
+        const { indexerClient } = mocks;
+        const { roundRepository } = mocks.dependencies;
+        const { eventsRegistry } = mocks.registries;
+
+        const dataLoaderSpy = vi.spyOn(orchestrator["dataLoader"], "applyChanges");
+        const eventsFetcherSpy = vi.spyOn(
+            orchestrator["eventsFetcher"],
+            "fetchEventsByBlockNumberAndLogIndex",
+        );
+
+        // Mock finding round by admin role
+        vi.spyOn(roundRepository, "getRoundByRole").mockImplementation(
+            async (chainId, roleType, role) => {
+                if (roleType === "admin" && role === roleGrantedEvent.params.role.toLowerCase()) {
+                    return {
+                        id: "13",
+                        chainId,
+                    } as unknown as Round;
+                }
+                return undefined;
+            },
+        );
+
+        vi.spyOn(indexerClient, "getEventsAfterBlockNumberAndLogIndex")
+            .mockResolvedValueOnce([roleGrantedEvent])
+            .mockResolvedValue([]);
+
+        const orchestratorPromise = orchestrator.run(abortController.signal);
+        await waitForProcessing(eventsFetcherSpy, dataLoaderSpy);
+
+        abortController.abort();
+        await orchestratorPromise;
+
+        expect(orchestrator["dataLoader"].applyChanges).toHaveBeenCalledWith(
+            expect.arrayContaining([expect.anything(), expect.anything()]),
+        );
+
+        expect(roundRepository.insertRoundRole).toHaveBeenCalledWith(
+            {
+                chainId: chainId,
+                roundId: "13",
+                role: "admin",
+                address: roleGrantedEvent.params.account,
+                createdAtBlock: BigInt(roleGrantedEvent.blockNumber),
+            },
+            {},
+        );
+
+        expect(eventsRegistry.saveLastProcessedEvent).toHaveBeenCalledWith(
+            chainId,
+            {
+                ...roleGrantedEvent,
+                rawEvent: roleGrantedEvent,
+            },
+            {},
+        );
+    });
+
+    it("process RoleGranted event and apply InsertPendingRoundRole changeset when role doesn't match any round", async () => {
+        const roleGrantedEvent = createTestAlloEvent<"RoleGranted">({
+            contractName: "Allo",
+            eventName: "RoleGranted",
+            params: {
+                role: "0x1234567890123456789012345678901234567890123456789012345678901234" as Bytes32String,
+                account: DEFAULT_FROM_ADDRESS,
+                sender: DEFAULT_FROM_ADDRESS,
+            },
+        }) as ProcessorEvent<"Allo", "RoleGranted">;
+
+        const { indexerClient } = mocks;
+        const { roundRepository } = mocks.dependencies;
+        const { eventsRegistry } = mocks.registries;
+
+        const dataLoaderSpy = vi.spyOn(orchestrator["dataLoader"], "applyChanges");
+        const eventsFetcherSpy = vi.spyOn(
+            orchestrator["eventsFetcher"],
+            "fetchEventsByBlockNumberAndLogIndex",
+        );
+
+        // Mock finding no round for the role
+        vi.spyOn(roundRepository, "getRoundByRole").mockResolvedValue(undefined);
+
+        vi.spyOn(indexerClient, "getEventsAfterBlockNumberAndLogIndex")
+            .mockResolvedValueOnce([roleGrantedEvent])
+            .mockResolvedValue([]);
+
+        const orchestratorPromise = orchestrator.run(abortController.signal);
+        await waitForProcessing(eventsFetcherSpy, dataLoaderSpy);
+
+        abortController.abort();
+        await orchestratorPromise;
+
+        expect(orchestrator["dataLoader"].applyChanges).toHaveBeenCalledWith(
+            expect.arrayContaining([expect.anything(), expect.anything()]),
+        );
+
+        expect(roundRepository.insertPendingRoundRole).toHaveBeenCalledWith(
+            {
+                chainId: chainId,
+                role: roleGrantedEvent.params.role.toLowerCase(),
+                address: roleGrantedEvent.params.account,
+                createdAtBlock: BigInt(roleGrantedEvent.blockNumber),
+            },
+            {},
+        );
+
+        expect(eventsRegistry.saveLastProcessedEvent).toHaveBeenCalledWith(
+            chainId,
+            {
+                ...roleGrantedEvent,
+                rawEvent: roleGrantedEvent,
+            },
+            {},
+        );
+    });
+
+    it("process RoleRevoked event and apply DeleteAllRoundRolesByRoleAndAddress changeset when role matches admin role", async () => {
+        const roleRevokedEvent = createTestAlloEvent<"RoleRevoked">({
+            contractName: "Allo",
+            eventName: "RoleRevoked",
+            params: {
+                role: "0x000000000000000000000000000000000000000000000000000000000000000d" as Bytes32String, // admin role
+                account: DEFAULT_FROM_ADDRESS,
+                sender: DEFAULT_FROM_ADDRESS,
+            },
+        }) as ProcessorEvent<"Allo", "RoleRevoked">;
+
+        const { indexerClient } = mocks;
+        const { roundRepository } = mocks.dependencies;
+        const { eventsRegistry } = mocks.registries;
+
+        const dataLoaderSpy = vi.spyOn(orchestrator["dataLoader"], "applyChanges");
+        const eventsFetcherSpy = vi.spyOn(
+            orchestrator["eventsFetcher"],
+            "fetchEventsByBlockNumberAndLogIndex",
+        );
+
+        // Mock finding round by admin role
+        vi.spyOn(roundRepository, "getRoundByRole").mockImplementation(
+            async (chainId, roleType, role) => {
+                if (roleType === "admin" && role === roleRevokedEvent.params.role.toLowerCase()) {
+                    return {
+                        id: "13",
+                        chainId,
+                    } as unknown as Round;
+                }
+                return undefined;
+            },
+        );
+
+        vi.spyOn(indexerClient, "getEventsAfterBlockNumberAndLogIndex")
+            .mockResolvedValueOnce([roleRevokedEvent])
+            .mockResolvedValue([]);
+
+        const orchestratorPromise = orchestrator.run(abortController.signal);
+        await waitForProcessing(eventsFetcherSpy, dataLoaderSpy);
+
+        abortController.abort();
+        await orchestratorPromise;
+
+        expect(orchestrator["dataLoader"].applyChanges).toHaveBeenCalledWith(
+            expect.arrayContaining([expect.anything(), expect.anything()]),
+        );
+
+        expect(roundRepository.deleteManyRoundRolesByRoleAndAddress).toHaveBeenCalledWith(
+            chainId,
+            "13",
+            "admin",
+            roleRevokedEvent.params.account,
+            {},
+        );
+
+        expect(eventsRegistry.saveLastProcessedEvent).toHaveBeenCalledWith(
+            chainId,
+            {
+                ...roleRevokedEvent,
+                rawEvent: roleRevokedEvent,
+            },
+            {},
+        );
+    });
+
+    it("process RoleRevoked event and only log warning when role doesn't match any round", async () => {
+        const roleRevokedEvent = createTestAlloEvent<"RoleRevoked">({
+            contractName: "Allo",
+            eventName: "RoleRevoked",
+            params: {
+                role: "0x1234567890123456789012345678901234567890123456789012345678901234" as Bytes32String, // unknown role
+                account: DEFAULT_FROM_ADDRESS,
+                sender: DEFAULT_FROM_ADDRESS,
+            },
+        }) as ProcessorEvent<"Allo", "RoleRevoked">;
+
+        const { indexerClient } = mocks;
+        const { roundRepository } = mocks.dependencies;
+        const { eventsRegistry } = mocks.registries;
+
+        const dataLoaderSpy = vi.spyOn(orchestrator["dataLoader"], "applyChanges");
+        const eventsFetcherSpy = vi.spyOn(
+            orchestrator["eventsFetcher"],
+            "fetchEventsByBlockNumberAndLogIndex",
+        );
+
+        // Mock finding no round for the role
+        vi.spyOn(roundRepository, "getRoundByRole").mockResolvedValue(undefined);
+
+        vi.spyOn(indexerClient, "getEventsAfterBlockNumberAndLogIndex")
+            .mockResolvedValueOnce([roleRevokedEvent])
+            .mockResolvedValue([]);
+
+        const orchestratorPromise = orchestrator.run(abortController.signal);
+        await waitForProcessing(eventsFetcherSpy, dataLoaderSpy);
+
+        abortController.abort();
+        await orchestratorPromise;
+
+        expect(orchestrator["dataLoader"].applyChanges).toHaveBeenCalledWith(
+            expect.arrayContaining([expect.anything()]),
+        );
+        expect(roundRepository.deleteManyPendingRoundRoles).not.toHaveBeenCalled();
+        expect(eventsRegistry.saveLastProcessedEvent).toHaveBeenCalledWith(
+            chainId,
+            {
+                ...roleRevokedEvent,
+                rawEvent: roleRevokedEvent,
             },
             {},
         );

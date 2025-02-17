@@ -102,6 +102,7 @@ export const createMockProviders = (): Pick<
 export const createMockIndexerClient = (): IIndexerClient => ({
     getEventsAfterBlockNumberAndLogIndex: vi.fn(),
     getEvents: vi.fn(),
+    getBlockRangeTimestampByChainId: vi.fn(),
 });
 
 export const DEFAULT_STRATEGY_MAP = new Map<ChainId, Map<Address, Hex>>([
