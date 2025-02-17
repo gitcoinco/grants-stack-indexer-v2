@@ -58,7 +58,7 @@ export const createTestAlloEvent = <E extends AlloEvent>({
 export const createTestRegistryEvent = <E extends RegistryEvent>({
     eventName,
     params,
-    blockNumber,
+    blockNumber = DEFAULT_BLOCK_NUMBER,
     blockTimestamp = DEFAULT_TIMESTAMP_MS,
     logIndex = 0,
     chainId = 1,
@@ -68,7 +68,7 @@ export const createTestRegistryEvent = <E extends RegistryEvent>({
 }: {
     eventName: E;
     params: EventParams<"Registry", E>;
-    blockNumber: number;
+    blockNumber?: number;
     blockTimestamp?: TimestampMs;
     logIndex?: number;
     chainId?: number;

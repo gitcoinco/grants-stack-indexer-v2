@@ -59,7 +59,7 @@ export class ProfileCreatedHandler implements IEventHandler<"Registry", "Profile
                         registryAddress: getAddress(this.event.srcAddress),
                         id: profileId,
                         name: this.event.params.name,
-                        nonce: this.event.params.nonce,
+                        nonce: BigInt(this.event.params.nonce),
                         anchorAddress: getAddress(this.event.params.anchor),
                         projectNumber: null,
                         metadataCid: metadataCid,
