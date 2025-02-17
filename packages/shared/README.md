@@ -39,3 +39,13 @@ You can import the package in your TypeScript files as follows:
 ```typescript
 import { ILogger, ProcessorEvent, stringify } from "@grants-stack-indexer/shared";
 ```
+
+### Configuring the Notifier
+
+#### Slack
+
+Visit [Slack API docs](https://api.slack.com/messaging/webhooks) to create a Slack app and configure a webhook URL. You can customize the bot's name, icons and permissions in the app settings.
+
+#### Null
+
+The null notifier is a no-op notifier that does nothing. It is useful when you want to disable notifications.
