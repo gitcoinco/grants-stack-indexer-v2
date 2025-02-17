@@ -2,7 +2,7 @@ import type {
     Address,
     AlloEvent,
     EventParams,
-    ProcessorEvent,
+    IndexerFetchedEvent,
     RegistryEvent,
     StrategyEvent,
     TimestampMs,
@@ -37,7 +37,7 @@ export const createTestAlloEvent = <E extends AlloEvent>({
     chainId?: number;
     from?: Address;
     txIndex?: number;
-}): ProcessorEvent<"Allo", AlloEvent> => {
+}): IndexerFetchedEvent<"Allo", E> => {
     return {
         contractName,
         eventName,
@@ -75,7 +75,7 @@ export const createTestRegistryEvent = <E extends RegistryEvent>({
     srcAddress?: Address;
     from?: Address;
     txIndex?: number;
-}): ProcessorEvent<"Registry", RegistryEvent> => {
+}): IndexerFetchedEvent<"Registry", E> => {
     return {
         contractName: "Registry",
         eventName,
@@ -97,7 +97,6 @@ export const createTestStrategyEvent = <E extends StrategyEvent>({
     eventName,
     params,
     blockNumber,
-    strategyId,
     blockTimestamp = DEFAULT_TIMESTAMP_MS,
     logIndex = 0,
     chainId = 1,
@@ -108,19 +107,17 @@ export const createTestStrategyEvent = <E extends StrategyEvent>({
     eventName: E;
     params: EventParams<"Strategy", E>;
     blockNumber: number;
-    strategyId: Address;
     blockTimestamp?: TimestampMs;
     logIndex?: number;
     chainId?: number;
     srcAddress?: Address;
     from?: Address;
     txIndex?: number;
-}): ProcessorEvent<"Strategy", E> => {
+}): IndexerFetchedEvent<"Strategy", E> => {
     return {
         contractName: "Strategy",
         eventName,
         params,
-        strategyId,
         blockNumber,
         blockTimestamp,
         logIndex,

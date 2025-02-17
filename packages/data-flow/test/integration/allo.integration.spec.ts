@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { IIndexerClient } from "@grants-stack-indexer/indexer-client";
 import { IEventRegistryRepository, Round } from "@grants-stack-indexer/repository";
-import { Bytes32String, ChainId, ProcessorEvent } from "@grants-stack-indexer/shared";
+import { Bytes32String, ChainId } from "@grants-stack-indexer/shared";
 
 import { CoreDependencies, IStrategyRegistry } from "../../src/internal.js";
 import { Orchestrator } from "../../src/orchestrator.js";
@@ -66,7 +66,7 @@ describe("Orchestrator Integration - Allo Events Processing", () => {
                 strategy: "0xF5F6Ca46a9DA3C1089d0F2F029cF14F3F714D483",
                 profileId: "0x384959f32e27e7813e609989ec4636755f933c4bb5b8943cbdb5cf3b8ee7b66b",
             },
-        }) as ProcessorEvent<"Allo", "PoolCreated">;
+        });
 
         const { indexerClient } = mocks;
         const { roundRepository, metadataProvider, evmProvider } = mocks.dependencies;
@@ -244,7 +244,7 @@ describe("Orchestrator Integration - Allo Events Processing", () => {
                 poolId: "13",
                 metadata: ["1", "bafkreiadxn64e7ibijctm67flwgbjpsy36avvfsrmzyvraffnwsg75yki4"],
             },
-        }) as ProcessorEvent<"Allo", "PoolMetadataUpdated">;
+        });
 
         const { indexerClient } = mocks;
         const { roundRepository, metadataProvider } = mocks.dependencies;
@@ -325,7 +325,7 @@ describe("Orchestrator Integration - Allo Events Processing", () => {
                 account: DEFAULT_FROM_ADDRESS,
                 sender: DEFAULT_FROM_ADDRESS,
             },
-        }) as ProcessorEvent<"Allo", "RoleGranted">;
+        });
 
         const { indexerClient } = mocks;
         const { roundRepository } = mocks.dependencies;
@@ -394,7 +394,7 @@ describe("Orchestrator Integration - Allo Events Processing", () => {
                 account: DEFAULT_FROM_ADDRESS,
                 sender: DEFAULT_FROM_ADDRESS,
             },
-        }) as ProcessorEvent<"Allo", "RoleGranted">;
+        });
 
         const { indexerClient } = mocks;
         const { roundRepository } = mocks.dependencies;
@@ -452,7 +452,7 @@ describe("Orchestrator Integration - Allo Events Processing", () => {
                 account: DEFAULT_FROM_ADDRESS,
                 sender: DEFAULT_FROM_ADDRESS,
             },
-        }) as ProcessorEvent<"Allo", "RoleRevoked">;
+        });
 
         const { indexerClient } = mocks;
         const { roundRepository } = mocks.dependencies;
@@ -518,7 +518,7 @@ describe("Orchestrator Integration - Allo Events Processing", () => {
                 account: DEFAULT_FROM_ADDRESS,
                 sender: DEFAULT_FROM_ADDRESS,
             },
-        }) as ProcessorEvent<"Allo", "RoleRevoked">;
+        });
 
         const { indexerClient } = mocks;
         const { roundRepository } = mocks.dependencies;

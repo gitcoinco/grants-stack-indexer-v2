@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { IIndexerClient } from "@grants-stack-indexer/indexer-client";
 import { IEventRegistryRepository, Project } from "@grants-stack-indexer/repository";
-import { Bytes32String, ChainId, ProcessorEvent } from "@grants-stack-indexer/shared";
+import { Bytes32String, ChainId } from "@grants-stack-indexer/shared";
 
 import { CoreDependencies, IStrategyRegistry } from "../../src/internal.js";
 import { Orchestrator } from "../../src/orchestrator.js";
@@ -58,7 +58,7 @@ describe("Orchestrator Integration - Registry Events Processing", () => {
                 owner: DEFAULT_FROM_ADDRESS,
                 anchor: mockAnchorAddress,
             },
-        }) as ProcessorEvent<"Registry", "ProfileCreated">;
+        });
 
         const { indexerClient } = mocks;
         const { projectRepository, metadataProvider } = mocks.dependencies;
@@ -161,7 +161,7 @@ describe("Orchestrator Integration - Registry Events Processing", () => {
                     "0x384959f32e27e7813e609989ec4636755f933c4bb5b8943cbdb5cf3b8ee7b66b" as Bytes32String,
                 metadata: ["1", "ipfs://updated-metadata"],
             },
-        }) as ProcessorEvent<"Registry", "ProfileMetadataUpdated">;
+        });
 
         const { indexerClient } = mocks;
         const { projectRepository, metadataProvider } = mocks.dependencies;
@@ -223,7 +223,7 @@ describe("Orchestrator Integration - Registry Events Processing", () => {
                     "0x384959f32e27e7813e609989ec4636755f933c4bb5b8943cbdb5cf3b8ee7b66b" as Bytes32String,
                 metadata: ["1", "ipfs://invalid-metadata"],
             },
-        }) as ProcessorEvent<"Registry", "ProfileMetadataUpdated">;
+        });
 
         const { indexerClient } = mocks;
         const { projectRepository, metadataProvider } = mocks.dependencies;
@@ -282,7 +282,7 @@ describe("Orchestrator Integration - Registry Events Processing", () => {
                 name: "Updated Project Name",
                 anchor: mockAnchorAddress,
             },
-        }) as ProcessorEvent<"Registry", "ProfileNameUpdated">;
+        });
 
         const { indexerClient } = mocks;
         const { projectRepository } = mocks.dependencies;
@@ -336,7 +336,7 @@ describe("Orchestrator Integration - Registry Events Processing", () => {
                     "0x384959f32e27e7813e609989ec4636755f933c4bb5b8943cbdb5cf3b8ee7b66b" as Bytes32String,
                 owner: DEFAULT_FROM_ADDRESS,
             },
-        }) as ProcessorEvent<"Registry", "ProfileOwnerUpdated">;
+        });
 
         const { indexerClient } = mocks;
         const { projectRepository } = mocks.dependencies;
@@ -397,7 +397,7 @@ describe("Orchestrator Integration - Registry Events Processing", () => {
                 account: DEFAULT_FROM_ADDRESS,
                 sender: DEFAULT_FROM_ADDRESS,
             },
-        }) as ProcessorEvent<"Registry", "RoleGranted">;
+        });
 
         const { indexerClient } = mocks;
         const { projectRepository } = mocks.dependencies;
@@ -458,7 +458,7 @@ describe("Orchestrator Integration - Registry Events Processing", () => {
                 account: DEFAULT_FROM_ADDRESS,
                 sender: DEFAULT_FROM_ADDRESS,
             },
-        }) as ProcessorEvent<"Registry", "RoleGranted">;
+        });
 
         const { indexerClient } = mocks;
         const { projectRepository } = mocks.dependencies;
@@ -511,7 +511,7 @@ describe("Orchestrator Integration - Registry Events Processing", () => {
                 account: DEFAULT_FROM_ADDRESS,
                 sender: DEFAULT_FROM_ADDRESS,
             },
-        }) as ProcessorEvent<"Registry", "RoleRevoked">;
+        });
 
         const { indexerClient } = mocks;
         const { projectRepository } = mocks.dependencies;
