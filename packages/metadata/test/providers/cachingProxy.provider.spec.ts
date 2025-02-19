@@ -28,7 +28,6 @@ describe("CachingMetadataProvider", () => {
         provider = new CachingMetadataProvider(mockProvider, mockCache, mockLogger, {
             maxTry: 1,
             delay: 1,
-            until: (result) => result !== undefined,
         });
     });
     afterEach(() => {
