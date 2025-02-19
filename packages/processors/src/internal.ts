@@ -15,3 +15,4 @@ export * from "./processors/registry/index.js";
 
 // Decoders
 export * from "./processors/strategy/helpers/decoder.js";
+export * from "./helpers/index.js";

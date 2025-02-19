@@ -1,13 +1,7 @@
 import { getAddress, zeroAddress } from "viem";
 
 import type { Changeset, NewRound, PendingRoundRole } from "@grants-stack-indexer/repository";
-import type {
-    Bytes32String,
-    ChainId,
-    ProcessorEvent,
-    TimestampMs,
-    Token,
-} from "@grants-stack-indexer/shared";
+import type { ChainId, ProcessorEvent, TimestampMs, Token } from "@grants-stack-indexer/shared";
 import { getToken, isAlloNativeToken } from "@grants-stack-indexer/shared";
 
 import type { IEventHandler, ProcessorDependencies, StrategyTimings } from "../../../internal.js";
@@ -162,11 +156,8 @@ export class PoolCreatedHandler implements IEventHandler<"Allo", "PoolCreated"> 
         const allPendingRoles: PendingRoundRole[] = [];
         const { adminRole, managerRole } = getRoundRoles(BigInt(roundId));
 
-        for (const roleName of [adminRole, managerRole] as const) {
-            const pendingRoles = await roundRepository.getPendingRoundRoles(
-                chainId,
-                roleName as Bytes32String,
-            );
+        for (const roleHash of [adminRole, managerRole] as const) {
+            const pendingRoles = await roundRepository.getPendingRoundRoles(chainId, roleHash);
             for (const pr of pendingRoles) {
                 changes.push({
                     type: "InsertRoundRole",
@@ -175,7 +166,7 @@ export class PoolCreatedHandler implements IEventHandler<"Allo", "PoolCreated"> 
                             chainId,
                             roundId,
                             address: pr.address,
-                            role: roleName === adminRole ? "admin" : "manager",
+                            role: roleHash === adminRole ? "admin" : "manager",
                             createdAtBlock: pr.createdAtBlock,
                         },
                     },
