@@ -26,7 +26,7 @@ export class CachingMetadataProvider implements IMetadataProvider, ICacheable {
 
     /** @inheritdoc */
     async getMetadata<T>(ipfsCid: string, validateContent?: z.ZodSchema<T>): Promise<T | null> {
-        let cachedMetadata: T | null = null;
+        let cachedMetadata: T | null | undefined = undefined;
         try {
             cachedMetadata = (await this.cache.get(ipfsCid)) as T | null;
         } catch (error) {
