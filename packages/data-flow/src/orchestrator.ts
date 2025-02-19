@@ -37,12 +37,7 @@ import {
 } from "@grants-stack-indexer/shared";
 
 import type { IEventsFetcher, IStrategyRegistry } from "./interfaces/index.js";
-import {
-    MAX_BULK_FETCH_METADATA_CONCURRENCY,
-    MAX_BULK_FETCH_METADATA_RETRIES,
-    METADATA_BULK_FETCH_BACKOFF_FACTOR,
-    METADATA_BULK_FETCH_BASE_DELAY_MS,
-} from "./constants.js";
+import { MAX_BULK_FETCH_METADATA_CONCURRENCY } from "./constants.js";
 import { EventsFetcher } from "./eventsFetcher.js";
 import { EventsProcessor } from "./eventsProcessor.js";
 import { InvalidEvent } from "./exceptions/index.js";
