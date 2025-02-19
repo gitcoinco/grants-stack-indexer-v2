@@ -16,12 +16,12 @@ export class CachingMetadataProvider implements IMetadataProvider, ICacheable {
     constructor(
         private readonly provider: IMetadataProvider,
         private readonly cache: ICache<string, unknown> & Partial<ICacheable>,
+        private readonly logger: ILogger,
         private readonly retryOptions: RetryOptions = {
             maxTry: 10,
             delay: 1000,
             until: (result) => result !== undefined,
         },
-        private readonly logger: ILogger,
     ) {}
 
     /** @inheritdoc */
