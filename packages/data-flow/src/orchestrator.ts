@@ -22,6 +22,7 @@ import {
     ContractName,
     Hex,
     ILogger,
+    INotifier,
     isAlloEvent,
     isStrategyEvent,
     ProcessorEvent,
@@ -77,8 +78,6 @@ type TokenWithTimestamps = {
  * - Retry handling with exponential backoff for transient failures
  * - Comprehensive error handling and logging for various failure scenarios
  * - Registry tracking of supported/unsupported strategies and events
- *
- * TODO: Enhance logging and observability
  */
 export class Orchestrator {
     private readonly eventsQueue: IQueue<ProcessorEvent<ContractName, AnyEvent>>;
@@ -111,6 +110,7 @@ export class Orchestrator {
         private fetchDelayInMs: number = 10000,
         private retryStrategy: RetryStrategy,
         private logger: ILogger,
+        private notifier: INotifier,
         private environment: "development" | "staging" | "production" = "development",
     ) {
         this.eventsFetcher = new EventsFetcher(this.indexerClient);
@@ -197,7 +197,6 @@ export class Orchestrator {
                         rawEvent: event,
                     });
                 }
-                // TODO: notify
                 if (
                     error instanceof UnsupportedStrategy ||
                     error instanceof InvalidEvent ||
@@ -219,6 +218,11 @@ export class Orchestrator {
                             className: Orchestrator.name,
                             chainId: this.chainId,
                         });
+                        void this.notifier.send(error.message, {
+                            chainId: this.chainId,
+                            event: event!,
+                            stack: error.getFullStack(),
+                        });
                     } else if (error instanceof Error || isNativeError(error)) {
                         const shouldIgnoreError = this.shouldIgnoreTimestampsUpdatedError(
                             error,
@@ -230,6 +234,11 @@ export class Orchestrator {
                                 className: Orchestrator.name,
                                 chainId: this.chainId,
                             });
+                            void this.notifier.send(error.message, {
+                                chainId: this.chainId,
+                                event: event!,
+                                stack: error.stack,
+                            });
                         }
                     } else {
                         this.logger.error(
@@ -237,6 +246,13 @@ export class Orchestrator {
                             {
                                 className: Orchestrator.name,
                                 chainId: this.chainId,
+                            },
+                        );
+                        void this.notifier.send(
+                            `Error processing event: ${stringify(event)} ${error}`,
+                            {
+                                chainId: this.chainId,
+                                event: event!,
                             },
                         );
                     }
