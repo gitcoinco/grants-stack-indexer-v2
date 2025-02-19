@@ -1,7 +1,5 @@
 import { isNativeError } from "util/types";
 import pMap from "p-map";
-import { retryAsyncUntilDefined } from "ts-retry";
-import { DelayParameters } from "ts-retry/lib/cjs/retry/options.js";
 
 import { IIndexerClient } from "@grants-stack-indexer/indexer-client";
 import { TokenPrice } from "@grants-stack-indexer/pricing";
@@ -355,18 +353,8 @@ export class Orchestrator {
             metadataIds,
             async (id) => {
                 try {
-                    const result = await retryAsyncUntilDefined(
-                        () => this.dependencies.metadataProvider.getMetadata<unknown>(id),
-                        {
-                            maxTry: MAX_BULK_FETCH_METADATA_RETRIES,
-                            delay: (params: DelayParameters<unknown>) => {
-                                return (
-                                    METADATA_BULK_FETCH_BASE_DELAY_MS *
-                                    METADATA_BULK_FETCH_BACKOFF_FACTOR ** params.currentTry
-                                );
-                            },
-                        },
-                    );
+                    const result =
+                        await this.dependencies.metadataProvider.getMetadata<unknown>(id);
                     return { status: "fulfilled", value: result };
                 } catch (error) {
                     return { status: "rejected", reason: error };

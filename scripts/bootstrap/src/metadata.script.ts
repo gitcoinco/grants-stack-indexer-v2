@@ -1,6 +1,5 @@
 import { configDotenv } from "dotenv";
 import { pMapIterable } from "p-map";
-import { retryAsyncUntilDefined, RetryOptions } from "ts-retry";
 
 import { getMetadataCidsFromEvents } from "@grants-stack-indexer/data-flow";
 import { EnvioIndexerClient } from "@grants-stack-indexer/indexer-client";
@@ -121,40 +120,33 @@ const main = async (): Promise<void> => {
         console.log(checkpointMap);
     }
 
-    const retryOptions: RetryOptions = {
-        maxTry: 10,
-        delay: 1000,
-    };
     console.log(cids.length, " where fetched");
     // Fetch metadata for each CID with concurrency limit
     let counter = 0;
-    let errorCount = 0;
+    let nullCounter = 0;
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     for await (const metadata of pMapIterable(
         Array.from(cids),
         async (cid) => {
             try {
-                const metadata = await retryAsyncUntilDefined(
-                    () => publicGatewayProvider.getMetadata(cid),
-                    retryOptions,
-                );
+                const metadata = await publicGatewayProvider.getMetadata(cid);
+                if (metadata === null) {
+                    nullCounter++;
+                } else {
+                    counter++;
+                }
                 return { status: "fullfilled", value: metadata };
             } catch (error) {
+                console.log(error);
                 return { status: "rejected", error };
             }
         },
         {
-            concurrency: 1000,
+            concurrency: 100,
         },
     )) {
-        if (metadata.status === "fullfilled") {
-            counter++;
-        }
-        if (metadata.status === "rejected") {
-            errorCount++;
-        }
-        process.stdout.write(
-            `${counter} / ${cids.length} CID's successfully fetched, errors: ${errorCount}\r`,
+        console.log(
+            `${counter} / ${cids.length} CID's successfully fetched, errors: ${nullCounter}\r`,
         );
     }
     process.exit(0);
