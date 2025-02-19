@@ -47,9 +47,9 @@ describe("ProfileCreatedHandler", () => {
             blockNumber: 123,
             params: {
                 profileId: "0x1231231234" as Bytes32String,
-                metadata: [1n, "cid-metadata"],
+                metadata: ["1", "cid-metadata"],
                 name: "Test Project",
-                nonce: 1n,
+                nonce: "1",
                 anchor: mockedAddress,
                 owner: mockedAddress,
             },

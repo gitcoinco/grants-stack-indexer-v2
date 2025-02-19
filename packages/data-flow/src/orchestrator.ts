@@ -1,7 +1,5 @@
 import { isNativeError } from "util/types";
 import pMap from "p-map";
-import { retryAsyncUntilDefined } from "ts-retry";
-import { DelayParameters } from "ts-retry/lib/cjs/retry/options.js";
 
 import { IIndexerClient } from "@grants-stack-indexer/indexer-client";
 import { TokenPrice } from "@grants-stack-indexer/pricing";
@@ -24,6 +22,7 @@ import {
     ContractName,
     Hex,
     ILogger,
+    INotifier,
     isAlloEvent,
     isStrategyEvent,
     ProcessorEvent,
@@ -38,12 +37,7 @@ import {
 } from "@grants-stack-indexer/shared";
 
 import type { IEventsFetcher, IStrategyRegistry } from "./interfaces/index.js";
-import {
-    MAX_BULK_FETCH_METADATA_CONCURRENCY,
-    MAX_BULK_FETCH_METADATA_RETRIES,
-    METADATA_BULK_FETCH_BACKOFF_FACTOR,
-    METADATA_BULK_FETCH_BASE_DELAY_MS,
-} from "./constants.js";
+import { MAX_BULK_FETCH_METADATA_CONCURRENCY } from "./constants.js";
 import { EventsFetcher } from "./eventsFetcher.js";
 import { EventsProcessor } from "./eventsProcessor.js";
 import { InvalidEvent } from "./exceptions/index.js";
@@ -79,8 +73,6 @@ type TokenWithTimestamps = {
  * - Retry handling with exponential backoff for transient failures
  * - Comprehensive error handling and logging for various failure scenarios
  * - Registry tracking of supported/unsupported strategies and events
- *
- * TODO: Enhance logging and observability
  */
 export class Orchestrator {
     private readonly eventsQueue: IQueue<ProcessorEvent<ContractName, AnyEvent>>;
@@ -113,6 +105,7 @@ export class Orchestrator {
         private fetchDelayInMs: number = 10000,
         private retryStrategy: RetryStrategy,
         private logger: ILogger,
+        private notifier: INotifier,
         private environment: "development" | "staging" | "production" = "development",
     ) {
         this.eventsFetcher = new EventsFetcher(this.indexerClient);
@@ -199,7 +192,6 @@ export class Orchestrator {
                         rawEvent: event,
                     });
                 }
-                // TODO: notify
                 if (
                     error instanceof UnsupportedStrategy ||
                     error instanceof InvalidEvent ||
@@ -221,6 +213,11 @@ export class Orchestrator {
                             className: Orchestrator.name,
                             chainId: this.chainId,
                         });
+                        void this.notifier.send(error.message, {
+                            chainId: this.chainId,
+                            event: event!,
+                            stack: error.getFullStack(),
+                        });
                     } else if (error instanceof Error || isNativeError(error)) {
                         const shouldIgnoreError = this.shouldIgnoreTimestampsUpdatedError(
                             error,
@@ -232,6 +229,11 @@ export class Orchestrator {
                                 className: Orchestrator.name,
                                 chainId: this.chainId,
                             });
+                            void this.notifier.send(error.message, {
+                                chainId: this.chainId,
+                                event: event!,
+                                stack: error.stack,
+                            });
                         }
                     } else {
                         this.logger.error(
@@ -239,6 +241,13 @@ export class Orchestrator {
                             {
                                 className: Orchestrator.name,
                                 chainId: this.chainId,
+                            },
+                        );
+                        void this.notifier.send(
+                            `Error processing event: ${stringify(event)} ${error}`,
+                            {
+                                chainId: this.chainId,
+                                event: event!,
                             },
                         );
                     }
@@ -355,18 +364,8 @@ export class Orchestrator {
             metadataIds,
             async (id) => {
                 try {
-                    const result = await retryAsyncUntilDefined(
-                        () => this.dependencies.metadataProvider.getMetadata<unknown>(id),
-                        {
-                            maxTry: MAX_BULK_FETCH_METADATA_RETRIES,
-                            delay: (params: DelayParameters<unknown>) => {
-                                return (
-                                    METADATA_BULK_FETCH_BASE_DELAY_MS *
-                                    METADATA_BULK_FETCH_BACKOFF_FACTOR ** params.currentTry
-                                );
-                            },
-                        },
-                    );
+                    const result =
+                        await this.dependencies.metadataProvider.getMetadata<unknown>(id);
                     return { status: "fulfilled", value: result };
                 } catch (error) {
                     return { status: "rejected", reason: error };
