@@ -1,0 +1,28 @@
+{
+    "name": "@grants-stack-indexer/e2e-tests",
+    "version": "0.0.1",
+    "description": "E2E tests for Grants Stack Indexer",
+    "type": "module",
+    "scripts": {
+        "build": "tsc -p tsconfig.build.json",
+        "clean": "rm -rf dist",
+        "test:e2e": "vitest run",
+        "test:e2e:debug": "vitest run --reporter verbose",
+        "test:e2e:watch": "vitest watch"
+    },
+    "dependencies": {
+        "@grants-stack-indexer/indexer-client": "workspace:*",
+        "@grants-stack-indexer/shared": "workspace:*",
+        "axios": "1.7.7",
+        "express": "4.21.2",
+        "graphql": "16.10.0",
+        "graphql-request": "7.1.0",
+        "pg": "8.13.0"
+    },
+    "devDependencies": {
+        "@testcontainers/postgresql": "10.18.0",
+        "@types/express": "5.0.0",
+        "@types/pg": "8.11.10",
+        "testcontainers": "10.18.0"
+    }
+}
