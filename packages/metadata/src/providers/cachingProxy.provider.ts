@@ -46,15 +46,16 @@ export class CachingMetadataProvider implements IMetadataProvider, ICacheable {
             return null;
         });
 
+        const result = metadata ?? null;
         try {
-            await this.cache.set(ipfsCid, metadata ?? null);
+            await this.cache.set(ipfsCid, result);
         } catch (error) {
             this.logger.debug(`Failed to cache metadata for IPFS CID ${ipfsCid}`, {
                 error,
             });
         }
 
-        return metadata ?? null;
+        return result;
     }
 
     /** @inheritdoc */
