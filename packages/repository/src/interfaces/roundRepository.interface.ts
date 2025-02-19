@@ -1,4 +1,4 @@
-import { Address, ChainId } from "@grants-stack-indexer/shared";
+import { Address, Bytes32String, ChainId } from "@grants-stack-indexer/shared";
 
 import {
     NewPendingRoundRole,
@@ -92,7 +92,7 @@ export interface IRoundReadRepository {
      * @param role The specific role to fetch pending roles for.
      * @returns A promise that resolves to an array of PendingRoundRole objects.
      */
-    getPendingRoundRoles(chainId: ChainId, role: RoundRoleNames): Promise<PendingRoundRole[]>;
+    getPendingRoundRoles(chainId: ChainId, role: Bytes32String): Promise<PendingRoundRole[]>;
 }
 
 export interface IRoundRepository<
