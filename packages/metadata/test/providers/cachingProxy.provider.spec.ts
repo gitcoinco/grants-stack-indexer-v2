@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 
 import { ICache } from "@grants-stack-indexer/repository";
@@ -24,8 +24,13 @@ describe("CachingMetadataProvider", () => {
     let provider: CachingMetadataProvider;
 
     beforeEach(() => {
+        provider = new CachingMetadataProvider(mockProvider, mockCache, mockLogger, {
+            maxTry: 1,
+            delay: 1,
+        });
+    });
+    afterEach(() => {
         vi.clearAllMocks();
-        provider = new CachingMetadataProvider(mockProvider, mockCache, mockLogger);
     });
 
     describe("getMetadata", () => {
@@ -60,7 +65,6 @@ describe("CachingMetadataProvider", () => {
             vi.spyOn(mockProvider, "getMetadata").mockResolvedValue(testData);
 
             const result = await provider.getMetadata(testCid, testSchema);
-
             expect(result).toEqual(testData);
             expect(mockLogger.debug).toHaveBeenCalledWith(
                 `Failed to get cached metadata for IPFS CID ${testCid}`,
@@ -89,8 +93,8 @@ describe("CachingMetadataProvider", () => {
 
             const result = await provider.getMetadata(testCid, testSchema);
 
-            expect(result).toBeUndefined();
-            expect(mockCache.set).not.toHaveBeenCalled();
+            expect(result).toBeNull();
+            expect(mockCache.set).toHaveBeenCalled();
         });
     });
 });
