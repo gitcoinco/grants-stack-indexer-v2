@@ -1,0 +1,196 @@
+language: en-US # Set the language for reviews using ISO language code
+tone_instructions: "" # Custom instructions for review tone (max 250 chars)
+early_access: false # Disable early-access features
+enable_free_tier: false # Disable free tier features for users not on a paid plan
+reviews:
+    profile: chill # Set review profile - 'chill' yields less nitpicky feedback than 'assertive'
+    request_changes_workflow: false # Don't auto-approve when comments are resolved
+    high_level_summary: true # Generate high level PR/MR summary in description
+    high_level_summary_placeholder: "@coderabbitai summary" # Placeholder for high level summary
+    high_level_summary_in_walkthrough: false # Don't include summary in walkthrough comment
+    auto_title_placeholder: "@coderabbitai" # Keyword in PR/MR title for auto-generation
+    auto_title_instructions: use conventional commit syntax for generating the title # Instructions for auto-title
+    review_status: false # Don't post review details on each review
+    commit_status: true # Set commit status during review progress
+    fail_commit_status: false # Don't set failure status when review fails
+    collapse_walkthrough: true # Generate walkthrough in collapsible section
+    changed_files_summary: false # Don't generate changed files summary
+    sequence_diagrams: false # Don't generate sequence diagrams
+    assess_linked_issues: false # Don't assess linked issues
+    related_issues: false # Don't include related issues
+    related_prs: false # Don't include related PRs
+    suggested_labels: false # Don't suggest labels
+    auto_apply_labels: false # Don't auto-apply suggested labels
+    suggested_reviewers: false # Don't suggest reviewers
+    poem: false # Don't generate poems in walkthrough
+    labeling_instructions: [] # No custom labeling instructions
+    path_filters: # Glob patterns for files to include/exclude
+        - "!dist/**, !node_modules/**" # Exclude dist and node_modules directories
+    path_instructions:
+        - path: "**/*.ts"
+          instructions: |2-
+          Review TypeScript files for adherence to the following guidelines:
+                - Avoid over-abstraction; prioritize composition over inheritance.
+                - Use dependency injection and follow SOLID principles.
+                - Avoid `any`; use `unknown` when necessary.
+                - Use runtime type-checking for environment variables (e.g., Zod).
+                - Prevent circular dependencies with the internal module pattern.
+                - Libraries should have an `external.ts` file explicitly listing public exports.
+                - Use `bigint` as-is; cast to `Number` only when exposing values via APIs.
+                - Document all code with JSDoc.
+                - Encourage static async factory functions for constructors.
+        - Avoid overly nitpicky feedback beyond these best practices.
+        - path: "**/*.tsx"
+          instructions: |2-
+          Review `.tsx` files with these front-end best practices:
+                - Avoid complex logic in the render section; abstract it into functions.
+                - Maintain import order: React imports first, then libraries, then internal files.
+                - Prefer logical AND (`&&`) over ternary conditionals for clarity.
+                - Avoid inline styles; use external stylesheets or CSS-in-JS solutions.
+                - Incorporate appropriate break lines for better readability.
+                - Optimize images to be under 250kB for performance.
+                - Follow React and team-specific standards for component structure and naming.
+                - Be concise and avoid overly nitpicky feedback outside of these best practices.
+        - path: "**/services/**/*.ts"
+          instructions: |-
+              Review service files with the following considerations:
+                      - A Service encapsulates a broader business workflow and might orchestrate various components or interact with multiple data sources or APIs.
+                      - Ensure proper composability: Services should use Providers for data/resource access and apply business/orchestration logic.
+                      - Validate naming conventions for aggregating services (e.g., `AggregatorService` or domain-specific names like `MetricsService`).
+        - path: scripts/**/*.ts
+          instructions: |-
+              Ensure scripts:
+                      - Use `process.cwd()` for root references.
+                      - Follow folder conventions (`infra/` for infra scripts, `utilities/` for utilities).
+                      - Are organized in `package.json` with `script:infra:{name}` or `script:util:{name}`.
+               - Be concise and avoid overly nitpicky feedback outside of these best practices.
+        - path: "**/*.test.ts"
+          instructions: |-
+              Review the unit test files with the following guidelines:
+                      - Avoid using the word "should" in test descriptions.
+                      - Ensure descriptive test names convey the intent of each test.
+                      - Validate adherence to the Mocha/Chai/Jest/Vitest/Cypress test library best practices.
+               - Be concise and avoid overly nitpicky feedback outside of these best practices.
+        - path: "**/*.spec.ts"
+          instructions: |-
+              Review the unit test files with the following guidelines:
+                      - Avoid using the word "should" in test descriptions.
+                      - Ensure descriptive test names convey the intent of each test.
+                      - Validate adherence to the Mocha/Chai/Jest test library best practices.
+               - Be concise and avoid overly nitpicky feedback outside of these best practices.
+        - path: "**/*.js"
+          instructions: |2-
+                Review JavaScript files for:
+                - Compliance with the Google JavaScript Style Guide.
+                - Dependency management without caret versions.
+         - Be concise and avoid overly nitpicky feedback outside of these best practices.
+        - path: "**/errors/**/*.ts"
+          instructions: |2-
+         Ensure custom error classes:
+                - Have declarative, descriptive names.
+                - Avoid suffixes like `Exception` or `Error` (e.g., use `EmptyArray`).
+         - Be concise and avoid overly nitpicky feedback outside of these best practices.
+        - path: "**/providers/**/*.ts"
+          instructions: >-
+              Review provider files for the following:
+
+              - Providers should supply narrowly scoped data/resources.
+
+              - Ensure classes interacting with metadata sources (e.g., GitHub, JSON
+              files, IPFS) implement the `IMetadataProvider` interface and follow
+              naming conventions (e.g., `GithubProvider`, `JsonFileProvider`).
+               - Be concise and avoid overly nitpicky feedback outside of these best practices.
+    abort_on_close: true # Stop review if PR/MR is closed/merged
+    auto_review:
+        enabled: true # Enable automatic code review
+        auto_incremental_review: true # Enable review on each push
+        ignore_title_keywords: [] # No keywords to ignore in PR titles
+        labels: [] # No label restrictions for auto-review
+        drafts: true # Review draft PRs/MRs
+        base_branches: [] # Only review default branch
+    finishing_touches:
+        docstrings:
+            enabled: true # Allow generating docstrings
+    tools: # Configuration for various code analysis tools
+        shellcheck:
+            enabled: true # Enable ShellCheck for shell script analysis
+        ruff:
+            enabled: false # Enable Ruff for Python linting
+        markdownlint:
+            enabled: true # Enable markdownlint for Markdown files
+        github-checks:
+            enabled: true # Enable GitHub Checks integration
+            timeout_ms: 300000 # Wait up to 5 minutes for GitHub Workflow checks
+        languagetool:
+            enabled: true # Enable LanguageTool for grammar checking
+            enabled_only: false # Don't restrict to only enabled rules
+            level: default # Use default strictness level
+            enabled_rules: [] # No specific rules enabled
+            disabled_rules: [] # No specific rules disabled
+            enabled_categories: [] # No specific categories enabled
+            disabled_categories: [] # No specific categories disabled
+        biome:
+            enabled: true # Enable Biome for web project analysis
+        hadolint:
+            enabled: true # Enable Hadolint for Dockerfile linting
+        swiftlint:
+            enabled: false # Enable SwiftLint for Swift code
+        phpstan:
+            enabled: false # Enable PHPStan for PHP analysis
+            level: default # Use default rule level
+        golangci-lint:
+            enabled: false # Enable golangci-lint for Go code
+        yamllint:
+            enabled: true # Enable YAMLlint for YAML files
+        gitleaks:
+            enabled: true # Enable Gitleaks for secret scanning
+        checkov:
+            enabled: true # Enable Checkov for IaC analysis
+        detekt:
+            enabled: false # Enable detekt for Kotlin analysis
+        eslint:
+            enabled: true # Enable ESLint for JavaScript
+        rubocop:
+            enabled: false # Enable RuboCop for Ruby analysis
+        buf:
+            enabled: false # Enable Buf for Protobuf files
+        regal:
+            enabled: false # Enable Regal for Rego linting
+        actionlint:
+            enabled: true # Enable actionlint for GitHub Actions
+        pmd:
+            enabled: false # Enable PMD for Java analysis
+        cppcheck:
+            enabled: false # Enable Cppcheck for C/C++
+        semgrep:
+            enabled: true # Enable Semgrep for security scanning
+        circleci:
+            enabled: true # Enable CircleCI config checker
+        ast-grep:
+            packages: [] # No predefined packages
+            rule_dirs: [] # No custom rule directories
+            util_dirs: [] # No custom util directories
+            essential_rules: true # Use essential rules package
+chat:
+    auto_reply: true # Enable automatic bot replies
+    integrations:
+        jira:
+            usage: auto # Auto-disable Jira for public repos
+        linear:
+            usage: auto # Auto-disable Linear for public repos
+knowledge_base:
+    opt_out: false # Don't opt out of knowledge base features
+    web_search:
+        enabled: true # Enable web search integration
+    learnings:
+        scope: auto # Auto-select learnings scope based on repo visibility
+    issues:
+        scope: auto # Auto-select issues scope based on repo visibility
+    jira:
+        usage: auto # Auto-disable Jira for public repos
+        project_keys: [] # No specific Jira project keys
+    linear:
+        usage: auto # Auto-disable Linear for public repos
+        team_keys: ["GIT"] # No specific Linear team keys
+    pull_requests:
+        scope: auto # Auto-select PR scope based on repo visibility
