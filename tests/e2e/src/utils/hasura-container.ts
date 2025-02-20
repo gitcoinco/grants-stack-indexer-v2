@@ -6,6 +6,7 @@ import {
     WaitStrategy,
 } from "testcontainers";
 
+import { ServiceNotStarted, StartupFailed } from "../exceptions/index.js";
 import { TestDatabase } from "./test-database.js";
 
 /**
@@ -40,7 +41,7 @@ interface HasuraConfig {
  * await hasura.start(network);
  *
  * // Use GraphQL endpoint
- * const endpoint = hasura.getGraphQlUrl();
+ * const endpoint = hasura.getGraphQLUrl();
  *
  * // Clean up
  * await hasura.stop();
@@ -77,7 +78,7 @@ export class HasuraApiContainer {
             this.container = await this.createContainer(network);
             console.log("Hasura container started", this.container.getId());
         } catch (error) {
-            throw new Error(`Failed to start Hasura container: ${error}`);
+            throw new StartupFailed("Hasura", error);
         }
     }
 
@@ -139,11 +140,11 @@ export class HasuraApiContainer {
 
     /**
      * Gets the base URL for the Hasura instance
-     * @throws {Error} If the container is not started
+     * @throws {ServiceNotStarted} If the container is not started
      */
     public getUrl(): string {
         if (!this.container) {
-            throw new Error("Hasura container not started");
+            throw new ServiceNotStarted("Hasura API container");
         }
 
         const mappedPort = this.container.getMappedPort(this.config.HASURA_PORT);
@@ -152,9 +153,9 @@ export class HasuraApiContainer {
 
     /**
      * Gets the GraphQL endpoint URL
-     * @throws {Error} If the container is not started
+     * @throws {ServiceNotStarted} If the container is not started
      */
-    public getGraphQlUrl(): string {
+    public getGraphQLUrl(): string {
         return `${this.getUrl()}/v1/graphql`;
     }
 

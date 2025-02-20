@@ -1,6 +1,7 @@
 import { ChildProcess, spawn } from "child_process";
 import path from "path";
 
+import { StartupFailed } from "../exceptions/index.js";
 import { BASE_NODE_ENV_VARS } from "./constants.js";
 
 /**
@@ -8,7 +9,7 @@ import { BASE_NODE_ENV_VARS } from "./constants.js";
  */
 interface ProcessingServiceConfig {
     databaseUrl: string;
-    indexerGraphQlUrl: string;
+    indexerGraphQLUrl: string;
     indexerAdminSecret: string;
     logLevel?: string;
     nodeEnv?: string;
@@ -28,7 +29,7 @@ interface ProcessingServiceConfig {
  * ```typescript
  * const config = {
  *   databaseUrl: "postgresql://...",
- *   indexerGraphQlUrl: "http://localhost:4000/v1/graphql",
+ *   indexerGraphQLUrl: "http://localhost:4000/v1/graphql",
  *   indexerAdminSecret: "test-secret"
  * };
  *
@@ -76,14 +77,14 @@ export class ProcessingServiceManager {
             DATABASE_SCHEMA: "public",
 
             // Chain Configuration
-            CHAINS: `[{"id":10,"name":"optimism","fetchLimit":30,"fetchDelayMs":5000,"rpcUrls":["https://optimism.llamarpc.com","https://rpc.ankr.com/optimism","https://optimism.gateway.tenderly.co","https://optimism.blockpi.network/v1/rpc/public","https://mainnet.optimism.io","https://opt-mainnet.g.alchemy.com/v2/demo"]}]`,
+            CHAINS: `[{"id":10,"name":"optimism","fetchLimit":30,"fetchDelayMs":5000,"rpcUrls":["https://optimism.llamarpc.com","https://rpc.ankr.com/optimism","https://optimism.gateway.tenderly.co","https://optimism.blockpi.network/v1/rpc/public","https://opt-mainnet.g.alchemy.com/v2/demo"]}]`,
 
             // Logging
             LOG_LEVEL: this.config.logLevel ?? "debug",
             NODE_ENV: this.config.nodeEnv ?? "development",
 
             // Indexer Configuration
-            INDEXER_GRAPHQL_URL: this.config.indexerGraphQlUrl,
+            INDEXER_GRAPHQL_URL: this.config.indexerGraphQLUrl,
             INDEXER_ADMIN_SECRET: this.config.indexerAdminSecret,
 
             // IPFS Configuration
@@ -134,7 +135,7 @@ export class ProcessingServiceManager {
         });
 
         this.process.on("error", (err) => {
-            reject(new Error(`Failed to start processing service: ${err.message}`));
+            reject(new StartupFailed("Processing service", err));
         });
 
         this.process.on("exit", (code) => {
@@ -150,7 +151,12 @@ export class ProcessingServiceManager {
      */
     private setupTimeout(reject: (error: Error) => void): void {
         setTimeout(() => {
-            reject(new Error("Processing service failed to start within timeout"));
+            reject(
+                new StartupFailed(
+                    "Processing service",
+                    new Error("Failed to start within timeout"),
+                ),
+            );
         }, 30000);
     }
 

@@ -65,4 +65,4 @@ pnpm test:e2e
 
 -   [Vitest](https://vitest.dev/)
 -   [Testcontainers](https://testcontainers.com/)
--   [Testcontainers for PostgreSQL](https://testcontainers.com/modules/databases/postgresql/)
+-   [Testcontainers for PostgreSQL](https://node.testcontainers.org/modules/postgresql/)

@@ -2,6 +2,7 @@ import axios from "axios";
 import { Client } from "pg";
 import { Network, StartedNetwork } from "testcontainers";
 
+import { ServiceNotStarted } from "../exceptions/index.js";
 import { MockEnvioIndexer } from "../mocks/envio-graphql-server.mock.js";
 import { MOCK_ENVIO_INDEXER_PORT } from "./constants.js";
 import { DatabaseManager } from "./database-manager.js";
@@ -84,7 +85,7 @@ export class TestEnvironment {
 
         this.processingService = new ProcessingServiceManager({
             databaseUrl: this.database.getConnectionString(),
-            indexerGraphQlUrl: this.indexerGraphQl.getGraphQlUrl(),
+            indexerGraphQLUrl: this.indexerGraphQl.getGraphQlUrl(),
             indexerAdminSecret: "test-secret",
         });
         await this.processingService.start();
@@ -152,19 +153,27 @@ export class TestEnvironment {
      * Stops the processing service
      */
     public async stopProcessingService(): Promise<void> {
-        if (!this.processingService) throw new Error("Processing service not started");
+        if (!this.processingService) throw new ServiceNotStarted("Processing service");
         await this.processingService.stop();
     }
 
-    // Getters for accessing individual components
+    /**
+     * Gets the indexer GraphQL server mock
+     */
     public getIndexerGraphQl(): MockEnvioIndexer {
         return this.indexerGraphQl;
     }
 
+    /**
+     * Gets the Test Database container
+     */
     public getDatabase(): TestDatabase {
         return this.database;
     }
 
+    /**
+     * Gets the Hasura API container
+     */
     public getApiHasura(): HasuraApiContainer {
         return this.apiHasura;
     }
