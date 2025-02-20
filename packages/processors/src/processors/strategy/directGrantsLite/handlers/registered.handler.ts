@@ -74,7 +74,7 @@ export class DGLiteRegisteredHandler implements IEventHandler<"Strategy", "Regis
                 {
                     status: "PENDING",
                     updatedAtBlock: blockNumber.toString(),
-                    updatedAt: new Date(blockTimestamp * 1000), // timestamp is in seconds, convert to ms
+                    updatedAt: new Date(blockTimestamp),
                 },
             ],
             distributionTransaction: null,

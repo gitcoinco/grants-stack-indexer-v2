@@ -2,6 +2,7 @@ import { parseUnits, zeroAddress } from "viem";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { IIndexerClient } from "@grants-stack-indexer/indexer-client";
+import { getRoundRoles } from "@grants-stack-indexer/processors";
 import { IEventRegistryRepository, Round } from "@grants-stack-indexer/repository";
 import { Bytes32String, ChainId } from "@grants-stack-indexer/shared";
 
@@ -83,8 +84,11 @@ describe("Orchestrator Integration - Allo Events Processing", () => {
             .mockResolvedValue([]);
         vi.spyOn(metadataProvider, "getMetadata").mockResolvedValue({});
         vi.spyOn(evmProvider, "readContract").mockResolvedValue(strategyTiming);
+
         vi.spyOn(roundRepository, "getPendingRoundRoles").mockImplementation((_, name) => {
-            if (name === "admin") {
+            const { adminRole } = getRoundRoles(BigInt(poolCreatedEvent.params.poolId));
+
+            if (name === adminRole) {
                 return Promise.resolve([
                     {
                         id: 1,

@@ -113,6 +113,10 @@ export const DEFAULT_STRATEGY_MAP = new Map<ChainId, Map<Address, Hex>>([
                 "0xF5F6Ca46a9DA3C1089d0F2F029cF14F3F714D483",
                 "0x103732a8e473467a510d4128ee11065262bdd978f0d9dad89ba68f2c56127e27",
             ],
+            [
+                "0xD5F6cA46A9DA3c1089D0F2F029CF14F3f714D483",
+                "0x6f9291df02b2664139cec5703c124e4ebce32879c74b6297faa1468aa5ff9ebf",
+            ],
         ]),
     ],
 ]);

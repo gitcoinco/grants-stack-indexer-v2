@@ -5,7 +5,7 @@ export { UnsupportedStrategy, UnsupportedEventException } from "./internal.js";
 
 export type { IProcessor, ProcessorDependencies } from "./internal.js";
 
-export { existsHandler } from "./internal.js";
+export { existsHandler, getRoundRoles } from "./internal.js";
 
 export {
     decodeDVMDApplicationData,
