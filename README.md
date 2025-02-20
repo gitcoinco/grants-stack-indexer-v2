@@ -43,6 +43,12 @@ Ensure you have the following installed on your machine:
 
 ### Setup
 
+1. Install dependencies and build depedencies:
+
+```
+pnpm i && pnpm build
+```
+
 1. Copy the Example Environment File and edit the `.env` file
 
 ```
@@ -55,26 +61,47 @@ cp .env.example .env
 docker-compose up -d --build
 ```
 
-3. Copy the Example Environment File on `scripts/migrations` and edit the `.env` file
+3. Copy the Example Environment File on `scripts/bootstrap` and edit the `.env` file
+
+```
+cp scripts/bootstrap/.env.example scripts/bootstrap/.env
+```
+
+4. Copy the Example Environment File on `scripts/migrations` and edit the `.env` file
 
 ```
 cp scripts/migrations/.env.example scripts/migrations/.env
 ```
 
-4. After starting Docker Compose, run the following command to apply the database migrations:
+5. Copy the Example Environment File on `scripts/hasura-config` and edit the `.env` file
+
+```
+cp scripts/hasura-config/.env.example scripts/hasura-config/.env
+```
+
+6. Apply cache migrations:
+
+```
+pnpm db:cache:migrate
+```
+
+7. Bootstrap DB with IPFS metadata and Pricing(optional):
+
+```
+pnpm bootstrap:metadata
+pnpm bootstrap:pricing
+```
+
+8. Apply migrations:
 
 ```
 pnpm db:migrate
 ```
 
-5. Copy the Example Environment File on `apps/processing` and edit the `.env` file
-
-cp apps/processing/.env.example apps/processing/.env
-
-6. Start the Processing service with:
+9. For automatic hasura API configuration run:
 
 ```
-pnpm dev
+pnpm api:configure
 ```
 
 Once the setup is completed you can access Hasura by navigating to:

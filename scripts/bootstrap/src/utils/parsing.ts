@@ -1,5 +1,3 @@
-import { existsSync } from "fs";
-import path from "path";
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 import { z } from "zod";
@@ -27,17 +25,4 @@ export const parseArguments = (): z.infer<typeof zodSchema> => {
             return true;
         })
         .parseSync();
-};
-
-export const getMigrationsFolder = (): string => {
-    const migrationsFolder = path.join(
-        path.dirname(new URL(import.meta.url).pathname),
-        `../migrations`,
-    );
-
-    if (!existsSync(migrationsFolder)) {
-        throw new Error(`Migrations folder not found`);
-    }
-
-    return migrationsFolder;
 };

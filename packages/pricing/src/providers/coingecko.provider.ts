@@ -15,7 +15,8 @@ import {
     CoingeckoPriceChartData,
     CoingeckoTokenId,
     MIN_GRANULARITY_MS,
-    // MIN_GRANULARITY_MS,
+    ninetyDaysMs,
+    oneDayMs,
     TokenPrice,
     UnknownPricingException,
     UnsupportedToken,
@@ -161,9 +162,6 @@ export class CoingeckoProvider implements IPricingProvider {
             const effectiveMin = Math.min(...(timestamps as number[]));
             let effectiveMax = Math.max(...(timestamps as number[]));
 
-            const oneDayMs = 24 * 60 * 60 * 1000; // 1 day in milliseconds
-            const ninetyDaysMs = 90 * oneDayMs; // 90 days in milliseconds
-
             // 1 hour granularity
             const minGranularityMs = MIN_GRANULARITY_MS;
 
@@ -180,7 +178,7 @@ export class CoingeckoProvider implements IPricingProvider {
                 while (currentStart < effectiveMax) {
                     const currentEnd = Math.min(currentStart + segmentDuration, effectiveMax);
 
-                    path = `/coins/${tokenId}/market_chart/range?vs_currency=usd&from=${currentStart / 1000}&to=${currentEnd / 1000}&precision=full`;
+                    path = `/coins/${tokenId}/market_chart/range?vs_currency=usd&from=${Math.floor(currentStart / 1000)}&to=${Math.floor(currentEnd / 1000)}&precision=full`;
                     // Push the promise for the current segment
                     segments.push(
                         this.axios.get<CoingeckoPriceChartData>(path).then(({ data }) =>

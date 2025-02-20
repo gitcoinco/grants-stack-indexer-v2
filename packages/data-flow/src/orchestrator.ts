@@ -1,5 +1,7 @@
 import { isNativeError } from "util/types";
 import pMap from "p-map";
+import { retryAsyncUntilDefined } from "ts-retry";
+import { DelayParameters } from "ts-retry/lib/cjs/retry/options.js";
 
 import { IIndexerClient } from "@grants-stack-indexer/indexer-client";
 import { TokenPrice } from "@grants-stack-indexer/pricing";
@@ -8,7 +10,12 @@ import {
     UnsupportedEventException,
     UnsupportedStrategy,
 } from "@grants-stack-indexer/processors";
-import { RoundNotFound, RoundNotFoundForId } from "@grants-stack-indexer/repository";
+import {
+    Changeset,
+    IEventRegistryRepository,
+    RoundNotFound,
+    RoundNotFoundForId,
+} from "@grants-stack-indexer/repository";
 import {
     Address,
     AnyEvent,
@@ -30,7 +37,13 @@ import {
     TOKENS_SOURCE_CODES,
 } from "@grants-stack-indexer/shared";
 
-import type { IEventsFetcher, IEventsRegistry, IStrategyRegistry } from "./interfaces/index.js";
+import type { IEventsFetcher, IStrategyRegistry } from "./interfaces/index.js";
+import {
+    MAX_BULK_FETCH_METADATA_CONCURRENCY,
+    MAX_BULK_FETCH_METADATA_RETRIES,
+    METADATA_BULK_FETCH_BACKOFF_FACTOR,
+    METADATA_BULK_FETCH_BASE_DELAY_MS,
+} from "./constants.js";
 import { EventsFetcher } from "./eventsFetcher.js";
 import { EventsProcessor } from "./eventsProcessor.js";
 import { InvalidEvent } from "./exceptions/index.js";
@@ -74,7 +87,7 @@ export class Orchestrator {
     private readonly eventsByBlockContext: Map<number, AnyIndexerFetchedEvent[]>;
     private readonly eventsFetcher: IEventsFetcher;
     private readonly eventsProcessor: EventsProcessor;
-    private readonly eventsRegistry: IEventsRegistry;
+    private readonly eventsRegistry: IEventRegistryRepository;
     private readonly strategyRegistry: IStrategyRegistry;
     private readonly dataLoader: DataLoader;
     private readonly retryHandler: RetryHandler;
@@ -93,7 +106,7 @@ export class Orchestrator {
         private dependencies: Readonly<CoreDependencies>,
         private indexerClient: IIndexerClient,
         private registries: {
-            eventsRegistry: IEventsRegistry;
+            eventsRegistry: IEventRegistryRepository;
             strategyRegistry: IStrategyRegistry;
         },
         private fetchLimit: number = 1000,
@@ -116,6 +129,7 @@ export class Orchestrator {
                 application: this.dependencies.applicationRepository,
                 donation: this.dependencies.donationRepository,
                 applicationPayout: this.dependencies.applicationPayoutRepository,
+                eventRegistry: this.eventsRegistry,
             },
             this.dependencies.transactionManager,
             this.logger,
@@ -158,24 +172,39 @@ export class Orchestrator {
                     continue;
                 }
 
-                await this.eventsRegistry.saveLastProcessedEvent(this.chainId, {
-                    ...event,
-                    rawEvent: event,
-                });
-                console.time(`Processing time for event ${event.eventName}`);
                 await this.retryHandler.execute(
                     async () => {
-                        await this.handleEvent(event!);
+                        const changesets = await this.handleEvent(event!);
+                        if (changesets) {
+                            await this.dataLoader.applyChanges([
+                                ...changesets,
+                                {
+                                    type: "InsertProcessedEvent",
+                                    args: {
+                                        chainId: this.chainId,
+                                        processedEvent: {
+                                            ...event!,
+                                            rawEvent: event,
+                                        },
+                                    },
+                                },
+                            ]);
+                        }
                     },
                     { abortSignal: signal },
                 );
-                console.timeEnd(`Processing time for event ${event.eventName}`);
                 processedEvents++;
                 this.logger.info(`Processed events: ${processedEvents}/${totalEvents}`, {
                     className: Orchestrator.name,
                     chainId: this.chainId,
                 });
             } catch (error: unknown) {
+                if (event) {
+                    await this.eventsRegistry.saveLastProcessedEvent(this.chainId, {
+                        ...event,
+                        rawEvent: event,
+                    });
+                }
                 // TODO: notify
                 if (
                     error instanceof UnsupportedStrategy ||
@@ -274,7 +303,6 @@ export class Orchestrator {
             blockNumber,
             logIndex,
             limit: this.fetchLimit,
-            // allowPartialLastBlock: false, //TODO: ask nigiri about this
         });
 
         return events;
@@ -292,7 +320,7 @@ export class Orchestrator {
         await this.dependencies.metadataProvider.clearCache?.();
         await this.dependencies.pricingProvider.clearCache?.();
 
-        const metadataIds = getMetadataCidsFromEvents(events);
+        const metadataIds = getMetadataCidsFromEvents(events, this.logger);
         const tokens = TOKENS_SOURCE_CODES.map((code) => ({
             token: {
                 priceSourceCode: code,
@@ -333,16 +361,24 @@ export class Orchestrator {
             metadataIds,
             async (id) => {
                 try {
-                    const result = await this.retryHandler.execute(() =>
-                        this.dependencies.metadataProvider.getMetadata<unknown>(id),
+                    const result = await retryAsyncUntilDefined(
+                        () => this.dependencies.metadataProvider.getMetadata<unknown>(id),
+                        {
+                            maxTry: MAX_BULK_FETCH_METADATA_RETRIES,
+                            delay: (params: DelayParameters<unknown>) => {
+                                return (
+                                    METADATA_BULK_FETCH_BASE_DELAY_MS *
+                                    METADATA_BULK_FETCH_BACKOFF_FACTOR ** params.currentTry
+                                );
+                            },
+                        },
                     );
                     return { status: "fulfilled", value: result };
                 } catch (error) {
-                    console.log("rejected", id);
                     return { status: "rejected", reason: error };
                 }
             },
-            { concurrency: 10 }, //FIXME: remove hardcoded concurrency
+            { concurrency: MAX_BULK_FETCH_METADATA_CONCURRENCY },
         );
 
         const metadata: unknown[] = [];
@@ -381,7 +417,9 @@ export class Orchestrator {
         return tokenPrices;
     }
 
-    private async handleEvent(event: ProcessorEvent<ContractName, AnyEvent>): Promise<void> {
+    private async handleEvent(
+        event: ProcessorEvent<ContractName, AnyEvent>,
+    ): Promise<Changeset[] | undefined> {
         event = await this.enhanceStrategyId(event);
         if (this.isPoolCreated(event)) {
             const handleable = existsHandler(event.strategyId);
@@ -399,12 +437,11 @@ export class Orchestrator {
                     chainId: this.chainId,
                 });
                 // we skip the event if the strategy id is not handled yet
-                return;
+                return undefined;
             }
         }
 
-        const changesets = await this.eventsProcessor.processEvent(event);
-        await this.dataLoader.applyChanges(changesets);
+        return this.eventsProcessor.processEvent(event);
     }
 
     /**

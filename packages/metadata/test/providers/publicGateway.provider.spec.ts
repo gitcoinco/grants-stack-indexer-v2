@@ -7,10 +7,10 @@ import { ILogger } from "@grants-stack-indexer/shared";
 import {
     EmptyGatewaysUrlsException,
     InvalidContentException,
-    IpfsProvider,
+    PublicGatewayProvider,
 } from "../../src/external.js";
 
-describe("IpfsProvider", () => {
+describe("PublicGatewayProvider", () => {
     const logger: ILogger = {
         debug: vi.fn(),
         error: vi.fn(),
@@ -18,12 +18,12 @@ describe("IpfsProvider", () => {
         warn: vi.fn(),
     };
     let mock: MockAdapter;
-    let provider: IpfsProvider;
+    let provider: PublicGatewayProvider;
     const gateways = ["https://ipfs.io", "https://cloudflare-ipfs.com"];
     const validCid = "QmW2WQi7j6c7UgJTarActp7tDNikE4B2qXtFCfLPdsgaTQ";
 
     beforeEach(() => {
-        provider = new IpfsProvider(gateways, logger);
+        provider = new PublicGatewayProvider(gateways, logger);
         mock = new MockAdapter(provider["axiosInstance"]);
     });
 
@@ -33,7 +33,7 @@ describe("IpfsProvider", () => {
 
     describe("constructor", () => {
         it("throw EmptyGatewaysUrlsException when initialized with empty gateways array", () => {
-            expect(() => new IpfsProvider([], logger)).toThrow(EmptyGatewaysUrlsException);
+            expect(() => new PublicGatewayProvider([], logger)).toThrow(EmptyGatewaysUrlsException);
         });
     });
 
@@ -65,11 +65,10 @@ describe("IpfsProvider", () => {
             expect(result).toEqual(mockData);
         });
 
-        it("return undefined if all gateways fail", async () => {
+        it("returns undefined if all gateways fail", async () => {
             gateways.forEach((gateway) => {
                 mock.onGet(`${gateway}/ipfs/${validCid}`).networkError();
             });
-
             const result = await provider.getMetadata(validCid);
             expect(result).toBeUndefined();
         });
@@ -77,12 +76,10 @@ describe("IpfsProvider", () => {
         it("validate content with provided schema", async () => {
             const mockData = { name: "Test Data", age: 30 };
             mock.onGet(`${gateways[0]}/ipfs/${validCid}`).reply(200, mockData);
-
             const schema = z.object({
                 name: z.string(),
                 age: z.number(),
             });
-
             const result = await provider.getMetadata(validCid, schema);
             expect(result).toEqual(mockData);
         });

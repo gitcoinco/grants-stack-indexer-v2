@@ -1,22 +1,47 @@
-# grants-stack-indexer: migrations scripts
+# Grants Stack Indexer: Bootstrap Scripts
 
-This package contains scripts for managing the database schema and migrations.
+This package contains scripts for bootstrapping the grants-stack-indexer project, including metadata and pricing management.
 
 ## Available Scripts
 
-| Script       | Description                             |
-| ------------ | --------------------------------------- |
-| `db:migrate` | Runs all pending database migrations    |
-| `db:reset`   | Drops and recreates the database schema |
+| Script               | Description                                                |
+| -------------------- | ---------------------------------------------------------- |
+| `bootstrap:metadata` | Runs the metadata bootstrap script                         |
+| `bootstrap:pricing`  | Runs the pricing bootstrap script                          |
+| `build`              | Compiles TypeScript files into JavaScript                  |
+| `check-types`        | Checks for type issues using TypeScript                    |
+| `clean`              | Removes the `dist` folder                                  |
+| `format`             | Checks code formatting and style using Prettier            |
+| `format:fix`         | Runs formatter and automatically fixes issues              |
+| `lint`               | Runs ESLint to check for coding standards                  |
+| `lint:fix`           | Runs linter and automatically fixes code formatting issues |
+| `test`               | Runs tests using Vitest                                    |
+| `test:cov`           | Runs tests with coverage report                            |
 
 ## Environment Setup
 
-1. Create a `.env` file in the `apps/scripts` directory:
+1. Create a `.env` file in the `scripts/bootstrap` directory:
 
-```env
-# Database connection URL
-DATABASE_URL=postgresql://user:password@localhost:5432/mydb
-```
+    ```env
+    # Database connection URL
+    DATABASE_URL=postgre://postgres:testing@localhost:5434/datalayer-postgres-db
+    # Database schema
+    DATABASE_SCHEMA=public
+    # Indexer URL
+    INDEXER_URL="localhost:5432/v1/graphql"
+    # Public gateway URLs
+    PUBLIC_GATEWAY_URLS=["https://ipfs.io", "https://dweb.link", "https://cloudflare-ipfs.com", "https://gateway.pinata.cloud", "https://ipfs.infura.io", "https://ipfs.fleek.co", "https://ipfs.eth.aragon.network", "https://ipfs.jes.xxx", "https://ipfs.lol", "https://ipfs.mle.party"]
+    # Chain IDs
+    CHAIN_IDS=[1, 10, 42161]
+    # Log level
+    LOG_LEVEL=error
+    # Pricing source
+    PRICING_SOURCE=coingecko
+    # Coingecko API key
+    COINGECKO_API_KEY=CG-9B9jasdasdasd
+    # Coingecko API type
+    COINGECKO_API_TYPE=pro
+    ```
 
 ### Environment Variables
 
@@ -32,61 +57,34 @@ First, install dependencies:
 pnpm install
 ```
 
-### Running Migrations
+### Running the Scripts
 
-To apply all pending migrations:
-
-```bash
-pnpm db:migrate --schema=schema_name
-```
-
-Optional arguments:
-
--   `--schema` or `-s`: Database schema name where migrations are applied. Defaults to `public`.
-
-This will:
-
-1. Load environment variables
-2. Connect to the database
-3. Create the schema if it doesn't exist
-4. Run any pending migrations
-5. Log the results
-
-### Resetting the Database
-
-To completely reset the database schema:
+To run the metadata bootstrap script:
 
 ```bash
-pnpm db:reset --schema=schema_name
+pnpm bootstrap:metadata --schema=schema_name
 ```
 
-**Warning**: This will:
+To run the pricing bootstrap script:
 
-1. Drop the existing schema and all its data
-2. Recreate an empty schema
-3. You'll need to run migrations again after reset
+```bash
+pnpm bootstrap:pricing --schema=schema_name
+```
 
-## Development
+### Development
 
-### Adding New Migrations
+```bash
+# Run type checking
+pnpm check-types
 
-1. Create a new migration file in [`packages/repository/src/migrations`](../../packages//repository/migrations)
-2. Name it using the format: `YYYYMMDDTHHmmss_description.ts`
-3. Implement the `up` and `down` functions
-4. Run `pnpm db:migrate` to apply the new migration
+# Run linting
+pnpm lint
 
-Example migration file:
+# Run tests
+pnpm test
 
-```typescript
-import { Kysely } from "kysely";
-
-export async function up(db: Kysely<any>): Promise<void> {
-    // Your migration code here
-}
-
-export async function down(db: Kysely<any>): Promise<void> {
-    // Code to reverse the migration
-}
+# Format code
+pnpm format:fix
 ```
 
 ## Troubleshooting
@@ -95,22 +93,6 @@ export async function down(db: Kysely<any>): Promise<void> {
 
 1. **Connection Error**
 
-    - Check if PostgreSQL is running
-    - Verify DATABASE_URL is correct
-    - Ensure the database exists
-
-2. **Permission Error**
-
-    - Verify user has necessary permissions
-    - Check schema ownership
-
-3. **Migration Failed**
-    - Check migration logs
-    - Ensure no conflicting changes
-    - Verify schema consistency
-
-TODO: add E2E tests for the scripts
-
-## References
-
--   [Kysely](https://kysely.dev/)
+    - Check if PostgreSQL is running.
+    - Verify `DATABASE_URL` is correct.
+    - Ensure the database exists.

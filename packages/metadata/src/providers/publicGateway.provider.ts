@@ -54,7 +54,7 @@ export class PublicGatewayProvider implements IMetadataProvider {
                 }
             }
         }
-        throw new Error(`Failed to fetch IPFS data for CID ${ipfsCid} from all gateways.`);
+        return undefined;
     }
 
     /**

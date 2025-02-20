@@ -6,21 +6,20 @@ import {
     IMetadataProvider,
     MetadataConfig,
     MetadataProvider,
-    PinataProvider,
     PublicGatewayProvider,
 } from "../internal.js";
 import { DummyMetadataProvider } from "../providers/dummy.provider.js";
 
 /**
- * Factory class for creating pricing providers.
+ * Factory class for creating metadata providers.
  */
 export class MetadataProviderFactory {
     /**
-     * Creates a pricing provider based on the provided configuration.
-     * @param options - The pricing configuration.
-     * @param deps - dependencies to inject into the pricing provider.
-     * @returns The created pricing provider.
-     * @throws {InvalidMetadataSource} if the pricing source is invalid.
+     * Creates a metadata provider based on the provided configuration.
+     * @param options - The metadata configuration.
+     * @param deps - dependencies to inject into the metadata provider.
+     * @returns The created metadata provider.
+     * @throws {InvalidMetadataSource} if the metadata source is invalid.
      * @throws {MissingDependencies} if the dependencies are missing.
      */
     static create(
@@ -34,12 +33,6 @@ export class MetadataProviderFactory {
         switch (options.metadataSource) {
             case "dummy":
                 metadataProvider = new DummyMetadataProvider();
-                break;
-            case "pinata":
-                if (!deps?.logger) {
-                    throw new MissingDependenciesException(["logger"]);
-                }
-                metadataProvider = new PinataProvider(options.jwt, options.gateway, deps.logger);
                 break;
             case "public-gateway":
                 if (!deps?.logger) {

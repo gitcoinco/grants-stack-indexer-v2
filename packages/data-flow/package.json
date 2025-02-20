@@ -36,6 +36,7 @@
         "@grants-stack-indexer/repository": "workspace:*",
         "@grants-stack-indexer/shared": "workspace:*",
         "p-map": "7.0.3",
+        "ts-retry": "5.0.1",
         "viem": "2.21.19"
     }
 }

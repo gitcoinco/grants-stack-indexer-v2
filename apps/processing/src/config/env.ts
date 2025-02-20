@@ -34,7 +34,7 @@ const baseSchema = z.object({
     INDEXER_GRAPHQL_URL: z.string().url(),
     INDEXER_ADMIN_SECRET: z.string().optional(),
     PRICING_SOURCE: z.enum(["dummy", "coingecko"]).default("coingecko"),
-    METADATA_SOURCE: z.enum(["dummy", "pinata", "public-gateway"]).default("dummy"),
+    METADATA_SOURCE: z.enum(["dummy", "public-gateway"]).default("dummy"),
     RETRY_MAX_ATTEMPTS: z.coerce.number().int().min(1).default(3),
     RETRY_BASE_DELAY_MS: z.coerce.number().int().min(1).default(3000), // 3 seconds
     RETRY_FACTOR: z.coerce.number().min(1).default(2),
@@ -54,12 +54,6 @@ const coingeckoPricingSchema = baseSchema.extend({
 
 const dummyMetadataSchema = baseSchema.extend({
     METADATA_SOURCE: z.literal("dummy"),
-});
-
-const pinataMetadataSchema = baseSchema.extend({
-    METADATA_SOURCE: z.literal("pinata"),
-    PINATA_JWT: z.string().min(1),
-    PINATA_GATEWAY_URL: z.string().url(),
 });
 
 const publicGatewayMetadataSchema = baseSchema.extend({
@@ -85,20 +79,11 @@ const validationSchema = z
         z
             .discriminatedUnion("METADATA_SOURCE", [
                 dummyMetadataSchema,
-                pinataMetadataSchema,
                 publicGatewayMetadataSchema,
             ])
             .transform((val) => {
                 if (val.METADATA_SOURCE === "dummy") {
                     return { metadataSource: val.METADATA_SOURCE, ...val };
-                }
-                if (val.METADATA_SOURCE === "pinata") {
-                    return {
-                        metadataSource: val.METADATA_SOURCE,
-                        jwt: val.PINATA_JWT,
-                        gateway: val.PINATA_GATEWAY_URL,
-                        ...val,
-                    };
                 }
                 if (val.METADATA_SOURCE === "public-gateway") {
                     return {

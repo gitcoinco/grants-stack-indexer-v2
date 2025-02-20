@@ -6,9 +6,9 @@ describe("ExponentialBackoff", () => {
     describe("constructor", () => {
         it("uses default options when none provided", () => {
             const strategy = new ExponentialBackoff();
-            expect(strategy["options"].baseDelay).toBe(5000);
-            expect(strategy["options"].factor).toBe(2);
-            expect(strategy["options"].maxAttempts).toBe(3);
+            expect(strategy["options"].baseDelay).toBe(200);
+            expect(strategy["options"].factor).toBe(1.5);
+            expect(strategy["options"].maxAttempts).toBe(10);
         });
 
         it("applies provided options", () => {

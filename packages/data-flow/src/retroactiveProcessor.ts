@@ -1,6 +1,9 @@
 import { IIndexerClient } from "@grants-stack-indexer/indexer-client";
 import { existsHandler, UnsupportedEventException } from "@grants-stack-indexer/processors";
-import { IStrategyProcessingCheckpointRepository } from "@grants-stack-indexer/repository";
+import {
+    IEventRegistryRepository,
+    IStrategyProcessingCheckpointRepository,
+} from "@grants-stack-indexer/repository";
 import {
     Address,
     AnyEvent,
@@ -20,7 +23,6 @@ import {
     EventsFetcher,
     EventsProcessor,
     IEventsFetcher,
-    IEventsRegistry,
     InvalidEvent,
     IStrategyRegistry,
     Queue,
@@ -60,7 +62,7 @@ type EventPointer = {
 export class RetroactiveProcessor {
     private readonly eventsFetcher: IEventsFetcher;
     private readonly eventsProcessor: EventsProcessor;
-    private readonly eventsRegistry: IEventsRegistry;
+    private readonly eventsRegistry: IEventRegistryRepository;
     private readonly strategyRegistry: IStrategyRegistry;
     private readonly dataLoader: DataLoader;
     private readonly checkpointRepository: IStrategyProcessingCheckpointRepository;
@@ -81,7 +83,7 @@ export class RetroactiveProcessor {
         private dependencies: Readonly<CoreDependencies>,
         private indexerClient: IIndexerClient,
         private registries: {
-            eventsRegistry: IEventsRegistry;
+            eventsRegistry: IEventRegistryRepository;
             strategyRegistry: IStrategyRegistry;
             checkpointRepository: IStrategyProcessingCheckpointRepository;
         },
@@ -104,6 +106,7 @@ export class RetroactiveProcessor {
                 application: this.dependencies.applicationRepository,
                 donation: this.dependencies.donationRepository,
                 applicationPayout: this.dependencies.applicationPayoutRepository,
+                eventRegistry: this.eventsRegistry,
             },
             this.dependencies.transactionManager,
             this.logger,

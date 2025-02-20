@@ -1,13 +1,13 @@
 import { IPricingCache } from "@grants-stack-indexer/repository";
 import { ICacheable, ILogger, TimestampMs, TokenCode } from "@grants-stack-indexer/shared";
 
-import { NoClosePriceFound } from "../exceptions/noClosePriceFound.exception.js";
-import { IPricingProvider, MIN_GRANULARITY_MS, TokenPrice } from "../internal.js";
-
-type CacheResult = {
-    timestampMs: TimestampMs;
-    price: TokenPrice | undefined;
-};
+import {
+    IPricingProvider,
+    MIN_GRANULARITY_MS,
+    NoClosePriceFound,
+    PROXIMITY_FACTOR,
+    TokenPrice,
+} from "../internal.js";
 
 const PROXIMITY_GRANULARITY_MS_FACTOR = 5;
 /**
@@ -36,7 +36,7 @@ export class CachingPricingProvider implements IPricingProvider, ICacheable {
                 await this.cache.getPricesByTimeRange(
                     tokenCode,
                     ((startTimestampMs as number) -
-                        MIN_GRANULARITY_MS * PROXIMITY_GRANULARITY_MS_FACTOR) as TimestampMs,
+                        MIN_GRANULARITY_MS * PROXIMITY_FACTOR) as TimestampMs,
                     startTimestampMs,
                 )
             ).sort((a, b) => a.timestampMs - b.timestampMs);
@@ -96,8 +96,9 @@ export class CachingPricingProvider implements IPricingProvider, ICacheable {
      */
     async getTokenPrices(tokenCode: TokenCode, timestamps: TimestampMs[]): Promise<TokenPrice[]> {
         if (timestamps.length === 0) return [];
-        let fromTimestampMs = timestamps[0] as TimestampMs;
-        let toTimestampMs = timestamps[timestamps.length - 1] as TimestampMs;
+        const sortedTimestamps = timestamps.sort((a, b) => a - b);
+        const fromTimestampMs = sortedTimestamps[0] as TimestampMs;
+        const toTimestampMs = sortedTimestamps[sortedTimestamps.length - 1] as TimestampMs;
         const cachedPrices = (
             await this.getCachedPrices(
                 tokenCode,
@@ -107,11 +108,14 @@ export class CachingPricingProvider implements IPricingProvider, ICacheable {
         ).sort((a, b) => a.timestampMs - b.timestampMs);
 
         try {
-            const prices = this.getClosestPrices(timestamps, cachedPrices);
+            const prices = this.getClosestPrices(sortedTimestamps, cachedPrices);
             return prices;
         } catch (error) {
             if (error instanceof NoClosePriceFound) {
-                const fetchedPrices = await this.provider.getTokenPrices(tokenCode, timestamps);
+                const fetchedPrices = await this.provider.getTokenPrices(
+                    tokenCode,
+                    sortedTimestamps,
+                );
                 for (const price of fetchedPrices) {
                     this.cache
                         .set(
@@ -128,7 +132,7 @@ export class CachingPricingProvider implements IPricingProvider, ICacheable {
                             );
                         });
                 }
-                return this.getClosestPrices(timestamps, fetchedPrices).sort(
+                return this.getClosestPrices(sortedTimestamps, fetchedPrices).sort(
                     (a, b) => a.timestampMs - b.timestampMs,
                 );
             }
@@ -140,7 +144,7 @@ export class CachingPricingProvider implements IPricingProvider, ICacheable {
      * Fetches cached prices for the given token and timestamps.
      * @param tokenCode - The token code
      * @param timestamps - The timestamps
-     * @returns {PromiseSettledResult<CacheResult>[]} - The cached prices
+     * @returns {PromiseSettledResult<TokenPrice>[]} - The cached prices
      */
     private async getCachedPrices(
         tokenCode: TokenCode,
@@ -182,7 +186,7 @@ export class CachingPricingProvider implements IPricingProvider, ICacheable {
         if (targetTimestamp >= prices[prices.length - 1]!.timestampMs) {
             if (
                 Math.abs(prices[prices.length - 1]!.timestampMs - targetTimestamp) >
-                MIN_GRANULARITY_MS * PROXIMITY_GRANULARITY_MS_FACTOR
+                MIN_GRANULARITY_MS * PROXIMITY_FACTOR
             ) {
                 return null;
             }
@@ -199,7 +203,7 @@ export class CachingPricingProvider implements IPricingProvider, ICacheable {
             if (prices[mid]!.timestampMs === targetTimestamp) {
                 if (
                     Math.abs(prices[mid]!.timestampMs - targetTimestamp) >
-                    MIN_GRANULARITY_MS * PROXIMITY_GRANULARITY_MS_FACTOR
+                    MIN_GRANULARITY_MS * PROXIMITY_FACTOR
                 ) {
                     return null;
                 }
@@ -216,7 +220,7 @@ export class CachingPricingProvider implements IPricingProvider, ICacheable {
         // Return the floor value (largest timestamp <= target)
         if (
             Math.abs(prices[left]!.timestampMs - targetTimestamp) >
-            MIN_GRANULARITY_MS * PROXIMITY_GRANULARITY_MS_FACTOR
+            MIN_GRANULARITY_MS * PROXIMITY_FACTOR
         ) {
             return null;
         }
