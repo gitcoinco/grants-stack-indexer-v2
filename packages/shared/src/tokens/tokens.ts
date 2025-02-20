@@ -624,6 +624,20 @@ export const TOKENS: {
             decimals: 6,
         },
     },
+    "295": {
+        "0x0000000000000000000000000000000000000000": {
+            code: "HBAR" as TokenCode,
+            priceSourceCode: "HBAR" as TokenCode,
+            address: "0x0000000000000000000000000000000000000000",
+            decimals: 8,
+        },
+        "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE": {
+            code: "HBAR" as TokenCode,
+            priceSourceCode: "HBAR" as TokenCode,
+            address: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+            decimals: 8,
+        },
+    },
 } as const;
 
 export const TOKENS_SOURCE_CODES = extractAllPriceSourceCodes(TOKENS);

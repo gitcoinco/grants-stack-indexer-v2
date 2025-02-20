@@ -11,7 +11,8 @@ export type CoingeckoSupportedChainId =
     | 1329
     | 42
     | 42220
-    | 1088;
+    | 1088
+    | 295;
 
 export type CoingeckoTokenId = Branded<string, "CoingeckoTokenId">;
 export type CoingeckoPlatformId = Branded<string, "CoingeckoPlatformId">;

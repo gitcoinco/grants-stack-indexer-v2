@@ -1,4 +1,4 @@
-import { optimism } from "viem/chains";
+import { hedera, optimism } from "viem/chains";
 
 import { EvmProvider } from "@grants-stack-indexer/chain-providers";
 import {
@@ -65,7 +65,8 @@ export class ProcessingService {
 
         for (const chain of chains) {
             // Initialize EVM provider
-            const evmProvider = new EvmProvider(chain.rpcUrls, optimism, logger);
+            // TODO: Derive viem chain from chain.id
+            const evmProvider = new EvmProvider(chain.rpcUrls, hedera, logger);
 
             const cachedStrategyRegistry = await InMemoryCachedStrategyRegistry.initialize(
                 logger,
