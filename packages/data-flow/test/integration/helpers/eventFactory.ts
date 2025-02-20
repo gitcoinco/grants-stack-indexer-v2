@@ -96,7 +96,7 @@ export const createTestRegistryEvent = <E extends RegistryEvent>({
 export const createTestStrategyEvent = <E extends StrategyEvent>({
     eventName,
     params,
-    blockNumber,
+    blockNumber = DEFAULT_BLOCK_NUMBER,
     blockTimestamp = DEFAULT_TIMESTAMP_MS,
     logIndex = 0,
     chainId = 1,
@@ -106,7 +106,7 @@ export const createTestStrategyEvent = <E extends StrategyEvent>({
 }: {
     eventName: E;
     params: EventParams<"Strategy", E>;
-    blockNumber: number;
+    blockNumber?: number;
     blockTimestamp?: TimestampMs;
     logIndex?: number;
     chainId?: number;
