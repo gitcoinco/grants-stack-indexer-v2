@@ -1,4 +1,5 @@
-import { zeroAddress } from "viem";
+import { randomBytes } from "crypto";
+import { bytesToHex, zeroAddress } from "viem";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { IIndexerClient } from "@grants-stack-indexer/indexer-client";
@@ -56,8 +57,8 @@ describe("Orchestrator Integration - Strategy Events Processing", () => {
         const distributedEvent = createTestStrategyEvent<"DistributedWithRecipientAddress">({
             eventName: "DistributedWithRecipientAddress",
             params: {
-                recipientId: "0xrecipient",
-                recipientAddress: "0xrecipient",
+                recipientId: DEFAULT_FROM_ADDRESS,
+                recipientAddress: DEFAULT_FROM_ADDRESS,
                 amount: "1000000000000000000",
                 sender: DEFAULT_FROM_ADDRESS,
             },
@@ -114,7 +115,7 @@ describe("Orchestrator Integration - Strategy Events Processing", () => {
             eventName: "DistributionUpdated",
             params: {
                 metadata: ["1", "ipfs://distribution-metadata"],
-                merkleRoot: "0xroot" as Bytes32String,
+                merkleRoot: bytesToHex(randomBytes(32)) as Bytes32String,
             },
             srcAddress: "0xD5F6cA46A9DA3c1089D0F2F029CF14F3f714D483",
         });
@@ -194,7 +195,7 @@ describe("Orchestrator Integration - Strategy Events Processing", () => {
             params: {
                 recipientId: DEFAULT_FROM_ADDRESS,
                 amount: "1000000000000000000",
-                grantee: "0xgrantee",
+                grantee: DEFAULT_FROM_ADDRESS,
                 token: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
             },
             srcAddress: "0xD5F6cA46A9DA3c1089D0F2F029CF14F3f714D483",
@@ -356,8 +357,8 @@ describe("Orchestrator Integration - Strategy Events Processing", () => {
             eventName: "AllocatedWithOrigin",
             params: {
                 recipientId: mockAnchorAddress,
-                amount: "1000000000000000000", // 1 ETH
-                token: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE", // ETH
+                amount: "1000000000000000000",
+                token: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
                 origin: DEFAULT_FROM_ADDRESS,
                 sender: DEFAULT_FROM_ADDRESS,
             },
