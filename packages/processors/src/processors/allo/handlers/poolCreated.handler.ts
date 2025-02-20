@@ -155,9 +155,10 @@ export class PoolCreatedHandler implements IEventHandler<"Allo", "PoolCreated"> 
         const { roundRepository } = this.dependencies;
         const changes: Changeset[] = [];
         const allPendingRoles: PendingRoundRole[] = [];
+        const { adminRole, managerRole } = getRoundRoles(BigInt(roundId));
 
-        for (const roleName of ["admin", "manager"] as const) {
-            const pendingRoles = await roundRepository.getPendingRoundRoles(chainId, roleName);
+        for (const roleHash of [adminRole, managerRole] as const) {
+            const pendingRoles = await roundRepository.getPendingRoundRoles(chainId, roleHash);
             for (const pr of pendingRoles) {
                 changes.push({
                     type: "InsertRoundRole",
@@ -166,7 +167,7 @@ export class PoolCreatedHandler implements IEventHandler<"Allo", "PoolCreated"> 
                             chainId,
                             roundId,
                             address: pr.address,
-                            role: roleName,
+                            role: roleHash === adminRole ? "admin" : "manager",
                             createdAtBlock: pr.createdAtBlock,
                         },
                     },
