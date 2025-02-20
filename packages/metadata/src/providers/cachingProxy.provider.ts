@@ -1,3 +1,4 @@
+import { retryAsync, RetryOptions } from "ts-retry";
 import { z } from "zod";
 
 import { ICache } from "@grants-stack-indexer/repository";
@@ -16,16 +17,18 @@ export class CachingMetadataProvider implements IMetadataProvider, ICacheable {
         private readonly provider: IMetadataProvider,
         private readonly cache: ICache<string, unknown> & Partial<ICacheable>,
         private readonly logger: ILogger,
+        private readonly retryOptions: RetryOptions = {
+            maxTry: 10,
+            delay: 1000,
+            until: (result) => result !== undefined,
+        },
     ) {}
 
     /** @inheritdoc */
-    async getMetadata<T>(
-        ipfsCid: string,
-        validateContent?: z.ZodSchema<T>,
-    ): Promise<T | undefined | null> {
-        let cachedMetadata: T | undefined | null = undefined;
+    async getMetadata<T>(ipfsCid: string, validateContent?: z.ZodSchema<T>): Promise<T | null> {
+        let cachedMetadata: T | null | undefined = undefined;
         try {
-            cachedMetadata = (await this.cache.get(ipfsCid)) as T | undefined | null;
+            cachedMetadata = (await this.cache.get(ipfsCid)) as T | null;
         } catch (error) {
             this.logger.debug(`Failed to get cached metadata for IPFS CID ${ipfsCid}`, {
                 error,
@@ -36,19 +39,23 @@ export class CachingMetadataProvider implements IMetadataProvider, ICacheable {
             return cachedMetadata;
         }
 
-        const metadata = await this.provider.getMetadata<T>(ipfsCid, validateContent);
+        const metadata = await retryAsync(
+            () => this.provider.getMetadata<T>(ipfsCid, validateContent),
+            this.retryOptions,
+        ).catch(() => {
+            return null;
+        });
 
-        if (metadata || metadata === null) {
-            try {
-                await this.cache.set(ipfsCid, metadata);
-            } catch (error) {
-                this.logger.debug(`Failed to cache metadata for IPFS CID ${ipfsCid}`, {
-                    error,
-                });
-            }
+        const result = metadata ?? null;
+        try {
+            await this.cache.set(ipfsCid, result);
+        } catch (error) {
+            this.logger.debug(`Failed to cache metadata for IPFS CID ${ipfsCid}`, {
+                error,
+            });
         }
 
-        return metadata;
+        return result;
     }
 
     /** @inheritdoc */

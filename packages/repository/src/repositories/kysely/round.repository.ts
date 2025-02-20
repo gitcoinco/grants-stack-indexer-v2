@@ -1,6 +1,6 @@
 import { Kysely } from "kysely";
 
-import { Address, ChainId, stringify } from "@grants-stack-indexer/shared";
+import { Address, Bytes32String, ChainId, stringify } from "@grants-stack-indexer/shared";
 
 import {
     Database,
@@ -279,10 +279,7 @@ export class KyselyRoundRepository implements IRoundRepository<KyselyTransaction
     // ============================ PENDING ROUND ROLES ============================
 
     /* @inheritdoc */
-    async getPendingRoundRoles(
-        chainId: ChainId,
-        role: RoundRoleNames,
-    ): Promise<PendingRoundRole[]> {
+    async getPendingRoundRoles(chainId: ChainId, role: Bytes32String): Promise<PendingRoundRole[]> {
         return this.db
             .withSchema(this.schemaName)
             .selectFrom("pendingRoundRoles")

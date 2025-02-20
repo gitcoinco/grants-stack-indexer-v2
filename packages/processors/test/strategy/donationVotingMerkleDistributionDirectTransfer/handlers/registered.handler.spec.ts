@@ -108,7 +108,7 @@ describe("DVMDRegisteredHandler", () => {
                         {
                             status: "PENDING",
                             updatedAtBlock: mockEvent.blockNumber.toString(),
-                            updatedAt: new Date(mockEvent.blockTimestamp * 1000),
+                            updatedAt: new Date(mockEvent.blockTimestamp),
                         },
                     ],
                     distributionTransaction: null,

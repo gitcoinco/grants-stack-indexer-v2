@@ -51,6 +51,7 @@ export class ProcessingService {
             kyselyDatabase,
             logger,
             retryStrategy,
+            notifier,
         } = sharedDependencies;
         const {
             eventRegistryRepository,
@@ -84,6 +85,7 @@ export class ProcessingService {
                 chain.fetchDelayMs,
                 retryStrategy,
                 logger,
+                notifier,
             );
             const retroactiveProcessor = new RetroactiveProcessor(
                 chain.id as ChainId,

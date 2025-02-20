@@ -9,3 +9,4 @@ export * from "./tokens/tokens.js";
 export * from "./exceptions/index.js";
 export * from "./retry/index.js";
 export * from "./caching/index.js";
+export * from "./notifier/index.js";

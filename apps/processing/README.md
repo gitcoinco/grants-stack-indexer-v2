@@ -40,6 +40,8 @@ Available options:
 | `RETRY_BASE_DELAY_MS` | Base delay for retry attempts | 3000 | No | |
 | `RETRY_FACTOR` | Delay factor for retry attempts | 2 | No | |
 | `RETRY_MAX_DELAY_MS` | Maximum delay for retry attempts | 300000 | No | |
+| `NOTIFIER_PROVIDER` | Notifier provider (slack or null) | null | No | |
+| `SLACK_WEBHOOK_URL` | Slack webhook URL | N/A | Only if NOTIFIER_PROVIDER is slack | |
 
 ## Available Scripts
 
