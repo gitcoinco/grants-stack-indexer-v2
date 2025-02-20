@@ -434,6 +434,79 @@ describe("Orchestrator Integration - Strategy Events Processing", () => {
         );
     });
 
+    it("process Allocated event and apply InsertApplicationPayout changeset", async () => {
+        const allocatedEvent = createTestStrategyEvent({
+            eventName: "AllocatedWithToken",
+            params: {
+                recipientId: mockAnchorAddress,
+                amount: "1000000000000000000",
+                token: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+                sender: DEFAULT_FROM_ADDRESS,
+            },
+            srcAddress: "0xF5F6Ca46a9DA3C1089d0F2F029cF14F3F714D483",
+        });
+
+        const { indexerClient } = mocks;
+        const { roundRepository, applicationRepository, applicationPayoutRepository } =
+            mocks.dependencies;
+        const { eventsRegistry } = mocks.registries;
+
+        const dataLoaderSpy = vi.spyOn(orchestrator["dataLoader"], "applyChanges");
+        const eventsFetcherSpy = vi.spyOn(
+            orchestrator["eventsFetcher"],
+            "fetchEventsByBlockNumberAndLogIndex",
+        );
+
+        vi.spyOn(roundRepository, "getRoundByStrategyAddressOrThrow").mockResolvedValue({
+            id: "13",
+            chainId: chainId,
+            matchTokenAddress: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+        } as unknown as Round);
+
+        vi.spyOn(applicationRepository, "getApplicationByAnchorAddressOrThrow").mockResolvedValue({
+            id: "1",
+            chainId: chainId,
+        } as unknown as Application);
+
+        vi.spyOn(indexerClient, "getEventsAfterBlockNumberAndLogIndex")
+            .mockResolvedValueOnce([allocatedEvent])
+            .mockResolvedValue([]);
+
+        const orchestratorPromise = orchestrator.run(abortController.signal);
+        await waitForProcessing(eventsFetcherSpy, dataLoaderSpy);
+
+        abortController.abort();
+        await orchestratorPromise;
+
+        expect(orchestrator["dataLoader"].applyChanges).toHaveBeenCalledWith(
+            expect.arrayContaining([expect.anything(), expect.anything()]),
+        );
+
+        expect(applicationPayoutRepository.insertApplicationPayout).toHaveBeenCalledWith(
+            {
+                amount: BigInt(allocatedEvent.params.amount),
+                applicationId: "1",
+                roundId: "13",
+                chainId: chainId,
+                tokenAddress: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+                amountInRoundMatchToken: BigInt(allocatedEvent.params.amount),
+                amountInUsd: "1",
+                transactionHash: allocatedEvent.transactionFields.hash,
+                sender: DEFAULT_FROM_ADDRESS,
+                timestamp: new Date(allocatedEvent.blockTimestamp),
+            },
+            {},
+        );
+        expect(eventsRegistry.saveLastProcessedEvent).toHaveBeenCalledWith(
+            chainId,
+            {
+                ...allocatedEvent,
+                rawEvent: allocatedEvent,
+            },
+            {},
+        );
+    });
+
     it("process Registered event and apply InsertApplication changeset", async () => {
         const registeredEvent = createTestStrategyEvent<"RegisteredWithSender">({
             eventName: "RegisteredWithSender",
