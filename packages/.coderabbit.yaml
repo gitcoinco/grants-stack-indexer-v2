@@ -30,76 +30,74 @@ reviews:
         - path: "**/*.ts"
           instructions: |2-
           Review TypeScript files for adherence to the following guidelines:
-                - Avoid over-abstraction; prioritize composition over inheritance.
-                - Use dependency injection and follow SOLID principles.
-                - Avoid `any`; use `unknown` when necessary.
-                - Use runtime type-checking for environment variables (e.g., Zod).
-                - Prevent circular dependencies with the internal module pattern.
-                - Libraries should have an `external.ts` file explicitly listing public exports.
-                - Use `bigint` as-is; cast to `Number` only when exposing values via APIs.
-                - Document all code with JSDoc.
-                - Encourage static async factory functions for constructors.
-        - Avoid overly nitpicky feedback beyond these best practices.
+              - Avoid over-abstraction; prioritize composition over inheritance.
+              - Use dependency injection and follow SOLID principles.
+              - Avoid `any`; use `unknown` when necessary.
+              - Use runtime type-checking for environment variables (e.g., Zod).
+              - Prevent circular dependencies with the internal module pattern.
+              - Libraries should have an `external.ts` file explicitly listing public exports.
+              - Use `bigint` as-is; cast to `Number` only when exposing values via APIs.
+              - Document all code with JSDoc.
+              - Encourage static async factory functions for constructors.
+              - Avoid overly nitpicky feedback beyond these best practices.
         - path: "**/*.tsx"
           instructions: |2-
           Review `.tsx` files with these front-end best practices:
-                - Avoid complex logic in the render section; abstract it into functions.
-                - Maintain import order: React imports first, then libraries, then internal files.
-                - Prefer logical AND (`&&`) over ternary conditionals for clarity.
-                - Avoid inline styles; use external stylesheets or CSS-in-JS solutions.
-                - Incorporate appropriate break lines for better readability.
-                - Optimize images to be under 250kB for performance.
-                - Follow React and team-specific standards for component structure and naming.
-                - Be concise and avoid overly nitpicky feedback outside of these best practices.
+              - Avoid complex logic in the render section; abstract it into functions.
+              - Maintain import order: React imports first, then libraries, then internal files.
+              - Prefer logical AND (`&&`) over ternary conditionals for clarity.
+              - Avoid inline styles; use external stylesheets or CSS-in-JS solutions.
+              - Incorporate appropriate break lines for better readability.
+              - Optimize images to be under 250kB for performance.
+              - Follow React and team-specific standards for component structure and naming.
+              - Be concise and avoid overly nitpicky feedback outside of these best practices.
         - path: "**/services/**/*.ts"
           instructions: |-
               Review service files with the following considerations:
-                      - A Service encapsulates a broader business workflow and might orchestrate various components or interact with multiple data sources or APIs.
-                      - Ensure proper composability: Services should use Providers for data/resource access and apply business/orchestration logic.
-                      - Validate naming conventions for aggregating services (e.g., `AggregatorService` or domain-specific names like `MetricsService`).
+                - A Service encapsulates a broader business workflow and might orchestrate various components or interact with multiple data sources or APIs.
+                - Ensure proper composability: Services should use Providers for data/resource access and apply business/orchestration logic.
+                - Validate naming conventions for aggregating services (e.g., `AggregatorService` or domain-specific names like `MetricsService`).
         - path: scripts/**/*.ts
           instructions: |-
               Ensure scripts:
-                      - Use `process.cwd()` for root references.
-                      - Follow folder conventions (`infra/` for infra scripts, `utilities/` for utilities).
-                      - Are organized in `package.json` with `script:infra:{name}` or `script:util:{name}`.
-               - Be concise and avoid overly nitpicky feedback outside of these best practices.
+                - Use `process.cwd()` for root references.
+                - Follow folder conventions (`infra/` for infra scripts, `utilities/` for utilities).
+                - Are organized in `package.json` with `script:infra:{name}` or `script:util:{name}`.
+                - Be concise and avoid overly nitpicky feedback outside of these best practices.
         - path: "**/*.test.ts"
           instructions: |-
               Review the unit test files with the following guidelines:
-                      - Avoid using the word "should" in test descriptions.
-                      - Ensure descriptive test names convey the intent of each test.
-                      - Validate adherence to the Mocha/Chai/Jest/Vitest/Cypress test library best practices.
-               - Be concise and avoid overly nitpicky feedback outside of these best practices.
+                - Avoid using the word "should" in test descriptions.
+                - Ensure descriptive test names convey the intent of each test.
+                - Validate adherence to the Mocha/Chai/Jest/Vitest/Cypress test library best practices.
+                - Be concise and avoid overly nitpicky feedback outside of these best practices.
         - path: "**/*.spec.ts"
           instructions: |-
               Review the unit test files with the following guidelines:
-                      - Avoid using the word "should" in test descriptions.
-                      - Ensure descriptive test names convey the intent of each test.
-                      - Validate adherence to the Mocha/Chai/Jest test library best practices.
-               - Be concise and avoid overly nitpicky feedback outside of these best practices.
+                - Avoid using the word "should" in test descriptions.
+                - Ensure descriptive test names convey the intent of each test.
+                - Validate adherence to the Mocha/Chai/Jest test library best practices.
+                - Be concise and avoid overly nitpicky feedback outside of these best practices.
         - path: "**/*.js"
           instructions: |2-
-                Review JavaScript files for:
+              Review JavaScript files for:
                 - Compliance with the Google JavaScript Style Guide.
                 - Dependency management without caret versions.
-         - Be concise and avoid overly nitpicky feedback outside of these best practices.
+                - Be concise and avoid overly nitpicky feedback outside of these best practices.
         - path: "**/errors/**/*.ts"
           instructions: |2-
-         Ensure custom error classes:
+              Ensure custom error classes:
                 - Have declarative, descriptive names.
                 - Avoid suffixes like `Exception` or `Error` (e.g., use `EmptyArray`).
-         - Be concise and avoid overly nitpicky feedback outside of these best practices.
+                - Be concise and avoid overly nitpicky feedback outside of these best practices.
         - path: "**/providers/**/*.ts"
           instructions: >-
               Review provider files for the following:
-
-              - Providers should supply narrowly scoped data/resources.
-
-              - Ensure classes interacting with metadata sources (e.g., GitHub, JSON
-              files, IPFS) implement the `IMetadataProvider` interface and follow
-              naming conventions (e.g., `GithubProvider`, `JsonFileProvider`).
-               - Be concise and avoid overly nitpicky feedback outside of these best practices.
+                - Providers should supply narrowly scoped data/resources.
+                - Ensure classes interacting with metadata sources (e.g., GitHub, JSON
+                files, IPFS) implement the `IMetadataProvider` interface and follow
+                naming conventions (e.g., `GithubProvider`, `JsonFileProvider`).
+                - Be concise and avoid overly nitpicky feedback outside of these best practices.
     abort_on_close: true # Stop review if PR/MR is closed/merged
     auto_review:
         enabled: true # Enable automatic code review
