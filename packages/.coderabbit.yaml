@@ -112,8 +112,6 @@ reviews:
     tools: # Configuration for various code analysis tools
         shellcheck:
             enabled: true # Enable ShellCheck for shell script analysis
-        ruff:
-            enabled: false # Enable Ruff for Python linting
         markdownlint:
             enabled: true # Enable markdownlint for Markdown files
         github-checks:
@@ -131,35 +129,16 @@ reviews:
             enabled: true # Enable Biome for web project analysis
         hadolint:
             enabled: true # Enable Hadolint for Dockerfile linting
-        swiftlint:
-            enabled: false # Enable SwiftLint for Swift code
-        phpstan:
-            enabled: false # Enable PHPStan for PHP analysis
-            level: default # Use default rule level
-        golangci-lint:
-            enabled: false # Enable golangci-lint for Go code
         yamllint:
             enabled: true # Enable YAMLlint for YAML files
         gitleaks:
             enabled: true # Enable Gitleaks for secret scanning
         checkov:
             enabled: true # Enable Checkov for IaC analysis
-        detekt:
-            enabled: false # Enable detekt for Kotlin analysis
         eslint:
             enabled: true # Enable ESLint for JavaScript
-        rubocop:
-            enabled: false # Enable RuboCop for Ruby analysis
-        buf:
-            enabled: false # Enable Buf for Protobuf files
-        regal:
-            enabled: false # Enable Regal for Rego linting
         actionlint:
             enabled: true # Enable actionlint for GitHub Actions
-        pmd:
-            enabled: false # Enable PMD for Java analysis
-        cppcheck:
-            enabled: false # Enable Cppcheck for C/C++
         semgrep:
             enabled: true # Enable Semgrep for security scanning
         circleci:
@@ -172,10 +151,8 @@ reviews:
 chat:
     auto_reply: true # Enable automatic bot replies
     integrations:
-        jira:
-            usage: auto # Auto-disable Jira for public repos
         linear:
-            usage: auto # Auto-disable Linear for public repos
+            usage: enabled # Enable Linear
 knowledge_base:
     opt_out: false # Don't opt out of knowledge base features
     web_search:
@@ -184,11 +161,8 @@ knowledge_base:
         scope: auto # Auto-select learnings scope based on repo visibility
     issues:
         scope: auto # Auto-select issues scope based on repo visibility
-    jira:
-        usage: auto # Auto-disable Jira for public repos
-        project_keys: [] # No specific Jira project keys
     linear:
-        usage: auto # Auto-disable Linear for public repos
-        team_keys: ["GIT"] # No specific Linear team keys
+        usage: enabled # Enable Linear
+        team_keys: ["GIT"] #  Linear team key
     pull_requests:
         scope: auto # Auto-select PR scope based on repo visibility
