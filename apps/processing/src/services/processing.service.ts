@@ -66,7 +66,6 @@ export class ProcessingService {
 
         for (const chain of chains) {
             // Initialize EVM provider
-            // TODO: Derive viem chain from chain.id
             const evmProvider = new EvmProvider(
                 chain.rpcUrls,
                 extractChain({ chains: Object.values(viemChains) as Chain[], id: chain.id }),
