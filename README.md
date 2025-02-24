@@ -112,6 +112,13 @@ http://localhost:8082/
 
 Use the default password: `my-admin-secret`.
 
+## To add a new chain
+
+1. On `indexer` package add the chain to `config.yaml` (refer to : [[How to add a new chain](apps/indexer/README.md)] )
+2. On `shared` package modify `tokens.ts` and add the tokens you will search price for (Refer to : [[How to add a new token](apps/shared/README.md)] )
+3. Wait until the new chain is fully indexed
+4. Run bootstrap pricing and metadata scripts (refer to: [[How to run bootstrap for specific chain](scripts/bootstrap/README.md)] )
+
 ## Contributing
 
 Wonderland is a team of top Web3 researchers, developers, and operators who believe that the future needs to be open-source, permissionless, and decentralized.
