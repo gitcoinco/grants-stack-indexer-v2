@@ -1,4 +1,5 @@
-import { hedera, optimism } from "viem/chains";
+import { Chain, extractChain } from "viem";
+import * as viemChains from "viem/chains";
 
 import { EvmProvider } from "@grants-stack-indexer/chain-providers";
 import {
@@ -66,7 +67,11 @@ export class ProcessingService {
         for (const chain of chains) {
             // Initialize EVM provider
             // TODO: Derive viem chain from chain.id
-            const evmProvider = new EvmProvider(chain.rpcUrls, hedera, logger);
+            const evmProvider = new EvmProvider(
+                chain.rpcUrls,
+                extractChain({ chains: Object.values(viemChains) as Chain[], id: chain.id }),
+                logger,
+            );
 
             const cachedStrategyRegistry = await InMemoryCachedStrategyRegistry.initialize(
                 logger,
