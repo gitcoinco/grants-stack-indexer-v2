@@ -83,7 +83,7 @@ export class KyselyProjectRepository implements IProjectRepository<KyselyTransac
                 .insertInto("projects")
                 .values({
                     ...project,
-                    tags: stringArrayToJsonb(project.tags?.length ? project.tags : []),
+                    tags: stringArrayToJsonb(Array.isArray(project.tags) ? project.tags : []),
                 })
                 .execute();
         } catch (error) {

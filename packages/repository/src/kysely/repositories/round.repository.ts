@@ -125,7 +125,7 @@ export class KyselyRoundRepository implements IRoundRepository<KyselyTransaction
                 .insertInto("rounds")
                 .values({
                     ..._round,
-                    tags: stringArrayToJsonb(_round.tags?.length ? _round.tags : []),
+                    tags: stringArrayToJsonb(Array.isArray(_round.tags) ? _round.tags : []),
                 })
                 .execute();
         } catch (error) {

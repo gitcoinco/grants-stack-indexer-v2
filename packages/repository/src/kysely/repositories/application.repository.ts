@@ -108,7 +108,9 @@ export class KyselyApplicationRepository implements IApplicationRepository<Kysel
                 .insertInto("applications")
                 .values({
                     ..._application,
-                    tags: stringArrayToJsonb(application.tags?.length ? application.tags : []),
+                    tags: stringArrayToJsonb(
+                        Array.isArray(_application.tags) ? _application.tags : [],
+                    ),
                 })
                 .execute();
         } catch (error) {
