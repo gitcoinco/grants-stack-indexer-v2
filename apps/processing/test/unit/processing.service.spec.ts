@@ -10,6 +10,7 @@ import {
 } from "@grants-stack-indexer/data-flow";
 
 import type { Environment } from "../../src/config/env.js";
+import { InvalidChainId } from "../../src/exceptions/index.js";
 import { ProcessingService } from "../../src/services/processing.service.js";
 
 vi.mock("../../src/services/sharedDependencies.service.js", () => ({
@@ -91,7 +92,7 @@ describe("ProcessingService", () => {
                 fetchDelayMs: 1000,
             },
             {
-                id: 2,
+                id: 10,
                 rpcUrls: ["http://localhost:8546"],
                 name: "Chain 2",
                 fetchLimit: 200,
@@ -154,8 +155,14 @@ describe("ProcessingService", () => {
                 expect.any(AbortSignal),
                 expect.any(AbortSignal),
             ]);
-            expect(logSpy).toHaveBeenNthCalledWith(2, "Starting orchestrator for chain 1...");
-            expect(logSpy).toHaveBeenNthCalledWith(3, "Starting orchestrator for chain 2...");
+            expect(logSpy).toHaveBeenNthCalledWith(
+                2,
+                `Starting orchestrator for chain ${mockEnv.CHAINS[0]?.id}...`,
+            );
+            expect(logSpy).toHaveBeenNthCalledWith(
+                3,
+                `Starting orchestrator for chain ${mockEnv.CHAINS[1]?.id}...`,
+            );
 
             // Simulate SIGINT
             process.emit("SIGINT");
@@ -200,6 +207,22 @@ describe("ProcessingService", () => {
             await processingService.releaseResources();
 
             expect(logSpy).toHaveBeenCalledWith(`Error releasing resources: ${mockError}`);
+        });
+        it("throws an error if the chain is not supported", async () => {
+            const unsupportedChain = {
+                id: 2,
+                rpcUrls: ["http://localhost:8546"],
+                name: "Chain 2",
+                fetchLimit: 200,
+                fetchDelayMs: 2000,
+            };
+            const env = {
+                ...mockEnv,
+                CHAINS: [unsupportedChain],
+            };
+            await expect(ProcessingService.initialize(env as Environment)).rejects.toThrow(
+                InvalidChainId,
+            );
         });
     });
 

@@ -43,6 +43,27 @@ Create a handler for the new event. This handler is essential for ensuring the e
 
 After making the necessary changes, redeploy your environment to apply the updates.
 
+## Adding a new chain
+
+### Step 1: Add the Chain to `config.yaml`
+
+Example:
+Use your values for the chain and the contracts you want to index.
+
+```yaml
+- id: 1 # ethereum
+  start_block: 17423042
+  rpc_url: https://mainnet.infura.io/v3/YOUR_INFURA_PROJECT_ID
+  contracts:
+      - name: Registry
+        address:
+            - 0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3
+      - name: Strategy
+      - name: Allo
+        address:
+            - 0x1133eA7Af70876e64665ecD07C0A0476d09465a1
+```
+
 ## 🔍 Notes
 
 Ensure each event is properly handled and thoroughly tested before redeploying the environment to prevent issues in the indexing process.

@@ -49,6 +49,7 @@ export class PoolCreatedHandler implements IEventHandler<"Allo", "PoolCreated"> 
             round?: unknown;
             application?: unknown;
         }>(metadataPointer);
+        // TODO: this might not work for other gitcoin strategies like retro funding
         const parsedRoundMetadata = RoundMetadataSchema.safeParse(metadata?.round);
 
         const checksummedTokenAddress = getAddress(tokenAddress);

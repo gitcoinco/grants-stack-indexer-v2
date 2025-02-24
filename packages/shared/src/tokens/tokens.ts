@@ -5,9 +5,13 @@ import { Address, ChainId, TimestampMs } from "../internal.js";
 export type TokenCode = Branded<string, "TokenCode">;
 
 export type Token = {
+    /** The token's unique code identifier (e.g. "ETH", "USDC") */
     code: TokenCode;
+    /** The code used to look up pricing data for this token. May differ from code */
     priceSourceCode: TokenCode;
+    /** The token's contract address on the blockchain */
     address: Address;
+    /** Number of decimal places used to represent token amounts */
     decimals: number;
     voteAmountCap?: bigint;
 };
@@ -622,6 +626,20 @@ export const TOKENS: {
             priceSourceCode: "USDC" as TokenCode,
             address: "0x78e0D07C4A08adFfe610113310163b40E7e47e81",
             decimals: 6,
+        },
+    },
+    "295": {
+        "0x0000000000000000000000000000000000000000": {
+            code: "HBAR" as TokenCode,
+            priceSourceCode: "HBAR" as TokenCode,
+            address: "0x0000000000000000000000000000000000000000",
+            decimals: 8,
+        },
+        "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE": {
+            code: "HBAR" as TokenCode,
+            priceSourceCode: "HBAR" as TokenCode,
+            address: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+            decimals: 8,
         },
     },
 } as const;
