@@ -6,6 +6,6 @@ export * from "./applicationPayout.repository.js";
 export * from "./strategyRegistry.repository.js";
 export * from "./eventRegistry.repository.js";
 export * from "./strategyProcessingCheckpoint.repository.js";
-export * from "./transactionManager.js";
+export * from "../transactionManager.js";
 export * from "./prices.repository.js";
 export * from "./metadata.repository.js";

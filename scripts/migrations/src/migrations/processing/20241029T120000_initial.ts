@@ -35,7 +35,7 @@ export async function up(db: Kysely<any>): Promise<void> {
         .addColumn("createdByAddress", ADDRESS_TYPE)
         .addColumn("createdAtBlock", BIGINT_TYPE)
         .addColumn("updatedAtBlock", BIGINT_TYPE)
-        .addColumn("tags", sql`text[]`)
+        .addColumn("tags", "jsonb")
         .addColumn("projectType", sql.table(`${schema}.project_type`))
 
         .addPrimaryKeyConstraint("projects_pkey", ["id", "chainId"])
@@ -80,7 +80,7 @@ export async function up(db: Kysely<any>): Promise<void> {
         .addColumn("id", "text")
         .addColumn("chainId", CHAIN_ID_TYPE)
 
-        .addColumn("tags", sql`text[]`)
+        .addColumn("tags", "jsonb")
 
         .addColumn("matchAmount", BIGINT_TYPE)
         .addColumn("matchTokenAddress", ADDRESS_TYPE)
@@ -204,7 +204,7 @@ export async function up(db: Kysely<any>): Promise<void> {
         .addColumn("totalAmountDonatedInUsd", CURRENCY_TYPE)
         .addColumn("uniqueDonorsCount", "integer")
 
-        .addColumn("tags", sql`text[]`)
+        .addColumn("tags", "jsonb")
 
         .addPrimaryKeyConstraint("applications_pkey", ["chainId", "roundId", "id"])
         .addForeignKeyConstraint(

@@ -18,6 +18,7 @@ import {
     RoundRole,
     RoundRoleNames,
 } from "../../internal.js";
+import { stringArrayToJsonb } from "../helpers/index.js";
 
 export class KyselyRoundRepository implements IRoundRepository<KyselyTransaction> {
     constructor(
@@ -120,7 +121,13 @@ export class KyselyRoundRepository implements IRoundRepository<KyselyTransaction
         const _round = this.formatRound(round);
         try {
             const queryBuilder = (tx || this.db).withSchema(this.schemaName);
-            await queryBuilder.insertInto("rounds").values(_round).execute();
+            await queryBuilder
+                .insertInto("rounds")
+                .values({
+                    ..._round,
+                    tags: stringArrayToJsonb(_round.tags?.length ? _round.tags : []),
+                })
+                .execute();
         } catch (error) {
             throw handlePostgresError(error, {
                 className: KyselyRoundRepository.name,

@@ -1,6 +1,6 @@
 import { Kysely } from "kysely";
 
-import { Database, ITransactionManager, KyselyTransaction } from "../../internal.js";
+import { Database, ITransactionManager, KyselyTransaction } from "../internal.js";
 
 export class KyselyTransactionManager implements ITransactionManager<KyselyTransaction> {
     constructor(private readonly db: Kysely<Database>) {}
