@@ -13,7 +13,7 @@ export async function up(db: Kysely<any>): Promise<void> {
     const ADDRESS_TYPE = "text";
     const CHAIN_ID_TYPE = "integer";
     const PENDING_ROLE_TYPE = "text";
-    const CURRENCY_TYPE = sql`numeric(18,2)`;
+    const CURRENCY_TYPE = sql`numeric(18,5)`;
 
     const schema = getSchemaName(db.schema);
     const ref = (name: string): RawBuilder<unknown> => sql.table(`${schema}.${name}`);

@@ -59,6 +59,7 @@ const TokenMapping: { [key: string]: CoingeckoTokenId | undefined } = {
     AVAX: "avalanche-2" as CoingeckoTokenId,
     // MTK: undefined,
     WSEI: "wrapped-sei" as CoingeckoTokenId,
+    HBAR: "hedera-hashgraph" as CoingeckoTokenId,
 };
 
 // sometimes coingecko returns no prices for 1 hour range, 2 hours works better

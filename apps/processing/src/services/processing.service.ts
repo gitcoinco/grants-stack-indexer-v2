@@ -1,4 +1,5 @@
-import { optimism } from "viem/chains";
+import { Chain, extractChain } from "viem";
+import * as viemChains from "viem/chains";
 
 import { EvmProvider } from "@grants-stack-indexer/chain-providers";
 import {
@@ -11,6 +12,7 @@ import {
 import { ChainId, ILogger } from "@grants-stack-indexer/shared";
 
 import { Environment } from "../config/env.js";
+import { InvalidChainId } from "../exceptions/index.js";
 import { SharedDependencies, SharedDependenciesService } from "./index.js";
 
 /**
@@ -63,9 +65,18 @@ export class ProcessingService {
         const strategyRegistry = new DatabaseStrategyRegistry(logger, strategyRegistryRepository);
         const eventsRegistry = new DatabaseEventRegistry(logger, eventRegistryRepository);
 
+        const viemChainsArray = Object.values(viemChains) as Chain[];
+
         for (const chain of chains) {
             // Initialize EVM provider
-            const evmProvider = new EvmProvider(chain.rpcUrls, optimism, logger);
+            const viemChain = extractChain({
+                chains: viemChainsArray,
+                id: chain.id,
+            });
+            if (!viemChain) {
+                throw new InvalidChainId(chain.id);
+            }
+            const evmProvider = new EvmProvider(chain.rpcUrls, viemChain, logger);
 
             const cachedStrategyRegistry = await InMemoryCachedStrategyRegistry.initialize(
                 logger,
