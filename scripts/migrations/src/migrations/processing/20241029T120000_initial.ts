@@ -13,7 +13,7 @@ export async function up(db: Kysely<any>): Promise<void> {
     const ADDRESS_TYPE = "text";
     const CHAIN_ID_TYPE = "integer";
     const PENDING_ROLE_TYPE = "text";
-    const CURRENCY_TYPE = sql`numeric(18,2)`;
+    const CURRENCY_TYPE = sql`numeric(18,5)`;
 
     const schema = getSchemaName(db.schema);
     const ref = (name: string): RawBuilder<unknown> => sql.table(`${schema}.${name}`);
@@ -35,7 +35,7 @@ export async function up(db: Kysely<any>): Promise<void> {
         .addColumn("createdByAddress", ADDRESS_TYPE)
         .addColumn("createdAtBlock", BIGINT_TYPE)
         .addColumn("updatedAtBlock", BIGINT_TYPE)
-        .addColumn("tags", sql`text[]`)
+        .addColumn("tags", "jsonb")
         .addColumn("projectType", sql.table(`${schema}.project_type`))
 
         .addPrimaryKeyConstraint("projects_pkey", ["id", "chainId"])
@@ -80,7 +80,7 @@ export async function up(db: Kysely<any>): Promise<void> {
         .addColumn("id", "text")
         .addColumn("chainId", CHAIN_ID_TYPE)
 
-        .addColumn("tags", sql`text[]`)
+        .addColumn("tags", "jsonb")
 
         .addColumn("matchAmount", BIGINT_TYPE)
         .addColumn("matchTokenAddress", ADDRESS_TYPE)
@@ -204,7 +204,7 @@ export async function up(db: Kysely<any>): Promise<void> {
         .addColumn("totalAmountDonatedInUsd", CURRENCY_TYPE)
         .addColumn("uniqueDonorsCount", "integer")
 
-        .addColumn("tags", sql`text[]`)
+        .addColumn("tags", "jsonb")
 
         .addPrimaryKeyConstraint("applications_pkey", ["chainId", "roundId", "id"])
         .addForeignKeyConstraint(

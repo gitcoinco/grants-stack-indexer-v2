@@ -16,6 +16,7 @@ import {
     ProjectNotFound,
     ProjectRoleNames,
 } from "../../internal.js";
+import { stringArrayToJsonb } from "../helpers/index.js";
 
 export class KyselyProjectRepository implements IProjectRepository<KyselyTransaction> {
     constructor(
@@ -78,7 +79,13 @@ export class KyselyProjectRepository implements IProjectRepository<KyselyTransac
     async insertProject(project: NewProject, tx?: KyselyTransaction): Promise<void> {
         try {
             const queryBuilder = (tx || this.db).withSchema(this.schemaName);
-            await queryBuilder.insertInto("projects").values(project).execute();
+            await queryBuilder
+                .insertInto("projects")
+                .values({
+                    ...project,
+                    tags: stringArrayToJsonb(Array.isArray(project.tags) ? project.tags : []),
+                })
+                .execute();
         } catch (error) {
             throw handlePostgresError(error, {
                 className: KyselyProjectRepository.name,

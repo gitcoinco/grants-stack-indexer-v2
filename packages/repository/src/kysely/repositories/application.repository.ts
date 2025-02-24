@@ -12,6 +12,7 @@ import {
     NewApplication,
     PartialApplication,
 } from "../../internal.js";
+import { stringArrayToJsonb } from "../helpers/index.js";
 
 export class KyselyApplicationRepository implements IApplicationRepository<KyselyTransaction> {
     constructor(
@@ -103,7 +104,15 @@ export class KyselyApplicationRepository implements IApplicationRepository<Kysel
         try {
             const queryBuilder = (tx || this.db).withSchema(this.schemaName);
 
-            await queryBuilder.insertInto("applications").values(_application).execute();
+            await queryBuilder
+                .insertInto("applications")
+                .values({
+                    ..._application,
+                    tags: stringArrayToJsonb(
+                        Array.isArray(_application.tags) ? _application.tags : [],
+                    ),
+                })
+                .execute();
         } catch (error) {
             throw handlePostgresError(error, {
                 className: KyselyApplicationRepository.name,

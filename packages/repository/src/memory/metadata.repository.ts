@@ -1,4 +1,4 @@
-import { ICache } from "../../internal.js";
+import { ICache } from "../internal.js";
 
 /**
  * A cache for metadata using a simple in-memory map.

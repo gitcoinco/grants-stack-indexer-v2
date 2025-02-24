@@ -60,7 +60,7 @@ export {
     KyselyStrategyRegistryRepository,
     KyselyEventRegistryRepository,
     KyselyStrategyProcessingCheckpointRepository,
-} from "./repositories/kysely/index.js";
+} from "./kysely/repositories/index.js";
 
 export {
     RoundNotFound,

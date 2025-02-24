@@ -1,6 +1,6 @@
 import { TimestampMs, TokenCode, TokenPrice } from "@grants-stack-indexer/shared";
 
-import { IPricingCache, PriceCacheKey } from "../../internal.js";
+import { IPricingCache, PriceCacheKey } from "../internal.js";
 
 /**
  * A cache for token prices using a simple in-memory map.
