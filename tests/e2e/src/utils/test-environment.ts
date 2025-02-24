@@ -2,7 +2,6 @@ import axios from "axios";
 import { Client } from "pg";
 import { Network, StartedNetwork } from "testcontainers";
 
-import { ServiceNotStarted } from "../exceptions/index.js";
 import { MockEnvioIndexer } from "../mocks/envio-graphql-server.mock.js";
 import { MOCK_ENVIO_INDEXER_PORT } from "./constants.js";
 import { DatabaseManager } from "./database-manager.js";
@@ -10,8 +9,14 @@ import { HasuraApiContainer } from "./hasura-container.js";
 import { ProcessingServiceManager } from "./processing-service.js";
 import { TestDatabase } from "./test-database.js";
 
+export interface GlobalTestState {
+    databaseUrl: string;
+    hasuraUrl: string;
+    envioIndexerUrl: string;
+}
+
 /**
- * TestEnvironment orchestrates all components needed for integration testing.
+ * TestEnvironment orchestrates the setup and teardown of the global test environment components
  * It manages the lifecycle of containers, services, and network connections.
  *
  * Features:
@@ -36,18 +41,18 @@ export class TestEnvironment {
     }
 
     /**
-     * Sets up the complete test environment
+     * Sets up the global test environment (database, Hasura API, and mock indexer)
      */
-    public async setup(): Promise<void> {
+    public async setupGlobal(): Promise<void> {
         try {
-            console.log("Setting up test environment...");
+            console.log("Setting up global test environment...");
             await this.setupNetwork();
-            await this.setupServices();
+            await this.setupGlobalServices();
             await this.verifyConnectivity();
-            console.log("Test environment setup complete!");
+            console.log("Global test environment setup complete!");
         } catch (error) {
-            console.error("Failed to setup test environment:", error);
-            await this.teardown();
+            console.error("Failed to setup global test environment:", error);
+            await this.teardownGlobal();
             process.exit(1);
         }
     }
@@ -62,10 +67,10 @@ export class TestEnvironment {
     }
 
     /**
-     * Sets up all services in the correct order
+     * Sets up global services in the correct order
      * @private
      */
-    private async setupServices(): Promise<void> {
+    private async setupGlobalServices(): Promise<void> {
         if (!this.network) throw new Error("Network not initialized");
 
         console.log("Starting database...");
@@ -75,20 +80,16 @@ export class TestEnvironment {
         await this.apiHasura.start(this.network);
 
         console.log("Running migrations...");
-        this.databaseManager.runMigrations(this.database.getConnectionString());
+        await this.databaseManager.runMigrations(this.database.getConnectionString());
 
         console.log("Setting up Hasura metadata...");
-        this.databaseManager.setupHasura(this.apiHasura.getUrl(), this.apiHasura.getAdminSecret());
+        await this.databaseManager.setupHasura(
+            this.apiHasura.getUrl(),
+            this.apiHasura.getAdminSecret(),
+        );
 
-        console.log("Starting mock GraphQL server...");
+        console.log("Starting mock Indexer server...");
         await this.indexerGraphQl.start();
-
-        this.processingService = new ProcessingServiceManager({
-            databaseUrl: this.database.getConnectionString(),
-            indexerGraphQLUrl: this.indexerGraphQl.getGraphQlUrl(),
-            indexerAdminSecret: "test-secret",
-        });
-        await this.processingService.start();
     }
 
     /**
@@ -98,8 +99,10 @@ export class TestEnvironment {
     private async verifyConnectivity(): Promise<void> {
         console.log("Verifying connectivity...");
 
-        await this.verifyDatabaseConnectivity();
-        await this.verifyExpressServerConnectivity();
+        await Promise.all([
+            this.verifyDatabaseConnectivity(),
+            this.verifyExpressServerConnectivity(),
+        ]);
     }
 
     /**
@@ -138,43 +141,40 @@ export class TestEnvironment {
     }
 
     /**
-     * Tears down the test environment
+     * Tears down the global test environment
      */
-    public async teardown(): Promise<void> {
+    public async teardownGlobal(): Promise<void> {
         await Promise.all([
-            this.processingService?.stop(),
             this.indexerGraphQl.stop(),
             this.apiHasura.stop(),
             this.database.stop(),
         ]);
+
+        console.log("Global test environment teardown complete!");
     }
 
-    /**
-     * Stops the processing service
-     */
-    public async stopProcessingService(): Promise<void> {
-        if (!this.processingService) throw new ServiceNotStarted("Processing service");
-        await this.processingService.stop();
+    public async resetDatabase(): Promise<void> {
+        await this.databaseManager.resetDatabase(this.getDatabaseConnectionString());
     }
 
     /**
      * Gets the indexer GraphQL server mock
      */
-    public getIndexerGraphQl(): MockEnvioIndexer {
-        return this.indexerGraphQl;
+    public getMockIndexerUrl(): string {
+        return this.indexerGraphQl.getUrl();
     }
 
     /**
      * Gets the Test Database container
      */
-    public getDatabase(): TestDatabase {
-        return this.database;
+    public getDatabaseConnectionString(): string {
+        return this.database.getConnectionString();
     }
 
     /**
      * Gets the Hasura API container
      */
-    public getApiHasura(): HasuraApiContainer {
-        return this.apiHasura;
+    public getApiHasuraUrl(): string {
+        return this.apiHasura.getUrl();
     }
 }

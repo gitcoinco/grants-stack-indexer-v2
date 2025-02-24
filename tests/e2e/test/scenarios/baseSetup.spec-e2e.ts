@@ -1,8 +1,8 @@
-import axios from "axios";
 import { gql, GraphQLClient } from "graphql-request";
-import { afterAll, beforeAll, describe, expect, expectTypeOf, it } from "vitest";
+import { beforeAll, describe, expect, expectTypeOf, inject, it } from "vitest";
 
-import { TestEnvironment } from "../src/utils/test-environment.js";
+import { GlobalTestState } from "../../src/utils/test-environment.js";
+import { TestHelper } from "../../src/utils/test-helper.js";
 
 /**
  * Response type definitions for GraphQL queries
@@ -39,44 +39,35 @@ interface BlockEventsResponse {
     };
 }
 
-/**
- * Test suite for the Processing Service integration
- */
-describe("Processing Service Integration", () => {
-    let testEnv: TestEnvironment;
+describe("Base Setup", () => {
+    let testHelper: TestHelper;
     let apiGraphQLClient: GraphQLClient;
     let indexerGraphQLClient: GraphQLClient;
+    let globalState: GlobalTestState;
 
     /**
      * Setup test environment before all tests
      */
     beforeAll(async () => {
-        testEnv = new TestEnvironment();
-        await testEnv.setup();
+        globalState = {
+            databaseUrl: inject("databaseUrl"),
+            hasuraUrl: inject("hasuraUrl"),
+            envioIndexerUrl: inject("envioIndexerUrl"),
+        };
+
+        testHelper = new TestHelper(globalState);
+        await testHelper.resetDatabase();
 
         // Initialize GraphQL clients
-        const hasuraApi = testEnv.getApiHasura();
-        apiGraphQLClient = new GraphQLClient(hasuraApi.getGraphQLUrl());
-
-        const indexerApi = testEnv.getIndexerGraphQl();
-        indexerGraphQLClient = new GraphQLClient(indexerApi.getGraphQlUrl());
-
-        // Stop the processing service to test without it running
-        await testEnv.stopProcessingService();
+        apiGraphQLClient = new GraphQLClient(`${globalState.hasuraUrl}/v1/graphql`);
+        indexerGraphQLClient = new GraphQLClient(`${globalState.envioIndexerUrl}/v1/graphql`);
     });
 
     /**
-     * Cleanup test environment after all tests
+     * Tests for the Mock Indexer Express Server
      */
-    afterAll(async () => {
-        await testEnv.teardown();
-    });
-
-    /**
-     * Tests for the Mock Indexer GraphQL Server
-     */
-    describe("Mock Indexer GraphQL Server", () => {
-        it("returns block events", async () => {
+    describe("Mock Indexer Express Server", () => {
+        it("responds with empty block events", async () => {
             const response = await indexerGraphQLClient.request<BlockEventsResponse>(
                 gql`
                     query getTotalEventsInBlock($chainId: Int!, $blockNumber: Int!) {
@@ -107,14 +98,6 @@ describe("Processing Service Integration", () => {
                     nodes: [],
                 },
             });
-        });
-
-        it("responds to health checks", async () => {
-            const indexerApi = testEnv.getIndexerGraphQl();
-            const healthResponse = await axios.get(`${indexerApi.getUrl()}/health`);
-
-            expect(healthResponse.status).toBe(200);
-            expect(healthResponse.data).toBe("OK");
         });
     });
 

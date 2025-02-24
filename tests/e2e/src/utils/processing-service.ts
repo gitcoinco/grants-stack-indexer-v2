@@ -41,6 +41,7 @@ interface ProcessingServiceConfig {
 export class ProcessingServiceManager {
     private process: ChildProcess | null = null;
     private readonly processingPath: string;
+    private CHAIN_ID: number = 1;
 
     constructor(private readonly config: ProcessingServiceConfig) {
         this.processingPath = path.resolve(__dirname, "../../../../apps/processing");
@@ -77,7 +78,7 @@ export class ProcessingServiceManager {
             DATABASE_SCHEMA: "public",
 
             // Chain Configuration
-            CHAINS: `[{"id":10,"name":"optimism","fetchLimit":30,"fetchDelayMs":5000,"rpcUrls":["https://optimism.llamarpc.com","https://rpc.ankr.com/optimism","https://optimism.gateway.tenderly.co","https://optimism.blockpi.network/v1/rpc/public","https://opt-mainnet.g.alchemy.com/v2/demo"]}]`,
+            CHAINS: `[{"id":${this.CHAIN_ID},"name":"mainnet","rpcUrls":["https://eth.llamarpc.com","https://rpc.flashbots.net/fast"],"fetchLimit":30,"fetchDelayMs":50}]`,
 
             // Logging
             LOG_LEVEL: this.config.logLevel ?? "debug",
@@ -129,7 +130,7 @@ export class ProcessingServiceManager {
 
         this.process.stdout?.on("data", (data) => {
             const output = (data as Buffer).toString();
-            if (output.includes("Starting orchestrator for chain 10")) {
+            if (output.includes(`Starting orchestrator for chain ${this.CHAIN_ID}`)) {
                 resolve();
             }
         });

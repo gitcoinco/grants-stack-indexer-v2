@@ -59,6 +59,7 @@ export class MockEnvioIndexer {
         // Configure routes
         app.get("/health", this.healthCheckHandler);
         app.post("/v1/graphql", this.createGraphQLHandler());
+        app.post("/events", this.addEventsHandler.bind(this));
 
         return app;
     }
@@ -106,6 +107,23 @@ export class MockEnvioIndexer {
             res.json({ data: null });
         };
     }
+
+    /**
+     * Handles adding events via REST endpoint
+     * @private
+     */
+    private addEventsHandler: RequestHandler = (
+        req: Request<object, object, { events: AnyIndexerFetchedEvent[] }>,
+        res: Response,
+    ): void => {
+        const events = req.body.events as AnyIndexerFetchedEvent[];
+        if (!Array.isArray(events)) {
+            res.status(400).json({ error: "Invalid events format. Expected array." });
+            return;
+        }
+        this.events.push(...events);
+        res.status(200).json({ message: "Events added successfully" });
+    };
 
     /**
      * Adds events to the mock server's event store
@@ -160,7 +178,7 @@ export class MockEnvioIndexer {
     private async startServer(): Promise<void> {
         return new Promise((resolve) => {
             this.server = this.app.listen(this.port, "0.0.0.0", () => {
-                console.log(`Mock GraphQL server started on http://0.0.0.0:${this.port}`);
+                console.log(`Mock Indexer Express server started on http://0.0.0.0:${this.port}`);
                 resolve();
             });
         });

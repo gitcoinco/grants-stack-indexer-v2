@@ -1,7 +1,10 @@
-import { execSync } from "child_process";
+import { exec } from "child_process";
 import path from "path";
+import { promisify } from "util";
 
 import { BASE_NODE_ENV_VARS, DATABASE_SCHEMA } from "./constants.js";
+
+const execAsync = promisify(exec);
 
 /**
  * DatabaseManager handles database migrations and Hasura metadata setup
@@ -10,6 +13,7 @@ import { BASE_NODE_ENV_VARS, DATABASE_SCHEMA } from "./constants.js";
  * Features:
  * - Database migrations
  * - Hasura metadata configuration
+ * - Database reset
  * - Clean environment execution
  */
 export class DatabaseManager {
@@ -25,25 +29,33 @@ export class DatabaseManager {
      * Runs database migrations
      * @param databaseUrl - The database connection URL
      */
-    public runMigrations(databaseUrl: string): void {
-        const migrationsEnv = {
-            DATABASE_URL: databaseUrl,
-            DATABASE_SCHEMA: DATABASE_SCHEMA,
-            PWD: this.migrationsPath,
-            ...BASE_NODE_ENV_VARS,
-        };
+    public async runMigrations(databaseUrl: string): Promise<void> {
+        const migrationsEnv = this.createEnvironment(databaseUrl);
 
-        execSync(`pnpm db:cache:migrate --schema=${DATABASE_SCHEMA}`, {
-            cwd: this.migrationsPath,
-            stdio: "pipe",
-            env: migrationsEnv,
-        });
+        await Promise.all([
+            this.execMigration("db:cache:migrate", migrationsEnv),
+            this.execMigration("db:migrate", migrationsEnv),
+        ]);
+    }
 
-        execSync(`pnpm db:migrate --schema=${DATABASE_SCHEMA}`, {
-            cwd: this.migrationsPath,
-            stdio: "pipe",
-            env: migrationsEnv,
-        });
+    /**
+     * Resets the database by migrating down and up
+     * @param databaseUrl - The database connection URL
+     */
+    public async resetDatabase(databaseUrl: string): Promise<void> {
+        const migrationsEnv = this.createEnvironment(databaseUrl);
+
+        // First reset both databases in parallel
+        await Promise.all([
+            this.execMigration("db:cache:reset", migrationsEnv),
+            this.execMigration("db:reset", migrationsEnv),
+        ]);
+
+        // Then run migrations in parallel
+        await Promise.all([
+            this.execMigration("db:cache:migrate", migrationsEnv),
+            this.execMigration("db:migrate", migrationsEnv),
+        ]);
     }
 
     /**
@@ -51,7 +63,7 @@ export class DatabaseManager {
      * @param hasuraUrl - The Hasura instance URL
      * @param adminSecret - The Hasura admin secret
      */
-    public setupHasura(hasuraUrl: string, adminSecret: string): void {
+    public async setupHasura(hasuraUrl: string, adminSecret: string): Promise<void> {
         const hasuraEnv = {
             HASURA_ENDPOINT: hasuraUrl,
             HASURA_ADMIN_SECRET: adminSecret,
@@ -60,10 +72,39 @@ export class DatabaseManager {
             ...BASE_NODE_ENV_VARS,
         };
 
-        execSync("pnpm api:configure", {
-            cwd: this.hasuraPath,
-            stdio: "pipe",
-            env: hasuraEnv,
-        });
+        await this.execMigration("api:configure", hasuraEnv, this.hasuraPath);
+    }
+
+    /**
+     * Creates the environment configuration for migrations
+     * @private
+     */
+    private createEnvironment(databaseUrl: string): NodeJS.ProcessEnv {
+        return {
+            DATABASE_URL: databaseUrl,
+            DATABASE_SCHEMA,
+            PWD: this.migrationsPath,
+            ...BASE_NODE_ENV_VARS,
+        };
+    }
+
+    /**
+     * Executes a migration command
+     * @private
+     */
+    private async execMigration(
+        command: string,
+        env: NodeJS.ProcessEnv,
+        cwd: string = this.migrationsPath,
+    ): Promise<void> {
+        try {
+            await execAsync(`pnpm ${command} --schema=${DATABASE_SCHEMA}`, {
+                cwd,
+                env,
+            });
+        } catch (error) {
+            console.error(`Failed to execute ${command}:`, error);
+            throw error;
+        }
     }
 }

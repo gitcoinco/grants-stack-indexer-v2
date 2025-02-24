@@ -6,9 +6,9 @@
     "scripts": {
         "build": "tsc -p tsconfig.build.json",
         "clean": "rm -rf dist",
-        "test:e2e": "vitest run",
-        "test:e2e:debug": "vitest run --reporter verbose",
-        "test:e2e:watch": "vitest watch"
+        "test:e2e": "vitest run --no-file-parallelism",
+        "test:e2e:debug": "vitest run --reporter verbose --no-file-parallelism",
+        "test:e2e:watch": "vitest watch --no-file-parallelism"
     },
     "dependencies": {
         "@grants-stack-indexer/indexer-client": "workspace:*",

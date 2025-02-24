@@ -14,10 +14,10 @@ export default defineConfig({
             reporter: ["text", "json", "html"],
             exclude: ["node_modules", "dist", ...configDefaults.exclude], // Files to exclude from coverage
         },
+        globalSetup: "./test/globalSetup.ts",
     },
     resolve: {
         alias: {
-            // Setup path alias based on tsconfig paths
             "@": path.resolve(__dirname, "src"),
         },
     },
