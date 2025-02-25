@@ -5,6 +5,7 @@ import { DirectAllocationStrategyHandler } from "./directAllocation/index.js";
 import { DirectGrantsLiteStrategyHandler } from "./directGrantsLite/index.js";
 import { DGSimpleStrategyHandler } from "./directGrantsSimple/index.js";
 import { DVMDDirectTransferStrategyHandler } from "./donationVotingMerkleDistributionDirectTransfer/dvmdDirectTransfer.handler.js";
+import { EasyRetroFundingStrategyHandler } from "./easyRetroFunding/easyRetroFunding.handler.js";
 
 /**
  * This mapping connects strategy IDs to their corresponding handler classes.
@@ -22,11 +23,13 @@ const strategyIdToHandler: Readonly<Record<string, StrategyHandlerConstructor>> 
     "0x9fa6890423649187b1f0e8bf4265f0305ce99523c3d11aa36b35a54617bb0ec0":
         DVMDDirectTransferStrategyHandler, // DonationVotingMerkleDistributionDirectTransferStrategyv2.1
     "0x4cd0051913234cdd7d165b208851240d334786d6e5afbb4d0eec203515a9c6f3":
-        DirectAllocationStrategyHandler,
-    "0x263cb916541b6fc1fb5543a244829ccdba75264b097726e6ecc3c3cfce824bf5": DGSimpleStrategyHandler,
-    "0x53fb9d3bce0956ca2db5bb1441f5ca23050cb1973b33789e04a5978acfd9ca93": DGSimpleStrategyHandler,
+        DirectAllocationStrategyHandler, // DirectAllocationStrategyv1.1
+    "0x263cb916541b6fc1fb5543a244829ccdba75264b097726e6ecc3c3cfce824bf5": DGSimpleStrategyHandler, // DirectGrantsSimpleStrategyv1.1
+    "0x53fb9d3bce0956ca2db5bb1441f5ca23050cb1973b33789e04a5978acfd9ca93": DGSimpleStrategyHandler, // DirectGrantsSimpleStrategyv2.1
     "0x103732a8e473467a510d4128ee11065262bdd978f0d9dad89ba68f2c56127e27":
-        DirectGrantsLiteStrategyHandler,
+        DirectGrantsLiteStrategyHandler, // DirectGrantsLiteStrategyv1.0
+    "0x060ffd6c79f918819a622248c6823443412aedea610cc19c89d28dadcdef7fba":
+        EasyRetroFundingStrategyHandler, // EasyRetroFundingStrategyv1.0
 } as const;
 
 /**
