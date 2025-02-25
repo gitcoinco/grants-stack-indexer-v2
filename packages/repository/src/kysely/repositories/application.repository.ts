@@ -136,7 +136,11 @@ export class KyselyApplicationRepository implements IApplicationRepository<Kysel
 
             await queryBuilder
                 .updateTable("applications")
-                .set(_application)
+                .set(
+                    application.tags && Array.isArray(application.tags)
+                        ? { ..._application, tags: stringArrayToJsonb(application.tags) }
+                        : _application,
+                )
                 .where("id", "=", where.id)
                 .where("chainId", "=", where.chainId)
                 .where("roundId", "=", where.roundId)

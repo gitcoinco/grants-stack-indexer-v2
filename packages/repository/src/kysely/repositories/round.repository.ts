@@ -150,7 +150,11 @@ export class KyselyRoundRepository implements IRoundRepository<KyselyTransaction
             const queryBuilder = (tx || this.db).withSchema(this.schemaName);
             const query = queryBuilder
                 .updateTable("rounds")
-                .set(_round)
+                .set(
+                    _round.tags && Array.isArray(_round.tags)
+                        ? { ..._round, tags: stringArrayToJsonb(_round.tags) }
+                        : _round,
+                )
                 .where("chainId", "=", where.chainId);
 
             if ("id" in where) {
