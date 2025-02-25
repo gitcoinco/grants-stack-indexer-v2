@@ -268,7 +268,20 @@ export async function up(db: Kysely<any>): Promise<void> {
         .addColumn("amountInRoundMatchToken", BIGINT_TYPE)
 
         .addPrimaryKeyConstraint("donations_pkey", ["id"])
-
+        .addForeignKeyConstraint(
+            "donations_rounds_fkey",
+            ["roundId", "chainId"],
+            "rounds",
+            ["id", "chainId"],
+            (cb) => cb.onDelete("cascade"),
+        )
+        .addForeignKeyConstraint(
+            "donations_applications_fkey",
+            ["applicationId", "roundId", "chainId"],
+            "applications",
+            ["id", "roundId", "chainId"],
+            (cb) => cb.onDelete("cascade"),
+        )
         .execute();
 
     await db.schema

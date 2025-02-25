@@ -1,4 +1,4 @@
-import { getAddress, zeroAddress } from "viem";
+import { getAddress } from "viem";
 
 import { Changeset, Donation } from "@grants-stack-indexer/repository";
 import { ChainId, getTokenOrThrow, ProcessorEvent } from "@grants-stack-indexer/shared";
@@ -68,7 +68,7 @@ export class DirectAllocatedHandler implements IEventHandler<"Strategy", "Direct
             id: donationId,
             chainId: this.chainId,
             roundId: round.id,
-            applicationId: zeroAddress,
+            applicationId: null,
             donorAddress: sender,
             recipientAddress: getAddress(this.event.params.profileOwner),
             projectId: project.id,
