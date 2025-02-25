@@ -62,6 +62,7 @@ variable "CHAINS" {
     fetchLimit   = number
     fetchDelayMs = number
   }))
+  sensitive = true
 }
 
 
@@ -96,6 +97,7 @@ variable "PRICING_SOURCE" {
 variable "COINGECKO_API_KEY" {
   description = "Coingecko API key"
   type        = string
+  sensitive   = true
 }
 
 variable "COINGECKO_API_TYPE" {
@@ -117,11 +119,13 @@ variable "LOG_LEVEL" {
 variable "DATALAYER_PG_PASSWORD" {
   description = "Datalayer postgres password"
   type        = string
+  sensitive   = true
 }
 
 variable "DATALAYER_PG_USER" {
   description = "Datalayer postgres user"
   type        = string
+  sensitive   = true
 }
 
 variable "DATALAYER_PG_EXPOSED_PORT" {
@@ -132,6 +136,7 @@ variable "DATALAYER_PG_EXPOSED_PORT" {
 variable "DATALAYER_PG_DB_NAME" {
   description = "Database name"
   type        = string
+  sensitive   = true
 }
 
 ######################################################
@@ -150,6 +155,7 @@ variable "DATALAYER_HASURA_ENABLE_CONSOLE" {
 variable "DATALAYER_HASURA_ADMIN_SECRET" {
   description = "Datalayer hasura admin secret"
   type        = string
+  sensitive   = true
 }
 
 variable "DATALAYER_HASURA_UNAUTHORIZED_ROLE" {
