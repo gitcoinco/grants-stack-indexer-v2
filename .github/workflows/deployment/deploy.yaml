@@ -1,4 +1,4 @@
-name: Terraform Deployment with Docker Tag
+name: Deploy to AWS
 
 on:
     workflow_dispatch:
@@ -9,7 +9,12 @@ on:
             deploy_environment:
                 description: "Deployment environment (e.g., staging, production)"
                 required: true
-                default: "staging"
+            processing_image_tag:
+                description: "Processing image tag"
+                required: true
+
+env:
+    TF_VAR_processing_image_tag: ${{ github.event.inputs.processing_image_tag }}
 
 jobs:
     check-admin-permissions:
