@@ -451,6 +451,7 @@ describe("Orchestrator", { sequential: true }, () => {
             AllocatedWithStatus: "",
             TimestampsUpdatedWithRegistrationAndAllocation: "",
             DistributionUpdated: "",
+            DistributionUpdatedWithMerkleRoot: "",
             FundsDistributed: "",
             RecipientStatusUpdatedWithApplicationId: "",
             RecipientStatusUpdatedWithRecipientStatus: "",

@@ -19,6 +19,7 @@ const StrategyEventArray = [
     "AllocatedWithVotes",
     "AllocatedWithStatus",
     "DistributionUpdated",
+    "DistributionUpdatedWithMerkleRoot",
     "FundsDistributed",
     "RecipientStatusUpdatedWithApplicationId",
     "RecipientStatusUpdatedWithRecipientStatus",
@@ -59,23 +60,25 @@ export type StrategyEventParams<T extends StrategyEvent> = T extends "Registered
                       ? AllocatedWithVotesParams
                       : T extends "DistributionUpdated"
                         ? DistributionUpdatedParams
-                        : T extends "FundsDistributed"
-                          ? FundsDistributedParams
-                          : T extends "RecipientStatusUpdatedWithApplicationId"
-                            ? RecipientStatusUpdatedWithApplicationIdParams
-                            : T extends "RecipientStatusUpdatedWithRecipientStatus"
-                              ? RecipientStatusUpdatedWithRecipientStatusParams
-                              : T extends "RecipientStatusUpdatedWithFullRow"
-                                ? RecipientStatusUpdatedWithFullRowParams
-                                : T extends "UpdatedRegistrationWithStatus"
-                                  ? UpdatedRegistrationWithStatusParams
-                                  : T extends "UpdatedRegistration"
-                                    ? UpdatedRegistrationParams
-                                    : T extends "UpdatedRegistrationWithApplicationId"
-                                      ? UpdatedRegistrationWithApplicationIdParams
-                                      : T extends "DirectAllocated"
-                                        ? DirectAllocatedParams
-                                        : never;
+                        : T extends "DistributionUpdatedWithMerkleRoot"
+                          ? DistributionUpdatedWithMerkleRootParams
+                          : T extends "FundsDistributed"
+                            ? FundsDistributedParams
+                            : T extends "RecipientStatusUpdatedWithApplicationId"
+                              ? RecipientStatusUpdatedWithApplicationIdParams
+                              : T extends "RecipientStatusUpdatedWithRecipientStatus"
+                                ? RecipientStatusUpdatedWithRecipientStatusParams
+                                : T extends "RecipientStatusUpdatedWithFullRow"
+                                  ? RecipientStatusUpdatedWithFullRowParams
+                                  : T extends "UpdatedRegistrationWithStatus"
+                                    ? UpdatedRegistrationWithStatusParams
+                                    : T extends "UpdatedRegistration"
+                                      ? UpdatedRegistrationParams
+                                      : T extends "UpdatedRegistrationWithApplicationId"
+                                        ? UpdatedRegistrationWithApplicationIdParams
+                                        : T extends "DirectAllocated"
+                                          ? DirectAllocatedParams
+                                          : never;
 
 // =============================================================================
 // =============================== Event Parameters ============================
@@ -165,6 +168,10 @@ export type AllocatedWithStatusParams = {
 
 // ======================= DistributionUpdated =======================
 export type DistributionUpdatedParams = {
+    metadata: [protocol: string, pointer: string]; //uint256,bytes32
+};
+
+export type DistributionUpdatedWithMerkleRootParams = {
     merkleRoot: Bytes32String;
     metadata: [protocol: string, pointer: string]; //uint256,bytes32
 };

@@ -110,12 +110,91 @@ describe("Orchestrator Integration - Strategy Events Processing", () => {
         );
     });
 
+    it("process DistributionUpdatedWithMerkleRoot event and apply UpdateRoundByStrategyAddress changeset", async () => {
+        const distributionUpdatedEvent =
+            createTestStrategyEvent<"DistributionUpdatedWithMerkleRoot">({
+                eventName: "DistributionUpdatedWithMerkleRoot",
+                params: {
+                    metadata: ["1", "ipfs://distribution-metadata"],
+                    merkleRoot: bytesToHex(randomBytes(32)) as Bytes32String,
+                },
+                srcAddress: "0xD5F6cA46A9DA3c1089D0F2F029CF14F3f714D483",
+            });
+
+        const { indexerClient } = mocks;
+        const { roundRepository, metadataProvider } = mocks.dependencies;
+        const { eventsRegistry } = mocks.registries;
+
+        const dataLoaderSpy = vi.spyOn(orchestrator["dataLoader"], "applyChanges");
+        const eventsFetcherSpy = vi.spyOn(
+            orchestrator["eventsFetcher"],
+            "fetchEventsByBlockNumberAndLogIndex",
+        );
+
+        const mockDistribution = {
+            matchingDistribution: [
+                {
+                    contributionsCount: 44,
+                    projectPayoutAddress: "0x7340F1a1e4e38F43d2FCC85cdb2b764de36B40c0",
+                    applicationId: "3",
+                    matchPoolPercentage: 0.099999,
+                    projectId: "0x15c5e4db5530e05216abc9484025e2f1c4fb55b8525d29ef38fde237e767e324",
+                    projectName: "ReFi DAO - A Network Society to Regenerate Earth. ✨ 🌱",
+                    matchAmountInToken: "999999999999999475712",
+                    originalMatchAmountInToken: "999999999999999475712",
+                },
+                {
+                    contributionsCount: 69,
+                    projectPayoutAddress: "0x01d1909cA27E364904934849eab8399532dd5c8b",
+                    applicationId: "11",
+                    matchPoolPercentage: 0.099999,
+                    projectId: "0xca460772f5ba0840a589d2c19fb7e17ac259e4be884313e3712c06c9c885dc93",
+                    projectName: "Giveth",
+                    matchAmountInToken: "999999999999999475712",
+                    originalMatchAmountInToken: "999999999999999475712",
+                },
+            ],
+        };
+
+        vi.spyOn(metadataProvider, "getMetadata").mockResolvedValue(mockDistribution);
+
+        vi.spyOn(indexerClient, "getEventsAfterBlockNumberAndLogIndex")
+            .mockResolvedValueOnce([distributionUpdatedEvent])
+            .mockResolvedValue([]);
+
+        const orchestratorPromise = orchestrator.run(abortController.signal);
+        await waitForProcessing(eventsFetcherSpy, dataLoaderSpy);
+
+        abortController.abort();
+        await orchestratorPromise;
+
+        expect(orchestrator["dataLoader"].applyChanges).toHaveBeenCalledWith(
+            expect.arrayContaining([expect.anything(), expect.anything()]),
+        );
+
+        expect(roundRepository.updateRound).toHaveBeenCalledWith(
+            { chainId, strategyAddress: distributionUpdatedEvent.srcAddress },
+            {
+                readyForPayoutTransaction: distributionUpdatedEvent.transactionFields.hash,
+                matchingDistribution: mockDistribution.matchingDistribution,
+            },
+            {},
+        );
+        expect(eventsRegistry.saveLastProcessedEvent).toHaveBeenCalledWith(
+            chainId,
+            {
+                ...distributionUpdatedEvent,
+                rawEvent: distributionUpdatedEvent,
+            },
+            {},
+        );
+    });
+
     it("process DistributionUpdated event and apply UpdateRoundByStrategyAddress changeset", async () => {
         const distributionUpdatedEvent = createTestStrategyEvent<"DistributionUpdated">({
             eventName: "DistributionUpdated",
             params: {
                 metadata: ["1", "ipfs://distribution-metadata"],
-                merkleRoot: bytesToHex(randomBytes(32)) as Bytes32String,
             },
             srcAddress: "0xD5F6cA46A9DA3c1089D0F2F029CF14F3f714D483",
         });
