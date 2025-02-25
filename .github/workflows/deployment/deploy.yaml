@@ -3,14 +3,11 @@ name: Deploy to AWS
 on:
     workflow_dispatch:
         inputs:
-            docker_tag:
-                description: "Docker image tag"
+            processing_image_tag:
+                description: "Processing image tag"
                 required: true
             deploy_environment:
                 description: "Deployment environment (e.g., staging, production)"
-                required: true
-            processing_image_tag:
-                description: "Processing image tag"
                 required: true
 
 env:

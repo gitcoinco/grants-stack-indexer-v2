@@ -15,6 +15,10 @@ jobs:
               uses: docker/setup-buildx-action@v2
 
             - name: Build Docker Image
-              run: |
-                  docker build \
-                    --target=processing .
+              uses: docker/build-push-action@v3
+              with:
+                  context: .
+                  target: processing
+                  push: false # change to true if you want to push the image
+                  cache-from: type=gha
+                  cache-to: type=gha,mode=max
