@@ -15,6 +15,7 @@ import {
     ApplicationPayout,
     Donation as DonationTable,
     ProcessedEvent as EventRegistryTable,
+    LegacyProject as LegacyProjectTable,
     MatchingDistribution,
     Metadata as MetadataCacheTable,
     PendingProjectRole as PendingProjectRoleTable,
@@ -77,6 +78,7 @@ export interface Database {
     strategyProcessingCheckpoints: StrategyProcessingCheckpointTable;
     metadataCache: MetadataCacheTable;
     priceCache: PriceCacheTable;
+    legacyProjects: LegacyProjectTable;
 }
 
 /**

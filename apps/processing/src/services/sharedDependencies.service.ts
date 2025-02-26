@@ -13,6 +13,7 @@ import {
     KyselyApplicationRepository,
     KyselyDonationRepository,
     KyselyEventRegistryRepository,
+    KyselyLegacyProjectRepository,
     KyselyMetadataCache,
     KyselyPricingCache,
     KyselyProjectRepository,
@@ -72,6 +73,10 @@ export class SharedDependenciesService {
         const transactionManager = new KyselyTransactionManager(kyselyDatabase);
 
         const projectRepository = new KyselyProjectRepository(kyselyDatabase, env.DATABASE_SCHEMA);
+        const legacyProjectRepository = new KyselyLegacyProjectRepository(
+            kyselyDatabase,
+            env.DATABASE_SCHEMA,
+        );
         const roundRepository = new KyselyRoundRepository(kyselyDatabase, env.DATABASE_SCHEMA);
         const applicationRepository = new KyselyApplicationRepository(
             kyselyDatabase,
@@ -153,6 +158,7 @@ export class SharedDependenciesService {
                 metadataProvider,
                 applicationPayoutRepository,
                 transactionManager,
+                legacyProjectRepository,
             },
             registriesRepositories: {
                 eventRegistryRepository,

@@ -1,22 +1,23 @@
 import type { Address, ChainId } from "@grants-stack-indexer/shared";
 
-import { NewApplicationPayout, NewProcessedEvent } from "../internal.js";
-import { NewApplication, PartialApplication } from "./application.types.js";
-import { NewDonation } from "./donation.types.js";
 import {
+    NewApplication,
+    NewApplicationPayout,
+    NewDonation,
+    NewLegacyProject,
     NewPendingProjectRole,
+    NewPendingRoundRole,
+    NewProcessedEvent,
     NewProject,
     NewProjectRole,
-    PartialProject,
-    ProjectRole,
-} from "./project.types.js";
-import {
-    NewPendingRoundRole,
     NewRound,
     NewRoundRole,
+    PartialApplication,
+    PartialProject,
     PartialRound,
+    ProjectRole,
     RoundRole,
-} from "./round.types.js";
+} from "./index.js";
 
 //TODO: see if in the future we move out of inline object types for changesets
 
@@ -175,10 +176,18 @@ export type ProcessedEventChangeset = {
     };
 };
 
+export type LegacyProjectChangeset = {
+    type: "InsertLegacyProject";
+    args: {
+        legacyProject: NewLegacyProject;
+    };
+};
+
 export type Changeset =
     | ProjectChangeset
     | RoundChangeset
     | ApplicationChangeset
     | DonationChangeset
     | ApplicationPayoutChangeset
-    | ProcessedEventChangeset;
+    | ProcessedEventChangeset
+    | LegacyProjectChangeset;

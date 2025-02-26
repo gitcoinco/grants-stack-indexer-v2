@@ -5,6 +5,7 @@ import {
     IApplicationPayoutRepository,
     IApplicationRepository,
     IDonationRepository,
+    ILegacyProjectRepository,
     IProjectRepository,
     IRoundRepository,
     ITransactionManager,
@@ -30,4 +31,5 @@ export type CoreDependencies = Pick<
     donationRepository: IDonationRepository;
     applicationPayoutRepository: IApplicationPayoutRepository;
     transactionManager: ITransactionManager;
+    legacyProjectRepository: ILegacyProjectRepository;
 };

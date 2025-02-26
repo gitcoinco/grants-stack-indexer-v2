@@ -4,14 +4,15 @@ import { Address, TimestampMs } from "../../internal.js";
 import {
     AlloEvent,
     AlloEventParams,
+    AlloV1ToV2ProfileMigrationEvent,
     RegistryEvent,
     RegistryEventParams,
     StrategyEvent,
     StrategyEventParams,
 } from "./index.js";
 
-export type ContractName = "Strategy" | "Allo" | "Registry";
-export type AnyEvent = StrategyEvent | AlloEvent | RegistryEvent;
+export type ContractName = "Strategy" | "Allo" | "Registry" | "AlloV1ToV2ProfileMigration";
+export type AnyEvent = StrategyEvent | AlloEvent | RegistryEvent | AlloV1ToV2ProfileMigrationEvent;
 
 type TransactionFields = {
     hash: Hex;
@@ -28,7 +29,9 @@ export type ContractToEventName<T extends ContractName> = T extends "Allo"
       ? StrategyEvent
       : T extends "Registry"
         ? RegistryEvent
-        : never;
+        : T extends "AlloV1ToV2ProfileMigration"
+          ? AlloV1ToV2ProfileMigrationEvent
+          : never;
 
 /**
  * This type is used to map contract names to their respective event parameters.

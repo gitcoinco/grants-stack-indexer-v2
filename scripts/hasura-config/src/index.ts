@@ -26,6 +26,7 @@ const tables = [
     "applications_payouts",
     "donations",
     "legacy_projects",
+    "events_registry",
 ] as const;
 
 type Tables = typeof tables;

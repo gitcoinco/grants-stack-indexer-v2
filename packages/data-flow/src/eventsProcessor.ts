@@ -1,6 +1,7 @@
 import type { Changeset } from "@grants-stack-indexer/repository";
 import {
     AlloProcessor,
+    AlloV1ToV2ProfileMigrationProcessor,
     ProcessorDependencies,
     RegistryProcessor,
     StrategyProcessor,
@@ -10,6 +11,7 @@ import {
     ChainId,
     ContractName,
     isAlloEvent,
+    isAlloV1ToV2ProfileMigrationEvent,
     isRegistryEvent,
     isStrategyEvent,
     ProcessorEvent,
@@ -26,11 +28,16 @@ export class EventsProcessor {
     alloProcessor: AlloProcessor;
     registryProcessor: RegistryProcessor;
     strategyProcessor: StrategyProcessor;
+    alloV1ToV2MigrationProcessor: AlloV1ToV2ProfileMigrationProcessor;
 
     constructor(chainId: ChainId, dependencies: Readonly<ProcessorDependencies>) {
         this.alloProcessor = new AlloProcessor(chainId, dependencies);
         this.registryProcessor = new RegistryProcessor(chainId, dependencies);
         this.strategyProcessor = new StrategyProcessor(chainId, dependencies);
+        this.alloV1ToV2MigrationProcessor = new AlloV1ToV2ProfileMigrationProcessor(
+            chainId,
+            dependencies,
+        );
     }
 
     /**
@@ -48,6 +55,9 @@ export class EventsProcessor {
         }
         if (isStrategyEvent(event)) {
             return await this.strategyProcessor.process(event);
+        }
+        if (isAlloV1ToV2ProfileMigrationEvent(event)) {
+            return await this.alloV1ToV2MigrationProcessor.process(event);
         }
 
         throw new InvalidEvent(event);
