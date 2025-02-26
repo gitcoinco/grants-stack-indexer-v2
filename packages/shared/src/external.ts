@@ -25,7 +25,12 @@ export {
     UnknownToken,
 } from "./internal.js";
 
-export { isAlloEvent, isRegistryEvent, isStrategyEvent } from "./internal.js";
+export {
+    isAlloEvent,
+    isRegistryEvent,
+    isStrategyEvent,
+    isGitcoinAttestationNetworkEvent,
+} from "./internal.js";
 export { stringify } from "./internal.js";
 
 export { RetriableError, NonRetriableError, RateLimitError, NetworkError } from "./internal.js";

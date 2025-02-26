@@ -11,6 +11,7 @@ export type {
     IStrategyRegistryRepository,
     IEventRegistryRepository,
     IStrategyProcessingCheckpointRepository,
+    IAttestationRepository,
     DatabaseConfig,
 } from "./internal.js";
 
@@ -38,6 +39,14 @@ export type { Donation, NewDonation } from "./types/index.js";
 
 export type { NewApplicationPayout, ApplicationPayout } from "./types/index.js";
 
+export type {
+    NewAttestation,
+    Attestation,
+    AttestationTxn,
+    AttestationTxnData,
+    NewAttestationTxn,
+} from "./types/index.js";
+
 export type { Strategy, NewStrategy } from "./types/index.js";
 export type { ProcessedEvent, NewProcessedEvent } from "./types/index.js";
 
@@ -49,6 +58,7 @@ export type {
     DonationChangeset,
     ApplicationPayoutChangeset,
     ProcessedEventChangeset,
+    AttestationChangeset,
 } from "./types/index.js";
 
 export {
@@ -60,6 +70,7 @@ export {
     KyselyStrategyRegistryRepository,
     KyselyEventRegistryRepository,
     KyselyStrategyProcessingCheckpointRepository,
+    KyselyAttestationRepository,
 } from "./kysely/repositories/index.js";
 
 export {

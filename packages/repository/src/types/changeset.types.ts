@@ -1,6 +1,11 @@
 import type { Address, ChainId } from "@grants-stack-indexer/shared";
 
-import { NewApplicationPayout, NewProcessedEvent } from "../internal.js";
+import {
+    AttestationTxnData,
+    NewApplicationPayout,
+    NewAttestation,
+    NewProcessedEvent,
+} from "../internal.js";
 import { NewApplication, PartialApplication } from "./application.types.js";
 import { NewDonation } from "./donation.types.js";
 import {
@@ -175,10 +180,19 @@ export type ProcessedEventChangeset = {
     };
 };
 
+export type AttestationChangeset = {
+    type: "InsertAttestation";
+    args: {
+        attestationData: NewAttestation;
+        transactionsData: AttestationTxnData[];
+    };
+};
+
 export type Changeset =
     | ProjectChangeset
     | RoundChangeset
     | ApplicationChangeset
     | DonationChangeset
     | ApplicationPayoutChangeset
-    | ProcessedEventChangeset;
+    | ProcessedEventChangeset
+    | AttestationChangeset;

@@ -4,14 +4,16 @@ import { Address, TimestampMs } from "../../internal.js";
 import {
     AlloEvent,
     AlloEventParams,
+    GitcoinAttestationNetworkEvent,
+    GitcoinAttestationNetworkEventParams,
     RegistryEvent,
     RegistryEventParams,
     StrategyEvent,
     StrategyEventParams,
 } from "./index.js";
 
-export type ContractName = "Strategy" | "Allo" | "Registry";
-export type AnyEvent = StrategyEvent | AlloEvent | RegistryEvent;
+export type ContractName = "Strategy" | "Allo" | "Registry" | "GitcoinAttestationNetwork";
+export type AnyEvent = StrategyEvent | AlloEvent | RegistryEvent | GitcoinAttestationNetworkEvent;
 
 type TransactionFields = {
     hash: Hex;
@@ -28,7 +30,9 @@ export type ContractToEventName<T extends ContractName> = T extends "Allo"
       ? StrategyEvent
       : T extends "Registry"
         ? RegistryEvent
-        : never;
+        : T extends "GitcoinAttestationNetwork"
+          ? GitcoinAttestationNetworkEvent
+          : never;
 
 /**
  * This type is used to map contract names to their respective event parameters.
@@ -45,7 +49,11 @@ export type EventParams<T extends ContractName, E extends ContractToEventName<T>
         ? E extends RegistryEvent
             ? RegistryEventParams<E>
             : never
-        : never;
+        : T extends "GitcoinAttestationNetwork"
+          ? E extends GitcoinAttestationNetworkEvent
+              ? GitcoinAttestationNetworkEventParams<E>
+              : never
+          : never;
 
 /**
  * This type represents events fetched from the indexer.

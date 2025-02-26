@@ -10,3 +10,4 @@ export * from "./transactionManager.interface.js";
 export * from "./pgError.interface.js";
 export * from "./cache.interface.js";
 export * from "./pricingCache.interface.js";
+export * from "./attestationRepository.interface.js";
