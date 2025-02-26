@@ -153,6 +153,7 @@ describe("Orchestrator Integration - Allo Events Processing", () => {
                 totalDistributed: 0n,
                 readyForPayoutTransaction: null,
                 matchingDistribution: null,
+                timestamp: new Date(poolCreatedEvent.blockTimestamp),
             },
             {},
         );

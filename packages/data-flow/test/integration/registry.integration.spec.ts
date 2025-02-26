@@ -117,6 +117,7 @@ describe("Orchestrator Integration - Registry Events Processing", () => {
                 createdAtBlock: BigInt(profileCreatedEvent.blockNumber),
                 updatedAtBlock: BigInt(profileCreatedEvent.blockNumber),
                 projectType: "canonical",
+                timestamp: new Date(profileCreatedEvent.blockTimestamp),
             },
             {},
         );

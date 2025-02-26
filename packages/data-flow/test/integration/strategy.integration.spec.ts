@@ -586,6 +586,7 @@ describe("Orchestrator Integration - Strategy Events Processing", () => {
                 totalDonationsCount: 0,
                 uniqueDonorsCount: 0,
                 tags: ["allo-v2"],
+                timestamp: new Date(registeredEvent.blockTimestamp),
             },
             {},
         );
