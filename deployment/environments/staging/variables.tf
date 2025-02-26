@@ -62,7 +62,7 @@ variable "CHAINS" {
     fetchLimit   = number
     fetchDelayMs = number
   }))
-  sensitive = true
+  sensitive = false
 }
 
 
