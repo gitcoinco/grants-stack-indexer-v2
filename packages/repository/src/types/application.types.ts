@@ -25,7 +25,7 @@ export type Application = {
     totalDonationsCount: number;
     totalAmountDonatedInUsd: number;
     uniqueDonorsCount: number;
-
+    timestamp: Date;
     tags: string[];
 };
 

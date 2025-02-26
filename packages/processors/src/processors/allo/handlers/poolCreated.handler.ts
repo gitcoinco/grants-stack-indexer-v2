@@ -127,6 +127,7 @@ export class PoolCreatedHandler implements IEventHandler<"Allo", "PoolCreated"> 
             totalDistributed: 0n,
             readyForPayoutTransaction: null,
             matchingDistribution: null,
+            timestamp: new Date(this.event.blockTimestamp),
         };
 
         const changes: Changeset[] = [

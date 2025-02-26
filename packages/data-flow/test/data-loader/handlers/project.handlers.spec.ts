@@ -42,6 +42,7 @@ describe("Project Handlers", () => {
             updatedAtBlock: 100n,
             tags: [],
             projectType: "canonical",
+            timestamp: new Date(),
         } as NewProject;
 
         await handlers.InsertProject(
