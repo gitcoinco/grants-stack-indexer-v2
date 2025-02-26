@@ -545,6 +545,9 @@ describe("Orchestrator", { sequential: true }, () => {
             getEventsAfterBlockNumberAndLogIndexSpy
                 .mockResolvedValueOnce([mockEvent])
                 .mockResolvedValue([]);
+            const dataLoaderSpy = vi.spyOn(orchestrator["dataLoader"], "applyChanges");
+
+            vi.spyOn(mockEventsRegistry, "getLastProcessedEvent").mockResolvedValue(undefined);
 
             vi.spyOn(mockStrategyRegistry, "getStrategyId").mockResolvedValue({
                 id: unhandledStrategyId,
@@ -557,12 +560,24 @@ describe("Orchestrator", { sequential: true }, () => {
             runPromise = orchestrator.run(abortController.signal);
 
             await vi.waitFor(() => {
-                if (getEventsAfterBlockNumberAndLogIndexSpy.mock.calls.length >= 2)
+                if (getEventsAfterBlockNumberAndLogIndexSpy.mock.calls.length < 1)
                     throw new Error("Not yet called");
             });
 
             expect(orchestrator["eventsProcessor"].processEvent).not.toHaveBeenCalled();
-            expect(orchestrator["dataLoader"].applyChanges).not.toHaveBeenCalled();
+            expect(dataLoaderSpy).toHaveBeenCalledWith([
+                {
+                    type: "InsertProcessedEvent",
+                    args: {
+                        chainId,
+                        processedEvent: {
+                            ...mockEvent,
+                            rawEvent: mockEvent,
+                            strategyId: unhandledStrategyId,
+                        },
+                    },
+                },
+            ]);
             expect(mockEventsRegistry.saveLastProcessedEvent).not.toHaveBeenCalled();
             expect(mockStrategyRegistry.saveStrategyId).not.toHaveBeenCalled();
         });

@@ -176,6 +176,19 @@ export class Orchestrator {
                                     },
                                 },
                             ]);
+                        } else {
+                            await this.dataLoader.applyChanges([
+                                {
+                                    type: "InsertProcessedEvent",
+                                    args: {
+                                        chainId: this.chainId,
+                                        processedEvent: {
+                                            ...event!,
+                                            rawEvent: event,
+                                        },
+                                    },
+                                },
+                            ]);
                         }
                     },
                     { abortSignal: signal },
