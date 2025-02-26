@@ -115,6 +115,10 @@ contracts:
           # - event: RecipientStatusUpdated(uint256 indexed rowIndex, uint256 fullRow, address sender)
           # - event: RegistrationTimestampsUpdated(uint64 registrationStartTime, uint64 registrationEndTime, address sender)
 
+    - name: GitcoinAttestationNetwork
+      handler: src/handlers/GitcoinAttestationNetwork.ts
+      events:
+          - event: OnAttested(bytes32 indexed uid, address indexed recipient, uint256 fee, bytes data, bytes32 refUID)
 ##########################
 #        NETWORKS        #
 ##########################
@@ -165,6 +169,9 @@ networks:
     #       - name: Allo
     #         address:
     #             - 0x1133eA7Af70876e64665ecD07C0A0476d09465a1
+    #       - name: GitcoinAttestationNetwork
+    #         address:
+    #             - 0x2ce7E4cB5Edb140A9327e67De85463186E757C8f
 
     # - id: 137 # polygon
     #   start_block: 49466006
@@ -274,21 +281,24 @@ networks:
           - name: Allo
             address:
                 - 0x1133eA7Af70876e64665ecD07C0A0476d09465a1
-#######################
-#       TESTNET       #
-#######################
 
-# - id: 11155111 # sepolia
-#   start_block: 4617051
-#   contracts:
-#       - name: Registry
-#         address:
-#             - 0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3
-#       - name: Strategy
-#       - name: Allo
-#         address:
-#             - 0x1133eA7Af70876e64665ecD07C0A0476d09465a1
+    #######################
+    #       TESTNET       #
+    #######################
 
+    - id: 11155111 # sepolia
+      start_block: 4617051
+      contracts:
+          - name: Registry
+            address:
+                - 0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3
+          - name: Strategy
+          - name: Allo
+            address:
+                - 0x1133eA7Af70876e64665ecD07C0A0476d09465a1
+          - name: GitcoinAttestationNetwork
+            address:
+                - 0xBAa70bbAB3C4a7265f879bb3658336DE893b8582
 # - id: 80001 # polygon-mumbai
 #   start_block: 41939383
 #   contracts:
