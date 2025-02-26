@@ -201,6 +201,9 @@ importers:
             axios:
                 specifier: 1.7.7
                 version: 1.7.7
+            multiformats:
+                specifier: 13.3.2
+                version: 13.3.2
             pinata:
                 specifier: 1.10.1
                 version: 1.10.1

@@ -36,4 +36,9 @@ describe("isValidCid", () => {
             expect(isValidCid(input as unknown as string)).toBe(false);
         });
     });
+
+    it("returns true when CID has path or query parameters", () => {
+        const cidWithParams = "QmW2WQi7j6c7UgJTarActp7tDNikE4B2qXtFCfLPdsgaTQ/path?param=value";
+        expect(isValidCid(cidWithParams)).toBe(true);
+    });
 });
