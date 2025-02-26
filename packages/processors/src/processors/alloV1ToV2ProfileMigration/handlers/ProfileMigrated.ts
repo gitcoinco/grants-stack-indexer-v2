@@ -31,7 +31,7 @@ export class ProfileMigratedHandler
                 args: {
                     legacyProject: {
                         v1ProjectId: alloV1,
-                        v1ChainId: alloV1ChainId,
+                        v1ChainId: Number(alloV1ChainId) as ChainId,
                         v2ProjectId: alloV2,
                     },
                 },

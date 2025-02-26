@@ -1,6 +1,6 @@
 import { Hex } from "viem";
 
-import { Address, TimestampMs } from "../../internal.js";
+import { Address, AlloV1ToV2ProfileMigrationEventParams, TimestampMs } from "../../internal.js";
 import {
     AlloEvent,
     AlloEventParams,
@@ -48,7 +48,11 @@ export type EventParams<T extends ContractName, E extends ContractToEventName<T>
         ? E extends RegistryEvent
             ? RegistryEventParams<E>
             : never
-        : never;
+        : T extends "AlloV1ToV2ProfileMigration"
+          ? E extends AlloV1ToV2ProfileMigrationEvent
+              ? AlloV1ToV2ProfileMigrationEventParams<E>
+              : never
+          : never;
 
 /**
  * This type represents events fetched from the indexer.
