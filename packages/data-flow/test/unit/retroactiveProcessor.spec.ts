@@ -5,6 +5,7 @@ import { IIndexerClient } from "@grants-stack-indexer/indexer-client";
 import {
     IApplicationPayoutRepository,
     IApplicationRepository,
+    IAttestationRepository,
     IDonationRepository,
     IProjectRepository,
     IRoundRepository,
@@ -142,6 +143,7 @@ describe("RetroactiveProcessor", () => {
             applicationRepository: {} as IApplicationRepository,
             donationRepository: {} as IDonationRepository,
             applicationPayoutRepository: {} as IApplicationPayoutRepository,
+            attestationRepository: {} as IAttestationRepository,
             transactionManager: {} as ITransactionManager,
             pricingProvider: {
                 getTokenPrice: vi.fn(),

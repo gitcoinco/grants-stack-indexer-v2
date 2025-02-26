@@ -13,6 +13,9 @@ export * from "./processors/allo/index.js";
 export * from "./processors/strategy/index.js";
 export * from "./processors/registry/index.js";
 
+export * from "./processors/gitcoinAttestationNetwork/index.js";
+
 // Decoders
 export * from "./processors/strategy/helpers/decoder.js";
+export * from "./processors/gitcoinAttestationNetwork/helpers/decoder.js";
 export * from "./helpers/index.js";

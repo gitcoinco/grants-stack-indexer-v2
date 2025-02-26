@@ -1,5 +1,10 @@
 // Add your external exports here
-export { StrategyProcessor, AlloProcessor, RegistryProcessor } from "./internal.js";
+export {
+    StrategyProcessor,
+    AlloProcessor,
+    RegistryProcessor,
+    GitcoinAttestationNetworkProcessor,
+} from "./internal.js";
 
 export { UnsupportedStrategy, UnsupportedEventException } from "./internal.js";
 

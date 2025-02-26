@@ -21,6 +21,7 @@ export const createMockRepositories = (): Pick<
     | "donationRepository"
     | "applicationPayoutRepository"
     | "transactionManager"
+    | "attestationRepository"
 > => ({
     projectRepository: {
         getProjects: vi.fn(),
@@ -78,6 +79,9 @@ export const createMockRepositories = (): Pick<
             .mockImplementation((fn: (tx: TransactionConnection) => Promise<unknown>) => {
                 return fn({} as TransactionConnection);
             }),
+    },
+    attestationRepository: {
+        insertAttestation: vi.fn(),
     },
 });
 

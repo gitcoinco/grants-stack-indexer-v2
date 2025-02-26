@@ -1,5 +1,7 @@
 import { Kysely } from "kysely";
 
+import { stringify } from "@grants-stack-indexer/shared";
+
 import {
     AttestationTxnData,
     Database,
@@ -22,10 +24,15 @@ export class KyselyAttestationRepository implements IAttestationRepository<Kysel
         tx?: KyselyTransaction,
     ): Promise<void> {
         try {
-            const queryBuilder = (tx || this.db).withSchema(this.schemaName);
+            let queryBuilder = (tx || this.db).withSchema(this.schemaName);
 
             // Insert the attestation
-            await queryBuilder.insertInto("attestations").values(attestation).execute();
+            await queryBuilder
+                .insertInto("attestations")
+                .values(this.formatAttestation(attestation))
+                .execute();
+
+            queryBuilder = (tx || this.db).withSchema(this.schemaName);
 
             // Insert the transaction data
             if (txData.length > 0) {
@@ -51,5 +58,12 @@ export class KyselyAttestationRepository implements IAttestationRepository<Kysel
                 },
             });
         }
+    }
+
+    private formatAttestation(attestation: NewAttestation): NewAttestation {
+        if (attestation.metadata && Array.isArray(attestation.metadata)) {
+            attestation.metadata = stringify(attestation.metadata);
+        }
+        return attestation;
     }
 }

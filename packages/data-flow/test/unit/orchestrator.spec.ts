@@ -9,6 +9,7 @@ import {
     Changeset,
     IApplicationPayoutRepository,
     IApplicationRepository,
+    IAttestationRepository,
     IDonationRepository,
     IEventRegistryRepository,
     IProjectRepository,
@@ -119,6 +120,7 @@ describe("Orchestrator", { sequential: true }, () => {
             applicationRepository: {} as unknown as IApplicationRepository,
             donationRepository: {} as unknown as IDonationRepository,
             applicationPayoutRepository: {} as unknown as IApplicationPayoutRepository,
+            attestationRepository: {} as unknown as IAttestationRepository,
             pricingProvider: mockPricingProvider,
             metadataProvider: mockMetadataProvider,
         };

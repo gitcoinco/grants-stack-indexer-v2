@@ -1,6 +1,7 @@
 import type { Changeset } from "@grants-stack-indexer/repository";
 import {
     AlloProcessor,
+    GitcoinAttestationNetworkProcessor,
     ProcessorDependencies,
     RegistryProcessor,
     StrategyProcessor,
@@ -10,6 +11,7 @@ import {
     ChainId,
     ContractName,
     isAlloEvent,
+    isGitcoinAttestationNetworkEvent,
     isRegistryEvent,
     isStrategyEvent,
     ProcessorEvent,
@@ -26,11 +28,13 @@ export class EventsProcessor {
     alloProcessor: AlloProcessor;
     registryProcessor: RegistryProcessor;
     strategyProcessor: StrategyProcessor;
+    ganProcessor: GitcoinAttestationNetworkProcessor;
 
     constructor(chainId: ChainId, dependencies: Readonly<ProcessorDependencies>) {
         this.alloProcessor = new AlloProcessor(chainId, dependencies);
         this.registryProcessor = new RegistryProcessor(chainId, dependencies);
         this.strategyProcessor = new StrategyProcessor(chainId, dependencies);
+        this.ganProcessor = new GitcoinAttestationNetworkProcessor(chainId, dependencies);
     }
 
     /**
@@ -48,6 +52,9 @@ export class EventsProcessor {
         }
         if (isStrategyEvent(event)) {
             return await this.strategyProcessor.process(event);
+        }
+        if (isGitcoinAttestationNetworkEvent(event)) {
+            return await this.ganProcessor.process(event);
         }
 
         throw new InvalidEvent(event);
