@@ -1,4 +1,4 @@
-import { getAddress, parseEther, zeroAddress } from "viem";
+import { getAddress, parseEther } from "viem";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { IPricingProvider } from "@grants-stack-indexer/pricing";
@@ -95,7 +95,7 @@ describe("DirectAllocatedHandler", () => {
                         id: donationId,
                         chainId,
                         roundId: mockRound.id,
-                        applicationId: zeroAddress,
+                        applicationId: null,
                         projectId: mockEvent.params.profileId,
                         donorAddress: getAddress(mockEvent.params.sender),
                         recipientAddress: getAddress(mockEvent.params.profileOwner),
