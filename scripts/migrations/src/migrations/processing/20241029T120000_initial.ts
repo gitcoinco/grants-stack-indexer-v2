@@ -302,15 +302,6 @@ export async function up(db: Kysely<any>): Promise<void> {
         .columns(["chainId", "roundId", "applicationId"])
         .execute();
 
-    await db.schema
-        .createTable("legacy_projects")
-        .addColumn("id", "serial", (col) => col.primaryKey())
-        .addColumn("v1ProjectId", "text")
-        .addColumn("v2ProjectId", "text")
-        .addUniqueConstraint("unique_v1ProjectId", ["v1ProjectId"])
-        .addUniqueConstraint("unique_v2ProjectId", ["v2ProjectId"])
-        .execute();
-
     // Project search function
     await sql`
 

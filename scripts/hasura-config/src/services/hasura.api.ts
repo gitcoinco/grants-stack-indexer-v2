@@ -5,8 +5,6 @@ import type { CustomFunction, HasuraConfig, RelationshipConfig } from "../intern
 import { HasuraApiException, NetworkException } from "../internal.js";
 import { singularize, snakeToCamelCase } from "../utils.js";
 
-// import { snakeToCamelCase } from "../utils.js";
-
 type FetchFkRelationshipResult = {
     result: [string[], string[]];
 }[];
