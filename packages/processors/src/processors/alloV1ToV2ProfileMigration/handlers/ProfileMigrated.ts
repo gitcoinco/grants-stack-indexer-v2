@@ -7,12 +7,8 @@ type Dependencies = Pick<ProcessorDependencies, "logger">;
 /**
  * Handles the ProfileMigrated event for the Registry contract from Allo protocol.
  *
- * This handler performs the following steps:
- * - Fetches the metadata for the profile from the metadata provider
- * - Parses the metadata to extract the project type
- * - Returns the changeset to insert the project with the metadata
- *
- * If the metadata is not valid, it sets the metadata to null and the project type to canonical.
+ * This handler extracts the alloV1, alloV1ChainId, and alloV2 parameters from the event
+ * and creates a changeset to insert a new legacy project mapping between V1 and V2.
  */
 export class ProfileMigratedHandler
     implements IEventHandler<"AlloV1ToV2ProfileMigration", "ProfileMigrated">

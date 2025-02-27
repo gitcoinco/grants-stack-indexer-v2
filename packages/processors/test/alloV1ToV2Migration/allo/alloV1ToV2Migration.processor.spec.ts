@@ -59,7 +59,7 @@ describe("AlloV1ToV2ProfileMigrationProcessor", () => {
         vi.clearAllMocks();
     });
 
-    it("call ProfileMigratedHandler for PoolCreated event", async () => {
+    it("calls ProfileMigratedHandler for ProfileMigrated event", async () => {
         const mockEvent: ProcessorEvent<"AlloV1ToV2ProfileMigration", "ProfileMigrated"> = {
             eventName: "ProfileMigrated",
             // Add other necessary event properties here

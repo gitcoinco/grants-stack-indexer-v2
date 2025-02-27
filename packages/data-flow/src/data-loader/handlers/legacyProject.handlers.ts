@@ -3,18 +3,18 @@ import { ILegacyProjectRepository, LegacyProjectChangeset } from "@grants-stack-
 import { ChangesetHandler } from "../types/index.js";
 
 /**
- * Collection of handlers for application-related operations.
- * Each handler corresponds to a specific Application changeset type.
+ * Collection of handlers for legacy project operations.
+ * Each handler corresponds to a specific legacy project changeset type.
  */
 export type LegacyProjectHandlers = {
     [K in LegacyProjectChangeset["type"]]: ChangesetHandler<K>;
 };
 
 /**
- * Creates handlers for managing application-related operations.
+ * Creates handlers for managing legacy project operations.
  *
- * @param repository - The application repository instance used for database operations
- * @returns An object containing all application-related handlers
+ * @param repository - The legacy project repository instance used for database operations
+ * @returns An object containing all legacy project handlers
  */
 export const createLegacyProjectHandlers = (
     repository: ILegacyProjectRepository,

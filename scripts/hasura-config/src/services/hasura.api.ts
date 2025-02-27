@@ -1,9 +1,8 @@
-// import assert from "assert";
 import axios, { AxiosError, AxiosInstance, isAxiosError } from "axios";
+import { camelize, singularize } from "inflection";
 
 import type { CustomFunction, HasuraConfig, RelationshipConfig } from "../internal.js";
 import { HasuraApiException, NetworkException } from "../internal.js";
-import { singularize, snakeToCamelCase } from "../utils.js";
 
 type FetchFkRelationshipResult = {
     result: [string[], string[]];
@@ -143,7 +142,7 @@ export class HasuraMetadataApi<Tables extends readonly string[]> {
 
             // Object relationship: in the child table
             const objectRelationshipPayload = {
-                name: singularize(snakeToCamelCase(parentTable.name)), // name derived from parent table
+                name: singularize(camelize(parentTable.name)), // name derived from parent table
                 table: childTable,
                 source: "default",
                 using: {
@@ -161,7 +160,7 @@ export class HasuraMetadataApi<Tables extends readonly string[]> {
             );
 
             const arrayRelationshipPayload = {
-                name: snakeToCamelCase(childTable.name), // name derived from child table
+                name: camelize(childTable.name), // name derived from child table
                 table: parentTable,
                 source: "default",
                 using: {
@@ -311,6 +310,11 @@ export class HasuraMetadataApi<Tables extends readonly string[]> {
 
         throw new HasuraApiException(errorMessage);
     }
+    /**
+     * Returns the payload for fetching FK relationships from Hasura API. This payload includes generic SQL queries to fetch FK relationships from the database.
+     *
+     * @returns {Object} The payload for fetching FK relationships.
+     */
     private getFetchFkRelationshipPayload(): {
         type: string;
         source: string;
@@ -345,7 +349,7 @@ export class HasuraMetadataApi<Tables extends readonly string[]> {
                     type: "run_sql",
                     args: {
                         source: "default",
-                        sql: "SELECT\nCOALESCE(\n  json_agg(\n    row_to_json(info)\n  ),\n  '[]' :: JSON\n)\nFROM (\nSELECT\ntc.table_schema,\ntc.table_name,\ntc.constraint_name,\njson_agg(constraint_column_usage.column_name) AS columns\nFROM\ninformation_schema.table_constraints tc\nJOIN (\n  SELECT\n    x.tblschema AS table_schema,\n    x.tblname AS table_name,\n    x.colname AS column_name,\n    x.cstrname AS constraint_name\n  FROM ( SELECT DISTINCT\n      nr.nspname,\n      r.relname,\n      a.attname,\n      c.conname\n    FROM\n      pg_namespace nr,\n      pg_class r,\n      pg_attribute a,\n      pg_depend d,\n      pg_namespace nc,\n      pg_constraint c\n    WHERE\n      nr.oid = r.relnamespace\n      AND r.oid = a.attrelid\n      AND d.refclassid = 'pg_class'::regclass::oid\n      AND d.refobjid = r.oid\n      AND d.refobjsubid = a.attnum\n      AND d.classid = 'pg_constraint'::regclass::oid\n      AND d.objid = c.oid\n      AND c.connamespace = nc.oid\n      AND c.contype = 'c'::\"char\"\n      AND(r.relkind = ANY (ARRAY ['r'::\"char\", 'p'::\"char\"]))\n      AND NOT a.attisdropped\n    UNION ALL\n    SELECT\n      nr.nspname,\n      r.relname,\n      a.attname,\n      c.conname\n    FROM\n      pg_namespace nr,\n      pg_class r,\n      pg_attribute a,\n      pg_namespace nc,\n      pg_constraint c\n    WHERE\n      nr.oid = r.relnamespace\n      AND r.oid = a.attrelid\n      AND nc.oid = c.connamespace\n      AND r.oid = CASE c.contype\n      WHEN 'f'::\"char\" THEN\n        c.confrelid\n      ELSE\n        c.conrelid\n      END\n      AND(a.attnum = ANY (\n          CASE c.contype\n          WHEN 'f'::\"char\" THEN\n            c.confkey\n          ELSE\n            c.conkey\n          END))\n      AND NOT a.attisdropped\n      AND(c.contype = ANY (ARRAY ['p'::\"char\", 'u'::\"char\", 'f'::\"char\"]))\n      AND(r.relkind = ANY (ARRAY ['r'::\"char\", 'p'::\"char\"]))) x (tblschema, tblname, colname, cstrname)) constraint_column_usage ON tc.constraint_name::text = constraint_column_usage.constraint_name::text\n  AND tc.table_schema::text = constraint_column_usage.table_schema::text\n  AND tc.table_name::text = constraint_column_usage.table_name::text\nwhere ((tc.table_schema='public'))\n  AND tc.constraint_type::text = 'PRIMARY KEY'::text\nGROUP BY\n  tc.table_schema, tc.table_name, tc.constraint_name) as info;",
+                        sql: "SELECT\nCOALESCE(\n  json_agg(\n    row_to_json(info)\n  ),\n  '[]' :: JSON\n)\nFROM (\nSELECT n.nspname::text AS table_schema,\n    ct.relname::text AS table_name,\n    r.conname::text AS constraint_name,\n    pg_get_constraintdef(r.oid, true) AS \"check\"\n   FROM pg_constraint r\n     JOIN pg_class ct ON r.conrelid = ct.oid\n     JOIN pg_namespace n ON ct.relnamespace = n.oid\n   where ((n.nspname='public'))\n   AND r.contype = 'c'::\"char\"\n   ) AS info;",
                         cascade: false,
                         read_only: true,
                     },
@@ -354,7 +358,7 @@ export class HasuraMetadataApi<Tables extends readonly string[]> {
                     type: "run_sql",
                     args: {
                         source: "default",
-                        sql: "SELECT\nCOALESCE(\n  json_agg(\n    row_to_json(info)\n  ),\n  '[]' :: JSON\n)\nFROM (\n\tSELECT\n\t\ttc.table_name,\n\t\ttc.constraint_schema AS table_schema,\n\t\ttc.constraint_name,\n\t\tjson_agg(kcu.column_name) AS columns\n\tFROM\n\t\tinformation_schema.table_constraints tc\n\t\tJOIN information_schema.key_column_usage kcu USING (constraint_schema, constraint_name)\n    where ((tc.constraint_schema='public'))\n\t\tAND tc.constraint_type::text = 'UNIQUE'::text\n\tGROUP BY\n\t\ttc.table_name,\n\t\ttc.constraint_schema,\n\t\ttc.constraint_name) AS info;",
+                        sql: "SELECT\nCOALESCE(\n  json_agg(\n    row_to_json(info)\n  ),\n  '[]' :: JSON\n)\nFROM (\nSELECT n.nspname::text AS table_schema,\n    ct.relname::text AS table_name,\n    r.conname::text AS constraint_name,\n    pg_get_constraintdef(r.oid, true) AS \"check\"\n   FROM pg_constraint r\n     JOIN pg_class ct ON r.conrelid = ct.oid\n     JOIN pg_namespace n ON ct.relnamespace = n.oid\n   where ((n.nspname='public'))\n   AND r.contype = 'c'::\"char\"\n   ) AS info;",
                         cascade: false,
                         read_only: true,
                     },
@@ -376,9 +380,9 @@ export class HasuraMetadataApi<Tables extends readonly string[]> {
         const fkRelationshipsResult: FkRelationship[] = [];
 
         fkRelationships.forEach((item) => {
-            // Cada item.result es un array de dos elementos:
-            // - El primero es un array de strings (por ejemplo, ["coalesce"] o ["tables"])
-            // - El segundo es un array que contiene una cadena JSON con los resultados.
+            // Each item.result is an array of two elements:
+            // - The first is an array of strings (e.g., ["coalesce"] or ["tables"])
+            // - The second is an array containing a JSON string with the results.
             const key = item.result[0][0];
             if (key === "coalesce") {
                 try {
@@ -388,7 +392,7 @@ export class HasuraMetadataApi<Tables extends readonly string[]> {
                         unknown
                     >[];
                     relData.forEach((rel) => {
-                        // Si el objeto tiene la propiedad "constraint_name", asumimos que es una relación FK
+                        // If the object has the "constraint_name" property, we assume it's an FK relationship
                         if (rel.constraint_name && rel.ref_table) {
                             fkRelationshipsResult.push(rel as unknown as FkRelationship);
                         }
