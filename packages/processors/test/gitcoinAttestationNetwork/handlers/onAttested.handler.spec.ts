@@ -132,7 +132,7 @@ describe("OnAttestedHandler", () => {
                     roundsContributed: expectedDecodedData.roundsCountributed,
                     chainIdsContributed: expectedDecodedData.chainIdsContributed,
                     totalUSDAmount: expectedDecodedData.totalUSDAmount,
-                    timestamp: new Date(1727704881770 * 1000),
+                    timestamp: new Date(1727704881770),
                     metadataCid: expectedDecodedData.metadataCid,
                     metadata: mockMetadata,
                 },
@@ -157,7 +157,7 @@ describe("OnAttestedHandler", () => {
                 { name: "timestamp", type: "uint64" },
                 { name: "metadataCid", type: "string" },
             ],
-            [1n, 1n, 1n, 10n, 1727704881770n, ""],
+            [1n, 1n, 1n, 10n, 1727704881n, ""],
         );
         // Arrange
         const mockEvent = createMockEvent({
@@ -191,7 +191,7 @@ describe("OnAttestedHandler", () => {
                     roundsContributed: 1n,
                     chainIdsContributed: 1n,
                     totalUSDAmount: 10n,
-                    timestamp: new Date(1727704881770 * 1000),
+                    timestamp: new Date(1727704881000),
                     metadataCid: "",
                     metadata: [],
                 },

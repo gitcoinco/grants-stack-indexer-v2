@@ -2,7 +2,7 @@ import { AttestationTxnData } from "@grants-stack-indexer/repository";
 
 export type GitcoinAttestedData = {
     projectsContributed: bigint;
-    roundsCountributed: bigint;
+    roundsContributed: bigint;
     chainIdsContributed: bigint;
     totalUSDAmount: bigint;
     timestamp: bigint;

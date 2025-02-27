@@ -7,7 +7,7 @@ describe("decodeAttestedData", () => {
     it("correctly decodes attestation data", () => {
         const expectedData: GitcoinAttestedData = {
             projectsContributed: 1n,
-            roundsCountributed: 1n,
+            roundsContributed: 1n,
             chainIdsContributed: 1n,
             totalUSDAmount: 10n,
             timestamp: 1727704881770n,

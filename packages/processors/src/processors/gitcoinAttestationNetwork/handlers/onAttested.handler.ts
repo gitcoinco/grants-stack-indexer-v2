@@ -57,7 +57,7 @@ export class OnAttestedHandler implements IEventHandler<"GitcoinAttestationNetwo
             fee: BigInt(fee),
             refUID: refUID,
             projectsContributed: decodedAttestationData.projectsContributed,
-            roundsContributed: decodedAttestationData.roundsCountributed,
+            roundsContributed: decodedAttestationData.roundsContributed,
             chainIdsContributed: decodedAttestationData.chainIdsContributed,
             totalUSDAmount: decodedAttestationData.totalUSDAmount,
             timestamp: getDateFromTimestamp(decodedAttestationData.timestamp),

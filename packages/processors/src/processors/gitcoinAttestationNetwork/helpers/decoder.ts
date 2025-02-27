@@ -16,7 +16,7 @@ export const decodeAttestedData = (encodedData: Hex): GitcoinAttestedData => {
 
     const results: GitcoinAttestedData = {
         projectsContributed: decodedData[0],
-        roundsCountributed: decodedData[1],
+        roundsContributed: decodedData[1],
         chainIdsContributed: decodedData[2],
         totalUSDAmount: decodedData[3],
         timestamp: decodedData[4],
