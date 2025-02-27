@@ -37,7 +37,7 @@ export class KyselyAttestationRepository implements IAttestationRepository<Kysel
             // Insert the transaction data
             if (txData.length > 0) {
                 await queryBuilder
-                    .insertInto("attestationTransactions")
+                    .insertInto("attestationTxns")
                     .values(
                         txData.map((data) => ({
                             txnHash: data.txnHash,

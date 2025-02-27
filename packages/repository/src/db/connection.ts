@@ -80,7 +80,7 @@ export interface Database {
     metadataCache: MetadataCacheTable;
     priceCache: PriceCacheTable;
     attestations: AttestationTable;
-    attestationTransactions: AttestationTxnTable;
+    attestationTxns: AttestationTxnTable;
 }
 
 /**

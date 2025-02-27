@@ -52,12 +52,6 @@ export async function up(db: Kysely<any>): Promise<void> {
             ["uid", "chainId"],
             (cb) => cb.onDelete("cascade"),
         )
-        .addForeignKeyConstraint(
-            "attestation_txns_donations_fkey",
-            ["txnHash", "chainId"],
-            "donations",
-            ["transactionHash", "chainId"],
-        )
         .execute();
 }
 
