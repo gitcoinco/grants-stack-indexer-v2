@@ -1,5 +1,7 @@
 import { Kysely } from "kysely";
 
+import { stringify } from "@grants-stack-indexer/shared";
+
 import { Database, handlePostgresError, ICache } from "../../internal.js";
 
 export class KyselyMetadataCache implements ICache<string> {
@@ -37,17 +39,19 @@ export class KyselyMetadataCache implements ICache<string> {
     /** @inheritdoc */
     async set<T>(id: string, metadata: T): Promise<void> {
         try {
+            const formattedMetadata =
+                metadata && Array.isArray(metadata) ? stringify(metadata) : metadata;
             await this.db
                 .withSchema(this.schema)
                 .insertInto("metadataCache")
                 .values({
                     id: id,
-                    metadata: metadata as unknown,
+                    metadata: formattedMetadata,
                     createdAt: new Date(),
                 })
                 .onConflict((oc) =>
                     oc.column("id").doUpdateSet({
-                        metadata: metadata as unknown,
+                        metadata: formattedMetadata,
                         createdAt: new Date(),
                     }),
                 )

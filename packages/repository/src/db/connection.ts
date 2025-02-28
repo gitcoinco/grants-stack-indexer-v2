@@ -13,6 +13,8 @@ import { ILogger } from "@grants-stack-indexer/shared";
 import {
     Application,
     ApplicationPayout,
+    Attestation as AttestationTable,
+    AttestationTxn as AttestationTxnTable,
     Donation as DonationTable,
     ProcessedEvent as EventRegistryTable,
     LegacyProject as LegacyProjectTable,
@@ -78,6 +80,8 @@ export interface Database {
     strategyProcessingCheckpoints: StrategyProcessingCheckpointTable;
     metadataCache: MetadataCacheTable;
     priceCache: PriceCacheTable;
+    attestations: AttestationTable;
+    attestationTxns: AttestationTxnTable;
     legacyProjects: LegacyProjectTable;
 }
 

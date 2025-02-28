@@ -106,6 +106,7 @@ export class RetroactiveProcessor {
                 application: this.dependencies.applicationRepository,
                 donation: this.dependencies.donationRepository,
                 applicationPayout: this.dependencies.applicationPayoutRepository,
+                attestation: this.dependencies.attestationRepository,
                 eventRegistry: this.eventsRegistry,
                 legacyProject: this.dependencies.legacyProjectRepository,
             },

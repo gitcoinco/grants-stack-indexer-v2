@@ -4,6 +4,7 @@ import {
     Changeset,
     IApplicationPayoutRepository,
     IApplicationRepository,
+    IAttestationRepository,
     IDonationRepository,
     IEventRegistryRepository,
     ILegacyProjectRepository,
@@ -47,6 +48,9 @@ describe("DataLoader", () => {
         saveLastProcessedEvent: vi.fn(),
     } as unknown as IEventRegistryRepository;
 
+    const mockAttestationRepository = {
+        insertAttestation: vi.fn(),
+    } as unknown as IAttestationRepository;
     const mockLegacyProjectRepository = {
         insertLegacyProject: vi.fn(),
     } as unknown as ILegacyProjectRepository;
@@ -72,6 +76,7 @@ describe("DataLoader", () => {
                 donation: mockDonationRepository,
                 applicationPayout: mockApplicationPayoutRepository,
                 eventRegistry: mockEventRegistryRepository,
+                attestation: mockAttestationRepository,
                 legacyProject: mockLegacyProjectRepository,
             },
             mockTransactionManager,

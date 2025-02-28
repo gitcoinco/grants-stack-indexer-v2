@@ -3,6 +3,7 @@ export {
     StrategyProcessor,
     AlloProcessor,
     RegistryProcessor,
+    GitcoinAttestationNetworkProcessor,
     AlloV1ToV2ProfileMigrationProcessor,
 } from "./internal.js";
 
