@@ -148,6 +148,7 @@ describe("Base Setup", () => {
                 "projects",
                 "rounds",
                 "roundroles",
+                "eventsregistry",
             ];
 
             expect(types).toEqual(expect.arrayContaining(expectedTypes));
@@ -159,7 +160,6 @@ describe("Base Setup", () => {
                 "processevents",
                 "kyselymigration",
                 "strategiesregistry",
-                "eventsregistry",
             ];
 
             unexpectedTypes.forEach((type) => {
