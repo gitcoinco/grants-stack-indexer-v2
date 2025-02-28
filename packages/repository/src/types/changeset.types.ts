@@ -1,8 +1,10 @@
 import type { Address, ChainId } from "@grants-stack-indexer/shared";
 
 import {
+    AttestationTxnData,
     NewApplication,
     NewApplicationPayout,
+    NewAttestation,
     NewDonation,
     NewLegacyProject,
     NewPendingProjectRole,
@@ -183,6 +185,14 @@ export type LegacyProjectChangeset = {
     };
 };
 
+export type AttestationChangeset = {
+    type: "InsertAttestation";
+    args: {
+        attestationData: NewAttestation;
+        transactionsData: AttestationTxnData[];
+    };
+};
+
 export type Changeset =
     | ProjectChangeset
     | RoundChangeset
@@ -190,4 +200,5 @@ export type Changeset =
     | DonationChangeset
     | ApplicationPayoutChangeset
     | ProcessedEventChangeset
-    | LegacyProjectChangeset;
+    | LegacyProjectChangeset
+    | AttestationChangeset;

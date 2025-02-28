@@ -45,6 +45,7 @@ vi.mock("@grants-stack-indexer/repository", () => ({
     KyselyEventRegistryRepository: vi.fn(),
     KyselyStrategyProcessingCheckpointRepository: vi.fn(),
     KyselyTransactionManager: vi.fn(),
+    KyselyAttestationRepository: vi.fn(),
     KyselyPricingCache: vi.fn(),
     KyselyMetadataCache: vi.fn(),
     KyselyLegacyProjectRepository: vi.fn(),
@@ -162,6 +163,7 @@ describe("SharedDependenciesService", () => {
         expect(dependencies.core).toHaveProperty("donationRepository");
         expect(dependencies.core).toHaveProperty("metadataProvider");
         expect(dependencies.core).toHaveProperty("applicationPayoutRepository");
+        expect(dependencies.core).toHaveProperty("attestationRepository");
         expect(dependencies.core).toHaveProperty("transactionManager");
 
         // Verify registries
