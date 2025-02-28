@@ -56,7 +56,7 @@ describe("Processing Service Integration", () => {
 
         // Initialize GraphQL clients
         const hasuraApi = testEnv.getApiHasura();
-        apiGraphQLClient = new GraphQLClient(hasuraApi.getGraphQlUrl());
+        apiGraphQLClient = new GraphQLClient(hasuraApi.getGraphQLUrl());
 
         const indexerApi = testEnv.getIndexerGraphQl();
         indexerGraphQLClient = new GraphQLClient(indexerApi.getGraphQlUrl());
