@@ -4,6 +4,7 @@ export {
     AlloProcessor,
     RegistryProcessor,
     GitcoinAttestationNetworkProcessor,
+    AlloV1ToV2ProfileMigrationProcessor,
 } from "./internal.js";
 
 export { UnsupportedStrategy, UnsupportedEventException } from "./internal.js";

@@ -346,6 +346,9 @@ importers:
             dotenv:
                 specifier: 16.4.5
                 version: 16.4.5
+            inflection:
+                specifier: 3.0.2
+                version: 3.0.2
             zod:
                 specifier: 3.23.8
                 version: 3.23.8
@@ -3262,6 +3265,13 @@ packages:
                 integrity: sha512-JmXMZ6wuvDmLiHEml9ykzqO6lwFbof0GG4IkcGaENdCRDDmMVnny7s5HsIgHCbaq0w2MyPhDqkhTUgS2LU2PHA==,
             }
         engines: { node: ">=0.8.19" }
+
+    inflection@3.0.2:
+        resolution:
+            {
+                integrity: sha512-+Bg3+kg+J6JUWn8J6bzFmOWkTQ6L/NHfDRSYU+EVvuKHDxUDHAXgqixHfVlzuBQaPOTac8hn43aPhMNk6rMe3g==,
+            }
+        engines: { node: ">=18.0.0" }
 
     inflight@1.0.6:
         resolution:
@@ -7121,6 +7131,8 @@ snapshots:
     import-meta-resolve@4.1.0: {}
 
     imurmurhash@0.1.4: {}
+
+    inflection@3.0.2: {}
 
     inflight@1.0.6:
         dependencies:

@@ -4,7 +4,7 @@ export type Donation = {
     id: string;
     chainId: ChainId;
     roundId: Address | string;
-    applicationId: string;
+    applicationId: string | null;
     donorAddress: Address;
     recipientAddress: Address;
     projectId: string;

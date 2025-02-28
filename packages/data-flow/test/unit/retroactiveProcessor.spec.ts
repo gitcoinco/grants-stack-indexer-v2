@@ -7,6 +7,7 @@ import {
     IApplicationRepository,
     IAttestationRepository,
     IDonationRepository,
+    ILegacyProjectRepository,
     IProjectRepository,
     IRoundRepository,
     IStrategyProcessingCheckpointRepository,
@@ -144,6 +145,7 @@ describe("RetroactiveProcessor", () => {
             donationRepository: {} as IDonationRepository,
             applicationPayoutRepository: {} as IApplicationPayoutRepository,
             attestationRepository: {} as IAttestationRepository,
+            legacyProjectRepository: {} as ILegacyProjectRepository,
             transactionManager: {} as ITransactionManager,
             pricingProvider: {
                 getTokenPrice: vi.fn(),

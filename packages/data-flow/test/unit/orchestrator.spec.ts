@@ -12,6 +12,7 @@ import {
     IAttestationRepository,
     IDonationRepository,
     IEventRegistryRepository,
+    ILegacyProjectRepository,
     IProjectRepository,
     IRoundRepository,
     ITransactionManager,
@@ -121,6 +122,7 @@ describe("Orchestrator", { sequential: true }, () => {
             donationRepository: {} as unknown as IDonationRepository,
             applicationPayoutRepository: {} as unknown as IApplicationPayoutRepository,
             attestationRepository: {} as unknown as IAttestationRepository,
+            legacyProjectRepository: {} as unknown as ILegacyProjectRepository,
             pricingProvider: mockPricingProvider,
             metadataProvider: mockMetadataProvider,
         };

@@ -10,3 +10,4 @@ export * from "../transactionManager.js";
 export * from "./prices.repository.js";
 export * from "./metadata.repository.js";
 export * from "./attestation.repository.js";
+export * from "./legacyProject.repository.js";

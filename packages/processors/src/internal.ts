@@ -19,3 +19,6 @@ export * from "./processors/gitcoinAttestationNetwork/index.js";
 export * from "./processors/strategy/helpers/decoder.js";
 export * from "./processors/gitcoinAttestationNetwork/helpers/decoder.js";
 export * from "./helpers/index.js";
+
+// Allo V1 to V2 Migration
+export * from "./processors/alloV1ToV2ProfileMigration/index.js";

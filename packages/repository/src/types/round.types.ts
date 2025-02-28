@@ -43,6 +43,7 @@ export type Round = {
     matchingDistribution: MatchingDistribution[] | null;
     projectId: string;
     tags: string[];
+    timestamp: Date;
 };
 
 export type NewRound = Round;

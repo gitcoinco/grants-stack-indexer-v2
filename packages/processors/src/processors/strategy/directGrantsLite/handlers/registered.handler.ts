@@ -81,6 +81,7 @@ export class DGLiteRegisteredHandler implements IEventHandler<"Strategy", "Regis
             totalAmountDonatedInUsd: 0,
             totalDonationsCount: 0,
             uniqueDonorsCount: 0,
+            timestamp: new Date(blockTimestamp),
             tags: ["allo-v2"],
         };
 

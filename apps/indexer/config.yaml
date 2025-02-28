@@ -19,6 +19,7 @@ contracts:
           - event: PoolFunded(uint256 indexed poolId, uint256 amount, uint256 fee)
           - event: RoleGranted(bytes32 indexed role, address indexed account, address indexed sender);
           - event: RoleRevoked(bytes32 indexed role, address indexed account, address indexed sender);
+
     - name: Registry
       handler: src/handlers/Registry.ts
       events:
@@ -28,6 +29,11 @@ contracts:
           - event: ProfileOwnerUpdated(bytes32 indexed profileId, address owner)
           - event: RoleGranted(bytes32 indexed role, address indexed account, address indexed sender);
           - event: RoleRevoked(bytes32 indexed role, address indexed account, address indexed sender);
+
+    - name: AlloV1ToV2ProfileMigration
+      handler: src/handlers/AlloV1ToV2ProfileMigration.ts
+      events:
+          - event: ProfileMigrated(bytes32 indexed alloV1, uint256 alloV1ChainId, bytes32 indexed alloV2, uint256 nonce)
 
     - name: Strategy
       handler: src/handlers/Strategy.ts
@@ -159,19 +165,22 @@ networks:
     #         address:
     #             - 0x1133eA7Af70876e64665ecD07C0A0476d09465a1
 
-    # - id: 42161 # arbitrum
-    #   start_block: 146489425
-    #   contracts:
-    #       - name: Registry
-    #         address:
-    #             - 0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3
-    #       - name: Strategy
-    #       - name: Allo
-    #         address:
-    #             - 0x1133eA7Af70876e64665ecD07C0A0476d09465a1
-    #       - name: GitcoinAttestationNetwork
-    #         address:
-    #             - 0x2ce7E4cB5Edb140A9327e67De85463186E757C8f
+    - id: 42161 # arbitrum
+      start_block: 146489425
+      contracts:
+          - name: Registry
+            address:
+                - 0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3
+          - name: Strategy
+          - name: Allo
+            address:
+                - 0x1133eA7Af70876e64665ecD07C0A0476d09465a1
+          - name: AlloV1ToV2ProfileMigration
+            address:
+                - 0x1bFda15Ad5FC82E74Da81F0B8DcA486b3Ad14c71
+          - name: GitcoinAttestationNetwork
+            address:
+                - 0x2ce7E4cB5Edb140A9327e67De85463186E757C8f
 
     # - id: 137 # polygon
     #   start_block: 49466006
@@ -296,6 +305,9 @@ networks:
           - name: Allo
             address:
                 - 0x1133eA7Af70876e64665ecD07C0A0476d09465a1
+          - name: AlloV1ToV2ProfileMigration
+            address:
+                - 0xCd5AbD09ee34BA604795F7f69413caf20ee0Ab60
           - name: GitcoinAttestationNetwork
             address:
                 - 0xBAa70bbAB3C4a7265f879bb3658336DE893b8582

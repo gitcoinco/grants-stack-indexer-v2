@@ -48,6 +48,7 @@ vi.mock("@grants-stack-indexer/repository", () => ({
     KyselyAttestationRepository: vi.fn(),
     KyselyPricingCache: vi.fn(),
     KyselyMetadataCache: vi.fn(),
+    KyselyLegacyProjectRepository: vi.fn(),
     InMemoryPricingCache: vi.fn(),
     InMemoryMetadataCache: vi.fn(),
 }));

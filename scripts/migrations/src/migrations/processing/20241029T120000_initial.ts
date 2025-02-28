@@ -37,7 +37,7 @@ export async function up(db: Kysely<any>): Promise<void> {
         .addColumn("updatedAtBlock", BIGINT_TYPE)
         .addColumn("tags", "jsonb")
         .addColumn("projectType", sql.table(`${schema}.project_type`))
-
+        .addColumn("timestamp", "timestamptz")
         .addPrimaryKeyConstraint("projects_pkey", ["id", "chainId"])
         .execute();
 
@@ -116,12 +116,12 @@ export async function up(db: Kysely<any>): Promise<void> {
         .addColumn("readyForPayoutTransaction", "text")
 
         .addColumn("projectId", "text")
+        .addColumn("timestamp", "timestamptz")
 
         .addForeignKeyConstraint("rounds_projects_fkey", ["chainId", "projectId"], "projects", [
             "chainId",
             "id",
         ])
-
         // aggregates
 
         .addColumn("totalAmountDonatedInUsd", CURRENCY_TYPE)
@@ -205,7 +205,7 @@ export async function up(db: Kysely<any>): Promise<void> {
         .addColumn("uniqueDonorsCount", "integer")
 
         .addColumn("tags", "jsonb")
-
+        .addColumn("timestamp", "timestamptz")
         .addPrimaryKeyConstraint("applications_pkey", ["chainId", "roundId", "id"])
         .addForeignKeyConstraint(
             "applications_projects_fkey",
@@ -268,7 +268,20 @@ export async function up(db: Kysely<any>): Promise<void> {
         .addColumn("amountInRoundMatchToken", BIGINT_TYPE)
 
         .addPrimaryKeyConstraint("donations_pkey", ["id"])
-
+        .addForeignKeyConstraint(
+            "donations_rounds_fkey",
+            ["roundId", "chainId"],
+            "rounds",
+            ["id", "chainId"],
+            (cb) => cb.onDelete("cascade"),
+        )
+        .addForeignKeyConstraint(
+            "donations_applications_fkey",
+            ["applicationId", "roundId", "chainId"],
+            "applications",
+            ["id", "roundId", "chainId"],
+            (cb) => cb.onDelete("cascade"),
+        )
         .execute();
 
     await db.schema
@@ -292,12 +305,12 @@ export async function up(db: Kysely<any>): Promise<void> {
     await db.schema
         .createTable("legacy_projects")
         .addColumn("id", "serial", (col) => col.primaryKey())
+        .addColumn("v1ChainId", CHAIN_ID_TYPE)
         .addColumn("v1ProjectId", "text")
         .addColumn("v2ProjectId", "text")
         .addUniqueConstraint("unique_v1ProjectId", ["v1ProjectId"])
         .addUniqueConstraint("unique_v2ProjectId", ["v2ProjectId"])
         .execute();
-
     // Project search function
     await sql`
 

@@ -124,6 +124,7 @@ export class Orchestrator {
                 applicationPayout: this.dependencies.applicationPayoutRepository,
                 attestation: this.dependencies.attestationRepository,
                 eventRegistry: this.eventsRegistry,
+                legacyProject: this.dependencies.legacyProjectRepository,
             },
             this.dependencies.transactionManager,
             this.logger,

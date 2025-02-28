@@ -68,6 +68,7 @@ export class ProfileCreatedHandler implements IEventHandler<"Registry", "Profile
                         createdAtBlock: BigInt(this.event.blockNumber),
                         updatedAtBlock: BigInt(this.event.blockNumber),
                         projectType,
+                        timestamp: new Date(this.event.blockTimestamp),
                     },
                 },
             },

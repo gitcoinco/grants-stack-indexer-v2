@@ -107,7 +107,11 @@ export class KyselyProjectRepository implements IProjectRepository<KyselyTransac
             const queryBuilder = (tx || this.db).withSchema(this.schemaName);
             await queryBuilder
                 .updateTable("projects")
-                .set(project)
+                .set(
+                    project.tags && Array.isArray(project.tags)
+                        ? { ...project, tags: stringArrayToJsonb(project.tags) }
+                        : project,
+                )
                 .where("id", "=", where.id)
                 .where("chainId", "=", where.chainId)
                 .execute();

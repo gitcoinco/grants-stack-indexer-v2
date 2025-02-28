@@ -1,9 +1,10 @@
 import { Hex } from "viem";
 
-import { Address, TimestampMs } from "../../internal.js";
+import { Address, AlloV1ToV2ProfileMigrationEventParams, TimestampMs } from "../../internal.js";
 import {
     AlloEvent,
     AlloEventParams,
+    AlloV1ToV2ProfileMigrationEvent,
     GitcoinAttestationNetworkEvent,
     GitcoinAttestationNetworkEventParams,
     RegistryEvent,
@@ -12,8 +13,18 @@ import {
     StrategyEventParams,
 } from "./index.js";
 
-export type ContractName = "Strategy" | "Allo" | "Registry" | "GitcoinAttestationNetwork";
-export type AnyEvent = StrategyEvent | AlloEvent | RegistryEvent | GitcoinAttestationNetworkEvent;
+export type ContractName =
+    | "Strategy"
+    | "Allo"
+    | "Registry"
+    | "AlloV1ToV2ProfileMigration"
+    | "GitcoinAttestationNetwork";
+export type AnyEvent =
+    | StrategyEvent
+    | AlloEvent
+    | RegistryEvent
+    | AlloV1ToV2ProfileMigrationEvent
+    | GitcoinAttestationNetworkEvent;
 
 type TransactionFields = {
     hash: Hex;
@@ -30,9 +41,11 @@ export type ContractToEventName<T extends ContractName> = T extends "Allo"
       ? StrategyEvent
       : T extends "Registry"
         ? RegistryEvent
-        : T extends "GitcoinAttestationNetwork"
-          ? GitcoinAttestationNetworkEvent
-          : never;
+        : T extends "AlloV1ToV2ProfileMigration"
+          ? AlloV1ToV2ProfileMigrationEvent
+          : T extends "GitcoinAttestationNetwork"
+            ? GitcoinAttestationNetworkEvent
+            : never;
 
 /**
  * This type is used to map contract names to their respective event parameters.
@@ -49,11 +62,15 @@ export type EventParams<T extends ContractName, E extends ContractToEventName<T>
         ? E extends RegistryEvent
             ? RegistryEventParams<E>
             : never
-        : T extends "GitcoinAttestationNetwork"
-          ? E extends GitcoinAttestationNetworkEvent
-              ? GitcoinAttestationNetworkEventParams<E>
+        : T extends "AlloV1ToV2ProfileMigration"
+          ? E extends AlloV1ToV2ProfileMigrationEvent
+              ? AlloV1ToV2ProfileMigrationEventParams<E>
               : never
-          : never;
+          : T extends "GitcoinAttestationNetwork"
+            ? E extends GitcoinAttestationNetworkEvent
+                ? GitcoinAttestationNetworkEventParams<E>
+                : never
+            : never;
 
 /**
  * This type represents events fetched from the indexer.

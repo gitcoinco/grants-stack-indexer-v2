@@ -17,6 +17,7 @@ import {
     AttestationTxn as AttestationTxnTable,
     Donation as DonationTable,
     ProcessedEvent as EventRegistryTable,
+    LegacyProject as LegacyProjectTable,
     MatchingDistribution,
     Metadata as MetadataCacheTable,
     PendingProjectRole as PendingProjectRoleTable,
@@ -81,6 +82,7 @@ export interface Database {
     priceCache: PriceCacheTable;
     attestations: AttestationTable;
     attestationTxns: AttestationTxnTable;
+    legacyProjects: LegacyProjectTable;
 }
 
 /**

@@ -7,6 +7,7 @@ import {
     IAttestationRepository,
     IDonationRepository,
     IEventRegistryRepository,
+    ILegacyProjectRepository,
     IProjectRepository,
     IRoundRepository,
     ITransactionManager,
@@ -50,6 +51,9 @@ describe("DataLoader", () => {
     const mockAttestationRepository = {
         insertAttestation: vi.fn(),
     } as unknown as IAttestationRepository;
+    const mockLegacyProjectRepository = {
+        insertLegacyProject: vi.fn(),
+    } as unknown as ILegacyProjectRepository;
 
     const logger: ILogger = {
         debug: vi.fn(),
@@ -73,6 +77,7 @@ describe("DataLoader", () => {
                 applicationPayout: mockApplicationPayoutRepository,
                 eventRegistry: mockEventRegistryRepository,
                 attestation: mockAttestationRepository,
+                legacyProject: mockLegacyProjectRepository,
             },
             mockTransactionManager,
             logger,

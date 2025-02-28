@@ -5,3 +5,4 @@ export * from "./donation.handlers.js";
 export * from "./applicationPayout.handlers.js";
 export * from "./processedEvent.handlers.js";
 export * from "./attestation.handlers.js";
+export * from "./legacyProject.handlers.js";

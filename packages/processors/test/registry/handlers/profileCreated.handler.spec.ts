@@ -112,6 +112,7 @@ describe("ProfileCreatedHandler", () => {
                         createdAtBlock: BigInt(123),
                         updatedAtBlock: BigInt(123),
                         projectType: "canonical",
+                        timestamp: new Date(mockEvent.blockTimestamp),
                     },
                 },
             },
@@ -192,6 +193,7 @@ describe("ProfileCreatedHandler", () => {
                         createdAtBlock: BigInt(123),
                         updatedAtBlock: BigInt(123),
                         projectType: "canonical",
+                        timestamp: new Date(mockEvent.blockTimestamp),
                     },
                 },
             },
@@ -285,6 +287,7 @@ describe("ProfileCreatedHandler", () => {
                     createdAtBlock: BigInt(mockEvent.blockNumber),
                     updatedAtBlock: BigInt(mockEvent.blockNumber),
                     projectType: "linked", // As the metadata contains canonical, it should be "linked"
+                    timestamp: new Date(mockEvent.blockTimestamp),
                 },
             },
         });
@@ -330,6 +333,7 @@ describe("ProfileCreatedHandler", () => {
                         createdAtBlock: BigInt(mockEvent.blockNumber),
                         updatedAtBlock: BigInt(mockEvent.blockNumber),
                         projectType: "linked", // As the metadata contains canonical, it should be "linked"
+                        timestamp: new Date(mockEvent.blockTimestamp),
                     },
                 },
             },

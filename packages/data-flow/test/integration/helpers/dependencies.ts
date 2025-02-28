@@ -22,6 +22,7 @@ export const createMockRepositories = (): Pick<
     | "applicationPayoutRepository"
     | "transactionManager"
     | "attestationRepository"
+    | "legacyProjectRepository"
 > => ({
     projectRepository: {
         getProjects: vi.fn(),
@@ -37,6 +38,9 @@ export const createMockRepositories = (): Pick<
         getPendingProjectRolesByRole: vi.fn(),
         getProjectByAnchor: vi.fn(),
         getProjectByAnchorOrThrow: vi.fn(),
+    },
+    legacyProjectRepository: {
+        insertLegacyProject: vi.fn(),
     },
     roundRepository: {
         getRounds: vi.fn(),

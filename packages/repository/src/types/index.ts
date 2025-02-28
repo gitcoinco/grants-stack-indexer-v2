@@ -11,3 +11,4 @@ export * from "./transaction.types.js";
 export * from "./metadata.types.js";
 export * from "./price.types.js";
 export * from "./attestation.types.js";
+export * from "./legacyProject.types.js";

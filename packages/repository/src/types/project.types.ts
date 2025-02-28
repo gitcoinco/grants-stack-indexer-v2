@@ -17,6 +17,7 @@ export type Project = {
     updatedAtBlock: bigint;
     tags: string[];
     projectType: ProjectType;
+    timestamp: Date;
 };
 
 export type NewProject = Project;

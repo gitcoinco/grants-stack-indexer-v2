@@ -28,6 +28,7 @@ const tables = [
     "legacy_projects",
     "attestations",
     "attestation_txns",
+    "events_registry",
 ] as const;
 
 type Tables = typeof tables;

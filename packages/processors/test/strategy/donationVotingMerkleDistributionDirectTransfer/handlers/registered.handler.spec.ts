@@ -116,6 +116,7 @@ describe("DVMDRegisteredHandler", () => {
                     totalDonationsCount: 0,
                     uniqueDonorsCount: 0,
                     tags: ["allo-v2"],
+                    timestamp: new Date(mockEvent.blockTimestamp),
                 },
             },
         ]);

@@ -8,6 +8,7 @@ export type {
     IApplicationReadRepository,
     IDonationRepository,
     IApplicationPayoutRepository,
+    ILegacyProjectRepository,
     IStrategyRegistryRepository,
     IEventRegistryRepository,
     IStrategyProcessingCheckpointRepository,
@@ -37,6 +38,7 @@ export type {
 
 export type { Donation, NewDonation } from "./types/index.js";
 
+export type { LegacyProject, NewLegacyProject } from "./types/index.js";
 export type { NewApplicationPayout, ApplicationPayout } from "./types/index.js";
 
 export type {
@@ -59,6 +61,7 @@ export type {
     ApplicationPayoutChangeset,
     ProcessedEventChangeset,
     AttestationChangeset,
+    LegacyProjectChangeset,
 } from "./types/index.js";
 
 export {
@@ -71,6 +74,7 @@ export {
     KyselyEventRegistryRepository,
     KyselyStrategyProcessingCheckpointRepository,
     KyselyAttestationRepository,
+    KyselyLegacyProjectRepository,
 } from "./kysely/repositories/index.js";
 
 export {
