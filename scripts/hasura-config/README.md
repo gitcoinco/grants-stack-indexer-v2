@@ -53,6 +53,8 @@ The script will configure the following tables:
 -   applications_payouts
 -   donations
 -   legacy_projects
+-   attestations
+-   attestation_txns
 
 ## Relationships
 
@@ -74,6 +76,10 @@ The script sets up the following relationships:
 #### Applications
 
 -   Has many applicationsPayouts
+
+#### Attestations
+
+-   Has many attestationTxns
 
 ### Object Relationships (Many-to-One)
 
@@ -97,6 +103,10 @@ The script sets up the following relationships:
 #### Applications Payouts
 
 -   Belongs to application
+
+#### Attestation Txns
+
+-   Belongs to attestation
 
 ## Virtual Relationships
 
