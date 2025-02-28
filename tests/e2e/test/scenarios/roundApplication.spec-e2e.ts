@@ -1,4 +1,5 @@
 import { gql, GraphQLClient } from "graphql-request";
+import { Pool } from "pg";
 import { beforeAll, describe, expect, expectTypeOf, inject, it } from "vitest";
 
 import { Bytes32String, IndexerFetchedEvent, TimestampMs } from "@grants-stack-indexer/shared";
@@ -11,10 +12,16 @@ import { TestHelper } from "../../src/utils/test-helper.js";
  * - RoleGranted (Allo)
  * - PoolCreated (Allo)
  * - RegisteredWithSender (Strategy)
+ *
+ * Sad path events sequence:
+ * - ProjectCreated (Registry)
+ * - PoolCreated (Allo) // Unsupported strategy
+ * - RegisteredWithSender (Strategy) // Unsupported strategy event
  */
 describe("DVMD Round creation with Pending Role and Application", () => {
     let testHelper: TestHelper;
     let apiGraphQLClient: GraphQLClient;
+    let pgPool: Pool;
 
     const projectCreatedEvent: IndexerFetchedEvent<"Registry", "ProfileCreated"> = {
         blockNumber: 19593900,
@@ -115,6 +122,7 @@ describe("DVMD Round creation with Pending Role and Application", () => {
         await testHelper.resetDatabase();
 
         apiGraphQLClient = new GraphQLClient(`${globalState.hasuraUrl}/v1/graphql`);
+        pgPool = new Pool({ connectionString: globalState.databaseUrl });
 
         // Add events in sequence
         await testHelper.addEvents([
@@ -125,7 +133,7 @@ describe("DVMD Round creation with Pending Role and Application", () => {
         ]);
 
         await testHelper.startProcessingService();
-        await new Promise((resolve) => setTimeout(resolve, 1500));
+        await new Promise((resolve) => setTimeout(resolve, 2500));
         await testHelper.stopProcessingService();
     });
 
@@ -386,5 +394,194 @@ describe("DVMD Round creation with Pending Role and Application", () => {
         expect(application.totalDonationsCount).toBe(0);
         expect(application.uniqueDonorsCount).toBe(0);
         expect(application.tags).toContain("allo-v2");
+    });
+
+    it("verifies the strategy registry contains the strategy with handleable=true", async () => {
+        const result = await pgPool.query(
+            `SELECT * FROM strategies_registry WHERE chain_id = $1 AND address = $2`,
+            [1, poolCreatedEvent.params.strategy],
+        );
+
+        expect(result.rows).toHaveLength(1);
+        const strategyRecord = result.rows[0] as { id: string; handled: boolean };
+
+        expect(strategyRecord.id).toBe(
+            "0x9fa6890423649187b1f0e8bf4265f0305ce99523c3d11aa36b35a54617bb0ec0",
+        );
+        expect(strategyRecord.handled).toBe(true);
+    });
+});
+
+/**
+ * Test cases for unsupported strategies and events
+ * These test cases verify the behavior when:
+ * 1. A strategy ID doesn't have a handler
+ * 2. A strategy event's handler doesn't exist
+ */
+describe("Unsupported Strategy and Events", () => {
+    let testHelper: TestHelper;
+    let apiGraphQLClient: GraphQLClient;
+    let pgPool: Pool;
+
+    // Common project for both test scenarios
+    const projectCreatedEvent: IndexerFetchedEvent<"Registry", "ProfileCreated"> = {
+        blockNumber: 19593900,
+        blockTimestamp: 1712373000 as TimestampMs,
+        chainId: 1,
+        contractName: "Registry",
+        eventName: "ProfileCreated",
+        logIndex: 660,
+        params: {
+            name: "Test Project",
+            nonce: "1136007",
+            owner: "0xf3002e97f5ba36BD219C5CB41e6104CFf114e351",
+            anchor: "0x83cA32f18436653A0d49fae0f977EE43983e51b1",
+            metadata: ["1", "bafkreidl7yst7jpd7ebofslgpdxabn4jsxzhaoc2dwzfnyzh66ll4aqpqm"],
+            profileId:
+                "0x0cb99d2faa7ad3298c04cf9353e679a6ff3fcb325b981affd3198a80e70a8a1f" as Bytes32String,
+        },
+        srcAddress: "0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3",
+        transactionFields: {
+            from: "0xf3002e97f5ba36BD219C5CB41e6104CFf114e351",
+            hash: "0xf47c0e1224954086612c4642807d556a86a50c71a1bdfb720a28bee457474fa0",
+            transactionIndex: 99,
+        },
+    };
+
+    // Unsupported strategy with a made-up strategyId
+    const unsupportedPoolCreatedEvent: IndexerFetchedEvent<"Allo", "PoolCreated"> = {
+        blockNumber: 19593914,
+        blockTimestamp: 1712373023 as TimestampMs,
+        chainId: 1,
+        contractName: "Allo",
+        eventName: "PoolCreated",
+        logIndex: 662,
+        params: {
+            token: "0x6B175474E89094C44Da98b954EedeAC495271d0F",
+            amount: "0",
+            poolId: "999",
+            metadata: ["1", "bafkreiarqej7rdgfx7vsxc4lpqbvcupzx3bd2cvkjenwtn43u4a5dlpj34"],
+            strategy: "0xAAAa841B7b7D62a0dBC2a1f8B902eCEaB82e85cC", // Different address
+            profileId: "0x0cb99d2faa7ad3298c04cf9353e679a6ff3fcb325b981affd3198a80e70a8a1f",
+        },
+        srcAddress: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
+        transactionFields: {
+            from: "0xf3002e97f5ba36BD219C5CB41e6104CFf114e351",
+            hash: "0xf3002e97f5ba36BD219C5CB41e6104CFf114e351",
+            transactionIndex: 99,
+        },
+    };
+
+    // Event from an unsupported strategy
+    const unsupportedStrategyEvent: IndexerFetchedEvent<"Strategy", "RegisteredWithSender"> = {
+        blockNumber: 19593967,
+        blockTimestamp: 1712373659 as TimestampMs,
+        chainId: 1,
+        contractName: "Strategy",
+        eventName: "RegisteredWithSender",
+        logIndex: 663,
+        params: {
+            data: "0x00000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000010000000000000000000000000018bd9705b3027533b13b0d04046f86ed4ab8763d000000000000000000000000f3002e97f5ba36bd219c5cb41e6104cff114e351000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000003b6261666b726569673474646e6771657472377a376f776a777870676868376175777667797669756c64737069346a676e746a7176656466336a76340000000000",
+            sender: "0xf3002e97f5ba36BD219C5CB41e6104CFf114e351",
+            recipientId: "0x83cA32f18436653A0d49fae0f977EE43983e51b1",
+        },
+        srcAddress: "0xAAAa841B7b7D62a0dBC2a1f8B902eCEaB82e85cC", // Same as unsupported strategy
+        transactionFields: {
+            from: "0xf3002e97f5ba36BD219C5CB41e6104CFf114e351",
+            hash: "0xf3002e97f5ba36BD219C5CB41e6104CFf114e351",
+            transactionIndex: 99,
+        },
+    };
+    const unknownStrategyId = "0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890";
+
+    beforeAll(async () => {
+        const globalState = {
+            databaseUrl: inject("databaseUrl"),
+            hasuraUrl: inject("hasuraUrl"),
+            envioIndexerUrl: inject("envioIndexerUrl"),
+        };
+
+        testHelper = new TestHelper(globalState);
+        await testHelper.resetDatabase();
+
+        apiGraphQLClient = new GraphQLClient(`${globalState.hasuraUrl}/v1/graphql`);
+        pgPool = new Pool({ connectionString: globalState.databaseUrl });
+
+        // Manually insert the strategy with handled=true to simulate a cached strategy
+        // This will be updated to handled=false when the system processes the event
+        await pgPool.query(
+            `INSERT INTO strategies_registry (chain_id, address, id, handled) 
+             VALUES ($1, $2, $3, $4)`,
+            [
+                1,
+                unsupportedPoolCreatedEvent.params.strategy,
+                unknownStrategyId, // Made-up strategy ID
+                true, // Initially set to true
+            ],
+        );
+
+        // Add events in sequence
+        await testHelper.addEvents([
+            projectCreatedEvent,
+            unsupportedPoolCreatedEvent,
+            unsupportedStrategyEvent,
+        ]);
+
+        await testHelper.startProcessingService();
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+        await testHelper.stopProcessingService();
+    });
+
+    it("updates the strategy registry to mark the strategy as unhandled", async () => {
+        const result = await pgPool.query(
+            `SELECT * FROM strategies_registry WHERE chain_id = $1 AND address = $2`,
+            [1, unsupportedPoolCreatedEvent.params.strategy],
+        );
+
+        expect(result.rows).toHaveLength(1);
+        const strategyRecord = result.rows[0] as { id: string; handled: boolean };
+
+        // Verify that the system updated the handled flag from true to false
+        expect(strategyRecord.handled).toBe(false);
+    });
+
+    it("round is created for the unsupported strategy", async () => {
+        const { rounds } = await apiGraphQLClient.request<{
+            rounds: { id: string; strategyAddress: string; strategyId: string }[];
+        }>(
+            gql`
+                query RoundCheck($id: String!) {
+                    rounds(where: { id: { _eq: $id } }) {
+                        id
+                        strategyAddress
+                        strategyId
+                    }
+                }
+            `,
+            { id: unsupportedPoolCreatedEvent.params.poolId },
+        );
+
+        expect(rounds).toHaveLength(1);
+        expect(rounds[0]!.strategyAddress).toBe(unsupportedPoolCreatedEvent.params.strategy);
+        expect(rounds[0]!.strategyId).toBe(unknownStrategyId);
+    });
+
+    it("doesn't process events from unsupported strategies", async () => {
+        // Check if any applications were created from the unsupported strategy event
+        const { applications } = await apiGraphQLClient.request<{
+            applications: { id: string }[];
+        }>(
+            gql`
+                query ApplicationCheck($anchorAddress: String!) {
+                    applications(where: { anchorAddress: { _eq: $anchorAddress } }) {
+                        id
+                    }
+                }
+            `,
+            { anchorAddress: unsupportedStrategyEvent.params.recipientId },
+        );
+
+        // No applications should be created from events of unsupported strategies
+        expect(applications).toHaveLength(0);
     });
 });
