@@ -108,12 +108,10 @@ export class MockEnvioIndexer {
             // remove filtered events from the original events array
             this.events = this.events.filter((event) => !events.includes(event));
 
-            if (query.includes("getEventsAfterBlockNumberAndLogIndex")) {
-                res.json({ data: { raw_events: events } });
-                return;
-            }
-
-            if (query.includes("getEvents")) {
+            if (
+                query.includes("getEventsAfterBlockNumberAndLogIndex") ||
+                query.includes("getEvents")
+            ) {
                 res.json({ data: { raw_events: events } });
                 return;
             }
