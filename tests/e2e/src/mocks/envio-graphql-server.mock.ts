@@ -79,6 +79,19 @@ export class MockEnvioIndexer {
     private createGraphQLHandler(): RequestHandler {
         return (req: Request, res: Response): void => {
             const { query, variables } = req.body as GraphQLRequest;
+
+            if (query.includes("getTotalEventsInBlock")) {
+                res.json({
+                    data: {
+                        last_block_events: {
+                            aggregate: { count: 0 },
+                            nodes: [],
+                        },
+                    },
+                });
+                return;
+            }
+
             // Extract chainId from variables if present, fallback to query string extraction
             const chainId = variables?.chainId
                 ? Number(variables.chainId)
@@ -92,29 +105,16 @@ export class MockEnvioIndexer {
                 ? [...this.events].filter((event) => event.chainId === chainId)
                 : [...this.events];
 
+            // remove filtered events from the original events array
+            this.events = this.events.filter((event) => !events.includes(event));
+
             if (query.includes("getEventsAfterBlockNumberAndLogIndex")) {
-                // remove filtered events from the original events array
-                this.events = this.events.filter((event) => !events.includes(event));
                 res.json({ data: { raw_events: events } });
                 return;
             }
 
             if (query.includes("getEvents")) {
-                // remove filtered events from the original events array
-                this.events = this.events.filter((event) => !events.includes(event));
                 res.json({ data: { raw_events: events } });
-                return;
-            }
-
-            if (query.includes("getTotalEventsInBlock")) {
-                res.json({
-                    data: {
-                        last_block_events: {
-                            aggregate: { count: 0 },
-                            nodes: [],
-                        },
-                    },
-                });
                 return;
             }
 
