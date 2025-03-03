@@ -149,6 +149,8 @@ describe("Base Setup", () => {
                 "rounds",
                 "roundroles",
                 "eventsregistry",
+                "attestations",
+                "attestationtxns",
             ];
 
             expect(types).toEqual(expect.arrayContaining(expectedTypes));

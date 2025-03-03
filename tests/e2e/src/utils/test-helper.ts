@@ -7,6 +7,17 @@ import { DatabaseManager } from "./database-manager.js";
 import { ProcessingServiceManager } from "./processing-service.js";
 
 /**
+ * Configuration for test chains
+ */
+export interface TestChainConfig {
+    id: number;
+    name: string;
+    rpcUrls: string[];
+    fetchLimit?: number;
+    fetchDelayMs?: number;
+}
+
+/**
  * TestHelper is a utility class for managing the test environment on a per-test-file scope
  * It provides methods for starting and stopping the processing service,
  * resetting the database, and adding events to the mock indexer
@@ -15,6 +26,7 @@ import { ProcessingServiceManager } from "./processing-service.js";
  * - Processing service management
  * - Database management
  * - Event management
+ * - Multi-chain support
  */
 export class TestHelper {
     private processingService: ProcessingServiceManager | null = null;
@@ -30,12 +42,14 @@ export class TestHelper {
 
     /**
      * Starts the processing service
+     * @param chains - Optional chain configurations to use
      */
-    public async startProcessingService(): Promise<void> {
+    public async startProcessingService(chains?: TestChainConfig[]): Promise<void> {
         this.processingService = new ProcessingServiceManager({
             databaseUrl: this.globalState.databaseUrl,
             indexerGraphQLUrl: `${this.globalState.envioIndexerUrl}/v1/graphql`,
             indexerAdminSecret: "secret", // for mock server it's not used, so we passed a dummy value
+            chains,
         });
         await this.processingService.start();
     }

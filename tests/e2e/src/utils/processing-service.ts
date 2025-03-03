@@ -1,6 +1,8 @@
 import { ChildProcess, spawn } from "child_process";
 import path from "path";
 
+import { stringify } from "@grants-stack-indexer/shared";
+
 import { StartupFailed } from "../exceptions/index.js";
 import { BASE_NODE_ENV_VARS } from "./constants.js";
 
@@ -13,6 +15,13 @@ interface ProcessingServiceConfig {
     indexerAdminSecret: string;
     logLevel?: string;
     nodeEnv?: string;
+    chains?: Array<{
+        id: number;
+        name: string;
+        rpcUrls: string[];
+        fetchLimit?: number;
+        fetchDelayMs?: number;
+    }>;
 }
 
 /**
@@ -24,13 +33,19 @@ interface ProcessingServiceConfig {
  * - Process lifecycle management
  * - Configurable service parameters
  * - Startup validation
+ * - Multi-chain support
  *
  * @example
  * ```typescript
  * const config = {
  *   databaseUrl: "postgresql://...",
  *   indexerGraphQLUrl: "http://localhost:4000/v1/graphql",
- *   indexerAdminSecret: "test-secret"
+ *   indexerAdminSecret: "test-secret",
+ *   chains: [{
+ *     id: 1,
+ *     name: "mainnet",
+ *     rpcUrls: ["https://eth.llamarpc.com"]
+ *   }]
  * };
  *
  * const service = new ProcessingService(config);
@@ -41,10 +56,20 @@ interface ProcessingServiceConfig {
 export class ProcessingServiceManager {
     private process: ChildProcess | null = null;
     private readonly processingPath: string;
-    private CHAIN_ID: number = 1;
+    private readonly defaultChains = [
+        {
+            id: 1,
+            name: "mainnet",
+            rpcUrls: ["https://eth.llamarpc.com", "https://rpc.flashbots.net/fast"],
+            fetchLimit: 30,
+            fetchDelayMs: 50,
+        },
+    ];
+    private chains: ProcessingServiceConfig["chains"];
 
     constructor(private readonly config: ProcessingServiceConfig) {
         this.processingPath = path.resolve(__dirname, "../../../../apps/processing");
+        this.chains = this.config.chains ?? this.defaultChains;
     }
 
     /**
@@ -78,7 +103,7 @@ export class ProcessingServiceManager {
             DATABASE_SCHEMA: "public",
 
             // Chain Configuration
-            CHAINS: `[{"id":${this.CHAIN_ID},"name":"mainnet","rpcUrls":["https://eth.llamarpc.com","https://rpc.flashbots.net/fast"],"fetchLimit":30,"fetchDelayMs":50}]`,
+            CHAINS: stringify(this.chains),
 
             // Logging
             LOG_LEVEL: this.config.logLevel ?? "debug",
@@ -128,10 +153,16 @@ export class ProcessingServiceManager {
     private setupProcessHandlers(resolve: () => void, reject: (error: Error) => void): void {
         if (!this.process) return;
 
+        let startedChains = 0;
+        const totalChains = this.config.chains?.length ?? 1;
+
         this.process.stdout?.on("data", (data) => {
             const output = (data as Buffer).toString();
-            if (output.includes(`Starting orchestrator for chain ${this.CHAIN_ID}`)) {
-                resolve();
+            if (output.includes("Starting orchestrator for chain")) {
+                startedChains++;
+                if (startedChains === totalChains) {
+                    resolve();
+                }
             }
         });
 

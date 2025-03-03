@@ -78,17 +78,31 @@ export class MockEnvioIndexer {
      */
     private createGraphQLHandler(): RequestHandler {
         return (req: Request, res: Response): void => {
-            const { query } = req.body as GraphQLRequest;
+            const { query, variables } = req.body as GraphQLRequest;
+            // Extract chainId from variables if present, fallback to query string extraction
+            const chainId = variables?.chainId
+                ? Number(variables.chainId)
+                : ((): number | null => {
+                      const chainIdMatch = query.match(/chainId:\s*(\d+)/);
+                      return chainIdMatch ? parseInt(chainIdMatch[1]!, 10) : null;
+                  })();
+
+            // Filter events by chainId if specified
+            const events = chainId
+                ? [...this.events].filter((event) => event.chainId === chainId)
+                : [...this.events];
 
             if (query.includes("getEventsAfterBlockNumberAndLogIndex")) {
-                const events = [...this.events];
-                this.events = [];
+                // remove filtered events from the original events array
+                this.events = this.events.filter((event) => !events.includes(event));
                 res.json({ data: { raw_events: events } });
                 return;
             }
 
             if (query.includes("getEvents")) {
-                res.json({ data: { raw_events: this.events } });
+                // remove filtered events from the original events array
+                this.events = this.events.filter((event) => !events.includes(event));
+                res.json({ data: { raw_events: events } });
                 return;
             }
 
