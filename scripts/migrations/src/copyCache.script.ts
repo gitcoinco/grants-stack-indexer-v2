@@ -88,7 +88,7 @@ export const copyTableData = async (
         password,
         database: targetDb,
         ssl:
-            process.env.NODE_ENV === "production"
+            process.env.NODE_ENV === "production" || process.env.NODE_ENV === "staging"
                 ? {
                       rejectUnauthorized: false,
                   }
@@ -106,7 +106,7 @@ export const copyTableData = async (
         password,
         database: sourceDb,
         ssl:
-            process.env.NODE_ENV === "production"
+            process.env.NODE_ENV === "production" || process.env.NODE_ENV === "staging"
                 ? {
                       rejectUnauthorized: false,
                   }
@@ -141,48 +141,70 @@ export const copyTableData = async (
             return;
         }
 
-        // Get data from source
-        const dataResult = await sourcePool.query<DatabaseRow>(`SELECT * FROM "${tableName}"`);
+        // Get total count of rows in the source table
+        const countResult = await sourcePool.query<{ count: string }>(
+            `SELECT COUNT(*) as count FROM "${tableName}"`,
+        );
 
-        if (dataResult.rows.length === 0) {
+        if (!countResult.rows[0]) {
+            logger.warn(`Failed to get row count for table '${tableName}'. Skipping.`);
+            return;
+        }
+
+        const totalRows = parseInt(countResult.rows[0].count, 10);
+
+        if (totalRows === 0) {
             logger.info(`No data in source table '${tableName}'. Skipping.`);
             return;
         }
 
-        // Insert data into target in batches
-        const batchSize = 1000;
-        const totalRows = dataResult.rows.length;
+        logger.info(`Found ${totalRows} rows to copy for table '${tableName}'`);
+
+        // Process data in batches to avoid memory issues
+        const fetchBatchSize = 5000; // Number of rows to fetch at once
+        const insertBatchSize = 1000; // Number of rows to insert at once
         let processedRows = 0;
 
-        logger.info(`Copying ${totalRows} rows for table '${tableName}'...`);
+        // Retrieve and process data in batches using LIMIT and OFFSET
+        for (let offset = 0; offset < totalRows; offset += fetchBatchSize) {
+            // Fetch a batch of data
+            const dataResult = await sourcePool.query<DatabaseRow>(
+                `SELECT * FROM "${tableName}" LIMIT $1 OFFSET $2`,
+                [fetchBatchSize, offset],
+            );
 
-        // PostgreSQL has a limit on parameters, so we process in batches
-        for (let i = 0; i < totalRows; i += batchSize) {
-            const batch = dataResult.rows.slice(i, i + batchSize);
+            const batchRows = dataResult.rows;
 
-            // Create a parameterized query for this batch
-            const valueStrings = [];
-            const valueParams = [];
-            let paramIndex = 1;
+            // Process the fetched batch in smaller chunks for insertion
+            for (let i = 0; i < batchRows.length; i += insertBatchSize) {
+                const insertBatch = batchRows.slice(i, i + insertBatchSize);
 
-            for (const row of batch) {
-                const rowParams = [];
-                for (const col of columns) {
-                    rowParams.push(`$${paramIndex++}`);
-                    valueParams.push(row[col]);
+                // Create a parameterized query for this insertion batch
+                const valueStrings = [];
+                const valueParams = [];
+                let paramIndex = 1;
+
+                for (const row of insertBatch) {
+                    const rowParams = [];
+                    for (const col of columns) {
+                        rowParams.push(`$${paramIndex++}`);
+                        valueParams.push(row[col]);
+                    }
+                    valueStrings.push(`(${rowParams.join(", ")})`);
                 }
-                valueStrings.push(`(${rowParams.join(", ")})`);
+
+                const insertQuery = `
+                    INSERT INTO "${tableName}" (${columns.map((c) => `"${c}"`).join(", ")})
+                    VALUES ${valueStrings.join(", ")}
+                `;
+
+                await targetPool.query(insertQuery, valueParams);
+
+                processedRows += insertBatch.length;
+                logger.info(
+                    `Processed ${processedRows} of ${totalRows} rows for table '${tableName}'`,
+                );
             }
-
-            const insertQuery = `
-                INSERT INTO "${tableName}" (${columns.map((c) => `"${c}"`).join(", ")})
-                VALUES ${valueStrings.join(", ")}
-            `;
-
-            await targetPool.query(insertQuery, valueParams);
-
-            processedRows += batch.length;
-            logger.info(`Processed ${processedRows} of ${totalRows} rows for table '${tableName}'`);
         }
 
         logger.info(`Completed copying data for table '${tableName}'`);

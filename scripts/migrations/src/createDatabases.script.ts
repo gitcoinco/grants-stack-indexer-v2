@@ -39,7 +39,7 @@ export const createDatabaseIfNotExists = async (
         user,
         password,
         ssl:
-            process.env.NODE_ENV === "production"
+            process.env.NODE_ENV === "production" || process.env.NODE_ENV === "staging"
                 ? {
                       rejectUnauthorized: false,
                   }
