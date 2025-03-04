@@ -39,7 +39,6 @@ export const createDatabaseIfNotExists = async (
         user,
         password,
         database: "postgres", // Connect to system database
-        ssl: process.env.NODE_ENV === "production" ? true : false, // Enable SSL for production RDS
         connectionTimeoutMillis: 15000,
         idleTimeoutMillis: 10000,
         max: 5,

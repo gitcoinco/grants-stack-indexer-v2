@@ -24,7 +24,8 @@ export interface ConnectionDetails {
  */
 export const extractConnectionDetails = (url: string): ConnectionDetails => {
     // Parse DATABASE_URL (format: postgres://user:password@host:port/dbname)
-    const connectionRegex = /postgres:\/\/([^:]+):([^@]+)@([^:]+):([^\/]+)\/.*/;
+    // Allow for different protocol variants: postgre, postgres, postgresql
+    const connectionRegex = /(?:postgre(?:s|sql)?):\/\/([^:]+):([^@]+)@([^:]+):([^\/]+)\/.*/;
     const match = url.match(connectionRegex);
 
     if (!match || match.length < 5) {
