@@ -5,20 +5,26 @@ import { hideBin } from "yargs/helpers";
 
 import { Logger, stringify } from "@grants-stack-indexer/shared";
 
-import { BLUE_DB, ConnectionDetails, extractConnectionDetails, GREEN_DB } from "./constants.js";
+import {
+    BLUE_DB,
+    CACHE_TABLES,
+    ConnectionDetails,
+    extractConnectionDetails,
+    GREEN_DB,
+} from "./constants.js";
 import { getDatabaseConfigFromEnv } from "./schemas/index.js";
-
-configDotenv();
 
 const { Pool } = pg;
 
+configDotenv();
+
 /**
- * This script copies all table data between blue and green databases.
+ * This script copies cache data between blue and green databases.
  *
  * It performs the following steps:
  * 1. Loads environment variables from .env file
  * 2. Gets database configuration from environment
- * 3. Copies all tables from source to target database, resetting destination tables first
+ * 3. Copies cache tables from source to target database
  *
  * Environment variables required:
  * - DATABASE_URL: PostgreSQL connection string (used to extract host, port, user, password)
@@ -37,10 +43,6 @@ interface CopyCacheCommandArgs {
 }
 
 // Define interfaces for database query results
-interface TableNameRow {
-    table_name: string;
-}
-
 interface ColumnNameRow {
     column_name: string;
 }
@@ -63,56 +65,11 @@ const parseArguments = (): CopyCacheCommandArgs => {
 };
 
 /**
- * Get all tables in the public schema
- */
-export const getAllTables = async (
-    db: string,
-    connectionDetails: ConnectionDetails,
-): Promise<string[]> => {
-    const logger = Logger.getInstance();
-    const { host, port, user, password } = connectionDetails;
-
-    const pool = new Pool({
-        host,
-        port: parseInt(port, 10),
-        user,
-        password,
-        database: db,
-        ssl:
-            process.env.NODE_ENV === "production"
-                ? {
-                      rejectUnauthorized: false,
-                  }
-                : undefined,
-        connectionTimeoutMillis: 15000,
-        idleTimeoutMillis: 10000,
-        max: 5,
-    });
-
-    try {
-        logger.info(`Getting all tables from database '${db}'...`);
-
-        const result = await pool.query<TableNameRow>(`
-            SELECT table_name 
-            FROM information_schema.tables 
-            WHERE table_schema = 'public' 
-            AND table_type = 'BASE TABLE'
-            ORDER BY table_name
-        `);
-
-        const tables = result.rows.map((row) => row.table_name);
-        logger.info(`Found ${tables.length} tables in database '${db}'`);
-        return tables;
-    } catch (error) {
-        logger.error(`Failed to get tables: ${stringify(error)}`);
-        throw error;
-    } finally {
-        await pool.end();
-    }
-};
-
-/**
  * Copy table data between databases
+ * @param sourceDb - The source database name
+ * @param targetDb - The target database name
+ * @param tableName - The table name to copy
+ * @param connectionDetails - The connection details for the source and target databases
  */
 export const copyTableData = async (
     sourceDb: string,
@@ -188,7 +145,7 @@ export const copyTableData = async (
         const dataResult = await sourcePool.query<DatabaseRow>(`SELECT * FROM "${tableName}"`);
 
         if (dataResult.rows.length === 0) {
-            logger.info(`No data in source table '${tableName}'. Skipping insert.`);
+            logger.info(`No data in source table '${tableName}'. Skipping.`);
             return;
         }
 
@@ -239,9 +196,12 @@ export const copyTableData = async (
 };
 
 /**
- * Copy all tables data from one database to another
+ * Copy cache data from one database to another
+ * @param sourceDb - The source database name
+ * @param targetDb - The target database name
+ * @param connectionDetails - The connection details for the source and target databases
  */
-export const copyAllTableData = async (
+export const copyCacheData = async (
     sourceDb: string,
     targetDb: string,
     connectionDetails: ConnectionDetails,
@@ -249,26 +209,24 @@ export const copyAllTableData = async (
     const logger = Logger.getInstance();
 
     try {
-        logger.info(`Copying all table data from '${sourceDb}' to '${targetDb}'...`);
+        logger.info(`Copying cache data from '${sourceDb}' to '${targetDb}'...`);
 
-        // Get all tables from source database
-        const tables = await getAllTables(sourceDb, connectionDetails);
+        // Log which cache tables we'll copy
+        logger.info(`Using ${CACHE_TABLES.length} cache tables: ${CACHE_TABLES.join(", ")}`);
 
-        if (tables.length === 0) {
-            logger.warn("No tables found in source database. Nothing to copy.");
+        if (CACHE_TABLES.length === 0) {
+            logger.warn("No cache tables defined. Nothing to copy.");
             return;
         }
 
-        logger.info(`Found ${tables.length} tables to copy from source database`);
-
         // Copy each table
-        for (const table of tables) {
+        for (const table of CACHE_TABLES) {
             await copyTableData(sourceDb, targetDb, table, connectionDetails);
         }
 
-        logger.info(`✅ Successfully copied all table data from '${sourceDb}' to '${targetDb}'`);
+        logger.info(`✅ Successfully copied cache data from '${sourceDb}' to '${targetDb}'`);
     } catch (error) {
-        logger.error(`Failed to copy table data: ${stringify(error)}`);
+        logger.error(`Failed to copy cache data: ${stringify(error)}`);
         throw error;
     }
 };
@@ -286,10 +244,10 @@ export const main = async (): Promise<void> => {
     const sourceDb = sourceColor === "blue" ? BLUE_DB : GREEN_DB;
     const targetDb = sourceColor === "blue" ? GREEN_DB : BLUE_DB;
 
-    logger.info(`Copying all table data from ${sourceColor} to ${targetColor}...`);
-    await copyAllTableData(sourceDb, targetDb, connectionDetails);
+    logger.info(`Copying cache data from ${sourceColor} to ${targetColor}...`);
+    await copyCacheData(sourceDb, targetDb, connectionDetails);
 
-    logger.info(`✅ Database ${targetColor} is now an exact copy of ${sourceColor}`);
+    logger.info(`✅ Cache data copied from ${sourceColor} to ${targetColor} successfully`);
 
     process.exit(0);
 };
