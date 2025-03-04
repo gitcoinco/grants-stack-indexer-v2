@@ -7,7 +7,7 @@ This utility provides scripts for managing PostgreSQL databases in a blue-green 
 The scripts offer two main operations:
 
 1. **Database Creation** - Create both blue and green databases if they don't exist
-2. **Cache Data Copy** - Copy external services cache data from one database to the other
+2. **Database Copy** - Create an exact copy of all tables and data from one database to the other
 
 ## Database Creation
 
@@ -25,35 +25,48 @@ pnpm db:create-databases
 3. If either database doesn't exist, it creates it
 4. This operation can be run multiple times without error, as it only creates databases when needed
 
-## Cache Data Copy
+## Database Copy
 
-Use this operation to copy cache data between blue and green databases. This is essential for maintaining cache consistency during blue-green deployments.
+Use this operation to create an exact copy of one database to the other. This is essential for maintaining consistency during blue-green deployments.
 
 ```bash
-# Copy cache data from blue to green
+# Copy all tables and data from blue to green
 pnpm db:copy-cache --copyFrom=blue
 
-# Copy cache data from green to blue
+# Copy all tables and data from green to blue
 pnpm db:copy-cache --copyFrom=green
 
 # Using the shorthand parameter
 pnpm db:copy-cache -f blue
 ```
 
-### How Cache Data Copy Works
+### How Database Copy Works
 
 1. The script reads the PostgreSQL connection details from the `DATABASE_URL` environment variable
-2. It handles the two specific cache tables: `price_cache` and `metadata_cache`
-3. For each table:
-    - It truncates the target table
-    - Copies all data from the source to the target table
+2. It determines the source and target databases based on the `copyFrom` parameter
+3. It retrieves a list of all tables in the source database
+4. For each table:
+    - It truncates the target table (removing all existing data)
+    - Copies all data from the source table to the target table
     - Processes data in batches to avoid memory issues with large tables
+5. After completion, the target database is an exact copy of the source database
 
-### Cache Tables
+## Blue-Green Deployment Process
 
-The script only copies the following tables, which contain cached data from external services:
+Here's a typical workflow for using this utility in a blue-green deployment:
 
--   `price_cache`: Stores token price information
--   `metadata_cache`: Stores token metadata
+```bash
+# Step 1: Ensure both databases exist
+pnpm db:create-databases
 
-All other tables are managed through the regular migration process and are not part of the blue-green deployment cache copying strategy.
+# Step 2: Deploy new version to the inactive environment (e.g., green)
+# (Your deployment steps here)
+
+# Step 3: Copy data from the active environment to the inactive one
+pnpm db:copy-cache --copyFrom=blue
+
+# Step 4: Switch traffic to the newly updated environment
+# (Your traffic switching steps here)
+```
+
+This process allows for zero-downtime deployments by maintaining two parallel database environments.
