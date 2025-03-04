@@ -15,6 +15,8 @@
         "clean": "turbo run clean",
         "db:cache:migrate": "pnpm run --filter @grants-stack-indexer/migrations db:cache:migrate",
         "db:cache:reset": "pnpm run --filter @grants-stack-indexer/migrations db:cache:reset",
+        "db:copy-cache": "pnpm run --filter @grants-stack-indexer/migrations db:copy-cache",
+        "db:create-databases": "pnpm run --filter @grants-stack-indexer/migrations db:create-databases",
         "db:migrate": "pnpm run --filter @grants-stack-indexer/migrations db:migrate",
         "db:reset": "pnpm run --filter @grants-stack-indexer/migrations db:reset",
         "dev": "turbo run dev",
