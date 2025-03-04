@@ -281,10 +281,10 @@ describe("Allocation Events", () => {
                 donations: {
                     id: string;
                     chainId: number;
-                    Round: {
+                    round: {
                         id: string;
                     };
-                    Application: {
+                    application: {
                         id: string;
                     };
                     donorAddress: string;
@@ -312,10 +312,10 @@ describe("Allocation Events", () => {
                         ) {
                             id
                             chainId
-                            Round {
+                            round {
                                 id
                             }
-                            Application {
+                            application {
                                 id
                             }
                             donorAddress
@@ -340,8 +340,8 @@ describe("Allocation Events", () => {
             const donation = donations[0]!;
 
             expect(donation.chainId).toBe(1);
-            expect(donation.Round.id).toBe(dvmdPoolCreatedEvent.params.poolId);
-            expect(donation.Application.id).toBe("0");
+            expect(donation.round.id).toBe(dvmdPoolCreatedEvent.params.poolId);
+            expect(donation.application.id).toBe("0");
             expect(donation.donorAddress).toBe(dvmdAllocatedEvents[0]!.params.origin);
             expect(donation.recipientAddress).toBe("0xf3002e97f5ba36BD219C5CB41e6104CFf114e351");
             expect(donation.projectId).toBe(projectCreatedEvent.params.profileId);

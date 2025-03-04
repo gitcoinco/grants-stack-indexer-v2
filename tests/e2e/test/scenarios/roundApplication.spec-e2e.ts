@@ -158,7 +158,7 @@ describe("DVMD Round creation with Pending Role and Application", () => {
                 strategyId: string;
                 strategyName: string;
                 projectId: string;
-                RoundRoles: {
+                roundRoles: {
                     address: string;
                     role: string;
                 }[];
@@ -186,7 +186,7 @@ describe("DVMD Round creation with Pending Role and Application", () => {
                         strategyName
                         projectId
                         tags
-                        RoundRoles {
+                        roundRoles {
                             address
                             role
                         }
@@ -295,8 +295,8 @@ describe("DVMD Round creation with Pending Role and Application", () => {
         expect(new Date(round.donationsEndTime!).getTime()).toBe(1722470400000);
 
         // Verify round roles were created properly
-        expect(round.RoundRoles).toHaveLength(1);
-        const role = round.RoundRoles[0]!;
+        expect(round.roundRoles).toHaveLength(1);
+        const role = round.roundRoles[0]!;
         expect(role.address).toBe(roleGrantedEvent.params.account);
         expect(role.role).toBe("admin");
     });

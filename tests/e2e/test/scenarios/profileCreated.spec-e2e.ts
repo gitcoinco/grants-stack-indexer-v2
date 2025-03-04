@@ -66,7 +66,7 @@ describe("Profile Created", () => {
                 name: string;
                 metadata: object;
                 metadataCid: string;
-                ProjectRoles: {
+                projectRoles: {
                     address: string;
                     role: string;
                 }[];
@@ -83,7 +83,7 @@ describe("Profile Created", () => {
                         name
                         metadata
                         metadataCid
-                        ProjectRoles {
+                        projectRoles {
                             address
                             role
                         }
@@ -145,9 +145,9 @@ describe("Profile Created", () => {
         expect(project.projectType).toBe("canonical");
         expect(project.tags).toEqual(["allo-v2"]);
 
-        expect(project.ProjectRoles).toHaveLength(1);
-        expect(project.ProjectRoles[0]).toBeDefined();
-        const projectRole = project.ProjectRoles[0]!;
+        expect(project.projectRoles).toHaveLength(1);
+        expect(project.projectRoles[0]).toBeDefined();
+        const projectRole = project.projectRoles[0]!;
         expect(projectRole.address).toBe(event.params.owner);
         expect(projectRole.role).toBe("owner");
     });

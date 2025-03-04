@@ -226,7 +226,7 @@ describe("Attestation Events", () => {
                 totalUsdamount: string;
                 timestamp: string;
                 metadataCid: string;
-                AttestationTxns: {
+                attestationTxns: {
                     txnHash: string;
                     chainId: number;
                     donation: {
@@ -249,7 +249,7 @@ describe("Attestation Events", () => {
                         totalUsdamount
                         timestamp
                         metadataCid
-                        AttestationTxns {
+                        attestationTxns {
                             txnHash
                             chainId
                             donation {
@@ -281,8 +281,8 @@ describe("Attestation Events", () => {
         expect(attestation.totalUsdamount).toBe(10);
 
         // Verify attestation transactions
-        expect(attestation.AttestationTxns).toHaveLength(1);
-        const txn = attestation.AttestationTxns[0]!;
+        expect(attestation.attestationTxns).toHaveLength(1);
+        const txn = attestation.attestationTxns[0]!;
         expect(txn.chainId).toBe(1);
         expect(txn.txnHash).toBe(
             "0xf6f7ae3cfc9816413b367f7ab80caccc250ee4a788d7e6073945993542a88186",
@@ -298,7 +298,7 @@ describe("Attestation Events", () => {
                 uid: string;
                 chainId: number;
                 recipient: string;
-                AttestationTxns: {
+                attestationTxns: {
                     txnHash: string;
                     chainId: number;
                     donation: {
@@ -315,7 +315,7 @@ describe("Attestation Events", () => {
                         uid
                         chainId
                         recipient
-                        AttestationTxns {
+                        attestationTxns {
                             txnHash
                             chainId
                             donation {
@@ -345,8 +345,8 @@ describe("Attestation Events", () => {
         );
 
         // Verify attestation transactions
-        expect(attestation.AttestationTxns).toHaveLength(1);
-        const txn = attestation.AttestationTxns[0]!;
+        expect(attestation.attestationTxns).toHaveLength(1);
+        const txn = attestation.attestationTxns[0]!;
         expect(txn.txnHash).toBe(donationEvent.transactionFields.hash);
         expect(txn.chainId).toBe(donationEvent.chainId);
 
