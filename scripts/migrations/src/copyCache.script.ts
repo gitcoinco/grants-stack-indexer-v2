@@ -87,6 +87,12 @@ export const copyTableData = async (
         user,
         password,
         database: targetDb,
+        ssl:
+            process.env.NODE_ENV === "production"
+                ? {
+                      rejectUnauthorized: false,
+                  }
+                : undefined,
         connectionTimeoutMillis: 30000, // Longer timeout for data copy
         idleTimeoutMillis: 10000,
         max: 5,
@@ -99,6 +105,12 @@ export const copyTableData = async (
         user,
         password,
         database: sourceDb,
+        ssl:
+            process.env.NODE_ENV === "production"
+                ? {
+                      rejectUnauthorized: false,
+                  }
+                : undefined,
         connectionTimeoutMillis: 30000,
         idleTimeoutMillis: 10000,
         max: 5,

@@ -38,7 +38,12 @@ export const createDatabaseIfNotExists = async (
         port: parseInt(port, 10),
         user,
         password,
-        database: "postgres", // Connect to system database
+        ssl:
+            process.env.NODE_ENV === "production"
+                ? {
+                      rejectUnauthorized: false,
+                  }
+                : undefined,
         connectionTimeoutMillis: 15000,
         idleTimeoutMillis: 10000,
         max: 5,
