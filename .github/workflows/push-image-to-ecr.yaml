@@ -26,14 +26,12 @@ jobs:
 
             - name: Log in to Amazon ECR
               uses: aws-actions/amazon-ecr-login@v2
-
             - name: Build Docker Image
-              run: |
-
-                  IMAGE_TAG=${{ github.sha }}
-                  docker build -t ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:${IMAGE_TAG} .
-
-            - name: Push Docker Image to ECR
-              run: |
-                  IMAGE_TAG=${{ github.sha }}
-                  docker push ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:${IMAGE_TAG}
+              uses: docker/build-push-action@v3
+              with:
+                  context: .
+                  target: processing
+                  tag: ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:${{ github.sha }}
+                  push: true
+                  cache-from: type=gha
+                  cache-to: type=gha,mode=max
