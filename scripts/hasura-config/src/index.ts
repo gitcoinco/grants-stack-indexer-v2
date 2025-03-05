@@ -87,6 +87,26 @@ export const virtualArrayRelationships: RelationshipConfig<Tables>[] = [
             },
         },
     },
+    {
+        name: "projects",
+        table: {
+            name: "applications",
+            schema: "public",
+        },
+        source: "default",
+        using: {
+            manual_configuration: {
+                remote_table: {
+                    name: "projects",
+                    schema: "public",
+                },
+                source: "default",
+                column_mapping: {
+                    project_id: "id",
+                },
+            },
+        },
+    },
 ];
 
 async function configureHasura(): Promise<void> {
