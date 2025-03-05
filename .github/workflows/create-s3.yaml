@@ -3,9 +3,6 @@ name: Create S3 Bucket
 on:
     workflow_dispatch:
 
-env:
-    TF_VAR_app_environment: production
-
 jobs:
     deploy:
         name: Create S3 Bucket

@@ -3,9 +3,6 @@ name: Create ECR Repository
 on:
     workflow_dispatch:
 
-env:
-    TF_VAR_app_environment: production
-
 jobs:
     deploy:
         name: Create ECR Registry
