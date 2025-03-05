@@ -4,7 +4,7 @@ on:
     workflow_dispatch:
 
 env:
-    TF_VAR_app_environment: ${{ github.event.inputs.deploy_environment }}
+    TF_VAR_app_environment: production
 
 jobs:
     deploy:
