@@ -19,6 +19,25 @@ module "s3_terraform_state" {
   ignore_public_acls      = true
   restrict_public_buckets = true
 
+  # Enable versioning
+  versioning = {
+    enabled = true
+  }
+
+  # Enable object lock
+  object_lock_configuration = {
+    object_lock_enabled = "Enabled"
+  }
+
+  # Enable server-side encryption
+  server_side_encryption_configuration = {
+    rule = {
+      apply_server_side_encryption_by_default = {
+        sse_algorithm = "AES256"
+      }
+    }
+  }
+
   policy = jsonencode({
     "Version" : "2012-10-17",
     "Statement" : [
