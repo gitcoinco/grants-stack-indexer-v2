@@ -73,12 +73,12 @@ jobs:
                   # Write the contents of TERRAFORM_VARS to tfvars.json.
                   cat <<< "$TERRAFORM_VARS" > tfvars.json
                   # Store the active environment in a variable
-                  active_env="$(terraform output -raw active_environment)"
-                  echo "Active environment is: $active_env"
-                  if [ "$active_env" == "${{ github.event.inputs.deploy_instance }}" ]; then
-                      echo "Error: Active environment is the same as the deploy environment." >&2
+                  active_deployment="$(terraform output -raw active_deployment)"
+                  echo "Active deployment is: $active_deployment"
+                  if [ "$active_deployment" == "${{ github.event.inputs.deploy_instance }}" ]; then
+                      echo "Error: Active deployment is the same as the deploy environment." >&2
                       exit 1
                   fi
-                  terraform apply -var-file=tfvars.json -auto-approve -var="DEPLOYMENT_STATE=deploying" -var="ACTIVE_ENVIRONMENT=${active_env}"
+                  terraform apply -var-file=tfvars.json -auto-approve -var="DEPLOYMENT_STATE=deploying" -var="ACTIVE_DEPLOYMENT=${active_deployment}"
               env:
                   TERRAFORM_VARS: ${{ vars.TERRAFORM_VARS }}

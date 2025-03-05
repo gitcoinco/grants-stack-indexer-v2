@@ -71,11 +71,11 @@ jobs:
                   fi
                   # Write the contents of TERRAFORM_VARS to tfvars.json.
                   cat <<< "$TERRAFORM_VARS" > tfvars.json
-                  active_env=$(terraform output -raw active_environment)
-                  if [ "$active_env" == "${{ github.event.inputs.destroy_instance }}" ]; then
-                      echo "Error: Active environment is the same as the destroy instance." >&2
+                  active_deployment=$(terraform output -raw active_deployment)
+                  if [ "$active_deployment" == "${{ github.event.inputs.destroy_instance }}" ]; then
+                      echo "Error: Active deployment is the same as the destroy instance." >&2
                       exit 1
                   fi
-                  terraform apply -var-file=tfvars.json -auto-approve -var="DEPLOYMENT_STATE=single" -var="ACTIVE_ENVIRONMENT=$active_env"
+                  terraform apply -var-file=tfvars.json -auto-approve -var="DEPLOYMENT_STATE=single" -var="ACTIVE_DEPLOYMENT=$active_deployment"
               env:
                   TERRAFORM_VARS: ${{ vars.TERRAFORM_VARS }}

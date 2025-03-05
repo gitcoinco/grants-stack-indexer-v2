@@ -1,10 +1,11 @@
-name: Destroy Environment
+name: Current Deployment State
 
 on:
     workflow_dispatch:
+
 jobs:
-    destroy:
-        name: Terraform Destroy
+    deploy:
+        name: Terraform Deployment
         runs-on: ubuntu-latest
         env:
             TF_VAR_AWS_REGION: ${{ vars.AWS_REGION }}
@@ -64,6 +65,7 @@ jobs:
                   cat <<< "$TERRAFORM_VARS" > tfvars.json
                   active_deployment=$(terraform output -raw active_deployment)
                   deployment_state=$(terraform output -raw deployment_state)
-                  terraform destroy -var-file=tfvars.json -auto-approve -var="DEPLOYMENT_STATE=$deployment_state" -var="ACTIVE_DEPLOYMENT=$active_deployment"
+                  echo "Active deployment: $active_deployment"
+                  echo "Deployment state: $deployment_state"
               env:
                   TERRAFORM_VARS: ${{ vars.TERRAFORM_VARS }}

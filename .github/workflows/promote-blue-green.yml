@@ -71,10 +71,10 @@ jobs:
                   fi
                   # Write the contents of TERRAFORM_VARS to tfvars.json.
                   cat <<< "$TERRAFORM_VARS" > tfvars.json
-                  if [ "$(terraform output -raw active_environment)" == "${{ github.event.inputs.promote_instance }}" ]; then
-                      echo "Error: Active environment is the same as the promote instance." >&2
+                  if [ "$(terraform output -raw active_deployment)" == "${{ github.event.inputs.promote_instance }}" ]; then
+                      echo "Error: Active deployment is the same as the promote instance." >&2
                       exit 1
                   fi
-                  terraform apply -var-file=tfvars.json -auto-approve -var="DEPLOYMENT_STATE=deploying" -var="ACTIVE_ENVIRONMENT=${{ github.event.inputs.promote_instance }}"
+                  terraform apply -var-file=tfvars.json -auto-approve -var="DEPLOYMENT_STATE=deploying" -var="ACTIVE_DEPLOYMENT=${{ github.event.inputs.promote_instance }}"
               env:
                   TERRAFORM_VARS: ${{ vars.TERRAFORM_VARS }}
