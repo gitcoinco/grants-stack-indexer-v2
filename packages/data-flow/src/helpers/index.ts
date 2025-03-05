@@ -1,4 +1,5 @@
 import {
+    decodeAttestedData,
     decodeDGApplicationData,
     decodeDVMDApplicationData,
     decodeDVMDExtendedApplicationData,
@@ -31,6 +32,10 @@ export const getMetadataCidsFromEvents = (
             try {
                 const decoded = decodeDVMDExtendedApplicationData(event.params.data);
                 ids.add(decoded.metadata.pointer);
+            } catch {}
+            try {
+                const decoded = decodeAttestedData(event.params.data);
+                ids.add(decoded.metadataCid);
             } catch (error) {
                 logger.warn("Failed to decode Metadata CID from event data", {
                     error,
