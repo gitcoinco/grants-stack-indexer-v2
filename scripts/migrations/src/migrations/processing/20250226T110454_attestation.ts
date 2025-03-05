@@ -7,11 +7,6 @@ export async function up(db: Kysely<any>): Promise<void> {
     const ADDRESS_TYPE = "text";
 
     await db.schema
-        .alterTable("donations")
-        .addUniqueConstraint("unique_txnHash_chainId", ["transactionHash", "chainId"])
-        .execute();
-
-    await db.schema
         .createTable("attestations")
         .addColumn("uid", "text")
         .addColumn("chainId", CHAIN_ID_TYPE)
