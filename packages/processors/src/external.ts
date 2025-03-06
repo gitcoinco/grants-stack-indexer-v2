@@ -17,4 +17,5 @@ export {
     decodeDVMDApplicationData,
     decodeDVMDExtendedApplicationData,
     decodeDGApplicationData,
+    decodeAttestedData,
 } from "./internal.js";
