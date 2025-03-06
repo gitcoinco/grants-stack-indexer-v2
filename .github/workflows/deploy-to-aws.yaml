@@ -2,11 +2,20 @@ name: Deploy to AWS (First deployment)
 
 on:
     workflow_dispatch:
+        inputs:
+            environment:
+                type: choice
+                description: Environment to check
+                required: true
+                options:
+                    - production
+                    - staging
 
 jobs:
     deploy:
         name: Terraform Deployment
         runs-on: ubuntu-latest
+        environment: ${{ github.event.inputs.environment }}
         env:
             TF_VAR_AWS_REGION: ${{ vars.AWS_REGION }}
             TF_VAR_APP_NAME: ${{ vars.APP_NAME }}
@@ -45,16 +54,16 @@ jobs:
                   aws-region: ${{ vars.AWS_REGION }}
 
             - name: Terraform Init
-              working-directory: deployment/environments/production
+              working-directory: deployment/environments/${{github.event.inputs.environment}}
               run: |
                   terraform init \
                     -backend-config="bucket=${{ vars.APP_NAME }}-terraform-state" \
-                    -backend-config="key=${{ vars.APP_NAME }}-production-state" \
+                    -backend-config="key=${{ vars.APP_NAME }}-${{github.event.inputs.environment}}-state" \
                     -backend-config="region=${{ vars.AWS_REGION }}" \
                     -backend-config="encrypt=true"
 
             - name: Terraform Apply
-              working-directory: deployment/environments/production
+              working-directory: deployment/environments/${{github.event.inputs.environment}}
               run: |
                   # Validate that TERRAFORM_VARS is valid JSON.
                   if ! jq empty <<< "$TERRAFORM_VARS" >/dev/null 2>&1; then
@@ -63,6 +72,6 @@ jobs:
                   fi
                   # Write the contents of TERRAFORM_VARS to tfvars.json.
                   cat <<< "$TERRAFORM_VARS" > tfvars.json
-                  terraform apply -var-file=tfvars.json -auto-approve -var="DEPLOYMENT_STATE=single" -var="ACTIVE_ENVIRONMENT=green"
+                  terraform apply -var-file=tfvars.json -auto-approve -var="DEPLOYMENT_STATE=single" -var="ACTIVE_DEPLOYMENT=green"
               env:
                   TERRAFORM_VARS: ${{ vars.TERRAFORM_VARS }}

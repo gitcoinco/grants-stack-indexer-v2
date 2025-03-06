@@ -3,6 +3,13 @@ name: Destroy Blue Green (Finish upgrade - Step 3)
 on:
     workflow_dispatch:
         inputs:
+            environment:
+                type: choice
+                description: Environment to check
+                required: true
+                options:
+                    - production
+                    - staging
             destroy_instance:
                 type: choice
                 description: "Deployment instance (e.g., blue, green)"
@@ -15,10 +22,11 @@ jobs:
     deploy:
         name: Terraform Deployment
         runs-on: ubuntu-latest
+        environment: ${{ github.event.inputs.environment }}
         env:
             TF_VAR_AWS_REGION: ${{ vars.AWS_REGION }}
             TF_VAR_APP_NAME: ${{ vars.APP_NAME }}
-            TF_VAR_APP_ENVIRONMENT: production
+            TF_VAR_APP_ENVIRONMENT: ${{ github.event.inputs.environment }}
             #Database
             TF_VAR_DATALAYER_PG_USER: ${{ secrets.DATALAYER_PG_USER }}
             TF_VAR_DATALAYER_PG_PASSWORD: ${{ secrets.DATALAYER_PG_PASSWORD }}
@@ -53,16 +61,16 @@ jobs:
                   aws-region: ${{ vars.AWS_REGION }}
 
             - name: Terraform Init
-              working-directory: deployment/environments/production
+              working-directory: deployment/environments/${{ github.event.inputs.environment }}
               run: |
                   terraform init \
                     -backend-config="bucket=${{ vars.APP_NAME }}-terraform-state" \
-                    -backend-config="key=${{ vars.APP_NAME }}-production-state" \
+                    -backend-config="key=${{ vars.APP_NAME }}-${{ github.event.inputs.environment }}-state" \
                     -backend-config="region=${{ vars.AWS_REGION }}" \
                     -backend-config="encrypt=true"
 
             - name: Terraform Apply
-              working-directory: deployment/environments/production
+              working-directory: deployment/environments/${{ github.event.inputs.environment }}
               run: |
                   # Validate that TERRAFORM_VARS is valid JSON.
                   if ! jq empty <<< "$TERRAFORM_VARS" >/dev/null 2>&1; then

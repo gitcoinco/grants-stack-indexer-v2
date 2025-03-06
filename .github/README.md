@@ -91,28 +91,42 @@ Each step requires manual trigger with environment selection (blue/green) to ens
 
 ## Required Configuration
 
-### Secrets
+###Environment Variables and Secrets
+To properly configure your GitHub repository, set up the following environment variables and secrets:
 
-Configure these secrets in your GitHub repository:
+1. Add Repository Secrets
+   Navigate to GitHub Repository Settings → Secrets and add:
 
 -   `AWS_ACCESS_KEY_ID`
 -   `AWS_SECRET_ACCESS_KEY`
+-   `ECR_REGISTRY`
+-   `ECR_REPOSITORY`
+
+2. Add Repository Environment Variables
+   Under GitHub Repository Settings → Environment Variables, add:
+
+-   `APP_NAME`
+-   `AWS_REGION`
+
+3. Create GitHub Environments
+   Set up two separate GitHub Environments:
+
+-   `production`
+-   `staging`
+
+4. Add Secrets to GitHub Environments
+   Within each environment (production and staging), add:
+
 -   `COINGECKO_API_KEY`
 -   `HASURA_ADMIN_SECRET`
 -   `DATA_LAYER_DB_PASSWORD`
 -   `DATA_LAYER_DB_USER`
--   `ECR_REGISTRY`
--   `ECR_REPOSITORY`
 
-### Environment Variables
+5. Add Environment Variables to GitHub Environments
+   Under Repository Environment Variables, add:
 
-Configure these environment variables in the GitHub repository settings:
-
--   `APP_NAME`
--   `AWS_REGION`
--   `TERRAFORM_VARS` (Mostly all the changes will be just the image tags)
-
-Example `TERRAFORM_VARS` configuration:
+-   `TERRAFORM_VARS` (Primarily used for managing image tag updates)
+    Example `TERRAFORM_VARS` configuration:
 
 ```json
 {

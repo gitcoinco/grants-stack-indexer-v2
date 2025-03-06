@@ -1,19 +1,18 @@
-name: Destroy Environment
+name: Upgrade Current Deployment Infra
 
 on:
     workflow_dispatch:
         inputs:
             environment:
                 type: choice
-                description: Environment to check
-                required: true
+                description: Environment to upgrade
                 options:
                     - production
                     - staging
 
 jobs:
-    destroy:
-        name: Terraform Destroy
+    deploy:
+        name: Terraform Deployment
         runs-on: ubuntu-latest
         environment: ${{ github.event.inputs.environment }}
         env:
@@ -54,16 +53,16 @@ jobs:
                   aws-region: ${{ vars.AWS_REGION }}
 
             - name: Terraform Init
-              working-directory: deployment/environments/${{ github.event.inputs.environment }}
+              working-directory: deployment/environments/${{github.event.inputs.environment}}
               run: |
                   terraform init \
                     -backend-config="bucket=${{ vars.APP_NAME }}-terraform-state" \
-                    -backend-config="key=${{ vars.APP_NAME }}-${{ github.event.inputs.environment }}-state" \
+                    -backend-config="key=${{ vars.APP_NAME }}-${{github.event.inputs.environment}}-state" \
                     -backend-config="region=${{ vars.AWS_REGION }}" \
                     -backend-config="encrypt=true"
 
             - name: Terraform Apply
-              working-directory: deployment/environments/${{ github.event.inputs.environment }}
+              working-directory: deployment/environments/${{github.event.inputs.environment}}
               run: |
                   # Validate that TERRAFORM_VARS is valid JSON.
                   if ! jq empty <<< "$TERRAFORM_VARS" >/dev/null 2>&1; then
@@ -72,8 +71,10 @@ jobs:
                   fi
                   # Write the contents of TERRAFORM_VARS to tfvars.json.
                   cat <<< "$TERRAFORM_VARS" > tfvars.json
-                  active_deployment=$(terraform output -raw active_deployment)
                   deployment_state=$(terraform output -raw deployment_state)
-                  terraform destroy -var-file=tfvars.json -auto-approve -var="DEPLOYMENT_STATE=$deployment_state" -var="ACTIVE_DEPLOYMENT=$active_deployment"
+                  active_deployment=$(terraform output -raw active_deployment)
+                  echo "Deployment state: $deployment_state"
+                  echo "Active deployment: $active_deployment"
+                  terraform apply -var-file=tfvars.json -auto-approve -var="DEPLOYMENT_STATE=$deployment_state" -var="ACTIVE_DEPLOYMENT=$active_deployment"
               env:
                   TERRAFORM_VARS: ${{ vars.TERRAFORM_VARS }}
