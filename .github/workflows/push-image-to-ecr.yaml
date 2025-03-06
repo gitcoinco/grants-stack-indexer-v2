@@ -34,7 +34,7 @@ jobs:
               with:
                   context: .
                   target: processing
-                  tag: ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:${{ github.sha }}
+                  tags: ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:${{ github.sha }}
                   push: true
                   cache-from: type=gha
                   cache-to: type=gha,mode=max
