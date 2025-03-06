@@ -134,11 +134,11 @@ resource "aws_security_group" "api" {
 }
 
 resource "aws_db_subnet_group" "rds_subnet_group" {
-  name       = "rds_subnet_group"
+  name       = "${var.app_name}-${var.app_environment}-rds-subnet-group"
   subnet_ids = module.vpc.private_subnets
 
 
   tags = {
-    Name = "rds_subnet_group"
+    Name = "${var.app_name}-${var.app_environment}-rds-subnet-group"
   }
 }
