@@ -42,7 +42,7 @@ jobs:
             - name: Setup Terraform
               uses: hashicorp/setup-terraform@v1
               with:
-                  terraform_version: "1.4.6"
+                  terraform_version: ${{ vars.TERRAFORM_VERSION }}
                   terraform_wrapper: false
 
             - name: Set up AWS CLI

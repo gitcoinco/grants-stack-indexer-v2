@@ -153,7 +153,6 @@ Follow this instructions to make the first deployment work:
             DATABASE_URL=postgres://{{DB_USER}}:{{DB_PASSWORD}}@{{DB_URL}}:5432/GitcoinDatalayerGreen
             DATABASE_SCHEMA=public
             NODE_ENV=production
-            postgres://postgres:postgres@gitcoin-data-layer-production-rds.cxg4miqu8345.us-east-2.rds.amazonaws.com:5432/GitcoinDatalayerGreen
             ```
 
     6. chmod +x ./deployment/bastion_scripts/install_dependencies.sh
@@ -231,7 +230,7 @@ Follow this instructions to make the first deployment work:
 1. `nano ./scripts/hasura-config/.env`
 
     ```tsx
-    HASURA_ENDPOINT=http://gitcoin-data-layer-production-lb-1808889439.us-east-2.elb.amazonaws.com/
+    HASURA_ENDPOINT={{API_GW_URL}}
     HASURA_ADMIN_SECRET={{YOUR_HASURA_ADMIN_SECRET}}
     HASURA_SCHEMA=public
     ```

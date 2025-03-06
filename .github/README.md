@@ -39,11 +39,11 @@ Before deploying the application, you need to set up the basic infrastructure:
 1. **Create S3 Bucket** (`create-s3.yaml`):
 
     - Creates bucket for Terraform state
-    - Run once before any deployment
+    - Run once before the first deployment
 
 2. **Create ECR Repository** (`create-ecr.yml`):
     - Sets up Docker image registry
-    - Run once before any deployment
+    - Run once before the first deployment
 
 ### Base Deployment
 
