@@ -1,5 +1,5 @@
 name: Check Admin
-
+description: Check if the user is an admin
 inputs:
     github_token:
         type: string

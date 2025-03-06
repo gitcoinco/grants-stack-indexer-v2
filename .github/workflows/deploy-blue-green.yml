@@ -55,7 +55,7 @@ jobs:
                   terraform_wrapper: false
 
             - name: Set up AWS CLI
-              uses: aws-actions/configure-aws-credentials@v1
+              uses: aws-actions/configure-aws-credentials@v2
               with:
                   aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
                   aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
