@@ -8,8 +8,8 @@ on:
                 description: Environment to check
                 required: true
                 options:
-                    - production
                     - staging
+                    - production
             destroy_instance:
                 type: choice
                 description: "Deployment instance (e.g., blue, green)"
@@ -20,7 +20,7 @@ on:
 
 jobs:
     deploy:
-        name: Terraform Deployment
+        name: Destroy ${{ github.event.inputs.destroy_instance }} in ${{ github.event.inputs.environment }}
         runs-on: ubuntu-latest
         environment: ${{ github.event.inputs.environment }}
         env:

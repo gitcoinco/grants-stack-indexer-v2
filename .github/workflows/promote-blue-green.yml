@@ -8,8 +8,8 @@ on:
                 description: Environment to check
                 required: true
                 options:
-                    - production
                     - staging
+                    - production
             promote_instance:
                 type: choice
                 description: "Promote instance (e.g., blue, green)"
@@ -20,7 +20,7 @@ on:
 
 jobs:
     deploy:
-        name: Terraform Deployment
+        name: Promote ${{ github.event.inputs.promote_instance }} in ${{ github.event.inputs.environment }}
         runs-on: ubuntu-latest
         environment: ${{ github.event.inputs.environment }}
         env:

@@ -8,8 +8,8 @@ on:
                 description: Environment to check
                 required: true
                 options:
-                    - production
                     - staging
+                    - production
 
 jobs:
     deploy:

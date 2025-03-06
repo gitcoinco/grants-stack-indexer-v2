@@ -118,9 +118,9 @@ To properly configure your GitHub repository, set up the following environment v
    Within each environment (production and staging), add:
 
 -   `COINGECKO_API_KEY`
--   `HASURA_ADMIN_SECRET`
--   `DATA_LAYER_DB_PASSWORD`
--   `DATA_LAYER_DB_USER`
+-   `DATALAYER_HASURA_ADMIN_SECRET`
+-   `DATALAYER_PG_PASSWORD`
+-   `DATALAYER_PG_USER`
 
 5. Add Environment Variables to GitHub Environments
    Under Repository Environment Variables, add:

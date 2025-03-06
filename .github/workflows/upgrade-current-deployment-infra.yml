@@ -7,12 +7,12 @@ on:
                 type: choice
                 description: Environment to upgrade
                 options:
-                    - production
                     - staging
+                    - production
 
 jobs:
     deploy:
-        name: Terraform Deployment
+        name: Upgrade infra in ${{ github.event.inputs.environment }}
         runs-on: ubuntu-latest
         environment: ${{ github.event.inputs.environment }}
         env:
