@@ -33,4 +33,8 @@ export type GetEventsFilters = {
      * Limit of events to fetch
      */
     limit?: number;
+    /**
+     * Name of the event to fetch
+     */
+    eventName?: string;
 };

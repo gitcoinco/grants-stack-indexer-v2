@@ -6,6 +6,7 @@ import {
     IApplicationPayoutRepository,
     IApplicationRepository,
     IAttestationRepository,
+    ICache,
     IDonationRepository,
     ILegacyProjectRepository,
     IProjectRepository,
@@ -13,8 +14,10 @@ import {
     IStrategyProcessingCheckpointRepository,
     ITransactionManager,
     Strategy,
+    StrategyTimings,
 } from "@grants-stack-indexer/repository";
 import {
+    Address,
     ChainId,
     ContractToEventName,
     DeepPartial,
@@ -147,6 +150,7 @@ describe("RetroactiveProcessor", () => {
             attestationRepository: {} as IAttestationRepository,
             legacyProjectRepository: {} as ILegacyProjectRepository,
             transactionManager: {} as ITransactionManager,
+            strategyTimingsRepository: {} as ICache<Address, StrategyTimings>,
             pricingProvider: {
                 getTokenPrice: vi.fn(),
                 getTokenPrices: vi.fn(),

@@ -5,10 +5,18 @@ import type { IMetadataProvider } from "@grants-stack-indexer/metadata";
 import type { IPricingProvider } from "@grants-stack-indexer/pricing";
 import type {
     IApplicationReadRepository,
+    ICache,
     IProjectReadRepository,
     IRoundReadRepository,
+    StrategyTimings,
 } from "@grants-stack-indexer/repository";
-import type { ChainId, ILogger, ProcessorEvent, StrategyEvent } from "@grants-stack-indexer/shared";
+import type {
+    Address,
+    ChainId,
+    ILogger,
+    ProcessorEvent,
+    StrategyEvent,
+} from "@grants-stack-indexer/shared";
 
 import { StrategyProcessor, UnsupportedStrategy } from "../../src/internal.js";
 
@@ -38,6 +46,7 @@ describe("StrategyProcessor", () => {
             roundRepository: mockRoundRepository,
             projectRepository: {} as IProjectReadRepository,
             applicationRepository: {} as IApplicationReadRepository,
+            strategyTimingsRepository: {} as ICache<Address, StrategyTimings>,
             logger,
         });
 

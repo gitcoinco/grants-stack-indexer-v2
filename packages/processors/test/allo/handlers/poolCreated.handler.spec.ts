@@ -4,8 +4,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { EvmProvider } from "@grants-stack-indexer/chain-providers";
 import type { IMetadataProvider } from "@grants-stack-indexer/metadata";
 import type { IPricingProvider } from "@grants-stack-indexer/pricing";
-import type { IRoundReadRepository, Round } from "@grants-stack-indexer/repository";
 import type {
+    ICache,
+    IRoundReadRepository,
+    Round,
+    StrategyTimings,
+} from "@grants-stack-indexer/repository";
+import type {
+    Address,
     ChainId,
     DeepPartial,
     ProcessorEvent,
@@ -94,6 +100,7 @@ describe("PoolCreatedHandler", () => {
             pricingProvider: mockPricingProvider,
             metadataProvider: mockMetadataProvider,
             roundRepository: mockRoundRepository,
+            strategyTimingsRepository: {} as ICache<Address, StrategyTimings>,
         });
 
         const result = await handler.handle();
@@ -121,6 +128,7 @@ describe("PoolCreatedHandler", () => {
             pricingProvider: mockPricingProvider,
             metadataProvider: mockMetadataProvider,
             roundRepository: mockRoundRepository,
+            strategyTimingsRepository: {} as ICache<Address, StrategyTimings>,
         });
 
         const result = await handler.handle();
@@ -183,6 +191,7 @@ describe("PoolCreatedHandler", () => {
             pricingProvider: mockPricingProvider,
             metadataProvider: mockMetadataProvider,
             roundRepository: mockRoundRepository,
+            strategyTimingsRepository: {} as ICache<Address, StrategyTimings>,
         });
 
         const result = await handler.handle();
@@ -258,6 +267,7 @@ describe("PoolCreatedHandler", () => {
             pricingProvider: mockPricingProvider,
             metadataProvider: mockMetadataProvider,
             roundRepository: mockRoundRepository,
+            strategyTimingsRepository: {} as ICache<Address, StrategyTimings>,
         });
 
         const result = await handler.handle();
@@ -288,6 +298,7 @@ describe("PoolCreatedHandler", () => {
             pricingProvider: mockPricingProvider,
             metadataProvider: mockMetadataProvider,
             roundRepository: mockRoundRepository,
+            strategyTimingsRepository: {} as ICache<Address, StrategyTimings>,
         });
 
         const result = await handler.handle();
@@ -326,6 +337,7 @@ describe("PoolCreatedHandler", () => {
             pricingProvider: mockPricingProvider,
             metadataProvider: mockMetadataProvider,
             roundRepository: mockRoundRepository,
+            strategyTimingsRepository: {} as ICache<Address, StrategyTimings>,
         });
 
         await expect(() => handler.handle()).rejects.toThrow("Token price not found");
@@ -378,6 +390,7 @@ describe("PoolCreatedHandler", () => {
             pricingProvider: mockPricingProvider,
             metadataProvider: mockMetadataProvider,
             roundRepository: mockRoundRepository,
+            strategyTimingsRepository: {} as ICache<Address, StrategyTimings>,
         });
 
         const result = await handler.handle();
@@ -462,6 +475,7 @@ describe("PoolCreatedHandler", () => {
             pricingProvider: mockPricingProvider,
             metadataProvider: mockMetadataProvider,
             roundRepository: mockRoundRepository,
+            strategyTimingsRepository: {} as ICache<Address, StrategyTimings>,
         });
 
         await handler.handle();
@@ -489,6 +503,7 @@ describe("PoolCreatedHandler", () => {
             pricingProvider: mockPricingProvider,
             metadataProvider: mockMetadataProvider,
             roundRepository: mockRoundRepository,
+            strategyTimingsRepository: {} as ICache<Address, StrategyTimings>,
         });
 
         const result = await handler.handle();

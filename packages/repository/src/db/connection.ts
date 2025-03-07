@@ -30,6 +30,7 @@ import {
     StatusSnapshot,
     StrategyProcessingCheckpoint as StrategyProcessingCheckpointTable,
     Strategy as StrategyRegistryTable,
+    StrategyTimings as StrategyTimingsTable,
 } from "../internal.js";
 
 const { Pool } = pg;
@@ -83,6 +84,7 @@ export interface Database {
     attestations: AttestationTable;
     attestationTxns: AttestationTxnTable;
     legacyProjects: LegacyProjectTable;
+    strategyTimings: StrategyTimingsTable;
 }
 
 /**

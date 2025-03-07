@@ -196,10 +196,12 @@ export class Orchestrator {
                     { abortSignal: signal },
                 );
                 processedEvents++;
-                this.logger.info(`Processed events: ${processedEvents}/${totalEvents}`, {
-                    className: Orchestrator.name,
-                    chainId: this.chainId,
-                });
+                if (processedEvents % 1000 === 0) {
+                    this.logger.info(`Processed events: ${processedEvents}/${totalEvents}`, {
+                        className: Orchestrator.name,
+                        chainId: this.chainId,
+                    });
+                }
             } catch (error: unknown) {
                 if (event) {
                     await this.eventsRegistry.saveLastProcessedEvent(this.chainId, {

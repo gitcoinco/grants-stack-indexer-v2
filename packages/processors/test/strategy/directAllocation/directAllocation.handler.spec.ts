@@ -5,10 +5,18 @@ import { IMetadataProvider } from "@grants-stack-indexer/metadata";
 import { IPricingProvider } from "@grants-stack-indexer/pricing";
 import {
     IApplicationReadRepository,
+    ICache,
     IProjectReadRepository,
     IRoundReadRepository,
+    StrategyTimings,
 } from "@grants-stack-indexer/repository";
-import { ChainId, ILogger, ProcessorEvent, StrategyEvent } from "@grants-stack-indexer/shared";
+import {
+    Address,
+    ChainId,
+    ILogger,
+    ProcessorEvent,
+    StrategyEvent,
+} from "@grants-stack-indexer/shared";
 
 import { UnsupportedEventException } from "../../../src/internal.js";
 import { DirectAllocationStrategyHandler } from "../../../src/processors/strategy/directAllocation/directAllocation.handler.js";
@@ -51,6 +59,7 @@ describe("DirectAllocationStrategyHandler", () => {
             evmProvider: mockEVMProvider,
             pricingProvider: mockPricingProvider,
             applicationRepository: mockApplicationRepository,
+            strategyTimingsRepository: {} as ICache<Address, StrategyTimings>,
             logger: mockLogger,
         });
     });

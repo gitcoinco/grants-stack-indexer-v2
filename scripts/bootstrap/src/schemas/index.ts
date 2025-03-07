@@ -12,6 +12,12 @@ const stringToJSONSchema = z.string().transform((str, ctx): z.infer<ReturnType<t
     }
 });
 
+const chainSchema = z.object({
+    rpcUrls: z.array(z.string().url()).nonempty(),
+    id: z.coerce.number().int().positive(),
+    name: z.string(),
+});
+
 const dbEnvSchema = z.object({
     DATABASE_URL: z.string().url(),
     INDEXER_URL: z.string().url(),
@@ -19,6 +25,11 @@ const dbEnvSchema = z.object({
     INDEXER_FETCH_LIMIT: z.coerce.number().optional().default(1000),
     PUBLIC_GATEWAY_URLS: stringToJSONSchema.pipe(z.array(z.string().url())),
     CHAIN_IDS: stringToJSONSchema.pipe(z.array(z.number())),
+    CHAINS: stringToJSONSchema.pipe(z.array(chainSchema).nonempty()).refine((chains) => {
+        const ids = chains.map((chain) => chain.id);
+        const uniqueIds = new Set(ids);
+        return ids.length === uniqueIds.size;
+    }, "Chain IDs must be unique"),
     NODE_ENV: z.enum(["development", "staging", "production"]).default("development"),
     PRICING_SOURCE: z.enum(["dummy", "coingecko"]).default("coingecko"),
 });

@@ -5,10 +5,13 @@ import type { IMetadataProvider } from "@grants-stack-indexer/metadata";
 import type { IPricingProvider } from "@grants-stack-indexer/pricing";
 import type {
     IApplicationReadRepository,
+    ICache,
     IProjectReadRepository,
     IRoundReadRepository,
+    StrategyTimings,
 } from "@grants-stack-indexer/repository";
 import type {
+    Address,
     ChainId,
     GitcoinAttestationNetworkEvent,
     ILogger,
@@ -62,6 +65,7 @@ describe("GitcoinAttestationNetworkProcessor", () => {
             roundRepository: mockRoundRepository,
             projectRepository: mockProjectRepository,
             applicationRepository: mockApplicationRepository,
+            strategyTimingsRepository: {} as ICache<Address, StrategyTimings>,
             logger,
         });
     });

@@ -294,6 +294,9 @@ importers:
 
     scripts/bootstrap:
         dependencies:
+            "@grants-stack-indexer/chain-providers":
+                specifier: workspace:*
+                version: link:../../packages/chain-providers
             "@grants-stack-indexer/data-flow":
                 specifier: workspace:*
                 version: link:../../packages/data-flow
@@ -306,6 +309,9 @@ importers:
             "@grants-stack-indexer/pricing":
                 specifier: workspace:*
                 version: link:../../packages/pricing
+            "@grants-stack-indexer/processors":
+                specifier: workspace:*
+                version: link:../../packages/processors
             "@grants-stack-indexer/repository":
                 specifier: workspace:*
                 version: link:../../packages/repository
@@ -324,6 +330,9 @@ importers:
             ts-retry:
                 specifier: 5.0.1
                 version: 5.0.1
+            viem:
+                specifier: 2.19.6
+                version: 2.19.6(typescript@5.5.4)(zod@3.23.8)
             yargs:
                 specifier: 17.7.2
                 version: 17.7.2
@@ -1391,6 +1400,13 @@ packages:
             }
         engines: { node: ^14.21.3 || >=16 }
 
+    "@noble/curves@1.8.1":
+        resolution:
+            {
+                integrity: sha512-warwspo+UYUPep0Q+vtdVB4Ugn8GGQj8iyB3gnRWsztmUHTI3S1nhdiWNsPUGL0vud7JlRRk1XEu7Lq1KGTnMQ==,
+            }
+        engines: { node: ^14.21.3 || >=16 }
+
     "@noble/hashes@1.3.2":
         resolution:
             {
@@ -1409,6 +1425,13 @@ packages:
         resolution:
             {
                 integrity: sha512-1j6kQFb7QRru7eKN3ZDvRcP13rugwdxZqCjbiAVZfIJwgj2A65UmT4TgARXGlXgnRkORLTDTrO19ZErt7+QXgA==,
+            }
+        engines: { node: ^14.21.3 || >=16 }
+
+    "@noble/hashes@1.7.1":
+        resolution:
+            {
+                integrity: sha512-B8XBPsn4vT/KJAGqDzbwztd+6Yte3P4V7iafm24bxgDe/mlRuK6xmWPuCNrKt2vDafZ8MfJLlchDG/vYafQEjQ==,
             }
         engines: { node: ^14.21.3 || >=16 }
 
@@ -6969,11 +6992,17 @@ snapshots:
         dependencies:
             "@noble/hashes": 1.5.0
 
+    "@noble/curves@1.8.1":
+        dependencies:
+            "@noble/hashes": 1.7.1
+
     "@noble/hashes@1.3.2": {}
 
     "@noble/hashes@1.4.0": {}
 
     "@noble/hashes@1.5.0": {}
+
+    "@noble/hashes@1.7.1": {}
 
     "@nodelib/fs.scandir@2.1.5":
         dependencies:
@@ -9868,8 +9897,8 @@ snapshots:
 
     webauthn-p256@0.0.5:
         dependencies:
-            "@noble/curves": 1.4.0
-            "@noble/hashes": 1.4.0
+            "@noble/curves": 1.8.1
+            "@noble/hashes": 1.7.1
 
     which@2.0.2:
         dependencies:

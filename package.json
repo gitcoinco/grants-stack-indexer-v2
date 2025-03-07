@@ -8,8 +8,10 @@
     "type": "module",
     "scripts": {
         "api:configure": "pnpm run --filter @grants-stack-indexer/hasura-config api:configure",
+        "bootstrap:all": "pnpm run --filter @grants-stack-indexer/bootstrap bootstrap:metadata bootstrap:pricing bootstrap:strategyTimings",
         "bootstrap:metadata": "pnpm run --filter @grants-stack-indexer/bootstrap bootstrap:metadata",
         "bootstrap:pricing": "pnpm run --filter @grants-stack-indexer/bootstrap bootstrap:pricing",
+        "bootstrap:strategyTimings": "pnpm run --filter @grants-stack-indexer/bootstrap bootstrap:strategyTimings",
         "build": "turbo run build",
         "check-types": "turbo run check-types",
         "clean": "turbo run clean",

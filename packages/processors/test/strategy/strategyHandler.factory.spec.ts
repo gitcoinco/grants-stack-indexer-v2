@@ -1,4 +1,4 @@
-import { Hex } from "viem";
+import { Address, Hex } from "viem";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { EvmProvider } from "@grants-stack-indexer/chain-providers";
@@ -6,8 +6,10 @@ import { IMetadataProvider } from "@grants-stack-indexer/metadata";
 import { IPricingProvider } from "@grants-stack-indexer/pricing";
 import {
     IApplicationReadRepository,
+    ICache,
     IProjectReadRepository,
     IRoundReadRepository,
+    StrategyTimings,
 } from "@grants-stack-indexer/repository";
 import { ChainId, ILogger } from "@grants-stack-indexer/shared";
 
@@ -23,7 +25,7 @@ describe("StrategyHandlerFactory", () => {
     let mockProjectRepository: IProjectReadRepository;
     let mockProcessorDependencies: ProcessorDependencies;
     let mockApplicationRepository: IApplicationReadRepository;
-
+    let mockStrategyTimingsRepository: ICache<Address, StrategyTimings>;
     const logger: ILogger = {
         debug: vi.fn(),
         error: vi.fn(),
@@ -44,6 +46,7 @@ describe("StrategyHandlerFactory", () => {
             roundRepository: mockRoundRepository,
             projectRepository: mockProjectRepository,
             applicationRepository: mockApplicationRepository,
+            strategyTimingsRepository: mockStrategyTimingsRepository,
             logger,
         };
     });

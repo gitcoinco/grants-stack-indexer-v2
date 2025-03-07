@@ -5,10 +5,18 @@ import type { IMetadataProvider } from "@grants-stack-indexer/metadata";
 import type { IPricingProvider } from "@grants-stack-indexer/pricing";
 import type {
     IApplicationReadRepository,
+    ICache,
     IProjectReadRepository,
     IRoundReadRepository,
+    StrategyTimings,
 } from "@grants-stack-indexer/repository";
-import type { AlloEvent, ChainId, ILogger, ProcessorEvent } from "@grants-stack-indexer/shared";
+import type {
+    Address,
+    AlloEvent,
+    ChainId,
+    ILogger,
+    ProcessorEvent,
+} from "@grants-stack-indexer/shared";
 
 import { UnsupportedEventException } from "../../src/internal.js";
 import { AlloProcessor } from "../../src/processors/allo/allo.processor.js";
@@ -50,6 +58,7 @@ describe("AlloProcessor", () => {
             roundRepository: mockRoundRepository,
             projectRepository: {} as IProjectReadRepository,
             applicationRepository: {} as IApplicationReadRepository,
+            strategyTimingsRepository: {} as ICache<Address, StrategyTimings>,
             logger,
         });
 

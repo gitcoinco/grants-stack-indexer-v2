@@ -5,13 +5,15 @@ import {
     IApplicationPayoutRepository,
     IApplicationRepository,
     IAttestationRepository,
+    ICache,
     IDonationRepository,
     ILegacyProjectRepository,
     IProjectRepository,
     IRoundRepository,
     ITransactionManager,
+    StrategyTimings,
 } from "@grants-stack-indexer/repository";
-import { ICacheable } from "@grants-stack-indexer/shared";
+import { Address, ICacheable } from "@grants-stack-indexer/shared";
 
 /**
  * The core dependencies for the data flow
@@ -34,4 +36,5 @@ export type CoreDependencies = Pick<
     attestationRepository: IAttestationRepository;
     transactionManager: ITransactionManager;
     legacyProjectRepository: ILegacyProjectRepository;
+    strategyTimingsRepository: ICache<Address, StrategyTimings>;
 };

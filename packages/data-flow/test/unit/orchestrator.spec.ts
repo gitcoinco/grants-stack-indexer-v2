@@ -10,6 +10,7 @@ import {
     IApplicationPayoutRepository,
     IApplicationRepository,
     IAttestationRepository,
+    ICache,
     IDonationRepository,
     IEventRegistryRepository,
     ILegacyProjectRepository,
@@ -18,6 +19,7 @@ import {
     ITransactionManager,
     RoundNotFound,
     RoundNotFoundForId,
+    StrategyTimings,
 } from "@grants-stack-indexer/repository";
 import {
     AlloEvent,
@@ -123,6 +125,7 @@ describe("Orchestrator", { sequential: true }, () => {
             applicationPayoutRepository: {} as unknown as IApplicationPayoutRepository,
             attestationRepository: {} as unknown as IAttestationRepository,
             legacyProjectRepository: {} as unknown as ILegacyProjectRepository,
+            strategyTimingsRepository: {} as unknown as ICache<Address, StrategyTimings>,
             pricingProvider: mockPricingProvider,
             metadataProvider: mockMetadataProvider,
         };
