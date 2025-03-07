@@ -39,6 +39,9 @@ export const extractAllPriceSourceCodes = (tokensMap: TokensMap): TokenCode[] =>
     return Array.from(priceSourceCodes);
 };
 
+/**
+ * WARNING: ALL THE ADDRESSES MUST BE CHECKSUMMED
+ */
 export const TOKENS: {
     [chainId: number]: {
         [tokenAddress: Address]: Token;
@@ -391,10 +394,10 @@ export const TOKENS: {
             address: "0x912CE59144191C1204E64559FE8253a0e49E6548",
             decimals: 18,
         },
-        "0x4f604735c1cf31399c6e711d5962b2b3e0225ad3": {
+        "0x4F604735c1cF31399C6E711D5962b2B3E0225AD3": {
             code: "USDGLO" as TokenCode,
             priceSourceCode: "USDGLO" as TokenCode,
-            address: "0x4f604735c1cf31399c6e711d5962b2b3e0225ad3",
+            address: "0x4F604735c1cF31399C6E711D5962b2B3E0225AD3",
             decimals: 18,
         },
         "0x0000000000000000000000000000000000000000": {
@@ -409,10 +412,10 @@ export const TOKENS: {
             address: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
             decimals: 18,
         },
-        "0x7f9a7db853ca816b9a138aee3380ef34c437dee0": {
+        "0x7f9a7DB853Ca816B9A138AEe3380Ef34c437dEe0": {
             code: "GTC" as TokenCode,
             priceSourceCode: "GTC" as TokenCode,
-            address: "0x7f9a7db853ca816b9a138aee3380ef34c437dee0",
+            address: "0x7f9a7DB853Ca816B9A138AEe3380Ef34c437dEe0",
             decimals: 18,
         },
     },
