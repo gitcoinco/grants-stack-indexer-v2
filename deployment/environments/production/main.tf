@@ -41,12 +41,14 @@ module "storage" {
   rds_security_group_id = module.networking.rds_security_group_id
   rds_subnet_ids        = module.networking.private_subnets
   rds_subnet_group_name = module.networking.rds_subnet_group_name
+  rds_instance_class    = "db.t4g.micro"
 }
 
 module "bastion" {
   source                        = "../../modules/bastion"
   app_environment               = var.APP_ENVIRONMENT
   app_name                      = var.APP_NAME
+  instance_type                 = "t3.large"
   subnet_id                     = module.networking.private_subnets[0]
   bastion_instance_profile_name = module.iam.bastion_instance_profile_name
   bastion_security_group_id     = module.networking.processing_security_group_id
@@ -86,6 +88,7 @@ module "blue_compute" {
   api_repository_url                             = var.BLUE_API_REPOSITORY_URL
   api_service_role_arn                           = module.iam.api_service_role_arn
   api_security_group_id                          = module.networking.api_security_group_id
+  api_security_group_id_without_lb               = module.networking.api_security_group_id_without_lb
   lb_target_group_arn                            = module.load_balancer.lb_blue_target_group_arn
   NODE_ENV                                       = var.BLUE_NODE_ENV
   RETRY_BASE_DELAY_MS                            = var.BLUE_RETRY_BASE_DELAY_MS
@@ -139,6 +142,7 @@ module "green_compute" {
   api_repository_url                             = var.GREEN_API_REPOSITORY_URL
   api_service_role_arn                           = module.iam.api_service_role_arn
   api_security_group_id                          = module.networking.api_security_group_id
+  api_security_group_id_without_lb               = module.networking.api_security_group_id_without_lb
   lb_target_group_arn                            = module.load_balancer.lb_green_target_group_arn
   NODE_ENV                                       = var.GREEN_NODE_ENV
   RETRY_BASE_DELAY_MS                            = var.GREEN_RETRY_BASE_DELAY_MS

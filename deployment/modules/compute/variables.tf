@@ -85,6 +85,11 @@ variable "api_security_group_id" {
   type        = string
 }
 
+variable "api_security_group_id_without_lb" {
+  description = "The ID of the API security group without load balancer"
+  type        = string
+}
+
 variable "lb_target_group_arn" {
   description = "The ARN of the load balancer target group"
   type        = string

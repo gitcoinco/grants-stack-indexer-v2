@@ -22,6 +22,10 @@ output "api_security_group_id" {
   value = aws_security_group.api.id
 }
 
+output "api_security_group_id_without_lb" {
+  value = aws_security_group.api_without_lb.id
+}
+
 output "rds_subnet_group_name" {
   value = aws_db_subnet_group.rds_subnet_group.name
 }

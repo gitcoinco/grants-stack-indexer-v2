@@ -8,7 +8,7 @@ module "rds" {
   family               = "postgres16"
   engine               = "postgres"
   engine_version       = "16"
-  instance_class       = "db.t4g.micro"
+  instance_class       = var.rds_instance_class
   allocated_storage    = 10
 
   manage_master_user_password = false
