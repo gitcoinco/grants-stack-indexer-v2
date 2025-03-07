@@ -45,6 +45,8 @@ Before deploying the application, you need to set up the basic infrastructure:
     - Sets up Docker image registry
     - Run once before the first deployment
 
+Note: Once you deploy ECR registry, you will need to set `ECR_REGISTRY` in the repository settings.
+
 ### Base Deployment
 
 Two workflows handle the base deployment operations:
@@ -100,7 +102,6 @@ To properly configure your GitHub repository, set up the following environment v
 -   `AWS_ACCESS_KEY_ID`
 -   `AWS_SECRET_ACCESS_KEY`
 -   `ECR_REGISTRY`
--   `ECR_REPOSITORY`
 
 2. Add Repository Environment Variables
    Under GitHub Repository Settings → Environment Variables, add:
@@ -248,6 +249,5 @@ The `push-to-ecr.yaml` workflow automatically pushes images to Amazon ECR when c
 Required secrets for ECR:
 
 -   `ECR_REGISTRY`
--   `ECR_REPOSITORY`
 -   `AWS_ACCESS_KEY_ID`
 -   `AWS_SECRET_ACCESS_KEY`
