@@ -2,6 +2,7 @@ import { ILogger } from "@grants-stack-indexer/shared";
 
 import {
     CoingeckoProvider,
+    CoinPaprikaProvider,
     DummyPricingProvider,
     InvalidPricingSource,
     IPricingProvider,
@@ -40,6 +41,19 @@ export class PricingProviderFactory {
                 }
 
                 pricingProvider = new CoingeckoProvider(
+                    {
+                        apiKey: options.apiKey,
+                        apiType: options.apiType,
+                    },
+                    deps.logger,
+                );
+                break;
+            case "coinpaprika":
+                if (!deps?.logger) {
+                    throw new MissingDependencies();
+                }
+
+                pricingProvider = new CoinPaprikaProvider(
                     {
                         apiKey: options.apiKey,
                         apiType: options.apiType,

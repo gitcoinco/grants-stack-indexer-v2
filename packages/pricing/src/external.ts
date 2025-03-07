@@ -1,6 +1,11 @@
 export type { TokenPrice, IPricingProvider } from "./internal.js";
 
-export { CoingeckoProvider, DummyPricingProvider, CachingPricingProvider } from "./internal.js";
+export {
+    CoingeckoProvider,
+    DummyPricingProvider,
+    CachingPricingProvider,
+    CoinPaprikaProvider,
+} from "./internal.js";
 
 export { PricingProviderFactory } from "./internal.js";
 export type {
@@ -8,6 +13,7 @@ export type {
     PricingProvider,
     DummyPricingConfig,
     CoingeckoPricingConfig,
+    CoinPaprikaPricingConfig,
 } from "./internal.js";
 
 export {

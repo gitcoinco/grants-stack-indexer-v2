@@ -20,7 +20,7 @@ const dbEnvSchema = z.object({
     PUBLIC_GATEWAY_URLS: stringToJSONSchema.pipe(z.array(z.string().url())),
     CHAIN_IDS: stringToJSONSchema.pipe(z.array(z.number())),
     NODE_ENV: z.enum(["development", "staging", "production"]).default("development"),
-    PRICING_SOURCE: z.enum(["dummy", "coingecko"]).default("coingecko"),
+    PRICING_SOURCE: z.enum(["dummy", "coingecko", "coinpaprika"]).default("coingecko"),
 });
 
 const dummyPricingSchema = dbEnvSchema.extend({
@@ -34,11 +34,32 @@ const coingeckoPricingSchema = dbEnvSchema.extend({
     COINGECKO_API_TYPE: z.enum(["demo", "pro"]).default("pro"),
 });
 
+const coinpaprikaPricingSchema = dbEnvSchema.extend({
+    PRICING_SOURCE: z.literal("coinpaprika"),
+    COINPAPRIKA_API_KEY: z.string().default(""),
+    COINPAPRIKA_API_TYPE: z
+        .enum(["free", "starter", "pro", "business", "enterprise"])
+        .default("free"),
+});
+
 const validationSchema = z
-    .discriminatedUnion("PRICING_SOURCE", [dummyPricingSchema, coingeckoPricingSchema])
+    .discriminatedUnion("PRICING_SOURCE", [
+        dummyPricingSchema,
+        coingeckoPricingSchema,
+        coinpaprikaPricingSchema,
+    ])
     .transform((val) => {
         if (val.PRICING_SOURCE === "dummy") {
             return { pricingSource: val.PRICING_SOURCE, dummyPrice: val.DUMMY_PRICE, ...val };
+        }
+
+        if (val.PRICING_SOURCE === "coinpaprika") {
+            return {
+                pricingSource: val.PRICING_SOURCE,
+                apiKey: val.COINPAPRIKA_API_KEY,
+                apiType: val.COINPAPRIKA_API_TYPE,
+                ...val,
+            };
         }
 
         return {

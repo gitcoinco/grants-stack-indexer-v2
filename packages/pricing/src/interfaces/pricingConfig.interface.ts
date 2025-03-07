@@ -11,8 +11,16 @@ export type CoingeckoPricingConfig = {
     apiType: "demo" | "pro";
 };
 
+export type CoinPaprikaPricingConfig = {
+    pricingSource: "coinpaprika";
+    apiKey: string;
+    apiType: "free" | "starter" | "pro" | "business" | "enterprise";
+};
+
 export type PricingConfig<Source extends PricingProvider> = Source extends "dummy"
     ? DummyPricingConfig
     : Source extends "coingecko"
       ? CoingeckoPricingConfig
-      : never;
+      : Source extends "coinpaprika"
+        ? CoinPaprikaPricingConfig
+        : never;

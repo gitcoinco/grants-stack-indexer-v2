@@ -33,7 +33,7 @@ const baseSchema = z.object({
     DATABASE_SCHEMA: z.string().default("public"),
     INDEXER_GRAPHQL_URL: z.string().url(),
     INDEXER_ADMIN_SECRET: z.string().optional(),
-    PRICING_SOURCE: z.enum(["dummy", "coingecko"]).default("coingecko"),
+    PRICING_SOURCE: z.enum(["dummy", "coingecko", "coinpaprika"]).default("coingecko"),
     METADATA_SOURCE: z.enum(["dummy", "public-gateway"]).default("dummy"),
     RETRY_MAX_ATTEMPTS: z.coerce.number().int().min(1).default(3),
     RETRY_BASE_DELAY_MS: z.coerce.number().int().min(1).default(3000), // 3 seconds
@@ -55,6 +55,14 @@ const coingeckoPricingSchema = baseSchema.extend({
     COINGECKO_API_TYPE: z.enum(["demo", "pro"]).default("pro"),
 });
 
+const coinpaprikaPricingSchema = baseSchema.extend({
+    PRICING_SOURCE: z.literal("coinpaprika"),
+    COINPAPRIKA_API_KEY: z.string().default(""),
+    COINPAPRIKA_API_TYPE: z
+        .enum(["free", "starter", "pro", "business", "enterprise"])
+        .default("free"),
+});
+
 const dummyMetadataSchema = baseSchema.extend({
     METADATA_SOURCE: z.literal("dummy"),
 });
@@ -65,10 +73,23 @@ const publicGatewayMetadataSchema = baseSchema.extend({
 });
 
 const validationSchema = z
-    .discriminatedUnion("PRICING_SOURCE", [dummyPricingSchema, coingeckoPricingSchema])
+    .discriminatedUnion("PRICING_SOURCE", [
+        dummyPricingSchema,
+        coingeckoPricingSchema,
+        coinpaprikaPricingSchema,
+    ])
     .transform((val) => {
         if (val.PRICING_SOURCE === "dummy") {
             return { pricingSource: val.PRICING_SOURCE, dummyPrice: val.DUMMY_PRICE, ...val };
+        }
+
+        if (val.PRICING_SOURCE === "coinpaprika") {
+            return {
+                pricingSource: val.PRICING_SOURCE,
+                apiKey: val.COINPAPRIKA_API_KEY,
+                apiType: val.COINPAPRIKA_API_TYPE,
+                ...val,
+            };
         }
 
         return {
