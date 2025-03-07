@@ -3,6 +3,11 @@ variable "app_name" {
   type        = string
 }
 
+variable "instance_type" {
+  description = "The type of the instance"
+  type        = string
+}
+
 variable "app_environment" {
   description = "The environment of the application (e.g., dev, staging, prod)"
   type        = string

@@ -133,6 +133,30 @@ resource "aws_security_group" "api" {
   }
 }
 
+resource "aws_security_group" "api_without_lb" {
+  name   = "${var.app_name}-${var.app_environment}-api-sg-without-lb"
+  vpc_id = module.vpc.vpc_id
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 0
+    to_port     = 65535
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name        = "${var.app_name}-${var.app_environment}-api-sg-without-lb"
+    Environment = var.app_environment
+  }
+}
+
 resource "aws_db_subnet_group" "rds_subnet_group" {
   name       = "${var.app_name}-${var.app_environment}-rds-subnet-group"
   subnet_ids = module.vpc.private_subnets

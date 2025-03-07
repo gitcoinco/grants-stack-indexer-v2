@@ -12,6 +12,12 @@ variable "region" {
   description = "Region"
   type        = string
 }
+
+variable "rds_instance_class" {
+  description = "RDS instance class"
+  type        = string
+}
+
 variable "rds_username" {
   description = "RDS username"
   type        = string

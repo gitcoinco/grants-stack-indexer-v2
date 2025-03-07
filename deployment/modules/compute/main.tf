@@ -36,7 +36,7 @@ module "ecs" {
         force_new_deployment   = true
         assign_public_ip       = true
         subnet_ids             = var.public_subnets
-        security_group_ids     = var.is_active_deployment ? [var.api_security_group_id] : []
+        security_group_ids     = var.is_active_deployment ? [var.api_security_group_id] : [var.api_security_group_id_without_lb]
 
         autoscaling = {
           min_capacity = 1
