@@ -124,13 +124,15 @@ This guide is for production operations on the Gitcoin Data Layer.
 3. Run `Deploy Blue Green (Start upgrade - Step 1)` workflow and deploy the target deployment
 4. Follow the instructions to set up the target deployment:
 
-    - Set migrations with target environment nano ./scripts/migrations/.env
+    - Set migrations with target environment `nano ./scripts/migrations/.env`
         ```tsx
         DATABASE_URL=postgres://{{DB_USER}}:{{DB_PASSWORD}}@{{DB_URL}}:5432/GitcoinDatalayer{{Green|Blue(Should be target environment)}}
         DATABASE_SCHEMA=public
         NODE_ENV=production
         ```
     - pnpm db:reset
+    - pnpm db:cache:reset
+    - pnpm db:cache:migrate
     - pnpm db:copy-cache -f {{ green | blue (should be the source environment) }}
     - pnpm db:migrate
 
