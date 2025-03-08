@@ -133,11 +133,20 @@ This guide is for production operations on the Gitcoin Data Layer.
     - pnpm db:reset
     - pnpm db:copy-cache -f {{ green | blue (should be the source environment) }}
     - pnpm db:migrate
+      `nano ./scripts/hasura-config/.env`
 
-5. Wait until the new deployment is stable.
-6. Run `Promote Blue Green (Start upgrade - Step 2)` workflow
-7. Validate that is stable and working, you can go to the hasura api task on ECS and get the IP address of the task and check if the api is working. (You can rollback running again `Promote Blue Green (Start upgrade - Step 2)`)
-8. Once you are sure that the new deployment is stable, you can destroy the old deployment by running `Destroy Blue Green (Start upgrade - Step 3)` workflow
+    ```tsx
+        HASURA_ENDPOINT={{PUBLIC_IP_ECS_TASK}}
+        HASURA_ADMIN_SECRET={{YOUR_HASURA_ADMIN_SECRET}}
+        HASURA_SCHEMA=public
+    ```
+
+    - pnpm api:configure
+
+5. Wait until the new deployment is stable,you can go to the hasura api task on ECS and get the IP address of the task and check if the api is working. (You can rollback running again using `Promote Blue Green (Start upgrade - Step 2)` workflow)
+6. Run `Promote Blue Green (Start upgrade - Step 2)` workflow.
+7. Validate that is stable and working .
+8. Once you are sure that the new deployment is stable, you can destroy the old deployment by running `Destroy Blue Green (Start upgrade - Step 3)` workflow.
 
 ## For New chain
 
