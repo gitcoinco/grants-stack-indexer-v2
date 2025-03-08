@@ -178,7 +178,6 @@ export const copyTableData = async (
             // Process the fetched batch in smaller chunks for insertion
             for (let i = 0; i < batchRows.length; i += insertBatchSize) {
                 const insertBatch = batchRows.slice(i, i + insertBatchSize);
-
                 // Create a parameterized query for this insertion batch
                 const valueStrings = [];
                 const valueParams = [];
@@ -188,7 +187,14 @@ export const copyTableData = async (
                     const rowParams = [];
                     for (const col of columns) {
                         rowParams.push(`$${paramIndex++}`);
-                        valueParams.push(row[col]);
+                        //workaround for metadata column
+                        if (col === "metadata") {
+                            valueParams.push(
+                                Array.isArray(row[col]) ? stringify(row[col]) : row[col],
+                            );
+                        } else {
+                            valueParams.push(row[col]);
+                        }
                     }
                     valueStrings.push(`(${rowParams.join(", ")})`);
                 }
