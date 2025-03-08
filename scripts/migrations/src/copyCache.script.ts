@@ -204,7 +204,6 @@ export const copyTableData = async (
                     VALUES ${valueStrings.join(", ")}
                 `;
 
-                console.log(columns);
                 await targetPool.query(insertQuery, valueParams);
 
                 processedRows += insertBatch.length;
