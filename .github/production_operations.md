@@ -6,139 +6,20 @@ This guide is for production operations on the Gitcoin Data Layer.
 
 ![Architecture diagram](./architecture_diagram.png)
 
+## Prerequisites
+
+-   Make sure you have already created the S3 bucket and ECR repository. Refer to the [README.md](./README.md) for more information.
+-   Make sure you have already created environment variables and secrets in the repository settings. Refer to the [README.md](./README.md) for more information.
+
 ## First Deployment
 
-Fill the secrets and variables in github actions secrets and variables. those are:
+### Steps
 
-Repository secrets:
-
--   `AWS_ACCESS_KEY_ID`
--   `AWS_SECRET_ACCESS_KEY`
--   `COINGECKO_API_KEY`
--   `DATALAYER_HASURA_ADMIN_SECRET`
--   `DATALAYER_PG_PASSWORD`
--   `DATALAYER_PG_USER`
--   `ECR_REGISTRY`
-
-Repository Variables:
-
--   `APP_NAME`
--   `AWS_REGION`
--   `TERRAFORM_VARS` (Mostly all the changes will be just the image tags)
-
-example TERRAFORM_VARS:
-
-```json
-{
-    "GREEN_PROCESSING_IMAGE_TAG": "d8cece196697abbdafa5a7027e0b12f0ffe8bd77",
-    "BLUE_PROCESSING_IMAGE_TAG": "d8cece196697abbdafa5a7027e0b12f0ffe8bd77",
-    "GREEN_API_REPOSITORY_URL": "registry.hub.docker.com/hasura/graphql-engine",
-    "GREEN_API_IMAGE_TAG": "v2.23.0",
-    "GREEN_NODE_ENV": "production",
-    "GREEN_RETRY_MAX_ATTEMPTS": 10,
-    "GREEN_RETRY_BASE_DELAY_MS": 200,
-    "GREEN_RETRY_MAX_DELAY_MS": 1000,
-    "GREEN_RETRY_FACTOR": 1.5,
-    "GREEN_CHAINS": [
-        {
-            "id": 10,
-            "name": "optimism",
-            "rpcUrls": [
-                "https://optimism.llamarpc.com",
-                "https://rpc.ankr.com/optimism",
-                "https://optimism.gateway.tenderly.co",
-                "https://optimism.blockpi.network/v1/rpc/public",
-                "https://mainnet.optimism.io",
-                "https://opt-mainnet.g.alchemy.com/v2/demo"
-            ],
-            "fetchLimit": 1000,
-            "fetchDelayMs": 2000
-        },
-        {
-            "id": 1,
-            "name": "mainnet",
-            "rpcUrls": ["https://eth.llamarpc.com", "https://rpc.flashbots.net/fast"],
-            "fetchLimit": 1000,
-            "fetchDelayMs": 2000
-        }
-    ],
-    "GREEN_INDEXER_GRAPHQL_URL": "https://indexer.dev.hyperindex.xyz/e6a0458/v1/graphql",
-    "GREEN_METADATA_SOURCE": "public-gateway",
-    "GREEN_PUBLIC_GATEWAY_URLS": [
-        "https://ipfs.io",
-        "https://dweb.link",
-        "https://cloudflare-ipfs.com",
-        "https://gateway.pinata.cloud",
-        "https://ipfs.infura.io",
-        "https://ipfs.fleek.co",
-        "https://ipfs.eth.aragon.network",
-        "https://ipfs.jes.xxx",
-        "https://ipfs.lol",
-        "https://ipfs.mle.party"
-    ],
-    "GREEN_PRICING_SOURCE": "coingecko",
-    "GREEN_COINGECKO_API_TYPE": "pro",
-    "GREEN_LOG_LEVEL": "info",
-    "GREEN_DATALAYER_PG_DB_NAME": "GitcoinDatalayerGreen",
-    "BLUE_API_REPOSITORY_URL": "registry.hub.docker.com/hasura/graphql-engine",
-    "BLUE_API_IMAGE_TAG": "v2.23.0",
-    "BLUE_NODE_ENV": "production",
-    "BLUE_RETRY_MAX_ATTEMPTS": 10,
-    "BLUE_RETRY_BASE_DELAY_MS": 200,
-    "BLUE_RETRY_MAX_DELAY_MS": 1000,
-    "BLUE_RETRY_FACTOR": 1.5,
-    "BLUE_CHAINS": [
-        {
-            "id": 10,
-            "name": "optimism",
-            "rpcUrls": [
-                "https://optimism.llamarpc.com",
-                "https://rpc.ankr.com/optimism",
-                "https://optimism.gateway.tenderly.co",
-                "https://optimism.blockpi.network/v1/rpc/public",
-                "https://mainnet.optimism.io",
-                "https://opt-mainnet.g.alchemy.com/v2/demo"
-            ],
-            "fetchLimit": 1000,
-            "fetchDelayMs": 2000
-        },
-        {
-            "id": 1,
-            "name": "mainnet",
-            "rpcUrls": ["https://eth.llamarpc.com", "https://rpc.flashbots.net/fast"],
-            "fetchLimit": 1000,
-            "fetchDelayMs": 2000
-        }
-    ],
-    "BLUE_INDEXER_GRAPHQL_URL": "https://indexer.dev.hyperindex.xyz/e6a0458/v1/graphql",
-    "BLUE_METADATA_SOURCE": "public-gateway",
-    "BLUE_PUBLIC_GATEWAY_URLS": [
-        "https://ipfs.io",
-        "https://dweb.link",
-        "https://cloudflare-ipfs.com",
-        "https://gateway.pinata.cloud",
-        "https://ipfs.infura.io",
-        "https://ipfs.fleek.co",
-        "https://ipfs.eth.aragon.network",
-        "https://ipfs.jes.xxx",
-        "https://ipfs.lol",
-        "https://ipfs.mle.party"
-    ],
-    "BLUE_PRICING_SOURCE": "coingecko",
-    "BLUE_COINGECKO_API_TYPE": "pro",
-    "BLUE_LOG_LEVEL": "info",
-    "BLUE_DATALAYER_PG_DB_NAME": "GitcoinDatalayerBlue"
-}
-```
-
-Once variables are set, you can deploy the first time by running the `Deploy to AWS (First deployment)` workflow.
-
-Follow this instructions to make the first deployment work:
-
-1. Log in to your AWS account
-2. Copy your database endpoint from RDS > Databases > gitcoin-data-layer-staging-rds > Connectivity and security > Endpoint
-3. Go to EC2 > Instances > gitcoin-data-layer-production-bastion > Connect > Session Manager > Connect ( IF YOU CAN’T USE `SessionManager` try rebooting the instance)
-4. Once in the terminal run:
+1. Run `Deploy to AWS` workflow, and wait until it finishes.
+2. Log in to your AWS account
+3. Copy your database endpoint from RDS > Databases > gitcoin-data-layer-staging-rds > Connectivity and security > Endpoint
+4. Go to EC2 > Instances > gitcoin-data-layer-production-bastion > Connect > Session Manager > Connect ( IF YOU CAN’T USE `SessionManager` try rebooting the instance)
+5. Once in the terminal run:
 
     1. sudo su
     2. cd ~
@@ -238,9 +119,10 @@ Follow this instructions to make the first deployment work:
 
 ## Upgrade using blue deployment
 
-1. Update the TERRAFORM_VARS with the new image tag, or changes. (You can run `Current Deployment State` workflow to see the current state of the deployment, and the active environment. If the deployment state is `single`, it means that there is just one deployment and is the active one. If the deployment state is `deployment`, it means that there are two deployments, the blue and the green, and the active environment is `active_deployment`.)
-2. Run `Deploy Blue Green (Start upgrade - Step 1)` workflow and deploy the target deployment
-3. Follow the instructions to set up the target deployment:
+1. If you made any changes to Envio indexer, you need to wait until the indexer is ready and stable.
+2. Update the TERRAFORM_VARS with the new image tag, or changes. (You can run `Current Deployment State` workflow to see the current state of the deployment, and the active environment. If the deployment state is `single`, it means that there is just one deployment and is the active one. If the deployment state is `deployment`, it means that there are two deployments, the blue and the green, and the active environment is `active_deployment`.)
+3. Run `Deploy Blue Green (Start upgrade - Step 1)` workflow and deploy the target deployment
+4. Follow the instructions to set up the target deployment:
 
     - Set migrations with target environment nano ./scripts/migrations/.env
         ```tsx
@@ -252,7 +134,25 @@ Follow this instructions to make the first deployment work:
     - pnpm db:copy-cache -f {{ green | blue (should be the source environment) }}
     - pnpm db:migrate
 
-4. Wait until the new deployment is stable.
-5. Run `Promote Blue Green (Start upgrade - Step 2)` workflow
-6. Validate that is stable and working (You can rollback running again `Promote Blue Green (Start upgrade - Step 2)`)
-7. Once you are sure that the new deployment is stable, you can destroy the old deployment by running `Destroy Blue Green (Start upgrade - Step 3)` workflow
+5. Wait until the new deployment is stable.
+6. Run `Promote Blue Green (Start upgrade - Step 2)` workflow
+7. Validate that is stable and working, you can go to the hasura api task on ECS and get the IP address of the task and check if the api is working. (You can rollback running again `Promote Blue Green (Start upgrade - Step 2)`)
+8. Once you are sure that the new deployment is stable, you can destroy the old deployment by running `Destroy Blue Green (Start upgrade - Step 3)` workflow
+
+## For New chain
+
+1. Wait for the new chain to be fully indexed on Envio indexer.
+2. Update the TERRAFORM_VARS with the new chain in `CHAINS` environment variable.
+3. Run `Upgrade current deployment` workflow and deploy it to the current working deployment.
+
+## For new event
+
+1. Wait until envio indexer is ready and stable.
+2. Update TERRAFORM_VARS with the new event image tag.
+3. Do blue green deployment
+
+## For new strategy
+
+1. Wait until envio indexer is ready and stable.
+2. Update TERRAFORM_VARS with the new image tag.
+3. Do blue green deployment
