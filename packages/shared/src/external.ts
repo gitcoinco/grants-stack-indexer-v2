@@ -29,6 +29,7 @@ export {
     isAlloEvent,
     isRegistryEvent,
     isStrategyEvent,
+    isGitcoinAttestationNetworkEvent,
     isAlloV1ToV2ProfileMigrationEvent,
 } from "./internal.js";
 export { stringify } from "./internal.js";

@@ -15,6 +15,9 @@ jobs:
     build:
         uses: ./.github/workflows/build.yml
 
+    build-image:
+        uses: ./.github/workflows/build-image.yml
+
     lint:
         uses: ./.github/workflows/lint.yml
         needs: build

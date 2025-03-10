@@ -1,0 +1,46 @@
+name: Create ECR Repository
+
+on:
+    workflow_dispatch:
+
+jobs:
+    deploy:
+        name: Create ECR Registry
+        runs-on: ubuntu-latest
+        env:
+            TF_VAR_AWS_REGION: ${{ vars.AWS_REGION }}
+            TF_VAR_APP_NAME: ${{ vars.APP_NAME }}
+        steps:
+            - name: Check out github repository
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 1
+
+            - name: Check if user is an admin
+              uses: ./.github/actions/check-admin
+              with:
+                  github_token: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Setup Terraform
+              uses: hashicorp/setup-terraform@v1
+              with:
+                  terraform_version: ${{ vars.TERRAFORM_VERSION }}
+
+            - name: Set up AWS CLI
+              uses: aws-actions/configure-aws-credentials@v2
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+                  aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                  aws-region: ${{ vars.AWS_REGION }}
+
+            - name: Terraform Init
+              working-directory: deployment/registry
+              run: terraform init
+
+            - name: Terraform Plan
+              working-directory: deployment/registry
+              run: terraform plan
+
+            - name: Terraform Apply with Auto Confirm
+              working-directory: deployment/registry
+              run: terraform apply -auto-approve

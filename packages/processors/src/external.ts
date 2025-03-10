@@ -3,6 +3,7 @@ export {
     StrategyProcessor,
     AlloProcessor,
     RegistryProcessor,
+    GitcoinAttestationNetworkProcessor,
     AlloV1ToV2ProfileMigrationProcessor,
 } from "./internal.js";
 
@@ -16,4 +17,5 @@ export {
     decodeDVMDApplicationData,
     decodeDVMDExtendedApplicationData,
     decodeDGApplicationData,
+    decodeAttestedData,
 } from "./internal.js";

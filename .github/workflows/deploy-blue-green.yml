@@ -1,0 +1,92 @@
+name: Deploy Blue Green (Start upgrade - Step 1)
+
+on:
+    workflow_dispatch:
+        inputs:
+            environment:
+                type: choice
+                description: Environment to check
+                required: true
+                options:
+                    - staging
+                    - production
+            deploy_instance:
+                type: choice
+                description: "Deployment instance (e.g., blue, green)"
+                required: true
+                options:
+                    - blue
+                    - green
+
+jobs:
+    deploy:
+        name: Deploy ${{ github.event.inputs.deploy_instance }} to ${{ github.event.inputs.environment }}
+        runs-on: ubuntu-latest
+        environment: ${{ github.event.inputs.environment }}
+        env:
+            TF_VAR_AWS_REGION: ${{ vars.AWS_REGION }}
+            TF_VAR_APP_NAME: ${{ vars.APP_NAME }}
+            TF_VAR_APP_ENVIRONMENT: ${{ github.event.inputs.environment }}
+            #Database
+            TF_VAR_DATALAYER_PG_USER: ${{ secrets.DATALAYER_PG_USER }}
+            TF_VAR_DATALAYER_PG_PASSWORD: ${{ secrets.DATALAYER_PG_PASSWORD }}
+            #Hasura API
+            TF_VAR_GREEN_DATALAYER_HASURA_ADMIN_SECRET: ${{ secrets.DATALAYER_HASURA_ADMIN_SECRET }}
+            TF_VAR_BLUE_DATALAYER_HASURA_ADMIN_SECRET: ${{ secrets.DATALAYER_HASURA_ADMIN_SECRET }}
+            #Coingecko API
+            TF_VAR_GREEN_COINGECKO_API_KEY: ${{ secrets.COINGECKO_API_KEY }}
+            TF_VAR_BLUE_COINGECKO_API_KEY: ${{ secrets.COINGECKO_API_KEY }}
+
+        steps:
+            - name: Check out github repository
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 1
+
+            - name: Check if user is an admin
+              uses: ./.github/actions/check-admin
+              with:
+                  github_token: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Setup Terraform
+              uses: hashicorp/setup-terraform@v1
+              with:
+                  terraform_version: ${{ vars.TERRAFORM_VERSION }}
+                  terraform_wrapper: false
+
+            - name: Set up AWS CLI
+              uses: aws-actions/configure-aws-credentials@v2
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+                  aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                  aws-region: ${{ vars.AWS_REGION }}
+
+            - name: Terraform Init
+              working-directory: deployment/environments/${{ github.event.inputs.environment }}
+              run: |
+                  terraform init \
+                    -backend-config="bucket=${{ vars.APP_NAME }}-terraform-state" \
+                    -backend-config="key=${{ vars.APP_NAME }}-${{ github.event.inputs.environment }}-state" \
+                    -backend-config="region=${{ vars.AWS_REGION }}" \
+                    -backend-config="encrypt=true"
+
+            - name: Terraform Apply
+              working-directory: deployment/environments/${{ github.event.inputs.environment }}
+              run: |
+                  # Validate that TERRAFORM_VARS is valid JSON.
+                  if ! jq empty <<< "$TERRAFORM_VARS" >/dev/null 2>&1; then
+                    echo "Error: TERRAFORM_VARS is not valid JSON."
+                    exit 1
+                  fi
+                  # Write the contents of TERRAFORM_VARS to tfvars.json.
+                  cat <<< "$TERRAFORM_VARS" > tfvars.json
+                  # Store the active environment in a variable
+                  active_deployment="$(terraform output -raw active_deployment)"
+                  echo "Active deployment is: $active_deployment"
+                  if [ "$active_deployment" == "${{ github.event.inputs.deploy_instance }}" ]; then
+                      echo "Error: Active deployment is the same as the deploy environment." >&2
+                      exit 1
+                  fi
+                  terraform apply -var-file=tfvars.json -auto-approve -var="DEPLOYMENT_STATE=deploying" -var="ACTIVE_DEPLOYMENT=${active_deployment}"
+              env:
+                  TERRAFORM_VARS: ${{ vars.TERRAFORM_VARS }}

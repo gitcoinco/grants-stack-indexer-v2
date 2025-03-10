@@ -1,7 +1,7 @@
 import { configDotenv } from "dotenv";
 import { z } from "zod";
 
-import { CustomFunction, HasuraMetadataApi } from "./internal.js";
+import { CustomFunction, HasuraMetadataApi, RelationshipConfig } from "./internal.js";
 
 configDotenv();
 
@@ -26,6 +26,8 @@ const tables = [
     "applications_payouts",
     "donations",
     "legacy_projects",
+    "attestations",
+    "attestation_txns",
     "events_registry",
 ] as const;
 
@@ -36,6 +38,74 @@ const customFunctions: CustomFunction[] = [
     {
         name: "search_projects",
         schema: "public",
+    },
+];
+
+export const virtualObjectRelationships: RelationshipConfig<Tables>[] = [
+    {
+        name: "donation",
+        table: {
+            name: "attestation_txns",
+            schema: "public",
+        },
+        source: "default",
+        using: {
+            manual_configuration: {
+                remote_table: {
+                    name: "donations",
+                    schema: "public",
+                },
+                source: "default",
+                column_mapping: {
+                    txn_hash: "transaction_hash",
+                    chain_id: "chain_id",
+                },
+            },
+        },
+    },
+];
+
+export const virtualArrayRelationships: RelationshipConfig<Tables>[] = [
+    {
+        name: "attestationTransactions",
+        table: {
+            name: "donations",
+            schema: "public",
+        },
+        source: "default",
+        using: {
+            manual_configuration: {
+                remote_table: {
+                    name: "attestation_txns",
+                    schema: "public",
+                },
+                source: "default",
+                column_mapping: {
+                    transaction_hash: "txn_hash",
+                    chain_id: "chain_id",
+                },
+            },
+        },
+    },
+    {
+        name: "projects",
+        table: {
+            name: "applications",
+            schema: "public",
+        },
+        source: "default",
+        using: {
+            manual_configuration: {
+                remote_table: {
+                    name: "projects",
+                    schema: "public",
+                },
+                source: "default",
+                column_mapping: {
+                    project_id: "id",
+                },
+            },
+        },
     },
 ];
 
@@ -58,6 +128,14 @@ async function configureHasura(): Promise<void> {
     }
 
     await hasuraApi.createSuggestedRelationships(Array.from(tables));
+
+    for (const relationship of virtualArrayRelationships) {
+        await hasuraApi.createArrayRelationship(relationship);
+    }
+
+    for (const relationship of virtualObjectRelationships) {
+        await hasuraApi.createObjectRelationship(relationship);
+    }
 
     for (const func of customFunctions) {
         await hasuraApi.trackFunction(func);

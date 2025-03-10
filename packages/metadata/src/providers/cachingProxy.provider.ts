@@ -4,7 +4,7 @@ import { z } from "zod";
 import { ICache } from "@grants-stack-indexer/repository";
 import { ICacheable, ILogger } from "@grants-stack-indexer/shared";
 
-import { IMetadataProvider } from "../internal.js";
+import { IMetadataProvider, isValidCid } from "../internal.js";
 
 /**
  * A metadata provider that caches metadata lookups from the underlying provider.
@@ -26,6 +26,10 @@ export class CachingMetadataProvider implements IMetadataProvider, ICacheable {
 
     /** @inheritdoc */
     async getMetadata<T>(ipfsCid: string, validateContent?: z.ZodSchema<T>): Promise<T | null> {
+        if (ipfsCid === "" || !isValidCid(ipfsCid)) {
+            return null;
+        }
+
         let cachedMetadata: T | null | undefined = undefined;
         try {
             cachedMetadata = (await this.cache.get(ipfsCid)) as T | null;

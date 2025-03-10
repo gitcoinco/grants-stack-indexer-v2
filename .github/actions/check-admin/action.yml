@@ -1,0 +1,23 @@
+name: Check Admin
+description: Check if the user is an admin
+inputs:
+    github_token:
+        type: string
+        description: The GitHub token to use for the request
+
+runs:
+    using: composite
+    steps:
+        - name: Check if user is an admin
+          shell: bash
+          run: |
+              if [ "${{ github.event_name }}" = 'workflow_dispatch' ]; then
+                RESPONSE=$(curl -s -H "Authorization: token ${{ inputs.github_token }}" \
+                https://api.github.com/repos/${{ github.repository }}/collaborators/${{ github.actor }}/permission)
+
+                PERMISSION=$(echo $RESPONSE | jq -r .permission)
+
+                if [ "$PERMISSION" != "admin" ]; then
+                  echo "::error::This workflow can only be run by admin users." && exit 1
+                fi
+              fi

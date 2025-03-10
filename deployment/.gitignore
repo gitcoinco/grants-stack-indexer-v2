@@ -1,0 +1,26 @@
+# Terraform local dependencies
+.terraform/
+
+# Terraform state files
+terraform.tfstate
+terraform.tfstate.backup
+
+# Logs and crash files
+crash.log
+
+# Override files (not versionable)
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Dismiss hcl lock files 
+*.lock.hcl
+
+# Terraform CLI local configuration
+.terraformrc
+terraform.rc
+
+# Sensitive variables
+*.tfvars
+*.tfvars.json

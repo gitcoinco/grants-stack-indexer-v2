@@ -2,6 +2,7 @@ import type { Changeset } from "@grants-stack-indexer/repository";
 import {
     AlloProcessor,
     AlloV1ToV2ProfileMigrationProcessor,
+    GitcoinAttestationNetworkProcessor,
     ProcessorDependencies,
     RegistryProcessor,
     StrategyProcessor,
@@ -12,6 +13,7 @@ import {
     ContractName,
     isAlloEvent,
     isAlloV1ToV2ProfileMigrationEvent,
+    isGitcoinAttestationNetworkEvent,
     isRegistryEvent,
     isStrategyEvent,
     ProcessorEvent,
@@ -28,12 +30,14 @@ export class EventsProcessor {
     alloProcessor: AlloProcessor;
     registryProcessor: RegistryProcessor;
     strategyProcessor: StrategyProcessor;
+    ganProcessor: GitcoinAttestationNetworkProcessor;
     alloV1ToV2MigrationProcessor: AlloV1ToV2ProfileMigrationProcessor;
 
     constructor(chainId: ChainId, dependencies: Readonly<ProcessorDependencies>) {
         this.alloProcessor = new AlloProcessor(chainId, dependencies);
         this.registryProcessor = new RegistryProcessor(chainId, dependencies);
         this.strategyProcessor = new StrategyProcessor(chainId, dependencies);
+        this.ganProcessor = new GitcoinAttestationNetworkProcessor(chainId, dependencies);
         this.alloV1ToV2MigrationProcessor = new AlloV1ToV2ProfileMigrationProcessor(
             chainId,
             dependencies,
@@ -55,6 +59,9 @@ export class EventsProcessor {
         }
         if (isStrategyEvent(event)) {
             return await this.strategyProcessor.process(event);
+        }
+        if (isGitcoinAttestationNetworkEvent(event)) {
+            return await this.ganProcessor.process(event);
         }
         if (isAlloV1ToV2ProfileMigrationEvent(event)) {
             return await this.alloV1ToV2MigrationProcessor.process(event);

@@ -34,7 +34,7 @@ describe("CachingMetadataProvider", () => {
     });
 
     describe("getMetadata", () => {
-        const testCid = "QmTest123";
+        const testCid = "bafkreihrjyu5tney6wia2hmkertc74nzfpsgxw2epvnxm72bxj6ifnd4ku";
         const testData = { foo: "bar" };
         const testSchema = z.object({ foo: z.string() });
 
@@ -95,6 +95,18 @@ describe("CachingMetadataProvider", () => {
 
             expect(result).toBeNull();
             expect(mockCache.set).toHaveBeenCalled();
+        });
+
+        it("returns null when cid is empty", async () => {
+            const result = await provider.getMetadata("", testSchema);
+
+            expect(result).toBeNull();
+        });
+
+        it("returns null when cid is not valid", async () => {
+            const result = await provider.getMetadata("invalid", testSchema);
+
+            expect(result).toBeNull();
         });
     });
 });

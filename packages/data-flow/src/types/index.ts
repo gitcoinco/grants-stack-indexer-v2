@@ -4,6 +4,7 @@ import { ProcessorDependencies } from "@grants-stack-indexer/processors";
 import {
     IApplicationPayoutRepository,
     IApplicationRepository,
+    IAttestationRepository,
     IDonationRepository,
     ILegacyProjectRepository,
     IProjectRepository,
@@ -30,6 +31,7 @@ export type CoreDependencies = Pick<
     applicationRepository: IApplicationRepository;
     donationRepository: IDonationRepository;
     applicationPayoutRepository: IApplicationPayoutRepository;
+    attestationRepository: IAttestationRepository;
     transactionManager: ITransactionManager;
     legacyProjectRepository: ILegacyProjectRepository;
 };

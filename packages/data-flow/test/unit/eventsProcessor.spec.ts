@@ -3,11 +3,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
     AlloProcessor,
     AlloV1ToV2ProfileMigrationProcessor,
+    GitcoinAttestationNetworkProcessor,
     ProcessorDependencies,
     RegistryProcessor,
     StrategyProcessor,
 } from "@grants-stack-indexer/processors";
-import { Changeset } from "@grants-stack-indexer/repository";
+import { Attestation, AttestationTxnData, Changeset } from "@grants-stack-indexer/repository";
 import {
     AnyEvent,
     ChainId,
@@ -24,6 +25,7 @@ vi.mock("@grants-stack-indexer/processors", () => ({
     RegistryProcessor: vi.fn(),
     StrategyProcessor: vi.fn(),
     AlloV1ToV2ProfileMigrationProcessor: vi.fn(),
+    GitcoinAttestationNetworkProcessor: vi.fn(),
 }));
 
 describe("EventsProcessor", () => {
@@ -32,6 +34,7 @@ describe("EventsProcessor", () => {
     let mockRegistryProcessor: RegistryProcessor;
     let mockStrategyProcessor: StrategyProcessor;
     let mockAlloV1ToV2ProfileMigrationProcessor: AlloV1ToV2ProfileMigrationProcessor;
+    let mockGitcoinAttestationNetworkProcessor: GitcoinAttestationNetworkProcessor;
     const chainId = 1 as ChainId;
     const mockDependencies = {} as ProcessorDependencies;
 
@@ -42,13 +45,18 @@ describe("EventsProcessor", () => {
         mockAlloV1ToV2ProfileMigrationProcessor = {
             process: vi.fn(),
         } as unknown as AlloV1ToV2ProfileMigrationProcessor;
+        mockGitcoinAttestationNetworkProcessor = {
+            process: vi.fn(),
+        } as unknown as GitcoinAttestationNetworkProcessor;
         vi.mocked(AlloProcessor).mockImplementation(() => mockAlloProcessor);
         vi.mocked(RegistryProcessor).mockImplementation(() => mockRegistryProcessor);
         vi.mocked(StrategyProcessor).mockImplementation(() => mockStrategyProcessor);
         vi.mocked(AlloV1ToV2ProfileMigrationProcessor).mockImplementation(
             () => mockAlloV1ToV2ProfileMigrationProcessor,
         );
-
+        vi.mocked(GitcoinAttestationNetworkProcessor).mockImplementation(
+            () => mockGitcoinAttestationNetworkProcessor,
+        );
         eventsProcessor = new EventsProcessor(chainId, mockDependencies);
     });
 
@@ -129,6 +137,32 @@ describe("EventsProcessor", () => {
         const result = await eventsProcessor.processEvent(mockEvent);
 
         expect(mockAlloV1ToV2ProfileMigrationProcessor.process).toHaveBeenCalledWith(mockEvent);
+        expect(result).toBe(mockChangeset);
+    });
+
+    it("process GitcoinAttestationNetwork events using GitcoinAttestationNetworkProcessor", async () => {
+        const mockChangeset: Changeset[] = [
+            {
+                type: "InsertAttestation",
+                args: {
+                    attestationData: {} as Attestation,
+                    transactionsData: [] as AttestationTxnData[],
+                },
+            },
+        ];
+        const mockEvent = {
+            contractName: "GitcoinAttestationNetwork",
+            eventName: "OnAttested",
+            args: {},
+        } as unknown as ProcessorEvent<"GitcoinAttestationNetwork", "OnAttested">;
+
+        vi.spyOn(mockGitcoinAttestationNetworkProcessor, "process").mockResolvedValue(
+            mockChangeset,
+        );
+
+        const result = await eventsProcessor.processEvent(mockEvent);
+
+        expect(mockGitcoinAttestationNetworkProcessor.process).toHaveBeenCalledWith(mockEvent);
         expect(result).toBe(mockChangeset);
     });
 

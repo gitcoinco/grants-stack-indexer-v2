@@ -11,6 +11,7 @@ import {
     IStrategyRegistryRepository,
     KyselyApplicationPayoutRepository,
     KyselyApplicationRepository,
+    KyselyAttestationRepository,
     KyselyDonationRepository,
     KyselyEventRegistryRepository,
     KyselyLegacyProjectRepository,
@@ -90,6 +91,10 @@ export class SharedDependenciesService {
             kyselyDatabase,
             env.DATABASE_SCHEMA,
         );
+        const attestationRepository = new KyselyAttestationRepository(
+            kyselyDatabase,
+            env.DATABASE_SCHEMA,
+        );
         const pricingRepository = new KyselyPricingCache(kyselyDatabase, env.DATABASE_SCHEMA);
         const internalPricingProvider = PricingProviderFactory.create(env, {
             logger,
@@ -157,6 +162,7 @@ export class SharedDependenciesService {
                 donationRepository,
                 metadataProvider,
                 applicationPayoutRepository,
+                attestationRepository,
                 transactionManager,
                 legacyProjectRepository,
             },

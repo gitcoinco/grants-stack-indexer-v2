@@ -142,7 +142,7 @@ export class HasuraMetadataApi<Tables extends readonly string[]> {
 
             // Object relationship: in the child table
             const objectRelationshipPayload = {
-                name: singularize(camelize(parentTable.name)), // name derived from parent table
+                name: singularize(camelize(parentTable.name, true)), // name derived from parent table
                 table: childTable,
                 source: "default",
                 using: {
@@ -160,7 +160,7 @@ export class HasuraMetadataApi<Tables extends readonly string[]> {
             );
 
             const arrayRelationshipPayload = {
-                name: camelize(childTable.name), // name derived from child table
+                name: camelize(childTable.name, true), // name derived from child table
                 table: parentTable,
                 source: "default",
                 using: {

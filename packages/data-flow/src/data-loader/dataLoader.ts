@@ -2,6 +2,7 @@ import {
     Changeset,
     IApplicationPayoutRepository,
     IApplicationRepository,
+    IAttestationRepository,
     IDonationRepository,
     IEventRegistryRepository,
     ILegacyProjectRepository,
@@ -15,6 +16,7 @@ import { IDataLoader, InvalidChangeset } from "../internal.js";
 import {
     createApplicationHandlers,
     createApplicationPayoutHandlers,
+    createAttestationHandlers,
     createDonationHandlers,
     createLegacyProjectHandlers,
     createProcessedEventHandlers,
@@ -47,6 +49,7 @@ export class DataLoader implements IDataLoader {
             donation: IDonationRepository;
             applicationPayout: IApplicationPayoutRepository;
             eventRegistry: IEventRegistryRepository;
+            attestation: IAttestationRepository;
             legacyProject: ILegacyProjectRepository;
         },
         private readonly transactionManager: ITransactionManager,
@@ -59,6 +62,7 @@ export class DataLoader implements IDataLoader {
             ...createDonationHandlers(repositories.donation),
             ...createApplicationPayoutHandlers(repositories.applicationPayout),
             ...createProcessedEventHandlers(repositories.eventRegistry),
+            ...createAttestationHandlers(repositories.attestation),
             ...createLegacyProjectHandlers(repositories.legacyProject),
         };
     }
