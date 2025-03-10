@@ -95,7 +95,7 @@ export class DVMDDirectTransferStrategyHandler extends BaseStrategyHandler {
                 ).handle();
             case "DistributionUpdatedWithMerkleRoot":
                 return new BaseDistributionUpdatedHandler(
-                    event as ProcessorEvent<"Strategy", "DistributionUpdated">,
+                    event as ProcessorEvent<"Strategy", "DistributionUpdatedWithMerkleRoot">,
                     this.chainId,
                     this.dependencies,
                 ).handle();

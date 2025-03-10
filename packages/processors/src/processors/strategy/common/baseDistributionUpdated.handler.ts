@@ -26,10 +26,14 @@ type Dependencies = Pick<ProcessorDependencies, "metadataProvider" | "logger">;
  */
 
 export class BaseDistributionUpdatedHandler
-    implements IEventHandler<"Strategy", "DistributionUpdated">
+    implements
+        IEventHandler<"Strategy", "DistributionUpdated" | "DistributionUpdatedWithMerkleRoot">
 {
     constructor(
-        readonly event: ProcessorEvent<"Strategy", "DistributionUpdated">,
+        readonly event: ProcessorEvent<
+            "Strategy",
+            "DistributionUpdated" | "DistributionUpdatedWithMerkleRoot"
+        >,
         private readonly chainId: ChainId,
         private readonly dependencies: Dependencies,
     ) {}
