@@ -10,6 +10,7 @@ This guide is for production operations on the Gitcoin Data Layer.
 
 -   Make sure you have already created the S3 bucket and ECR repository. Refer to the [README.md](./README.md) for more information.
 -   Make sure you have already created environment variables and secrets in the repository settings. Refer to the [README.md](./README.md) for more information.
+-   Run `Push Docker Image to ECR` workflow and ensure the latest commit hash is available in the ECR Registry and use that in the TERRAFORM_VARS image tags
 
 ## First Deployment
 
@@ -49,7 +50,6 @@ This guide is for production operations on the Gitcoin Data Layer.
         DATABASE_URL=postgres://{{DB_USER}}:{{DB_PASSWORD}}@{{DB_URL}}:5432/GitcoinDatalayerGreen
         DATABASE_SCHEMA=public
         NODE_ENV=production
-
         ```
 
     2. `pnpm db:cache:migrate`
@@ -116,6 +116,8 @@ This guide is for production operations on the Gitcoin Data Layer.
     ```
 
 2. `pnpm api:configure`
+
+_Note: If data isn't populated, check your processing task logs on ECS. If there are issues, fix them and then run `Upgrade current deployment` workflow. Avoid using this unless you are adding a new chain or there are errors during the first time deployment._
 
 ## Upgrade using blue deployment
 
