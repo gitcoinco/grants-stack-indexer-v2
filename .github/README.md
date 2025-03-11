@@ -93,13 +93,14 @@ Each step requires manual trigger with environment selection (blue/green) to ens
 
 ## Required Configuration
 
-###Environment Variables and Secrets
+### Environment Variables and Secrets
+
 To properly configure your GitHub repository, set up the following environment variables and secrets:
 
 1. Add Repository Secrets
    Navigate to GitHub Repository Settings → Secrets and add:
 
--   `AWS_ACCESS_KEY_ID`
+-   `AWS_ACCESS_KEY`
 -   `AWS_SECRET_ACCESS_KEY`
 -   `ECR_REGISTRY`
 
@@ -249,5 +250,5 @@ The `push-to-ecr.yaml` workflow automatically pushes images to Amazon ECR when c
 Required secrets for ECR:
 
 -   `ECR_REGISTRY`
--   `AWS_ACCESS_KEY_ID`
+-   `AWS_ACCESS_KEY`
 -   `AWS_SECRET_ACCESS_KEY`
