@@ -1,11 +1,11 @@
-name: Unit and Integration Tests
+name: E2E Tests
 
 on:
     workflow_call:
 
 jobs:
-    unit:
-        name: Unit and Integration Tests
+    e2e:
+        name: E2E Tests
         runs-on: ubuntu-latest
         steps:
             - name: Check out github repository
@@ -19,5 +19,5 @@ jobs:
             - name: Install dependencies
               run: pnpm install --frozen-lockfile
 
-            - name: Run tests with coverage
-              run: pnpm test:cov
+            - name: Run tests
+              run: pnpm test:e2e
