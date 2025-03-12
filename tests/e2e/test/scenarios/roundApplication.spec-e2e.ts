@@ -5,6 +5,7 @@ import { beforeAll, describe, expect, expectTypeOf, inject, it } from "vitest";
 import { Bytes32String, IndexerFetchedEvent, TimestampMs } from "@grants-stack-indexer/shared";
 
 import { TestHelper } from "../../src/utils/test-helper.js";
+import { PROCESSING_SERVICE_RUNNING_DELAY_MS } from "../globalSetup.js";
 
 /**
  * Happy path events sequence:
@@ -133,7 +134,7 @@ describe("DVMD Round creation with Pending Role and Application", () => {
         ]);
 
         await testHelper.startProcessingService();
-        await new Promise((resolve) => setTimeout(resolve, 2500));
+        await new Promise((resolve) => setTimeout(resolve, PROCESSING_SERVICE_RUNNING_DELAY_MS));
         await testHelper.stopProcessingService();
     });
 
@@ -528,7 +529,7 @@ describe("Unsupported Strategy and Events", () => {
         ]);
 
         await testHelper.startProcessingService();
-        await new Promise((resolve) => setTimeout(resolve, 1500));
+        await new Promise((resolve) => setTimeout(resolve, 10000));
         await testHelper.stopProcessingService();
     });
 

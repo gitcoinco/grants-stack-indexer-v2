@@ -4,6 +4,7 @@ import { beforeAll, describe, expect, inject, it } from "vitest";
 import { Bytes32String, Hex, IndexerFetchedEvent, TimestampMs } from "@grants-stack-indexer/shared";
 
 import { TestHelper } from "../../src/utils/test-helper.js";
+import { PROCESSING_SERVICE_RUNNING_DELAY_MS } from "../globalSetup.js";
 
 describe("Search Projects", () => {
     let testHelper: TestHelper;
@@ -84,7 +85,7 @@ describe("Search Projects", () => {
         await testHelper.addEvents(events);
 
         await testHelper.startProcessingService();
-        await new Promise((resolve) => setTimeout(resolve, 2000));
+        await new Promise((resolve) => setTimeout(resolve, PROCESSING_SERVICE_RUNNING_DELAY_MS));
         await testHelper.stopProcessingService();
     });
 

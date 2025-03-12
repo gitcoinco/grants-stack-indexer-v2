@@ -26,6 +26,6 @@ jobs:
         uses: ./.github/workflows/test.yml
         needs: lint
 
-    test-integration:
-        uses: ./.github/workflows/test-integration.yml
-        needs: lint
+    e2e-tests:
+        uses: ./.github/workflows/e2e-tests.yml
+        needs: test
