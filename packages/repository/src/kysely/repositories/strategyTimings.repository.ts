@@ -44,9 +44,10 @@ export class KyselyStrategyTimingsCache implements ICache<string> {
     /** @inheritdoc */
     async set(address: string, strategyTimings: StrategyTimings): Promise<void> {
         try {
-            const formattedTimings = strategyTimings.timings
-                ? stringify(strategyTimings.timings)
-                : strategyTimings.timings;
+            const formattedTimings =
+                strategyTimings.timings && Array.isArray(strategyTimings.timings)
+                    ? stringify(strategyTimings.timings)
+                    : strategyTimings.timings;
             await this.db
                 .withSchema(this.schema)
                 .insertInto("strategyTimings")

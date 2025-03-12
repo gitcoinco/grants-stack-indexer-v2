@@ -25,33 +25,29 @@ import { parseArguments } from "./utils/index.js";
 configDotenv();
 
 /**
- * This script manages metadata retrieval and caching for the grants-stack-indexer project.
+ * This script manages strategy timings retrieval and caching for the grants-stack-indexer project.
  *
  * It performs the following steps:
  * 1. Loads environment variables from .env file
  * 2. Retrieves database configuration (URL and schema name) from environment
  * 3. Establishes a Kysely database connection with the specified schema
  * 4. Verifies database and table synchronization
- * 5. Initializes metadata repository and providers
- * 6. Fetches metadata CIDs from events and processes them
+ * 5. Initializes strategy repositories and providers
+ * 6. Fetches PoolCreated events from the indexer
+ * 7. Retrieves strategy IDs for each strategy address
+ * 8. Fetches and caches strategy timings for each strategy
  *
  * Environment variables required:
  * - DATABASE_URL: PostgreSQL connection string
  * - NODE_ENV: Environment mode (production, staging, etc.)
- * - PUBLIC_GATEWAY_URLS: URLs for public gateway access
  * - INDEXER_URL: URL for the indexer service
  * - INDEXER_SECRET: Secret key for indexer authentication
  * - CHAIN_IDS: Supported blockchain chain IDs
+ * - CHAINS: Chain configurations including RPC URLs
  * - INDEXER_FETCH_LIMIT: Limit for fetching indexer data
  *
  * Script arguments:
  * - schema: Database schema name for operations
- *
- * The script will:
- * - Connect to the database and verify table existence
- * - Initialize metadata caching and retrieval services
- * - Fetch and process metadata CIDs from events
- * - Log the progress and results of operations
  *
  * Ensure proper configuration and backups before running this script.
  */
@@ -97,6 +93,9 @@ const main = async (): Promise<void> => {
         }
     >();
 
+    /**
+     * Fetch PoolCreated events from the indexer
+     */
     while (hasMoreEvents) {
         //Fetch events
         const events = await Promise.all(
@@ -109,7 +108,6 @@ const main = async (): Promise<void> => {
                 });
             }),
         );
-        // Save checkpoint logic here (e.g., save cids or event data)
         events.forEach((events) => {
             checkpointMap.set(events[0]?.chainId ?? 0, {
                 blockNumber: events[events.length - 1]?.blockNumber ?? 0,
@@ -129,9 +127,8 @@ const main = async (): Promise<void> => {
     }
 
     console.log(poolCreatedEvents.length, " pool created events fetched");
-    // Fetch metadata for each CID with concurrency limit
+
     let nullCounter = 0;
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const evmProviders = new Map<ChainId, EvmProvider>();
 
     const viemChainsArray = Object.values(viemChains) as Chain[];
@@ -163,8 +160,11 @@ const main = async (): Promise<void> => {
     };
     let strategyIdCounter = 0;
     const strategyAddressId: [ChainId, Address, string][] = [];
-    // usa pmap para obtener un mapa con los strategyIds de los strategies en poolCreatedEvents
-    for await (const strategy of pMapIterable(
+
+    /**
+     * Populate strategyRegistry with strategyIds
+     */
+    for await (const _strategy of pMapIterable(
         strategyAddresses,
         async (strategy) => {
             try {
@@ -226,7 +226,11 @@ const main = async (): Promise<void> => {
     }
     let strategyTimingsCounter = 0;
     let nullStrategyTimingsCounter = 0;
-    for await (const s of pMapIterable(strategyAddressId, async (strategyAddressId) => {
+
+    /**
+     * Cache strategy timings
+     */
+    for await (const _s of pMapIterable(strategyAddressId, async (strategyAddressId) => {
         try {
             //check if exists on strategyTimings
             const strategyTimingsOnRegistry = await strategyTimingsRepository.get(
@@ -277,42 +281,6 @@ const main = async (): Promise<void> => {
             nullStrategyTimingsCounter,
         );
     }
-    // for await (const poolCreatedEvent of pMapIterable(
-    //     Array.from(poolCreatedEvents),
-    //     async (poolCreatedEvent) => {
-    //         try {
-    //             const strategyHandler = StrategyHandlerFactory.createHandler(
-    //                 poolCreatedEvent.chainId as ChainId,
-    //                 {
-    //                     logger,
-    //                     evmProvider: evmProviders.get(
-    //                         poolCreatedEvent.chainId as ChainId,
-    //                     ) as EvmProvider,
-    //                 } as unknown as ProcessorDependencies,
-    //                 poolCreatedEvent.strategyId,
-    //             );
-    //             const strategyTimings = await strategyHandler?.fetchStrategyTimings(
-    //                 poolCreatedEvent.params.strategy,
-    //             );
-    //             if (strategyTimings === null) {
-    //                 nullCounter++;
-    //             } else {
-    //                 counter++;
-    //             }
-    //             return { status: "fullfilled", value: metadata };
-    //         } catch (error) {
-    //             console.log(error);
-    //             return { status: "rejected", error };
-    //         }
-    //     },
-    //     {
-    //         concurrency: 100,
-    //     },
-    // )) {
-    //     console.log(
-    //         `${counter} / ${cids.length} CID's successfully fetched, errors: ${nullCounter}\r`,
-    //     );
-    // }
     process.exit(0);
 };
 
