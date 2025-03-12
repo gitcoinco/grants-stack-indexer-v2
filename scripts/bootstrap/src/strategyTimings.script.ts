@@ -164,6 +164,7 @@ const main = async (): Promise<void> => {
     /**
      * Populate strategyRegistry with strategyIds
      */
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     for await (const _strategy of pMapIterable(
         strategyAddresses,
         async (strategy) => {
@@ -230,6 +231,7 @@ const main = async (): Promise<void> => {
     /**
      * Cache strategy timings
      */
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     for await (const _s of pMapIterable(strategyAddressId, async (strategyAddressId) => {
         try {
             //check if exists on strategyTimings
