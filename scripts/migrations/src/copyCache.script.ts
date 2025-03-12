@@ -273,7 +273,7 @@ export const main = async (): Promise<void> => {
     const targetDb = sourceColor === "blue" ? GREEN_DB : BLUE_DB;
 
     logger.info(`Copying cache data from ${sourceColor} to ${targetColor}...`);
-    await copyCacheData("datalayer-postgres-db", "GitcoinDatalayerGreen", connectionDetails);
+    await copyCacheData(sourceDb, targetDb, connectionDetails);
 
     logger.info(`✅ Cache data copied from ${sourceColor} to ${targetColor} successfully`);
 
