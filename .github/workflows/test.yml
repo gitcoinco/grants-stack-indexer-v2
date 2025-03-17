@@ -5,7 +5,7 @@ on:
 
 jobs:
     unit:
-        name: Unit tests
+        name: Tests
         runs-on: ubuntu-latest
         steps:
             - name: Check out github repository

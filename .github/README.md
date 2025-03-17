@@ -4,21 +4,20 @@ This directory contains the GitHub Actions workflows for the Grants Stack Indexe
 
 ## Available Workflows
 
-| Workflow                 | Description                                     |
-| ------------------------ | ----------------------------------------------- |
-| `main-workflow.yml`      | Main CI pipeline triggered on PR to dev/main    |
-| `build.yml`              | Handles project building and type checking      |
-| `build-image.yml`        | Builds and validates Docker images              |
-| `lint.yml`               | Runs code linting and commit message validation |
-| `test.yml`               | Executes unit tests with coverage               |
-| `test-integration.yml`   | Runs integration tests                          |
-| `create-ecr.yml`         | Creates ECR repository in AWS                   |
-| `create-s3.yaml`         | Creates S3 bucket for terraform state           |
-| `deploy-to-aws.yaml`     | First-time deployment to AWS                    |
-| `deploy-blue-green.yml`  | Handles blue-green deployment (Step 1)          |
-| `promote-blue-green.yml` | Promotes blue-green deployment (Step 2)         |
-| `destroy-blue-green.yml` | Finalizes blue-green deployment (Step 3)        |
-| `destroy-deployment.yml` | Destroys environment resources                  |
+| Workflow                 | Description                                       |
+| ------------------------ | ------------------------------------------------- |
+| `main-workflow.yml`      | Main CI pipeline triggered on PR to dev/main      |
+| `build.yml`              | Handles project building and type checking        |
+| `build-image.yml`        | Builds and validates Docker images                |
+| `lint.yml`               | Runs code linting and commit message validation   |
+| `test.yml`               | Executes unit and integration tests with coverage |
+| `create-ecr.yml`         | Creates ECR repository in AWS                     |
+| `create-s3.yaml`         | Creates S3 bucket for terraform state             |
+| `deploy-to-aws.yaml`     | First-time deployment to AWS                      |
+| `deploy-blue-green.yml`  | Handles blue-green deployment (Step 1)            |
+| `promote-blue-green.yml` | Promotes blue-green deployment (Step 2)           |
+| `destroy-blue-green.yml` | Finalizes blue-green deployment (Step 3)          |
+| `destroy-deployment.yml` | Destroys environment resources                    |
 
 ## Main Workflow
 

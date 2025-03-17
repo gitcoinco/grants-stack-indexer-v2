@@ -240,10 +240,10 @@ describe("DVMDDirectTransferHandler", () => {
         expect(BaseFundsDistributedHandler.prototype.handle).toHaveBeenCalled();
     });
 
-    it("calls DistributionUpdatedHandler for DistributionUpdated event", async () => {
+    it("calls BaseDistributionUpdatedHandler for DistributionUpdatedWithMerkleRoot event", async () => {
         const mockEvent = {
-            eventName: "DistributionUpdated",
-        } as ProcessorEvent<"Strategy", "DistributionUpdated">;
+            eventName: "DistributionUpdatedWithMerkleRoot",
+        } as ProcessorEvent<"Strategy", "DistributionUpdatedWithMerkleRoot">;
 
         vi.spyOn(BaseDistributionUpdatedHandler.prototype, "handle").mockResolvedValue([]);
 

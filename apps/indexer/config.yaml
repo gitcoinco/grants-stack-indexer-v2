@@ -54,6 +54,9 @@ contracts:
 
           # DistributionUpdated
           - event: DistributionUpdated(bytes32 merkleRoot, (uint256,string) metadata)
+            name: DistributionUpdatedWithMerkleRoot
+          - event: DistributionUpdated((uint256,string) metadata)
+            name: DistributionUpdated
 
           # FundsUpdated
           - event: FundsDistributed(uint256 amount, address grantee, address indexed token, address indexed recipientId)
@@ -290,7 +293,6 @@ networks:
     #       - name: Allo
     #         address:
     #             - 0x1133eA7Af70876e64665ecD07C0A0476d09465a1
-
     #######################
     #       TESTNET       #
     #######################
@@ -311,6 +313,7 @@ networks:
           - name: GitcoinAttestationNetwork
             address:
                 - 0xBAa70bbAB3C4a7265f879bb3658336DE893b8582
+
 # - id: 80001 # polygon-mumbai
 #   start_block: 41939383
 #   contracts:
