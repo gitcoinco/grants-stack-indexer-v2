@@ -2,6 +2,11 @@ import type { TestProject } from "vitest/node";
 
 import { TestEnvironment } from "../src/utils/test-environment.js";
 
+/**
+ * Delay in milliseconds to wait for the processing service to finish processing events
+ */
+export const PROCESSING_SERVICE_RUNNING_DELAY_MS = 10000;
+
 let env: TestEnvironment | undefined;
 
 /**

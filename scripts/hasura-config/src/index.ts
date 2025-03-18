@@ -5,7 +5,7 @@ import { CustomFunction, HasuraMetadataApi, RelationshipConfig } from "./interna
 
 configDotenv();
 
-const DEFAULT_PUBLIC_FETCH_LIMIT = 50;
+const DEFAULT_PUBLIC_FETCH_LIMIT = 200;
 
 const envSchema = z.object({
     HASURA_ENDPOINT: z.string().url(),
