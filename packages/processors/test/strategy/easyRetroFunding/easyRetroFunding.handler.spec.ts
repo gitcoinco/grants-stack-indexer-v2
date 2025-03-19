@@ -10,7 +10,7 @@ import {
 } from "@grants-stack-indexer/repository";
 import { ChainId, ILogger, ProcessorEvent, StrategyEvent } from "@grants-stack-indexer/shared";
 
-import { UnsupportedEventException } from "../../../src/exceptions/index.js";
+import { UnsupportedEventException } from "../../../src/internal.js";
 import {
     BaseDistributionUpdatedHandler,
     BaseFundsDistributedHandler,
@@ -155,7 +155,7 @@ describe("EasyRetroFundingStrategyHandler", () => {
         expect(ERFUpdatedRegistrationHandler.prototype.handle).toHaveBeenCalled();
     });
 
-    it.skip("calls RecipientStatusUpdatedHandler for RecipientStatusUpdated event", async () => {
+    it("calls RecipientStatusUpdatedHandler for RecipientStatusUpdated event", async () => {
         const mockEvent = {
             eventName: "RecipientStatusUpdatedWithFullRow",
         } as ProcessorEvent<"Strategy", "RecipientStatusUpdatedWithFullRow">;
@@ -197,7 +197,7 @@ describe("EasyRetroFundingStrategyHandler", () => {
         expect(ERFTimestampsUpdatedHandler.prototype.handle).toHaveBeenCalled();
     });
 
-    it.skip("calls BaseDistributionUpdatedHandler for DistributionUpdated event", async () => {
+    it("calls BaseDistributionUpdatedHandler for DistributionUpdated event", async () => {
         const mockEvent = {
             eventName: "DistributionUpdated",
         } as ProcessorEvent<"Strategy", "DistributionUpdated">;
@@ -218,7 +218,7 @@ describe("EasyRetroFundingStrategyHandler", () => {
         expect(BaseDistributionUpdatedHandler.prototype.handle).toHaveBeenCalled();
     });
 
-    it.skip("calls FundsDistributedHandler for FundsDistributed event", async () => {
+    it("calls FundsDistributedHandler for FundsDistributed event", async () => {
         const mockEvent = {
             eventName: "FundsDistributed",
         } as ProcessorEvent<"Strategy", "FundsDistributed">;
