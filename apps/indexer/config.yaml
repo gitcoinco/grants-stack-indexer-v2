@@ -288,44 +288,43 @@ networks:
     #     Custom RPC      #
     #######################
 
-    # - id: 295 # hedera-mainnet
-    #   rpc_config:
-    #       url: https://mainnet.hashio.io/api
-    #       initial_block_interval: 1000 # Number of blocks to request initially
-    #       backoff_multiplicative: 0 # Factor to reduce batch size on error
-    #       acceleration_additive: 0 # Increase batch size if no errors
-    #       interval_ceiling: 1000 # Maximum blocks per request
-    #       backoff_millis: 1000 # Wait time before retrying in milliseconds
-    #       query_timeout_millis: 20000 # Timeout for RPC requests in milliseconds
-    #   start_block: 75239000
-    #   contracts:
-    #       - name: Registry
-    #         address:
-    #             - 0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3
-    #       - name: Strategy
-    #       - name: Allo
-    #         address:
-    #             - 0x1133eA7Af70876e64665ecD07C0A0476d09465a1
-                
-    # - id: 1329 # sei-mainnet
-    #   rpc_config:
-    #     url: https://evm-rpc.sei-apis.com
-    #     initial_block_interval: 1000 # Number of blocks to request initially
-    #     backoff_multiplicative: 0 # Factor to reduce batch size on error
-    #     acceleration_additive: 0 # Increase batch size if no errors
-    #     interval_ceiling: 1000 # Maximum blocks per request
-    #     backoff_millis: 1000 # Wait time before retrying in milliseconds
-    #     query_timeout_millis: 20000 # Timeout for RPC requests in milliseconds
-    #   start_block: 78000000
-    #   contracts:
-    #     - name: Registry
-    #       address:
-    #         - 0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3
-    #     - name: Strategy
-    #     - name: Allo
-    #       address:
-    #         - 0x1133eA7Af70876e64665ecD07C0A0476d09465a1
+    - id: 295 # hedera-mainnet
+      rpc_config:
+          url: ${ENVIO_HEDERA_RPC_URL:-https://mainnet.hashio.io/api}
+          # initial_block_interval: 9000 # Number of blocks to request initially
+          # backoff_multiplicative: 0 # Factor to reduce batch size on error
+          # acceleration_additive: 0 # Increase batch size if no errors
+          # interval_ceiling: 9000 # Maximum blocks per request
+          # backoff_millis: 1000 # Wait time before retrying in milliseconds
+          # query_timeout_millis: 20000 # Timeout for RPC requests in milliseconds
+      start_block: 75239000
+      contracts:
+          - name: Registry
+            address:
+                - 0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3
+          - name: Strategy
+          - name: Allo
+            address:
+                - 0x1133eA7Af70876e64665ecD07C0A0476d09465a1
 
+    - id: 1329 # sei-mainnet
+      rpc_config:
+          url: ${ENVIO_SEI_RPC_URL:-https://evm-rpc.sei-apis.com}
+          # initial_block_interval: 2000 # Number of blocks to request initially
+          # backoff_multiplicative: 0 # Factor to reduce batch size on error
+          # acceleration_additive: 0 # Increase batch size if no errors
+          # interval_ceiling: 2000 # Maximum blocks per request
+          # backoff_millis: 1000 # Wait time before retrying in milliseconds
+          # query_timeout_millis: 20000 # Timeout for RPC requests in milliseconds
+      start_block: 78000000
+      contracts:
+          - name: Registry
+            address:
+                - 0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3
+          - name: Strategy
+          - name: Allo
+            address:
+                - 0x1133eA7Af70876e64665ecD07C0A0476d09465a1
 
     #######################
     #       TESTNET       #
