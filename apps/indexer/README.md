@@ -2,7 +2,7 @@
 
 This repository contains the Envio indexer service, which is ready to run on the Envio hosted platform. It includes a Dockerfile for the indexer process.
 
-Hosted Link: https://envio.dev/app/gitcoinco/gitcoin-indexer
+Hosted Platform: https://envio.dev/app/gitcoinco/gitcoin-indexer
 
 ## 🚀 Deployment
 
