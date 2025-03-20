@@ -11,6 +11,7 @@ Strategy.TimestampsUpdatedWithRegistrationAndAllocation.handler(async ({}) => {}
 
 // DistributionUpdated Handler
 Strategy.DistributionUpdated.handler(async ({}) => {});
+Strategy.DistributionUpdatedWithMerkleRoot.handler(async ({}) => {});
 
 // FundsDistributed Handler
 Strategy.FundsDistributed.handler(async ({}) => {});

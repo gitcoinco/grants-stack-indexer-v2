@@ -54,6 +54,9 @@ contracts:
 
           # DistributionUpdated
           - event: DistributionUpdated(bytes32 merkleRoot, (uint256,string) metadata)
+            name: DistributionUpdatedWithMerkleRoot
+          - event: DistributionUpdated((uint256,string) metadata)
+            name: DistributionUpdated
 
           # FundsUpdated
           - event: FundsDistributed(uint256 amount, address grantee, address indexed token, address indexed recipientId)
@@ -154,16 +157,93 @@ networks:
             address:
                 - 0x1133eA7Af70876e64665ecD07C0A0476d09465a1
 
-    # - id: 250 # fantom
-    #   start_block: 77624278
-    #   contracts:
-    #       - name: Registry
-    #         address:
-    #             - 0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3
-    #       - name: Strategy
-    #       - name: Allo
-    #         address:
-    #             - 0x1133eA7Af70876e64665ecD07C0A0476d09465a1
+    - id: 137 # polygon
+      start_block: 49466006
+      contracts:
+          - name: Registry
+            address:
+                - 0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3
+          - name: Strategy
+          - name: Allo
+            address:
+                - 0x1133eA7Af70876e64665ecD07C0A0476d09465a1
+
+    - id: 42 # lukso-mainnet
+      start_block: 2400000
+      contracts:
+          - name: Registry
+            address:
+                - 0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3
+          - name: Strategy
+          - name: Allo
+            address:
+                - 0x1133eA7Af70876e64665ecD07C0A0476d09465a1
+
+    - id: 100 # gnosis
+      start_block: 35900000
+      contracts:
+          - name: Registry
+            address:
+                - 0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3
+          - name: Strategy
+          - name: Allo
+            address:
+                - 0x1133eA7Af70876e64665ecD07C0A0476d09465a1
+
+    - id: 250 # fantom
+      start_block: 77624278
+      contracts:
+          - name: Registry
+            address:
+                - 0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3
+          - name: Strategy
+          - name: Allo
+            address:
+                - 0x1133eA7Af70876e64665ecD07C0A0476d09465a1
+
+    - id: 324 # zksync-era-mainnet
+      start_block: 31154341
+      contracts:
+          - name: Registry
+            address:
+                - 0xaa376Ef759c1f5A8b0B5a1e2FEC5C23f3bF30246
+          - name: Strategy
+          - name: Allo
+            address:
+                - 0x9D1D1BF2835935C291C0f5228c86d5C4e235A249
+
+    - id: 1088 # metis
+      start_block: 17860000
+      contracts:
+          - name: Registry
+            address:
+                - 0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3
+          - name: Strategy
+          - name: Allo
+            address:
+                - 0x1133eA7Af70876e64665ecD07C0A0476d09465a1
+
+    - id: 43114 # avalanche
+      start_block: 34540051
+      contracts:
+          - name: Registry
+            address:
+                - 0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3
+          - name: Strategy
+          - name: Allo
+            address:
+                - 0x1133eA7Af70876e64665ecD07C0A0476d09465a1
+
+    - id: 8453 # base
+      start_block: 6083365
+      contracts:
+          - name: Registry
+            address:
+                - 0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3
+          - name: Strategy
+          - name: Allo
+            address:
+                - 0x1133eA7Af70876e64665ecD07C0A0476d09465a1
 
     - id: 42161 # arbitrum
       start_block: 146489425
@@ -182,106 +262,61 @@ networks:
             address:
                 - 0x2ce7E4cB5Edb140A9327e67De85463186E757C8f
 
-    # - id: 137 # polygon
-    #   start_block: 49466006
-    #   contracts:
-    #       - name: Registry
-    #         address:
-    #             - 0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3
-    #       - name: Strategy
-    #       - name: Allo
-    #         address:
-    #             - 0x1133eA7Af70876e64665ecD07C0A0476d09465a1
+    - id: 42220 # celo-mainnet
+      start_block: 22257475
+      contracts:
+          - name: Registry
+            address:
+                - 0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3
+          - name: Strategy
+          - name: Allo
+            address:
+                - 0x1133eA7Af70876e64665ecD07C0A0476d09465a1
 
-    # - id: 8453 # base
-    #   start_block: 6083365
-    #   contracts:
-    #       - name: Registry
-    #         address:
-    #             - 0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3
-    #       - name: Strategy
-    #       - name: Allo
-    #         address:
-    #             - 0x1133eA7Af70876e64665ecD07C0A0476d09465a1
+    - id: 534352 # scroll
+      start_block: 2683205
+      contracts:
+          - name: Registry
+            address:
+                - 0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3
+          - name: Strategy
+          - name: Allo
+            address:
+                - 0x1133eA7Af70876e64665ecD07C0A0476d09465a1
 
-    # - id: 324 # zksync-era-mainnet
-    #   start_block: 31154341
-    #   contracts:
-    #       - name: Registry
-    #         address:
-    #             - 0xaa376Ef759c1f5A8b0B5a1e2FEC5C23f3bF30246
-    #       - name: Strategy
-    #       - name: Allo
-    #         address:
-    #             - 0x9D1D1BF2835935C291C0f5228c86d5C4e235A249
-
-    # - id: 43114 # avalanche
-    #   start_block: 34540051
-    #   contracts:
-    #       - name: Registry
-    #         address:
-    #             - 0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3
-    #       - name: Strategy
-    #       - name: Allo
-    #         address:
-    #             - 0x1133eA7Af70876e64665ecD07C0A0476d09465a1
-
-    # - id: 534352 # scroll
-    #   start_block: 2683205
-    #   contracts:
-    #       - name: Registry
-    #         address:
-    #             - 0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3
-    #       - name: Strategy
-    #       - name: Allo
-    #         address:
-    #             - 0x1133eA7Af70876e64665ecD07C0A0476d09465a1
-
-    # - id: 1329 # sei-mainnet
-    #   rpc_config:
-    #     url: https://evm-rpc.sei-apis.com
-    #   start_block: 78000000
-    #   contracts:
-    #     - name: Registry
-    #       address:
-    #         - 0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3
-    #     - name: Strategy
-    #     - name: Allo
-    #       address:
-    #         - 0x1133eA7Af70876e64665ecD07C0A0476d09465a1
-
-    # - id: 42220 # celo-mainnet
-    #   start_block: 22257475
-    #   contracts:
-    #       - name: Registry
-    #         address:
-    #             - 0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3
-    #       - name: Strategy
-    #       - name: Allo
-    #         address:
-    #             - 0x1133eA7Af70876e64665ecD07C0A0476d09465a1
-
-    # - id: 42 # lukso-mainnet
-    #   start_block: 2400000
-    #   contracts:
-    #       - name: Registry
-    #         address:
-    #             - 0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3
-    #       - name: Strategy
-    #       - name: Allo
-    #         address:
-    #             - 0x1133eA7Af70876e64665ecD07C0A0476d09465a1
+    #######################
+    #     Custom RPC      #
+    #######################
 
     - id: 295 # hedera-mainnet
       rpc_config:
-          url: https://mainnet.hashio.io/api
-          initial_block_interval: 1000 # Number of blocks to request initially
-          backoff_multiplicative: 0 # Factor to reduce batch size on error
-          acceleration_additive: 0 # Increase batch size if no errors
-          interval_ceiling: 1000 # Maximum blocks per request
-          backoff_millis: 1000 # Wait time before retrying in milliseconds
-          query_timeout_millis: 20000 # Timeout for RPC requests in milliseconds
+          url: ${ENVIO_HEDERA_RPC_URL:-https://mainnet.hashio.io/api}
+          # initial_block_interval: 9000 # Number of blocks to request initially
+          # backoff_multiplicative: 0 # Factor to reduce batch size on error
+          # acceleration_additive: 0 # Increase batch size if no errors
+          # interval_ceiling: 9000 # Maximum blocks per request
+          # backoff_millis: 1000 # Wait time before retrying in milliseconds
+          # query_timeout_millis: 20000 # Timeout for RPC requests in milliseconds
       start_block: 75239000
+      contracts:
+          - name: Registry
+            address:
+                - 0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3
+          - name: Strategy
+          - name: Allo
+            address:
+                - 0x1133eA7Af70876e64665ecD07C0A0476d09465a1
+
+    - id: 1329 # sei-mainnet
+      rpc_config:
+          url: ${ENVIO_SEI_RPC_URL:-https://evm-rpc.sei-apis.com}
+          # initial_block_interval: 2000 # Number of blocks to request initially
+          # backoff_multiplicative: 0 # Factor to reduce batch size on error
+          # acceleration_additive: 0 # Increase batch size if no errors
+          interval_ceiling: 2000 # Maximum blocks per request
+          # backoff_millis: 1000 # Wait time before retrying in milliseconds
+          # query_timeout_millis: 20000 # Timeout for RPC requests in milliseconds
+      start_block: 78000000
       contracts:
           - name: Registry
             address:

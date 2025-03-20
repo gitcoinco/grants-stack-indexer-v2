@@ -10,55 +10,43 @@ import {
     Token,
 } from "@grants-stack-indexer/shared";
 
-import type { ProcessorDependencies, StrategyTimings } from "../../../internal.js";
-import DonationVotingMerkleDistributionDirectTransferStrategy from "../../../abis/allo-v2/v1/DonationVotingMerkleDistributionDirectTransferStrategy.js";
+import EasyRetroFundingStrategy from "../../../abis/allo-v2/v1/EasyRetroFundingStrategy.js";
 import { calculateAmountInUsd, getDateFromTimestamp } from "../../../helpers/index.js";
-import { TokenPriceNotFoundError, UnsupportedEventException } from "../../../internal.js";
 import {
-    BaseDistributedHandler,
+    ProcessorDependencies,
+    StrategyTimings,
+    TokenPriceNotFoundError,
+    UnsupportedEventException,
+} from "../../../internal.js";
+import {
     BaseDistributionUpdatedHandler,
     BaseFundsDistributedHandler,
     BaseRecipientStatusUpdatedHandler,
     BaseStrategyHandler,
 } from "../common/index.js";
 import {
-    DVMDAllocatedHandler,
-    DVMDRegisteredHandler,
-    DVMDTimestampsUpdatedHandler,
-    DVMDUpdatedRegistrationHandler,
+    ERFRegisteredHandler,
+    ERFTimestampsUpdatedHandler,
+    ERFUpdatedRegistrationHandler,
 } from "./handlers/index.js";
 
-type Dependencies = Pick<
-    ProcessorDependencies,
-    | "projectRepository"
-    | "roundRepository"
-    | "applicationRepository"
-    | "metadataProvider"
-    | "evmProvider"
-    | "pricingProvider"
-    | "logger"
->;
-
-const STRATEGY_NAME = "allov2.DonationVotingMerkleDistributionDirectTransferStrategy";
+const STRATEGY_NAME = "allov2.EasyRetroFundingStrategy";
 
 /**
  * This handler is responsible for processing events related to the
- * Donation Voting Merkle Distribution Direct Transfer strategy.
+ * Easy Retro Funding strategy.
  *
  * The following events are currently handled by this strategy:
  * - RegisteredWithSender
- * - DistributedWithRecipientAddress
- * - AllocatedWithOrigin
- * - TimestampsUpdatedWithRegistrationAndAllocation
- * - DistributionUpdatedWithMerkleRoot
- * - FundsDistributed
  * - UpdatedRegistrationWithStatus
+ * - TimestampsUpdatedWithRegistrationAndAllocation
+ * - DistributionUpdated
+ * - FundsDistributed
  */
-
-export class DVMDDirectTransferStrategyHandler extends BaseStrategyHandler {
+export class EasyRetroFundingStrategyHandler extends BaseStrategyHandler {
     constructor(
         private readonly chainId: ChainId,
-        private readonly dependencies: Dependencies,
+        private readonly dependencies: ProcessorDependencies,
     ) {
         super(STRATEGY_NAME);
     }
@@ -67,46 +55,13 @@ export class DVMDDirectTransferStrategyHandler extends BaseStrategyHandler {
     async handle(event: ProcessorEvent<"Strategy", StrategyEvent>): Promise<Changeset[]> {
         switch (event.eventName) {
             case "RegisteredWithSender":
-                return new DVMDRegisteredHandler(
+                return new ERFRegisteredHandler(
                     event as ProcessorEvent<"Strategy", "RegisteredWithSender">,
                     this.chainId,
                     this.dependencies,
                 ).handle();
-            case "DistributedWithRecipientAddress":
-                return new BaseDistributedHandler(
-                    event as ProcessorEvent<"Strategy", "DistributedWithRecipientAddress">,
-                    this.chainId,
-                    this.dependencies,
-                ).handle();
-            case "AllocatedWithOrigin":
-                return new DVMDAllocatedHandler(
-                    event as ProcessorEvent<"Strategy", "AllocatedWithOrigin">,
-                    this.chainId,
-                    this.dependencies,
-                ).handle();
-            case "TimestampsUpdatedWithRegistrationAndAllocation":
-                return new DVMDTimestampsUpdatedHandler(
-                    event as ProcessorEvent<
-                        "Strategy",
-                        "TimestampsUpdatedWithRegistrationAndAllocation"
-                    >,
-                    this.chainId,
-                    this.dependencies,
-                ).handle();
-            case "DistributionUpdatedWithMerkleRoot":
-                return new BaseDistributionUpdatedHandler(
-                    event as ProcessorEvent<"Strategy", "DistributionUpdatedWithMerkleRoot">,
-                    this.chainId,
-                    this.dependencies,
-                ).handle();
-            case "FundsDistributed":
-                return new BaseFundsDistributedHandler(
-                    event as ProcessorEvent<"Strategy", "FundsDistributed">,
-                    this.chainId,
-                    this.dependencies,
-                ).handle();
             case "UpdatedRegistrationWithStatus":
-                return new DVMDUpdatedRegistrationHandler(
+                return new ERFUpdatedRegistrationHandler(
                     event as ProcessorEvent<"Strategy", "UpdatedRegistrationWithStatus">,
                     this.chainId,
                     this.dependencies,
@@ -117,6 +72,28 @@ export class DVMDDirectTransferStrategyHandler extends BaseStrategyHandler {
                     this.chainId,
                     this.dependencies,
                 ).handle();
+            case "TimestampsUpdatedWithRegistrationAndAllocation":
+                return new ERFTimestampsUpdatedHandler(
+                    event as ProcessorEvent<
+                        "Strategy",
+                        "TimestampsUpdatedWithRegistrationAndAllocation"
+                    >,
+                    this.chainId,
+                    this.dependencies,
+                ).handle();
+            case "DistributionUpdated":
+                return new BaseDistributionUpdatedHandler(
+                    event as ProcessorEvent<"Strategy", "DistributionUpdated">,
+                    this.chainId,
+                    this.dependencies,
+                ).handle();
+            case "FundsDistributed":
+                return new BaseFundsDistributedHandler(
+                    event as ProcessorEvent<"Strategy", "FundsDistributed">,
+                    this.chainId,
+                    this.dependencies,
+                ).handle();
+
             default:
                 throw new UnsupportedEventException("Strategy", event.eventName, this.name);
         }
@@ -145,23 +122,23 @@ export class DVMDDirectTransferStrategyHandler extends BaseStrategyHandler {
 
         const contractCalls = [
             {
-                abi: DonationVotingMerkleDistributionDirectTransferStrategy,
+                abi: EasyRetroFundingStrategy,
                 functionName: "registrationStartTime",
                 address: strategyId,
             },
             {
-                abi: DonationVotingMerkleDistributionDirectTransferStrategy,
+                abi: EasyRetroFundingStrategy,
                 functionName: "registrationEndTime",
                 address: strategyId,
             },
             {
-                abi: DonationVotingMerkleDistributionDirectTransferStrategy,
-                functionName: "allocationStartTime",
+                abi: EasyRetroFundingStrategy,
+                functionName: "poolStartTime",
                 address: strategyId,
             },
             {
-                abi: DonationVotingMerkleDistributionDirectTransferStrategy,
-                functionName: "allocationEndTime",
+                abi: EasyRetroFundingStrategy,
+                functionName: "poolEndTime",
                 address: strategyId,
             },
         ] as const;

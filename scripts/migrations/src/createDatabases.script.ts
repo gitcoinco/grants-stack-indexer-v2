@@ -38,6 +38,7 @@ export const createDatabaseIfNotExists = async (
         port: parseInt(port, 10),
         user,
         password,
+        database: "postgres",
         ssl:
             process.env.NODE_ENV === "production" || process.env.NODE_ENV === "staging"
                 ? {

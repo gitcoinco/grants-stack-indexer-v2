@@ -38,7 +38,7 @@ module "storage" {
   region                = var.AWS_REGION
   rds_username          = var.DATALAYER_PG_USER
   rds_password          = var.DATALAYER_PG_PASSWORD
-  rds_instance_class    = "db.t4g.micro"
+  rds_instance_class    = "db.t4g.medium"
   rds_security_group_id = module.networking.rds_security_group_id
   rds_subnet_ids        = module.networking.private_subnets
   rds_subnet_group_name = module.networking.rds_subnet_group_name
