@@ -206,6 +206,35 @@ export class KyselyRoundRepository implements IRoundRepository<KyselyTransaction
     }
 
     /* @inheritdoc */
+    async incrementRoundDonationStats(
+        where: { chainId: ChainId; roundId: string },
+        amountInUsd: string,
+        tx?: KyselyTransaction,
+    ): Promise<void> {
+        try {
+            const queryBuilder = (tx || this.db).withSchema(this.schemaName);
+            await queryBuilder
+                .updateTable("rounds")
+                .set((eb) => ({
+                    totalDonationsCount: eb("totalDonationsCount", "+", 1),
+                    totalAmountDonatedInUsd: eb("totalAmountDonatedInUsd", "+", amountInUsd),
+                }))
+                .where("chainId", "=", where.chainId)
+                .where("id", "=", where.roundId)
+                .execute();
+        } catch (error) {
+            throw handlePostgresError(error, {
+                className: KyselyRoundRepository.name,
+                methodName: "incrementRoundDonationStats",
+                additionalData: {
+                    where,
+                    amountInUsd,
+                },
+            });
+        }
+    }
+
+    /* @inheritdoc */
     async incrementRoundTotalDistributed(
         where: { chainId: ChainId; roundId: string },
         amount: bigint,

@@ -51,6 +51,18 @@ export const createRoundHandlers = (repository: IRoundRepository): RoundHandlers
         );
     }) satisfies ChangesetHandler<"IncrementRoundFundedAmount">,
 
+    IncrementRoundDonationStats: (async (changeset, txConnection): Promise<void> => {
+        const { chainId, roundId, amountInUsd } = changeset.args;
+        await repository.incrementRoundDonationStats(
+            {
+                chainId,
+                roundId,
+            },
+            amountInUsd,
+            txConnection,
+        );
+    }) satisfies ChangesetHandler<"IncrementRoundDonationStats">,
+
     IncrementRoundTotalDistributed: (async (changeset, txConnection): Promise<void> => {
         const { chainId, roundId, amount } = changeset.args;
         await repository.incrementRoundTotalDistributed(

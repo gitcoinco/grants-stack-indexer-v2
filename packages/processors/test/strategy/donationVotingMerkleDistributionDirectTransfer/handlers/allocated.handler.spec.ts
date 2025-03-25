@@ -112,6 +112,23 @@ describe("DVMDAllocatedHandler", () => {
                     },
                 },
             },
+            {
+                type: "IncrementRoundDonationStats",
+                args: {
+                    chainId,
+                    roundId: "round1",
+                    amountInUsd: "20000",
+                },
+            },
+            {
+                type: "IncrementApplicationDonationStats",
+                args: {
+                    chainId,
+                    roundId: "round1",
+                    applicationId: "app1",
+                    amountInUsd: "20000",
+                },
+            },
         ]);
     });
 
@@ -173,6 +190,23 @@ describe("DVMDAllocatedHandler", () => {
                         amountInRoundMatchToken: parseEther("0.75"),
                         timestamp: new Date(mockEvent.blockTimestamp),
                     }),
+                },
+            },
+            {
+                type: "IncrementRoundDonationStats",
+                args: {
+                    chainId,
+                    roundId: "round1",
+                    amountInUsd: "1500",
+                },
+            },
+            {
+                type: "IncrementApplicationDonationStats",
+                args: {
+                    chainId,
+                    roundId: "round1",
+                    applicationId: "app1",
+                    amountInUsd: "1500",
                 },
             },
         ]);

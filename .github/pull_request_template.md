@@ -1,6 +1,6 @@
 # 🤖 Linear
 
-Closes GIT-XXX
+Closes PAR-XXX
 
 ## Description
 

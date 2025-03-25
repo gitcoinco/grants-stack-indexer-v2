@@ -77,7 +77,7 @@ export class ERFRegisteredHandler implements IEventHandler<"Strategy", "Register
                 },
             ],
             distributionTransaction: null,
-            totalAmountDonatedInUsd: 0,
+            totalAmountDonatedInUsd: "0",
             totalDonationsCount: 0,
             uniqueDonorsCount: 0,
             timestamp: new Date(blockTimestamp),

@@ -102,6 +102,14 @@ export type RoundChangeset =
           };
       }
     | {
+          type: "IncrementRoundDonationStats";
+          args: {
+              chainId: ChainId;
+              roundId: string;
+              amountInUsd: string;
+          };
+      }
+    | {
           type: "IncrementRoundTotalDistributed";
           args: {
               chainId: ChainId;
@@ -138,6 +146,15 @@ export type ApplicationChangeset =
     | {
           type: "InsertApplication";
           args: NewApplication;
+      }
+    | {
+          type: "IncrementApplicationDonationStats";
+          args: {
+              chainId: ChainId;
+              roundId: string;
+              applicationId: string;
+              amountInUsd: string;
+          };
       }
     | {
           type: "UpdateApplication";

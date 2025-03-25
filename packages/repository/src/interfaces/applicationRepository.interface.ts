@@ -89,4 +89,17 @@ export interface IApplicationRepository<
         application: PartialApplication,
         tx?: TxConnection,
     ): Promise<void>;
+
+    /**
+     * Increments the donation stats for an application.
+     * @param where An object containing the (id, chainId, and roundId) of the application to update.
+     * @param amountInUsd The amount in USD to increment by.
+     * @param tx Optional transaction connection
+     * @returns A promise that resolves when the increment is complete.
+     */
+    incrementApplicationDonationStats(
+        where: { id: string; chainId: ChainId; roundId: string },
+        amountInUsd: string,
+        tx?: TxConnection,
+    ): Promise<void>;
 }

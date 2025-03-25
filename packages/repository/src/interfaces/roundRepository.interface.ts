@@ -138,6 +138,22 @@ export interface IRoundRepository<
     ): Promise<void>;
 
     /**
+     * Increments the donation stats for a specific round.
+     * @param where An object containing the chainId and roundId of the round to update.
+     * @param amountInUsd The amount in USD to increment by.
+     * @param tx Optional transaction connection
+     * @returns A promise that resolves when the increment is complete.
+     */
+    incrementRoundDonationStats(
+        where: {
+            chainId: ChainId;
+            roundId: string;
+        },
+        amountInUsd: string,
+        tx?: TxConnection,
+    ): Promise<void>;
+
+    /**
      * Increments the total distributed amount for a specific round.
      * @param where An object containing the chainId and roundId of the round to update.
      * @param amount The amount to increment by.

@@ -23,7 +23,7 @@ export type Application = {
     createdAtBlock: bigint;
     statusUpdatedAtBlock: bigint;
     totalDonationsCount: number;
-    totalAmountDonatedInUsd: number;
+    totalAmountDonatedInUsd: string;
     uniqueDonorsCount: number;
     timestamp: Date;
     tags: string[];
