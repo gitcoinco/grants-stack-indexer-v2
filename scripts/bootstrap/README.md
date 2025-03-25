@@ -24,7 +24,7 @@ This package contains scripts for bootstrapping the grants-stack-indexer project
 
     ```env
     # Database connection URL
-    DATABASE_URL=postgre://postgres:testing@localhost:5434/datalayer-postgres-db
+    DATABASE_URL=postgres://postgres:testing@localhost:5434/datalayer-postgres-db
     # Database schema
     DATABASE_SCHEMA=public
     # Indexer URL
