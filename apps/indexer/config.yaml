@@ -177,7 +177,7 @@ networks:
           - name: Strategy
           - name: Allo
             address:
-                - 0x1133eA7Af70876e64665ecD07C0A0476d09465a1
+                - 0xB087535DB0df98fC4327136e897A5985E5Cfbd66
 
     - id: 100 # gnosis
       start_block: 35900000
