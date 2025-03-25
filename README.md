@@ -119,6 +119,26 @@ Use the default password: `my-admin-secret`.
 3. Wait until the new chain is fully indexed
 4. Run bootstrap pricing and metadata scripts (refer to: [[How to run bootstrap for specific chain](scripts/bootstrap/README.md)] )
 
+## Upgrade Notes
+
+### 1. Hasura Version Mismatch in `envio`
+
+When upgrading `envio`, the Hasura version used in `envio` may change. This can lead to version mismatches between different `docker-compose.yml` files in the project.
+
+### 2. Local Development Setup
+
+-   `envio` uses a `docker-compose.yml` located at `apps/indexer/generated/` for local development.
+-   The root-level `docker-compose.yml` may have a different Hasura version, leading to potential inconsistencies.
+-   Example of a version mismatch found:
+    -   **Root `docker-compose.yml`**: `hasura/graphql-engine:v2.23.0`
+    -   **Generated `docker-compose.yml` (envio)**: `hasura/graphql-engine:v2.43.0`
+
+### 3. Recommended Fix
+
+To avoid version mismatches:
+
+-   Alternatively, update the Hasura version in the root `docker-compose.yml` to match the `generated` one whenever `envio` is upgraded.
+
 ## Contributing
 
 Wonderland is a team of top Web3 researchers, developers, and operators who believe that the future needs to be open-source, permissionless, and decentralized.
