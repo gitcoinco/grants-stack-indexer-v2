@@ -70,6 +70,8 @@ Use your values for the chain and the contracts you want to index.
 
 Ensure each event is properly handled and thoroughly tested before redeploying the environment to prevent issues in the indexing process.
 
+Hypersync can sometimes be unreliable, so it's recommended to provide a fallback RPC. Check the `.env.example` file and ensure the necessary variables are set in the hosted service before deployment.
+
 ## 🧪 Testing
 
 To run tests, use the following command:
