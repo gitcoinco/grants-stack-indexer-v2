@@ -7,8 +7,6 @@ jobs:
     build:
         name: Run Build
         runs-on: ubuntu-latest
-        env:
-            ENVIO_ALCHEMY_API_KEY: ${{ secrets.ENVIO_ALCHEMY_API_KEY }}
 
         steps:
             - name: Check out github repository

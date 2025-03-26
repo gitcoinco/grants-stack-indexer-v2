@@ -112,8 +112,6 @@ services:
         build:
             context: ./apps/indexer
             dockerfile: Dockerfile
-            args:
-                ENVIO_ALCHEMY_API_KEY: ${ENVIO_ALCHEMY_API_KEY}
         restart: always
         depends_on:
             indexer-postgres-db:
