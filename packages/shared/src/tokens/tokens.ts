@@ -432,16 +432,22 @@ export const TOKENS: {
             address: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
             decimals: 18,
         },
-        "0x765de816845861e75a25fca122bb6898b8b1282a": {
+        "0x765DE816845861e75A25fCA122bb6898B8B1282a": {
             code: "CUSD" as TokenCode,
             priceSourceCode: "CUSD" as TokenCode,
-            address: "0x765de816845861e75a25fca122bb6898b8b1282a",
+            address: "0x765DE816845861e75A25fCA122bb6898B8B1282a",
             decimals: 18,
         },
-        "0x4f604735c1cf31399c6e711d5962b2b3e0225ad3": {
+        "0x4F604735c1cF31399C6E711D5962b2B3E0225AD3": {
             code: "USDGLO" as TokenCode,
             priceSourceCode: "USDGLO" as TokenCode,
-            address: "0x4f604735c1cf31399c6e711d5962b2b3e0225ad3",
+            address: "0x4F604735c1cF31399C6E711D5962b2B3E0225AD3",
+            decimals: 18,
+        },
+        "0x62B8B11039FcfE5aB0C56E502b1C372A3d2a9c7A": {
+            code: "G$" as TokenCode,
+            priceSourceCode: "G$" as TokenCode,
+            address: "0x62B8B11039FcfE5aB0C56E502b1C372A3d2a9c7A",
             decimals: 18,
         },
     },
