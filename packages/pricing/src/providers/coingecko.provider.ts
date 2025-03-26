@@ -60,6 +60,7 @@ const TokenMapping: { [key: string]: CoingeckoTokenId | undefined } = {
     // MTK: undefined,
     WSEI: "wrapped-sei" as CoingeckoTokenId,
     HBAR: "hedera-hashgraph" as CoingeckoTokenId,
+    G$: "gooddollar" as CoingeckoTokenId,
 };
 
 // sometimes coingecko returns no prices for 1 hour range, 2 hours works better
