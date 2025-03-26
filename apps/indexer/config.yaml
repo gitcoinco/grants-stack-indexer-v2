@@ -137,7 +137,7 @@ networks:
     #######################
     - id: 1 # mainnet
       start_block: 18486688
-      rpc: ${ENVIO_ALCHEMY_API_KEY:+https://eth-mainnet.g.alchemy.com/v2/${ENVIO_ALCHEMY_API_KEY}}${ENVIO_ALCHEMY_API_KEY:-https://eth.llamarpc.com}
+      rpc: https://eth-mainnet.g.alchemy.com/v2/${ENVIO_ALCHEMY_API_KEY}
       contracts:
           - name: Allo
             address:
@@ -148,7 +148,7 @@ networks:
                 - 0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3
 
     - id: 10 # optimism
-      rpc: ${ENVIO_ALCHEMY_API_KEY:+https://opt-mainnet.g.alchemy.com/v2/${ENVIO_ALCHEMY_API_KEY}}${ENVIO_ALCHEMY_API_KEY:-https://optimism.llamarpc.com}
+      rpc: https://opt-mainnet.g.alchemy.com/v2/${ENVIO_ALCHEMY_API_KEY}
       start_block: 111678968
       contracts:
           - name: Registry
@@ -172,7 +172,7 @@ networks:
                 - 0xB087535DB0df98fC4327136e897A5985E5Cfbd66
 
     - id: 100 # gnosis
-      rpc: ${ENVIO_ALCHEMY_API_KEY:+https://gnosis-mainnet.g.alchemy.com/v2/${ENVIO_ALCHEMY_API_KEY}}${ENVIO_ALCHEMY_API_KEY:-https://gnosis-rpc.publicnode.com}
+      rpc: https://gnosis-mainnet.g.alchemy.com/v2/${ENVIO_ALCHEMY_API_KEY}
       start_block: 35900000
       contracts:
           - name: Registry
@@ -184,7 +184,7 @@ networks:
                 - 0x1133eA7Af70876e64665ecD07C0A0476d09465a1
 
     - id: 137 # polygon
-      rpc: ${ENVIO_ALCHEMY_API_KEY:+https://polygon-mainnet.g.alchemy.com/v2/${ENVIO_ALCHEMY_API_KEY}}${ENVIO_ALCHEMY_API_KEY:-https://polygon.llamarpc.com}
+      rpc: https://polygon-mainnet.g.alchemy.com/v2/${ENVIO_ALCHEMY_API_KEY}
       start_block: 49466006
       contracts:
           - name: Registry
@@ -196,7 +196,7 @@ networks:
                 - 0x1133eA7Af70876e64665ecD07C0A0476d09465a1
 
     - id: 250 # fantom
-      rpc: ${ENVIO_ALCHEMY_API_KEY:+https://fantom-mainnet.g.alchemy.com/v2/${ENVIO_ALCHEMY_API_KEY}}${ENVIO_ALCHEMY_API_KEY:-https://rpc.ankr.com/fantom}
+      rpc: https://fantom-mainnet.g.alchemy.com/v2/${ENVIO_ALCHEMY_API_KEY}
       start_block: 77624278
       contracts:
           - name: Registry
@@ -208,7 +208,7 @@ networks:
                 - 0x1133eA7Af70876e64665ecD07C0A0476d09465a1
 
     - id: 324 # zksync-era-mainnet
-      rpc: ${ENVIO_ALCHEMY_API_KEY:+https://zksync-mainnet.g.alchemy.com/v2/${ENVIO_ALCHEMY_API_KEY}}${ENVIO_ALCHEMY_API_KEY:-https://1rpc.io/zksync2-era}
+      rpc: https://zksync-mainnet.g.alchemy.com/v2/${ENVIO_ALCHEMY_API_KEY}
       start_block: 31154341
       contracts:
           - name: Registry
@@ -220,7 +220,7 @@ networks:
                 - 0x9D1D1BF2835935C291C0f5228c86d5C4e235A249
 
     - id: 1088 # metis
-      rpc: ${ENVIO_ALCHEMY_API_KEY:+https://metis-mainnet.g.alchemy.com/v2/${ENVIO_ALCHEMY_API_KEY}}${ENVIO_ALCHEMY_API_KEY:-https://metis-rpc.publicnode.com}
+      rpc: https://metis-mainnet.g.alchemy.com/v2/${ENVIO_ALCHEMY_API_KEY}
       start_block: 17860000
       contracts:
           - name: Registry
@@ -232,7 +232,7 @@ networks:
                 - 0x1133eA7Af70876e64665ecD07C0A0476d09465a1
 
     - id: 8453 # base
-      rpc: ${ENVIO_ALCHEMY_API_KEY:+https://base-mainnet.g.alchemy.com/v2/${ENVIO_ALCHEMY_API_KEY}}${ENVIO_ALCHEMY_API_KEY:-https://base-rpc.publicnode.com}
+      rpc: https://base-mainnet.g.alchemy.com/v2/${ENVIO_ALCHEMY_API_KEY}
       start_block: 6083365
       contracts:
           - name: Registry
@@ -245,7 +245,7 @@ networks:
 
     - id: 42161 # arbitrum
       start_block: 146489425
-      rpc: ${ENVIO_ALCHEMY_API_KEY:+https://arb-mainnet.g.alchemy.com/v2/${ENVIO_ALCHEMY_API_KEY}}${ENVIO_ALCHEMY_API_KEY:-https://arbitrum.llamarpc.com}
+      rpc: https://arb-mainnet.g.alchemy.com/v2/${ENVIO_ALCHEMY_API_KEY}
       contracts:
           - name: Registry
             address:
@@ -262,7 +262,7 @@ networks:
                 - 0x2ce7E4cB5Edb140A9327e67De85463186E757C8f
 
     - id: 43114 # avalanche
-      rpc: ${ENVIO_ALCHEMY_API_KEY:+https://avax-mainnet.g.alchemy.com/v2/${ENVIO_ALCHEMY_API_KEY}}${ENVIO_ALCHEMY_API_KEY:-https://avalanche.public-rpc.com}
+      rpc: https://avax-mainnet.g.alchemy.com/v2/${ENVIO_ALCHEMY_API_KEY}
       start_block: 34540051
       contracts:
           - name: Registry
@@ -274,7 +274,7 @@ networks:
                 - 0x1133eA7Af70876e64665ecD07C0A0476d09465a1
 
     - id: 42220 # celo-mainnet
-      rpc: ${ENVIO_ALCHEMY_API_KEY:+https://celo-mainnet.g.alchemy.com/v2/${ENVIO_ALCHEMY_API_KEY}}${ENVIO_ALCHEMY_API_KEY:-https://1rpc.io/celo}
+      rpc: https://celo-mainnet.g.alchemy.com/v2/${ENVIO_ALCHEMY_API_KEY}
       start_block: 22257475
       contracts:
           - name: Registry
@@ -286,7 +286,7 @@ networks:
                 - 0x1133eA7Af70876e64665ecD07C0A0476d09465a1
 
     - id: 534352 # scroll
-      rpc: ${ENVIO_ALCHEMY_API_KEY:+https://scroll-mainnet.g.alchemy.com/v2/${ENVIO_ALCHEMY_API_KEY}}${ENVIO_ALCHEMY_API_KEY:-https://1rpc.io/scroll}
+      rpc: https://scroll-mainnet.g.alchemy.com/v2/${ENVIO_ALCHEMY_API_KEY}
       start_block: 2683205
       contracts:
           - name: Registry
@@ -344,7 +344,7 @@ networks:
     #######################
 
     - id: 11155111 # sepolia
-      rpc: ${ENVIO_ALCHEMY_API_KEY:+https://eth-sepolia.g.alchemy.com/v2/${ENVIO_ALCHEMY_API_KEY}}${ENVIO_ALCHEMY_API_KEY:-https://1rpc.io/sepolia}
+      rpc: https://eth-sepolia.g.alchemy.com/v2/${ENVIO_ALCHEMY_API_KEY}
       start_block: 4617051
       contracts:
           - name: Registry
