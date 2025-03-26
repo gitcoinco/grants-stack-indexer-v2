@@ -74,3 +74,5 @@ const TOKENS: {
     },
 };
 ```
+
+Make sure to update the mapping in coingecko.provider.ts if the priceSourceCode differs from the token code required by CoinGecko.
