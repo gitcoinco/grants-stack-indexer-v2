@@ -108,6 +108,23 @@ export class DVMDAllocatedHandler implements IEventHandler<"Strategy", "Allocate
                 type: "InsertDonation",
                 args: { donation },
             },
+            {
+                type: "IncrementRoundDonationStats",
+                args: {
+                    chainId: this.chainId,
+                    roundId: round.id,
+                    amountInUsd,
+                },
+            },
+            {
+                type: "IncrementApplicationDonationStats",
+                args: {
+                    chainId: this.chainId,
+                    roundId: round.id,
+                    applicationId: application.id,
+                    amountInUsd,
+                },
+            },
         ];
     }
 

@@ -60,6 +60,7 @@ export const createMockRepositories = (): Pick<
         getRoundMatchTokenAddressById: vi.fn(),
         getRoundRoles: vi.fn(),
         getPendingRoundRoles: vi.fn(),
+        incrementRoundDonationStats: vi.fn(),
     },
     applicationRepository: {
         insertApplication: vi.fn(),
@@ -69,6 +70,7 @@ export const createMockRepositories = (): Pick<
         getApplicationByAnchorAddress: vi.fn(),
         getApplicationByAnchorAddressOrThrow: vi.fn(),
         getApplicationsByRoundId: vi.fn(),
+        incrementApplicationDonationStats: vi.fn(),
     },
     donationRepository: {
         insertDonation: vi.fn(),

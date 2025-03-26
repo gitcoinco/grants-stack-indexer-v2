@@ -19,6 +19,7 @@ describe("Round Handlers", () => {
         deleteManyPendingRoundRoles: vi.fn(),
         insertRoundRole: vi.fn(),
         deleteManyRoundRolesByRoleAndAddress: vi.fn(),
+        incrementRoundDonationStats: vi.fn(),
     } as unknown as IRoundRepository;
     const mockTxConnection = { query: vi.fn() } as unknown as TransactionConnection;
 
@@ -106,6 +107,25 @@ describe("Round Handlers", () => {
         expect(mockRepository.incrementRoundFunds).toHaveBeenCalledWith(
             { chainId: 1 as ChainId, roundId: "round-1" },
             1000n,
+            "1000",
+            undefined,
+        );
+    });
+
+    it("handle IncrementRoundDonationStats changeset", async () => {
+        const changeset = {
+            type: "IncrementRoundDonationStats",
+            args: {
+                chainId: 1 as ChainId,
+                roundId: "round-1",
+                amountInUsd: "1000",
+            },
+        } as const;
+
+        await handlers.IncrementRoundDonationStats(changeset);
+
+        expect(mockRepository.incrementRoundDonationStats).toHaveBeenCalledWith(
+            { chainId: 1 as ChainId, roundId: "round-1" },
             "1000",
             undefined,
         );

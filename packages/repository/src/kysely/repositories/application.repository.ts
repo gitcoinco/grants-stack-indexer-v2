@@ -161,6 +161,35 @@ export class KyselyApplicationRepository implements IApplicationRepository<Kysel
         }
     }
 
+    /* @inheritdoc */
+    async incrementApplicationDonationStats(
+        where: { id: string; chainId: ChainId; roundId: string },
+        amountInUsd: string,
+        tx?: KyselyTransaction,
+    ): Promise<void> {
+        try {
+            const queryBuilder = (tx || this.db).withSchema(this.schemaName);
+            await queryBuilder
+                .updateTable("applications")
+                .set((eb) => ({
+                    totalDonationsCount: eb("totalDonationsCount", "+", 1),
+                    totalAmountDonatedInUsd: eb("totalAmountDonatedInUsd", "+", amountInUsd),
+                }))
+                .where("id", "=", where.id)
+                .where("chainId", "=", where.chainId)
+                .where("roundId", "=", where.roundId)
+                .execute();
+        } catch (error) {
+            throw handlePostgresError(error, {
+                className: KyselyApplicationRepository.name,
+                methodName: "incrementApplicationDonationStats",
+                additionalData: {
+                    where,
+                    amountInUsd,
+                },
+            });
+        }
+    }
     /**
      * Formats the application to ensure that the statusSnapshots are stored as a JSON string.
      * Also, properly handles BigInt stringification.

@@ -31,4 +31,13 @@ export const createApplicationHandlers = (
             txConnection,
         );
     }) satisfies ChangesetHandler<"UpdateApplication">,
+
+    IncrementApplicationDonationStats: (async (changeset, txConnection): Promise<void> => {
+        const { chainId, roundId, applicationId, amountInUsd } = changeset.args;
+        await repository.incrementApplicationDonationStats(
+            { chainId, roundId, id: applicationId },
+            amountInUsd,
+            txConnection,
+        );
+    }) satisfies ChangesetHandler<"IncrementApplicationDonationStats">,
 });
