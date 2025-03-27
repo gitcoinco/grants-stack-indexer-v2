@@ -105,6 +105,15 @@ describe("DGLiteAllocatedHandler", () => {
                 },
             },
         });
+
+        expect(result[1]).toEqual({
+            type: "IncrementRoundTotalDistributed",
+            args: {
+                chainId,
+                roundId: "round1",
+                amount: BigInt(amount),
+            },
+        });
     });
 
     it("doesn't fetch token price if amount is 0", async () => {
@@ -159,6 +168,15 @@ describe("DGLiteAllocatedHandler", () => {
         expect(changeset.args.applicationPayout.amount).toBe(0n);
         expect(changeset.args.applicationPayout.amountInUsd).toBe("0");
         expect(changeset.args.applicationPayout.amountInRoundMatchToken).toBe(0n);
+
+        expect(result[1]).toEqual({
+            type: "IncrementRoundTotalDistributed",
+            args: {
+                chainId,
+                roundId: "round1",
+                amount: BigInt(0),
+            },
+        });
     });
 
     it("throws RoundNotFound if round is not found", async () => {
@@ -369,5 +387,13 @@ describe("DGLiteAllocatedHandler", () => {
             args: { applicationPayout: { amountInRoundMatchToken: bigint } };
         };
         expect(changeset.args.applicationPayout.amountInRoundMatchToken).toBe(parseEther("0.005"));
+        expect(result[1]).toEqual({
+            type: "IncrementRoundTotalDistributed",
+            args: {
+                chainId,
+                roundId: "round1",
+                amount: parseEther("0.005"),
+            },
+        });
     });
 });
