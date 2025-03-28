@@ -4,7 +4,7 @@ import { GitcoinAttestedData } from "../types/index.js";
 
 const GITCOIN_ATTESTED_DATA_ABI = [
     { name: "projectsContributed", type: "uint64" },
-    { name: "roundsCountributed", type: "uint64" },
+    { name: "roundsContributed", type: "uint64" },
     { name: "chainIdsContributed", type: "uint64" },
     { name: "totalUSDAmount", type: "uint128" },
     { name: "timestamp", type: "uint64" },
