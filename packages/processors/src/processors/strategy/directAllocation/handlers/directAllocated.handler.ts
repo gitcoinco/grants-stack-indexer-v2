@@ -86,6 +86,14 @@ export class DirectAllocatedHandler implements IEventHandler<"Strategy", "Direct
                 type: "InsertDonation",
                 args: { donation },
             },
+            {
+                type: "IncrementRoundDonationStats",
+                args: {
+                    chainId: this.chainId,
+                    roundId: round.id,
+                    amountInUsd,
+                },
+            },
         ];
     }
 }

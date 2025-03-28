@@ -30,7 +30,7 @@ export class DGLiteAllocatedHandler implements IEventHandler<"Strategy", "Alloca
 
     /**
      * Handles the AllocatedWithToken event for the Direct Grants Lite strategy.
-     * @returns The changeset with an InsertApplicationPayout operation.
+     * @returns The changeset with an InsertApplicationPayout and IncrementRoundTotalDistributed operation.
      * @throws RoundNotFound if the round is not found.
      * @throws ApplicationNotFound if the application is not found.
      * @throws TokenNotFound if the token is not found.
@@ -102,6 +102,14 @@ export class DGLiteAllocatedHandler implements IEventHandler<"Strategy", "Alloca
                         sender: getAddress(this.event.params.sender),
                         timestamp: new Date(timestamp),
                     },
+                },
+            },
+            {
+                type: "IncrementRoundTotalDistributed",
+                args: {
+                    chainId: this.chainId,
+                    roundId: round.id,
+                    amount: amountInRoundMatchToken,
                 },
             },
         ];

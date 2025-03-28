@@ -169,11 +169,24 @@ export class KyselyApplicationRepository implements IApplicationRepository<Kysel
     ): Promise<void> {
         try {
             const queryBuilder = (tx || this.db).withSchema(this.schemaName);
+
+            const uniqueDonorsResult = await queryBuilder
+                .withSchema(this.schemaName)
+                .selectFrom("donations")
+                .where("chainId", "=", where.chainId)
+                .where("roundId", "=", where.roundId)
+                .where("applicationId", "=", where.id)
+                .select((qb) => qb.fn.count("donorAddress").distinct().as("uniqueDonorsCount"))
+                .executeTakeFirst();
+
+            const uniqueDonorsCount = Number(uniqueDonorsResult?.uniqueDonorsCount ?? 0);
+
             await queryBuilder
                 .updateTable("applications")
                 .set((eb) => ({
                     totalDonationsCount: eb("totalDonationsCount", "+", 1),
                     totalAmountDonatedInUsd: eb("totalAmountDonatedInUsd", "+", amountInUsd),
+                    uniqueDonorsCount,
                 }))
                 .where("id", "=", where.id)
                 .where("chainId", "=", where.chainId)

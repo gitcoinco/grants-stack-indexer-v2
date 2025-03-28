@@ -109,6 +109,14 @@ describe("DirectAllocatedHandler", () => {
                     },
                 },
             },
+            {
+                type: "IncrementRoundDonationStats",
+                args: {
+                    chainId,
+                    roundId: mockRound.id,
+                    amountInUsd: "20000",
+                },
+            },
         ]);
     });
 
