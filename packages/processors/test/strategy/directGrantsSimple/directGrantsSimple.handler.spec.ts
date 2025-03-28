@@ -113,6 +113,7 @@ describe("DirectGrantsSimpleStrategyHandler", () => {
             evmProvider: mockEVMProvider,
             pricingProvider: mockPricingProvider,
             applicationRepository: mockApplicationRepository,
+            strategyTimingsRepository: expect.any(Object),
             logger,
         });
         expect(DGSimpleTimestampsUpdatedHandler.prototype.handle).toHaveBeenCalled();
@@ -134,6 +135,7 @@ describe("DirectGrantsSimpleStrategyHandler", () => {
             evmProvider: mockEVMProvider,
             pricingProvider: mockPricingProvider,
             applicationRepository: mockApplicationRepository,
+            strategyTimingsRepository: expect.any(Object),
             logger,
         });
         expect(DGSimpleRegisteredHandler.prototype.handle).toHaveBeenCalled();
@@ -155,6 +157,7 @@ describe("DirectGrantsSimpleStrategyHandler", () => {
             evmProvider: mockEVMProvider,
             pricingProvider: mockPricingProvider,
             applicationRepository: mockApplicationRepository,
+            strategyTimingsRepository: expect.any(Object),
             logger,
         });
         expect(BaseDistributedHandler.prototype.handle).toHaveBeenCalled();

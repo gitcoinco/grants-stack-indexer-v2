@@ -2,13 +2,7 @@ import { Kysely } from "kysely";
 
 import { stringify } from "@grants-stack-indexer/shared";
 
-import {
-    Database,
-    handlePostgresError,
-    ICache,
-    KyselyMetadataCache,
-    StrategyTimings,
-} from "../../internal.js";
+import { Database, handlePostgresError, ICache, StrategyTimings } from "../../internal.js";
 
 export class KyselyStrategyTimingsCache implements ICache<string> {
     constructor(
@@ -32,7 +26,7 @@ export class KyselyStrategyTimingsCache implements ICache<string> {
             return result;
         } catch (error) {
             throw handlePostgresError(error, {
-                className: KyselyMetadataCache.name,
+                className: KyselyStrategyTimingsCache.name,
                 methodName: "get",
                 additionalData: {
                     address,
@@ -66,7 +60,7 @@ export class KyselyStrategyTimingsCache implements ICache<string> {
                 .execute();
         } catch (error) {
             throw handlePostgresError(error, {
-                className: KyselyMetadataCache.name,
+                className: KyselyStrategyTimingsCache.name,
                 methodName: "set",
                 additionalData: {
                     address,

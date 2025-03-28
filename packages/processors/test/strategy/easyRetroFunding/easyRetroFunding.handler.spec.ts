@@ -100,6 +100,7 @@ describe("EasyRetroFundingStrategyHandler", () => {
             evmProvider: mockEVMProvider,
             pricingProvider: mockPricingProvider,
             applicationRepository: mockApplicationRepository,
+            strategyTimingsRepository: expect.any(Object),
             logger,
         });
     });
@@ -128,6 +129,7 @@ describe("EasyRetroFundingStrategyHandler", () => {
             evmProvider: mockEVMProvider,
             pricingProvider: mockPricingProvider,
             applicationRepository: mockApplicationRepository,
+            strategyTimingsRepository: expect.any(Object),
             logger,
         });
         expect(ERFRegisteredHandler.prototype.handle).toHaveBeenCalled();
@@ -149,6 +151,7 @@ describe("EasyRetroFundingStrategyHandler", () => {
             evmProvider: mockEVMProvider,
             pricingProvider: mockPricingProvider,
             applicationRepository: mockApplicationRepository,
+            strategyTimingsRepository: expect.any(Object),
             logger,
         });
         expect(ERFUpdatedRegistrationHandler.prototype.handle).toHaveBeenCalled();
@@ -170,6 +173,7 @@ describe("EasyRetroFundingStrategyHandler", () => {
             evmProvider: mockEVMProvider,
             pricingProvider: mockPricingProvider,
             applicationRepository: mockApplicationRepository,
+            strategyTimingsRepository: expect.any(Object),
             logger,
         });
         expect(BaseRecipientStatusUpdatedHandler.prototype.handle).toHaveBeenCalled();
@@ -191,6 +195,7 @@ describe("EasyRetroFundingStrategyHandler", () => {
             evmProvider: mockEVMProvider,
             pricingProvider: mockPricingProvider,
             applicationRepository: mockApplicationRepository,
+            strategyTimingsRepository: expect.any(Object),
             logger,
         });
         expect(ERFTimestampsUpdatedHandler.prototype.handle).toHaveBeenCalled();
@@ -212,6 +217,7 @@ describe("EasyRetroFundingStrategyHandler", () => {
             evmProvider: mockEVMProvider,
             pricingProvider: mockPricingProvider,
             applicationRepository: mockApplicationRepository,
+            strategyTimingsRepository: expect.any(Object),
             logger,
         });
         expect(ERFDistributionUpdatedHandler.prototype.handle).toHaveBeenCalled();
@@ -233,6 +239,7 @@ describe("EasyRetroFundingStrategyHandler", () => {
             evmProvider: mockEVMProvider,
             pricingProvider: mockPricingProvider,
             applicationRepository: mockApplicationRepository,
+            strategyTimingsRepository: expect.any(Object),
             logger,
         });
         expect(BaseFundsDistributedHandler.prototype.handle).toHaveBeenCalled();

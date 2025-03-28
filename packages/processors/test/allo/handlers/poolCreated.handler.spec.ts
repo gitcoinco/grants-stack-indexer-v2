@@ -58,7 +58,7 @@ describe("PoolCreatedHandler", () => {
     let mockPricingProvider: IPricingProvider;
     let mockMetadataProvider: IMetadataProvider;
     let mockRoundRepository: IRoundReadRepository;
-
+    let mockStrategyTimingsRepository: ICache<Address, StrategyTimings>;
     beforeEach(() => {
         mockEvmProvider = {
             readContract: vi.fn(),
@@ -73,6 +73,10 @@ describe("PoolCreatedHandler", () => {
         mockMetadataProvider = {
             getMetadata: vi.fn(),
         };
+        mockStrategyTimingsRepository = {
+            get: vi.fn(),
+            set: vi.fn(),
+        } as unknown as ICache<Address, StrategyTimings>;
         mockRoundRepository = {
             getPendingRoundRoles: vi.fn(),
         } as unknown as IRoundReadRepository;
@@ -100,7 +104,7 @@ describe("PoolCreatedHandler", () => {
             pricingProvider: mockPricingProvider,
             metadataProvider: mockMetadataProvider,
             roundRepository: mockRoundRepository,
-            strategyTimingsRepository: {} as ICache<Address, StrategyTimings>,
+            strategyTimingsRepository: mockStrategyTimingsRepository,
         });
 
         const result = await handler.handle();
@@ -128,7 +132,7 @@ describe("PoolCreatedHandler", () => {
             pricingProvider: mockPricingProvider,
             metadataProvider: mockMetadataProvider,
             roundRepository: mockRoundRepository,
-            strategyTimingsRepository: {} as ICache<Address, StrategyTimings>,
+            strategyTimingsRepository: mockStrategyTimingsRepository,
         });
 
         const result = await handler.handle();
@@ -191,7 +195,7 @@ describe("PoolCreatedHandler", () => {
             pricingProvider: mockPricingProvider,
             metadataProvider: mockMetadataProvider,
             roundRepository: mockRoundRepository,
-            strategyTimingsRepository: {} as ICache<Address, StrategyTimings>,
+            strategyTimingsRepository: mockStrategyTimingsRepository,
         });
 
         const result = await handler.handle();
@@ -241,6 +245,7 @@ describe("PoolCreatedHandler", () => {
         });
         expect(mockPricingProvider.getTokenPrice).toHaveBeenCalled();
         expect(mockMetadataProvider.getMetadata).toHaveBeenCalled();
+        expect(mockStrategyTimingsRepository.get).toHaveBeenCalled();
         expect(mockEvmProvider.multicall).toHaveBeenCalled();
     });
 
@@ -298,7 +303,7 @@ describe("PoolCreatedHandler", () => {
             pricingProvider: mockPricingProvider,
             metadataProvider: mockMetadataProvider,
             roundRepository: mockRoundRepository,
-            strategyTimingsRepository: {} as ICache<Address, StrategyTimings>,
+            strategyTimingsRepository: mockStrategyTimingsRepository,
         });
 
         const result = await handler.handle();
@@ -390,7 +395,7 @@ describe("PoolCreatedHandler", () => {
             pricingProvider: mockPricingProvider,
             metadataProvider: mockMetadataProvider,
             roundRepository: mockRoundRepository,
-            strategyTimingsRepository: {} as ICache<Address, StrategyTimings>,
+            strategyTimingsRepository: mockStrategyTimingsRepository,
         });
 
         const result = await handler.handle();
@@ -475,7 +480,7 @@ describe("PoolCreatedHandler", () => {
             pricingProvider: mockPricingProvider,
             metadataProvider: mockMetadataProvider,
             roundRepository: mockRoundRepository,
-            strategyTimingsRepository: {} as ICache<Address, StrategyTimings>,
+            strategyTimingsRepository: mockStrategyTimingsRepository,
         });
 
         await handler.handle();
@@ -503,7 +508,7 @@ describe("PoolCreatedHandler", () => {
             pricingProvider: mockPricingProvider,
             metadataProvider: mockMetadataProvider,
             roundRepository: mockRoundRepository,
-            strategyTimingsRepository: {} as ICache<Address, StrategyTimings>,
+            strategyTimingsRepository: mockStrategyTimingsRepository,
         });
 
         const result = await handler.handle();

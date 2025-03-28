@@ -88,6 +88,7 @@ describe("DirectAllocationStrategyHandler", () => {
             evmProvider: mockEVMProvider,
             pricingProvider: mockPricingProvider,
             applicationRepository: mockApplicationRepository,
+            strategyTimingsRepository: expect.any(Object),
             logger: mockLogger,
         });
         expect(DirectAllocatedHandler.prototype.handle).toHaveBeenCalled();

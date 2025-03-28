@@ -85,14 +85,19 @@ cp scripts/hasura-config/.env.example scripts/hasura-config/.env
 pnpm db:cache:migrate
 ```
 
-7. Bootstrap DB with IPFS metadata and Pricing(optional):
+7. Bootstrap DB with IPFS metadata and Pricing and StrategyTimings(optional):
 
 ```
+# To run all of them
+pnpm bootstrap:all
+
+# To run one specific one
 pnpm bootstrap:metadata
 pnpm bootstrap:pricing
+pnpm boostrap:strategyTimings
 ```
 
-8. Apply migrations:
+1. Apply migrations:
 
 ```
 pnpm db:migrate
