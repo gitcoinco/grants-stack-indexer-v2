@@ -13,6 +13,7 @@
         "package.json"
     ],
     "scripts": {
+        "bootstrap:all": "tsx src/metadata.script.ts && tsx src/pricing.script.ts && tsx src/strategyTimings.script.ts",
         "bootstrap:metadata": "tsx src/metadata.script.ts",
         "bootstrap:pricing": "tsx src/pricing.script.ts",
         "bootstrap:strategyTimings": "tsx src/strategyTimings.script.ts",

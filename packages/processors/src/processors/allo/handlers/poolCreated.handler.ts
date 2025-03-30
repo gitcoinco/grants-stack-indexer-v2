@@ -82,11 +82,8 @@ export class PoolCreatedHandler implements IEventHandler<"Allo", "PoolCreated"> 
         if (strategyHandler) {
             const strategyTimingsOnRegistry = await strategyTimingsRepository.get(strategyAddress);
             if (strategyTimingsOnRegistry) {
-                console.log("======> SHIT FOUND", strategyTimings);
                 strategyTimings = strategyTimingsOnRegistry.timings as unknown as StrategyTimings;
-                console.log("======> SHIT RETRIEVED", strategyTimings);
             } else {
-                console.log("======> MEH NOT FOUND BUT FETCHING");
                 strategyTimings = await strategyHandler.fetchStrategyTimings(strategyAddress);
                 await strategyTimingsRepository.set(strategyAddress, {
                     address: strategyAddress,
@@ -94,7 +91,6 @@ export class PoolCreatedHandler implements IEventHandler<"Allo", "PoolCreated"> 
                     strategyId,
                     createdAt: new Date(),
                 });
-                console.log("======> MEH NOT FOUND BUT SETTING", strategyTimings);
             }
             if (parsedRoundMetadata.success && token) {
                 matchAmountObj = await strategyHandler.fetchMatchAmount(
