@@ -17,9 +17,35 @@ export class ProfileMigratedHandler
         readonly event: ProcessorEvent<"AlloV1ToV2ProfileMigration", "ProfileMigrated">,
         readonly chainId: ChainId,
         private dependencies: Dependencies,
-    ) {}
+    ) {
+        this.dependencies.logger?.debug("Initializing ProfileMigratedHandler", {
+            className: "ProfileMigratedHandler",
+            chainId: this.chainId,
+            blockNumber: this.event.blockNumber,
+            transactionHash: this.event.transactionFields.hash,
+        });
+    }
+
     async handle(): Promise<Changeset[]> {
+        const { logger } = this.dependencies;
         const { alloV1, alloV1ChainId, alloV2 } = this.event.params;
+
+        logger?.debug("Starting profile migration handling", {
+            className: "ProfileMigratedHandler",
+            methodName: "handle",
+            v1ProjectId: alloV1,
+            v1ChainId: alloV1ChainId.toString(),
+            v2ProjectId: alloV2,
+            blockNumber: this.event.blockNumber,
+        });
+
+        logger?.debug("Creating legacy project mapping", {
+            className: "ProfileMigratedHandler",
+            methodName: "handle",
+            v1ProjectId: alloV1,
+            v1ChainId: alloV1ChainId.toString(),
+            v2ProjectId: alloV2,
+        });
 
         const changes: Changeset[] = [
             {
@@ -33,6 +59,15 @@ export class ProfileMigratedHandler
                 },
             },
         ];
+
+        logger?.info("Profile migration completed", {
+            className: "ProfileMigratedHandler",
+            methodName: "handle",
+            v1ProjectId: alloV1,
+            v1ChainId: alloV1ChainId.toString(),
+            v2ProjectId: alloV2,
+            changeCount: changes.length,
+        });
 
         return changes;
     }

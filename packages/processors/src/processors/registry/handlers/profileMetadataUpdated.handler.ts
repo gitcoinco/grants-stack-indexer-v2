@@ -24,22 +24,67 @@ export class ProfileMetadataUpdatedHandler
         readonly event: ProcessorEvent<"Registry", "ProfileMetadataUpdated">,
         readonly chainId: ChainId,
         private dependencies: Dependencies,
-    ) {}
+    ) {
+        this.dependencies.logger?.debug("Initializing ProfileMetadataUpdatedHandler", {
+            className: "ProfileMetadataUpdatedHandler",
+            chainId: this.chainId,
+            profileId: this.event.params.profileId,
+            blockNumber: this.event.blockNumber,
+        });
+    }
     /* @inheritdoc */
     async handle(): Promise<Changeset[]> {
-        const { metadataProvider } = this.dependencies;
-
+        const { metadataProvider, logger } = this.dependencies;
+        const profileId = this.event.params.profileId;
         const metadataCid = this.event.params.metadata[1];
+
+        logger?.debug("Starting profile metadata update", {
+            className: "ProfileMetadataUpdatedHandler",
+            methodName: "handle",
+            profileId,
+            metadataCid,
+            blockNumber: this.event.blockNumber,
+        });
+
+        logger?.debug("Fetching metadata", {
+            className: "ProfileMetadataUpdatedHandler",
+            methodName: "handle",
+            profileId,
+            metadataCid,
+        });
+
         const metadata = await metadataProvider.getMetadata(metadataCid);
+
+        logger?.debug("Parsing metadata", {
+            className: "ProfileMetadataUpdatedHandler",
+            methodName: "handle",
+            profileId,
+            hasMetadata: !!metadata,
+        });
+
         const parsedMetadata = ProjectMetadataSchema.safeParse(metadata);
 
         if (!parsedMetadata.success) {
+            logger?.warn("Invalid metadata format", {
+                className: "ProfileMetadataUpdatedHandler",
+                methodName: "handle",
+                profileId,
+                errors: parsedMetadata.error.errors,
+            });
+
+            logger?.debug("Creating update with null metadata", {
+                className: "ProfileMetadataUpdatedHandler",
+                methodName: "handle",
+                profileId,
+                projectType: "canonical",
+            });
+
             return [
                 {
                     type: "UpdateProject",
                     args: {
                         chainId: this.chainId,
-                        projectId: this.event.params.profileId,
+                        projectId: profileId,
                         project: {
                             metadataCid: metadataCid,
                             metadata: null,
@@ -50,14 +95,29 @@ export class ProfileMetadataUpdatedHandler
             ];
         }
 
+        logger?.debug("Determining project type from metadata", {
+            className: "ProfileMetadataUpdatedHandler",
+            methodName: "handle",
+            profileId,
+            metadataType: parsedMetadata.data.type,
+        });
+
         const projectType = this.getProjectTypeFromMetadata(parsedMetadata.data);
+
+        logger?.info("Profile metadata update completed", {
+            className: "ProfileMetadataUpdatedHandler",
+            methodName: "handle",
+            profileId,
+            projectType,
+            metadataCid,
+        });
 
         return [
             {
                 type: "UpdateProject",
                 args: {
                     chainId: this.chainId,
-                    projectId: this.event.params.profileId,
+                    projectId: profileId,
                     project: {
                         metadataCid: metadataCid,
                         metadata: metadata,
@@ -68,11 +128,13 @@ export class ProfileMetadataUpdatedHandler
         ];
     }
     private getProjectTypeFromMetadata(metadata: ProjectMetadata): ProjectType {
-        // if the metadata contains a canonical reference, it's a linked project
-        if ("canonical" in metadata) {
-            return "linked";
-        }
-
-        return "canonical";
+        const projectType = "canonical" in metadata ? "linked" : "canonical";
+        this.dependencies.logger?.debug("Determined project type", {
+            className: "ProfileMetadataUpdatedHandler",
+            methodName: "getProjectTypeFromMetadata",
+            projectType,
+            hasCanonicalField: "canonical" in metadata,
+        });
+        return projectType;
     }
 }

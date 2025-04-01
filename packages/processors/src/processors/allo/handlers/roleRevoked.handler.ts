@@ -19,17 +19,49 @@ export class RoleRevokedHandler implements IEventHandler<"Allo", "RoleRevoked"> 
         readonly event: ProcessorEvent<"Allo", "RoleRevoked">,
         private readonly chainId: ChainId,
         private readonly dependencies: Dependencies,
-    ) {}
+    ) {
+        this.dependencies.logger?.debug("Initializing RoleRevokedHandler", {
+            className: "RoleRevokedHandler",
+            chainId: this.chainId,
+            role: this.event.params.role,
+            account: this.event.params.account,
+            blockNumber: this.event.blockNumber,
+        });
+    }
     /* @inheritdoc */
     async handle(): Promise<Changeset[]> {
         const role = this.event.params.role.toLowerCase();
         const account = getAddress(this.event.params.account);
         const { roundRepository, logger } = this.dependencies;
+
+        logger?.debug("Starting role revocation handling", {
+            className: "RoleRevokedHandler",
+            methodName: "handle",
+            role,
+            account,
+            blockNumber: this.event.blockNumber,
+        });
+
         let round: Round | undefined = undefined;
 
-        // search for a round where the admin role is the role granted
+        logger?.debug("Searching for round with admin role", {
+            className: "RoleRevokedHandler",
+            methodName: "handle",
+            role,
+            account,
+        });
+
         round = await roundRepository.getRoundByRole(this.chainId, "admin", role);
+
         if (round) {
+            logger?.info("Found round with matching admin role, deleting role", {
+                className: "RoleRevokedHandler",
+                methodName: "handle",
+                roundId: round.id,
+                role,
+                account,
+            });
+
             return [
                 {
                     type: "DeleteAllRoundRolesByRoleAndAddress",
@@ -45,9 +77,24 @@ export class RoleRevokedHandler implements IEventHandler<"Allo", "RoleRevoked"> 
             ];
         }
 
-        // search for a round where the manager role is the role granted
+        logger?.debug("Searching for round with manager role", {
+            className: "RoleRevokedHandler",
+            methodName: "handle",
+            role,
+            account,
+        });
+
         round = await roundRepository.getRoundByRole(this.chainId, "manager", role);
+
         if (round) {
+            logger?.info("Found round with matching manager role, deleting role", {
+                className: "RoleRevokedHandler",
+                methodName: "handle",
+                roundId: round.id,
+                role,
+                account,
+            });
+
             return [
                 {
                     type: "DeleteAllRoundRolesByRoleAndAddress",
@@ -63,7 +110,14 @@ export class RoleRevokedHandler implements IEventHandler<"Allo", "RoleRevoked"> 
             ];
         }
 
-        logger.warn(`No round found for role ${role} on chain ${this.chainId}`);
+        logger?.warn("No matching round found for role revocation", {
+            className: "RoleRevokedHandler",
+            methodName: "handle",
+            role,
+            account,
+            chainId: this.chainId,
+        });
+
         return [];
     }
 }

@@ -19,19 +19,65 @@ export class PoolFundedHandler implements IEventHandler<"Allo", "PoolFunded"> {
         readonly event: ProcessorEvent<"Allo", "PoolFunded">,
         private readonly chainId: ChainId,
         private readonly dependencies: Dependencies,
-    ) {}
+    ) {
+        this.dependencies.logger?.debug("Initializing PoolFundedHandler", {
+            className: "PoolFundedHandler",
+            chainId: this.chainId,
+            poolId: this.event.params.poolId.toString(),
+            blockNumber: this.event.blockNumber,
+        });
+    }
     /* @inheritdoc */
     async handle(): Promise<Changeset[]> {
+        const { roundRepository, pricingProvider, logger } = this.dependencies;
         const poolId = this.event.params.poolId.toString();
         const fundedAmount = BigInt(this.event.params.amount);
-        const { roundRepository, pricingProvider } = this.dependencies;
+
+        logger?.debug("Starting pool funding handling", {
+            className: "PoolFundedHandler",
+            methodName: "handle",
+            poolId,
+            fundedAmount: fundedAmount.toString(),
+            blockNumber: this.event.blockNumber,
+        });
+
+        logger?.debug("Fetching round data", {
+            className: "PoolFundedHandler",
+            methodName: "handle",
+            poolId,
+            chainId: this.chainId,
+        });
 
         const round = await roundRepository.getRoundByIdOrThrow(this.chainId, poolId);
 
+        logger?.debug("Getting token information", {
+            className: "PoolFundedHandler",
+            methodName: "handle",
+            poolId,
+            matchTokenAddress: round.matchTokenAddress,
+        });
+
         const token = getToken(this.chainId, round.matchTokenAddress);
 
-        //TODO: Review this on Advace Recovery Milestone
-        if (!token) throw new UnknownToken(round.matchTokenAddress, this.chainId);
+        if (!token) {
+            logger?.error("Unknown token encountered", {
+                className: "PoolFundedHandler",
+                methodName: "handle",
+                poolId,
+                tokenAddress: round.matchTokenAddress,
+                chainId: this.chainId,
+            });
+            throw new UnknownToken(round.matchTokenAddress, this.chainId);
+        }
+
+        logger?.debug("Calculating USD amount", {
+            className: "PoolFundedHandler",
+            methodName: "handle",
+            poolId,
+            tokenAddress: token.address,
+            amount: fundedAmount.toString(),
+            timestamp: this.event.blockTimestamp,
+        });
 
         const { amountInUsd } = await getTokenAmountInUsd(
             pricingProvider,
@@ -39,6 +85,15 @@ export class PoolFundedHandler implements IEventHandler<"Allo", "PoolFunded"> {
             fundedAmount,
             this.event.blockTimestamp,
         );
+
+        logger?.info("Pool funding processed successfully", {
+            className: "PoolFundedHandler",
+            methodName: "handle",
+            poolId,
+            fundedAmount: fundedAmount.toString(),
+            amountInUsd,
+            tokenAddress: token.address,
+        });
 
         return [
             {

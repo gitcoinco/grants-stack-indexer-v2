@@ -14,23 +14,55 @@ export class RoleGrantedHandler implements IEventHandler<"Registry", "RoleGrante
         readonly event: ProcessorEvent<"Registry", "RoleGranted">,
         readonly chainId: ChainId,
         private readonly dependencies: ProcessorDependencies,
-    ) {}
+    ) {
+        this.dependencies.logger?.debug("Initializing RoleGrantedHandler", {
+            className: "RoleGrantedHandler",
+            chainId: this.chainId,
+            role: this.event.params.role,
+            blockNumber: this.event.blockNumber,
+        });
+    }
+
     async handle(): Promise<Changeset[]> {
-        const { projectRepository } = this.dependencies;
+        const { projectRepository, logger } = this.dependencies;
         const role = this.event.params.role.toLowerCase();
+
+        logger?.debug("Starting role grant handling", {
+            className: "RoleGrantedHandler",
+            methodName: "handle",
+            role,
+            blockNumber: this.event.blockNumber,
+        });
+
         if (role === ALLO_OWNER_ROLE) {
+            logger?.debug("Skipping Allo owner role grant", {
+                className: "RoleGrantedHandler",
+                methodName: "handle",
+                role,
+            });
             return [];
         }
 
         const account = getAddress(this.event.params.account);
+
+        logger?.debug("Fetching project for role", {
+            className: "RoleGrantedHandler",
+            methodName: "handle",
+            role,
+            account,
+        });
+
         const project = await projectRepository.getProjectById(this.chainId, role);
 
-        // The member role for an Allo V2 profile, is the profileId itself.
-        // If a project exist with that id, we create the member role
-        // If it doesn't exist we create a pending project role. This can happen
-        // when a new project is created, since in Allo V2 the RoleGranted event for a member is
-        // emitted before the ProfileCreated event.
         if (project) {
+            logger?.info("Creating member role for existing project", {
+                className: "RoleGrantedHandler",
+                methodName: "handle",
+                projectId: project.id,
+                account,
+                role,
+            });
+
             return [
                 {
                     type: "InsertProjectRole",
@@ -46,6 +78,14 @@ export class RoleGrantedHandler implements IEventHandler<"Registry", "RoleGrante
                 },
             ];
         }
+
+        logger?.info("Creating pending project role", {
+            className: "RoleGrantedHandler",
+            methodName: "handle",
+            role,
+            account,
+            chainId: this.chainId,
+        });
 
         return [
             {
