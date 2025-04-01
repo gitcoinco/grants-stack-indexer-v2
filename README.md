@@ -94,10 +94,10 @@ pnpm bootstrap:all
 # To run one specific one
 pnpm bootstrap:metadata
 pnpm bootstrap:pricing
-pnpm boostrap:strategyTimings
+pnpm bootstrap:strategyTimings
 ```
 
-1. Apply migrations:
+8. Apply migrations:
 
 ```
 pnpm db:migrate

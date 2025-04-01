@@ -24,7 +24,7 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     await db.schema
         .createTable("strategy_timings")
         .addColumn("strategyId", "text", (col) => col.notNull())
-        .addColumn("address", ADDRESS_TYPE)
+        .addColumn("address", ADDRESS_TYPE, (col) => col.notNull())
         .addColumn("timings", "jsonb")
         .addColumn("createdAt", "timestamptz", (col) => col.defaultTo(sql`now()`))
         .addPrimaryKeyConstraint("strategy_timings_cache_pkey", ["address"])
@@ -32,9 +32,9 @@ export async function up(db: Kysely<unknown>): Promise<void> {
 
     await db.schema
         .createTable("strategies_registry")
-        .addColumn("address", ADDRESS_TYPE)
+        .addColumn("address", ADDRESS_TYPE, (col) => col.notNull())
         .addColumn("id", "text")
-        .addColumn("chainId", CHAIN_ID_TYPE)
+        .addColumn("chainId", CHAIN_ID_TYPE, (col) => col.notNull())
         .addColumn("handled", "boolean")
         .addPrimaryKeyConstraint("strategies_registry_pkey", ["address", "chainId"])
         .execute();
