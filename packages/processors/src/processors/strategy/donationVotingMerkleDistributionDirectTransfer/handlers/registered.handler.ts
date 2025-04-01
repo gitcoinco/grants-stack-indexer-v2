@@ -8,7 +8,7 @@ import { decodeDVMDExtendedApplicationData } from "../../helpers/index.js";
 
 type Dependencies = Pick<
     ProcessorDependencies,
-    "roundRepository" | "projectRepository" | "metadataProvider"
+    "roundRepository" | "projectRepository" | "metadataProvider" | "logger"
 >;
 
 /**
@@ -27,31 +27,82 @@ export class DVMDRegisteredHandler implements IEventHandler<"Strategy", "Registe
         readonly event: ProcessorEvent<"Strategy", "RegisteredWithSender">,
         private readonly chainId: ChainId,
         private readonly dependencies: Dependencies,
-    ) {}
+    ) {
+        this.dependencies.logger?.debug("Initializing DVMDRegisteredHandler", {
+            className: "DVMDRegisteredHandler",
+            chainId: this.chainId,
+            strategyAddress: this.event.srcAddress,
+            blockNumber: this.event.blockNumber,
+            transactionHash: this.event.transactionFields.hash,
+        });
+    }
 
     /** @inheritdoc */
     async handle(): Promise<Changeset[]> {
-        const { projectRepository, roundRepository, metadataProvider } = this.dependencies;
+        const { projectRepository, roundRepository, metadataProvider, logger } = this.dependencies;
         const { data: encodedData, recipientId, sender } = this.event.params;
         const { blockNumber, blockTimestamp } = this.event;
 
+        logger?.debug("Starting registration handling", {
+            className: "DVMDRegisteredHandler",
+            methodName: "handle",
+            recipientId,
+            sender,
+            blockNumber,
+        });
+
         const anchorAddress = getAddress(recipientId);
+        logger?.debug("Fetching project by anchor", {
+            className: "DVMDRegisteredHandler",
+            methodName: "handle",
+            anchorAddress,
+            chainId: this.chainId,
+        });
+
         const project = await projectRepository.getProjectByAnchorOrThrow(
             this.chainId,
             anchorAddress,
         );
 
         const strategyAddress = getAddress(this.event.srcAddress);
+        logger?.debug("Fetching round by strategy address", {
+            className: "DVMDRegisteredHandler",
+            methodName: "handle",
+            strategyAddress,
+            chainId: this.chainId,
+        });
+
         const round = await roundRepository.getRoundByStrategyAddressOrThrow(
             this.chainId,
             strategyAddress,
         );
 
+        logger?.debug("Decoding application data", {
+            className: "DVMDRegisteredHandler",
+            methodName: "handle",
+            encodedDataLength: encodedData.length,
+        });
+
         const values = decodeDVMDExtendedApplicationData(encodedData);
-        // ID is defined as recipientsCounter - 1, which is a value emitted by the strategy
         const id = (Number(values.recipientsCounter) - 1).toString();
 
+        logger?.debug("Fetching application metadata", {
+            className: "DVMDRegisteredHandler",
+            methodName: "handle",
+            metadataPointer: values.metadata.pointer,
+            applicationId: id,
+        });
+
         const metadata = await metadataProvider.getMetadata(values.metadata.pointer);
+
+        logger?.debug("Creating application record", {
+            className: "DVMDRegisteredHandler",
+            methodName: "handle",
+            applicationId: id,
+            projectId: project.id,
+            roundId: round.id,
+            metadataFound: metadata !== null,
+        });
 
         const application: NewApplication = {
             chainId: this.chainId,
@@ -80,9 +131,19 @@ export class DVMDRegisteredHandler implements IEventHandler<"Strategy", "Registe
             tags: ["allo-v2"],
         };
 
+        logger?.info("Registration processing completed", {
+            className: "DVMDRegisteredHandler",
+            methodName: "handle",
+            applicationId: id,
+            roundId: round.id,
+            projectId: project.id,
+            status: "PENDING",
+            blockNumber,
+        });
+
         return [
             {
-                type: "InsertApplication",
+                type: "InsertApplication" as const,
                 args: application,
             },
         ];

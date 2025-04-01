@@ -6,7 +6,7 @@ import { getToken, isAlloNativeToken } from "@grants-stack-indexer/shared";
 
 import type { IEventHandler, ProcessorDependencies, StrategyTimings } from "../../../internal.js";
 import { calculateAmountInUsd, getRoundRoles } from "../../../helpers/index.js";
-import { StrategyHandlerFactory, TokenPriceNotFoundError } from "../../../internal.js";
+import { getHandler, StrategyHandlerFactory, TokenPriceNotFoundError } from "../../../internal.js";
 import { RoundMetadataSchema } from "../../../schemas/index.js";
 
 type Dependencies = Pick<
@@ -100,7 +100,7 @@ export class PoolCreatedHandler implements IEventHandler<"Allo", "PoolCreated"> 
         logger?.debug("Creating strategy handler", {
             className: "PoolCreatedHandler",
             methodName: "handle",
-            strategyId,
+            strategyId: getHandler(strategyId),
             poolId: poolId.toString(),
         });
 

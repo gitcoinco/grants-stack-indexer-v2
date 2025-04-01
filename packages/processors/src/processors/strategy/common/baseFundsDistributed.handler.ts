@@ -29,7 +29,14 @@ export class BaseFundsDistributedHandler implements IEventHandler<"Strategy", "F
         readonly event: ProcessorEvent<"Strategy", "FundsDistributed">,
         private readonly chainId: ChainId,
         private readonly dependencies: Dependencies,
-    ) {}
+    ) {
+        this.dependencies.logger?.debug("Initializing BaseFundsDistributedHandler", {
+            className: "BaseFundsDistributedHandler",
+            chainId: this.chainId,
+            strategyAddress: this.event.srcAddress,
+            blockNumber: this.event.blockNumber,
+        });
+    }
 
     /**
      * Handles the FundsDistributed event.
@@ -40,23 +47,65 @@ export class BaseFundsDistributedHandler implements IEventHandler<"Strategy", "F
      *     2. IncrementRoundTotalDistributed: Increments the total distributed amount for a round.
      */
     async handle(): Promise<Changeset[]> {
-        const { roundRepository, applicationRepository } = this.dependencies;
-
+        const { roundRepository, applicationRepository, logger } = this.dependencies;
         const strategyAddress = getAddress(this.event.srcAddress);
+        const amount = BigInt(this.event.params.amount);
+
+        logger?.debug("Starting funds distribution handling", {
+            className: "BaseFundsDistributedHandler",
+            methodName: "handle",
+            strategyAddress,
+            amount: amount.toString(),
+            recipientId: this.event.params.recipientId,
+            chainId: this.chainId,
+        });
+
+        logger?.debug("Fetching round by strategy address", {
+            className: "BaseFundsDistributedHandler",
+            methodName: "handle",
+            strategyAddress,
+            chainId: this.chainId,
+        });
+
         const round = await roundRepository.getRoundByStrategyAddressOrThrow(
             this.chainId,
             strategyAddress,
         );
 
+        logger?.debug("Round found", {
+            className: "BaseFundsDistributedHandler",
+            methodName: "handle",
+            roundId: round.id,
+            strategyAddress,
+        });
+
         const roundId = round.id;
         const anchorAddress = getAddress(this.event.params.recipientId);
+
+        logger?.debug("Fetching application by anchor address", {
+            className: "BaseFundsDistributedHandler",
+            methodName: "handle",
+            roundId,
+            anchorAddress,
+            chainId: this.chainId,
+        });
+
         const application = await applicationRepository.getApplicationByAnchorAddressOrThrow(
             this.chainId,
             roundId,
             anchorAddress,
         );
 
-        return [
+        logger?.debug("Creating distribution changesets", {
+            className: "BaseFundsDistributedHandler",
+            methodName: "handle",
+            roundId,
+            applicationId: application.id,
+            amount: amount.toString(),
+            transactionHash: this.event.transactionFields.hash,
+        });
+
+        const changes: Changeset[] = [
             {
                 type: "UpdateApplication",
                 args: {
@@ -73,9 +122,20 @@ export class BaseFundsDistributedHandler implements IEventHandler<"Strategy", "F
                 args: {
                     chainId: this.chainId,
                     roundId: round.id,
-                    amount: BigInt(this.event.params.amount),
+                    amount,
                 },
             },
         ];
+
+        logger?.info("Funds distribution completed", {
+            className: "BaseFundsDistributedHandler",
+            methodName: "handle",
+            roundId,
+            applicationId: application.id,
+            amount: amount.toString(),
+            changeCount: changes.length,
+        });
+
+        return changes;
     }
 }

@@ -35,7 +35,15 @@ export class DGLiteUpdatedRegistrationHandler
         readonly event: ProcessorEvent<"Strategy", "UpdatedRegistrationWithStatus">,
         private readonly chainId: ChainId,
         private readonly dependencies: Dependencies,
-    ) {}
+    ) {
+        this.dependencies.logger?.debug("Initializing DGLiteUpdatedRegistrationHandler", {
+            className: "DGLiteUpdatedRegistrationHandler",
+            chainId: this.chainId,
+            strategyAddress: this.event.srcAddress,
+            blockNumber: this.event.blockNumber,
+            transactionHash: this.event.transactionFields.hash,
+        });
+    }
 
     /**
      * Handles the UpdatedRegistrationWithStatus event for the Direct Grants Lite strategy.
@@ -53,37 +61,91 @@ export class DGLiteUpdatedRegistrationHandler
             projectRepository,
         } = this.dependencies;
 
-        const { status: strStatus } = this.event.params;
+        const { status: strStatus, recipientId, data: encodedData } = this.event.params;
         const status = Number(strStatus);
 
-        if (!isValidApplicationStatus(status)) {
-            logger.warn(
-                `[DGLiteUpdatedRegistrationHandler] Invalid status: ${this.event.params.status}`,
-            );
+        logger?.debug("Starting registration update handling", {
+            className: "DGLiteUpdatedRegistrationHandler",
+            methodName: "handle",
+            recipientId,
+            status,
+            encodedDataLength: encodedData.length,
+        });
 
+        if (!isValidApplicationStatus(status)) {
+            logger?.warn("Invalid application status received", {
+                className: "DGLiteUpdatedRegistrationHandler",
+                methodName: "handle",
+                status: strStatus,
+                recipientId,
+            });
             return [];
         }
 
+        logger?.debug("Fetching project by anchor", {
+            className: "DGLiteUpdatedRegistrationHandler",
+            methodName: "handle",
+            recipientId: getAddress(recipientId),
+            chainId: this.chainId,
+        });
+
         const project = await projectRepository.getProjectByAnchorOrThrow(
             this.chainId,
-            getAddress(this.event.params.recipientId),
+            getAddress(recipientId),
         );
+
+        logger?.debug("Fetching round by strategy address", {
+            className: "DGLiteUpdatedRegistrationHandler",
+            methodName: "handle",
+            strategyAddress: this.event.srcAddress,
+            chainId: this.chainId,
+        });
+
         const round = await roundRepository.getRoundByStrategyAddressOrThrow(
             this.chainId,
             getAddress(this.event.srcAddress),
         );
+
+        logger?.debug("Fetching application by anchor address", {
+            className: "DGLiteUpdatedRegistrationHandler",
+            methodName: "handle",
+            roundId: round.id,
+            anchorAddress: project.anchorAddress,
+        });
+
         const application = await applicationRepository.getApplicationByAnchorAddressOrThrow(
             this.chainId,
             round.id,
             project.anchorAddress!,
         );
 
-        const encodedData = this.event.params.data;
+        logger?.debug("Decoding application data", {
+            className: "DGLiteUpdatedRegistrationHandler",
+            methodName: "handle",
+            applicationId: application.id,
+            encodedDataLength: encodedData.length,
+        });
+
         const values = decodeDVMDApplicationData(encodedData);
 
-        const metadata = await metadataProvider.getMetadata(values.metadata.pointer);
+        logger?.debug("Fetching updated metadata", {
+            className: "DGLiteUpdatedRegistrationHandler",
+            methodName: "handle",
+            applicationId: application.id,
+            metadataPointer: values.metadata.pointer,
+        });
 
+        const metadata = await metadataProvider.getMetadata(values.metadata.pointer);
         const statusString = ApplicationStatus[status] as Application["status"];
+
+        logger?.debug("Creating status update", {
+            className: "DGLiteUpdatedRegistrationHandler",
+            methodName: "handle",
+            applicationId: application.id,
+            currentStatus: application.status,
+            newStatus: statusString,
+            blockNumber: this.event.blockNumber,
+        });
 
         const statusUpdates = createStatusUpdate({
             application,
@@ -92,9 +154,9 @@ export class DGLiteUpdatedRegistrationHandler
             blockTimestamp: this.event.blockTimestamp,
         });
 
-        return [
+        const changes = [
             {
-                type: "UpdateApplication",
+                type: "UpdateApplication" as const,
                 args: {
                     chainId: this.chainId,
                     roundId: round.id,
@@ -108,5 +170,19 @@ export class DGLiteUpdatedRegistrationHandler
                 },
             },
         ];
+
+        logger?.info("Registration update completed", {
+            className: "DGLiteUpdatedRegistrationHandler",
+            methodName: "handle",
+            applicationId: application.id,
+            roundId: round.id,
+            projectId: project.id,
+            oldStatus: application.status,
+            newStatus: statusString,
+            metadataUpdated: metadata !== null,
+            changeCount: changes.length,
+        });
+
+        return changes;
     }
 }

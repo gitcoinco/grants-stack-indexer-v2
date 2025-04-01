@@ -278,6 +278,15 @@ export class Orchestrator {
                     );
                 } else {
                     if (error instanceof RetriableError) {
+                        this.logger.debug("Processing RetriableError", {
+                            className: Orchestrator.name,
+                            chainId: this.chainId,
+                            errorType: "RetriableError",
+                            eventIdentifier: event
+                                ? `${event.blockNumber}:${event.logIndex}`
+                                : undefined,
+                        });
+
                         error.message = `Error processing event after retries. ${error.message}`;
                         this.logger.error(error, {
                             event,
@@ -286,12 +295,30 @@ export class Orchestrator {
                             lastRetryDelay: error.metadata?.retryAfterInMs,
                             reason: error.metadata?.failureReason,
                         });
+
+                        this.logger.debug("Sending notification for RetriableError", {
+                            className: Orchestrator.name,
+                            chainId: this.chainId,
+                            eventIdentifier: event
+                                ? `${event.blockNumber}:${event.logIndex}`
+                                : undefined,
+                        });
+
                         void this.notifier.send(error.message, {
                             chainId: this.chainId,
                             event: event!,
                             stack: error.getFullStack(),
                         });
                     } else if (error instanceof Error || isNativeError(error)) {
+                        this.logger.debug("Processing standard Error", {
+                            className: Orchestrator.name,
+                            chainId: this.chainId,
+                            errorType: error.constructor.name,
+                            eventIdentifier: event
+                                ? `${event.blockNumber}:${event.logIndex}`
+                                : undefined,
+                        });
+
                         const shouldIgnoreError = this.shouldIgnoreTimestampsUpdatedError(
                             error,
                             event!,
@@ -303,15 +330,30 @@ export class Orchestrator {
                             shouldIgnoreError,
                             errorType: error.constructor.name,
                             eventIdentifier: `${event!.blockNumber}:${event!.logIndex}`,
+                            errorMessage: error.message,
                         });
 
                         if (!shouldIgnoreError) {
+                            this.logger.debug("Error not ignored, preparing to send notification", {
+                                className: Orchestrator.name,
+                                chainId: this.chainId,
+                                eventIdentifier: `${event!.blockNumber}:${event!.logIndex}`,
+                                errorType: error.constructor.name,
+                            });
+
                             this.logger.error(error, {
                                 event,
                                 className: Orchestrator.name,
                                 chainId: this.chainId,
                                 errorStack: error.stack,
                             });
+
+                            this.logger.debug("Sending notification for standard error", {
+                                className: Orchestrator.name,
+                                chainId: this.chainId,
+                                eventIdentifier: `${event!.blockNumber}:${event!.logIndex}`,
+                            });
+
                             void this.notifier.send(error.message, {
                                 chainId: this.chainId,
                                 event: event!,
@@ -319,12 +361,40 @@ export class Orchestrator {
                             });
                         }
                     } else {
+                        this.logger.debug("Processing unknown error type", {
+                            className: Orchestrator.name,
+                            chainId: this.chainId,
+                            errorType: typeof error,
+                            eventIdentifier: event
+                                ? `${event.blockNumber}:${event.logIndex}`
+                                : undefined,
+                        });
+
                         const errorMessage = `Error processing event: ${stringify(event)} ${error}`;
+
+                        this.logger.debug("Created error message for unknown error", {
+                            className: Orchestrator.name,
+                            chainId: this.chainId,
+                            errorMessage,
+                            eventIdentifier: event
+                                ? `${event.blockNumber}:${event.logIndex}`
+                                : undefined,
+                        });
+
                         this.logger.error(new Error(errorMessage), {
                             className: Orchestrator.name,
                             chainId: this.chainId,
                             unknownErrorType: typeof error,
                         });
+
+                        this.logger.debug("Sending notification for unknown error", {
+                            className: Orchestrator.name,
+                            chainId: this.chainId,
+                            eventIdentifier: event
+                                ? `${event.blockNumber}:${event.logIndex}`
+                                : undefined,
+                        });
+
                         void this.notifier.send(errorMessage, {
                             chainId: this.chainId,
                             event: event!,

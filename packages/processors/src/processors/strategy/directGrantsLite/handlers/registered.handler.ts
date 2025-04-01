@@ -8,7 +8,7 @@ import { decodeDVMDExtendedApplicationData } from "../../helpers/index.js";
 
 type Dependencies = Pick<
     ProcessorDependencies,
-    "roundRepository" | "projectRepository" | "metadataProvider"
+    "roundRepository" | "projectRepository" | "metadataProvider" | "logger"
 >;
 
 /**
@@ -27,7 +27,15 @@ export class DGLiteRegisteredHandler implements IEventHandler<"Strategy", "Regis
         readonly event: ProcessorEvent<"Strategy", "RegisteredWithSender">,
         private readonly chainId: ChainId,
         private readonly dependencies: Dependencies,
-    ) {}
+    ) {
+        this.dependencies.logger?.debug("Initializing DGLiteRegisteredHandler", {
+            className: "DGLiteRegisteredHandler",
+            chainId: this.chainId,
+            strategyAddress: this.event.srcAddress,
+            blockNumber: this.event.blockNumber,
+            transactionHash: this.event.transactionFields.hash,
+        });
+    }
 
     /**
      * Handles the RegisteredWithSender event for the Direct Grants Lite strategy.
@@ -36,27 +44,70 @@ export class DGLiteRegisteredHandler implements IEventHandler<"Strategy", "Regis
      * @throws RoundNotFound if the round is not found.
      */
     async handle(): Promise<Changeset[]> {
-        const { projectRepository, roundRepository, metadataProvider } = this.dependencies;
+        const { projectRepository, roundRepository, metadataProvider, logger } = this.dependencies;
         const { data: encodedData, recipientId, sender } = this.event.params;
         const { blockNumber, blockTimestamp } = this.event;
 
+        logger?.debug("Starting registration handling", {
+            className: "DGLiteRegisteredHandler",
+            methodName: "handle",
+            recipientId,
+            sender,
+            blockNumber,
+        });
+
         const anchorAddress = getAddress(recipientId);
+        logger?.debug("Fetching project by anchor", {
+            className: "DGLiteRegisteredHandler",
+            methodName: "handle",
+            anchorAddress,
+            chainId: this.chainId,
+        });
+
         const project = await projectRepository.getProjectByAnchorOrThrow(
             this.chainId,
             anchorAddress,
         );
 
         const strategyAddress = getAddress(this.event.srcAddress);
+        logger?.debug("Fetching round by strategy address", {
+            className: "DGLiteRegisteredHandler",
+            methodName: "handle",
+            strategyAddress,
+            chainId: this.chainId,
+        });
+
         const round = await roundRepository.getRoundByStrategyAddressOrThrow(
             this.chainId,
             strategyAddress,
         );
 
+        logger?.debug("Decoding application data", {
+            className: "DGLiteRegisteredHandler",
+            methodName: "handle",
+            encodedDataLength: encodedData.length,
+        });
+
         const values = decodeDVMDExtendedApplicationData(encodedData);
-        // ID is defined as recipientsCounter - 1, which is a value emitted by the strategy
         const id = (Number(values.recipientsCounter) - 1).toString();
 
+        logger?.debug("Fetching application metadata", {
+            className: "DGLiteRegisteredHandler",
+            methodName: "handle",
+            metadataPointer: values.metadata.pointer,
+            applicationId: id,
+        });
+
         const metadata = await metadataProvider.getMetadata(values.metadata.pointer);
+
+        logger?.debug("Creating application record", {
+            className: "DGLiteRegisteredHandler",
+            methodName: "handle",
+            applicationId: id,
+            projectId: project.id,
+            roundId: round.id,
+            metadataFound: metadata !== null,
+        });
 
         const application: NewApplication = {
             chainId: this.chainId,
@@ -85,9 +136,19 @@ export class DGLiteRegisteredHandler implements IEventHandler<"Strategy", "Regis
             tags: ["allo-v2"],
         };
 
+        logger?.info("Registration processing completed", {
+            className: "DGLiteRegisteredHandler",
+            methodName: "handle",
+            applicationId: id,
+            roundId: round.id,
+            projectId: project.id,
+            status: "PENDING",
+            blockNumber,
+        });
+
         return [
             {
-                type: "InsertApplication",
+                type: "InsertApplication" as const,
                 args: application,
             },
         ];

@@ -45,13 +45,15 @@ export class ProcessingService {
 
     static async initialize(env: Environment): Promise<ProcessingService> {
         const sharedDependencies = await SharedDependenciesService.initialize(env);
+        const { logger } = sharedDependencies;
+        logger.debug("Shared dependencies initialized");
+
         const { CHAINS: chains } = env;
         const {
             core,
             registriesRepositories,
             indexerClient,
             kyselyDatabase,
-            logger,
             retryStrategy,
             notifier,
         } = sharedDependencies;
@@ -60,29 +62,37 @@ export class ProcessingService {
             strategyRegistryRepository,
             strategyProcessingCheckpointRepository,
         } = registriesRepositories;
+
         const orchestrators: Map<ChainId, [Orchestrator, RetroactiveProcessor]> = new Map();
+        logger.debug("Starting chain initialization", { chainCount: chains.length });
 
         const strategyRegistry = new DatabaseStrategyRegistry(logger, strategyRegistryRepository);
         const eventsRegistry = new DatabaseEventRegistry(logger, eventRegistryRepository);
+        logger.debug("Created base registries");
 
         const viemChainsArray = Object.values(viemChains) as Chain[];
 
         for (const chain of chains) {
-            // Initialize EVM provider
+            logger.debug("Processing chain configuration", { chainId: chain.id });
+
             const viemChain = extractChain({
                 chains: viemChainsArray,
                 id: chain.id,
             });
             if (!viemChain) {
+                logger.error("Invalid chain configuration", { chainId: chain.id });
                 throw new InvalidChainId(chain.id);
             }
+
             const evmProvider = new EvmProvider(chain.rpcUrls, viemChain, logger);
+            logger.debug("EVM provider created", { chainId: chain.id });
 
             const cachedStrategyRegistry = await InMemoryCachedStrategyRegistry.initialize(
                 logger,
                 strategyRegistry,
                 chain.id as ChainId,
             );
+            logger.debug("Cached strategy registry initialized", { chainId: chain.id });
 
             const orchestrator = new Orchestrator(
                 chain.id as ChainId,
@@ -98,6 +108,8 @@ export class ProcessingService {
                 logger,
                 notifier,
             );
+            logger.debug("Orchestrator created", { chainId: chain.id });
+
             const retroactiveProcessor = new RetroactiveProcessor(
                 chain.id as ChainId,
                 { ...core, evmProvider },
@@ -111,10 +123,13 @@ export class ProcessingService {
                 retryStrategy,
                 logger,
             );
+            logger.debug("Retroactive processor created", { chainId: chain.id });
 
             orchestrators.set(chain.id as ChainId, [orchestrator, retroactiveProcessor]);
+            logger.debug("Chain setup completed", { chainId: chain.id });
         }
 
+        logger.debug("All chains initialized", { chainCount: orchestrators.size });
         return new ProcessingService(orchestrators, kyselyDatabase, logger);
     }
 
@@ -127,10 +142,10 @@ export class ProcessingService {
         this.logger.info("Starting processor service...");
 
         const abortController = new AbortController();
+        this.logger.debug("Created abort controller");
 
         const orchestratorProcesses: Promise<void>[] = [];
 
-        // Handle graceful shutdown
         process.on("SIGINT", () => {
             this.logger.info("Received SIGINT signal. Shutting down...");
             abortController.abort();
@@ -140,14 +155,20 @@ export class ProcessingService {
             this.logger.info("Received SIGTERM signal. Shutting down...");
             abortController.abort();
         });
+        this.logger.debug("Signal handlers registered");
 
         try {
             for (const [orchestrator, _] of this.orchestrators.values()) {
                 this.logger.info(`Starting orchestrator for chain ${orchestrator.chainId}...`);
                 orchestratorProcesses.push(orchestrator.run(abortController.signal));
+                this.logger.debug("Orchestrator process queued", { chainId: orchestrator.chainId });
             }
 
+            this.logger.debug("Waiting for all orchestrator processes", {
+                processCount: orchestratorProcesses.length,
+            });
             await Promise.allSettled(orchestratorProcesses);
+            this.logger.debug("All orchestrator processes completed");
         } catch (error) {
             this.logger.error(`Processor service failed: ${error}`);
             throw error;
@@ -161,7 +182,13 @@ export class ProcessingService {
     async processRetroactiveEvents(): Promise<void> {
         this.logger.info("Processing retroactive events...");
         for (const [_, retroactiveProcessor] of this.orchestrators.values()) {
+            this.logger.debug("Starting retroactive processing", {
+                chainId: retroactiveProcessor.chainId,
+            });
             await retroactiveProcessor.processRetroactiveStrategies();
+            this.logger.debug("Completed retroactive processing", {
+                chainId: retroactiveProcessor.chainId,
+            });
         }
     }
 
@@ -173,6 +200,7 @@ export class ProcessingService {
         try {
             this.logger.info("Releasing resources...");
             await this.kyselyDatabase.destroy();
+            this.logger.debug("Database resources released");
         } catch (error) {
             this.logger.error(`Error releasing resources: ${error}`);
         }

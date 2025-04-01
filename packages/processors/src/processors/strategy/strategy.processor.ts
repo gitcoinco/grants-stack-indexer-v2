@@ -2,7 +2,7 @@ import { Changeset } from "@grants-stack-indexer/repository";
 import { ChainId, ProcessorEvent, StrategyEvent } from "@grants-stack-indexer/shared";
 
 import type { IProcessor, ProcessorDependencies } from "../../internal.js";
-import { UnsupportedStrategy } from "../../internal.js";
+import { getHandler, UnsupportedStrategy } from "../../internal.js";
 import { StrategyHandlerFactory } from "./strategyHandler.factory.js";
 
 export class StrategyProcessor implements IProcessor<"Strategy", StrategyEvent> {
@@ -24,7 +24,7 @@ export class StrategyProcessor implements IProcessor<"Strategy", StrategyEvent> 
             className: "StrategyProcessor",
             methodName: "process",
             eventName: event.eventName,
-            strategyId,
+            strategyId: getHandler(strategyId),
             chainId: this.chainId,
             blockNumber: event.blockNumber,
         });
@@ -33,7 +33,7 @@ export class StrategyProcessor implements IProcessor<"Strategy", StrategyEvent> 
             logger?.debug("Creating strategy handler", {
                 className: "StrategyProcessor",
                 methodName: "process",
-                strategyId,
+                strategyId: getHandler(strategyId),
                 chainId: this.chainId,
             });
 
@@ -47,7 +47,7 @@ export class StrategyProcessor implements IProcessor<"Strategy", StrategyEvent> 
                 logger?.error("Unsupported strategy encountered", {
                     className: "StrategyProcessor",
                     methodName: "process",
-                    strategyId,
+                    strategyId: getHandler(strategyId),
                     chainId: this.chainId,
                 });
                 throw new UnsupportedStrategy(strategyId);
@@ -56,7 +56,7 @@ export class StrategyProcessor implements IProcessor<"Strategy", StrategyEvent> 
             logger?.debug("Delegating to strategy handler", {
                 className: "StrategyProcessor",
                 methodName: "process",
-                strategyId,
+                strategyId: getHandler(strategyId),
                 handlerType: strategyHandler.constructor.name,
             });
 
@@ -65,7 +65,7 @@ export class StrategyProcessor implements IProcessor<"Strategy", StrategyEvent> 
             logger?.info("Strategy event processing completed", {
                 className: "StrategyProcessor",
                 methodName: "process",
-                strategyId,
+                strategyId: getHandler(strategyId),
                 eventName: event.eventName,
                 chainId: this.chainId,
                 changesetCount: result.length,
@@ -76,7 +76,7 @@ export class StrategyProcessor implements IProcessor<"Strategy", StrategyEvent> 
             logger?.error("Error processing strategy event", {
                 className: "StrategyProcessor",
                 methodName: "process",
-                strategyId,
+                strategyId: getHandler(strategyId),
                 eventName: event.eventName,
                 chainId: this.chainId,
                 error: error instanceof Error ? error.message : String(error),

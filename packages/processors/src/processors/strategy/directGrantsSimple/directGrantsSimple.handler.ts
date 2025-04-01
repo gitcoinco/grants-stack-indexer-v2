@@ -22,31 +22,93 @@ export class DGSimpleStrategyHandler extends BaseStrategyHandler {
         private readonly dependencies: ProcessorDependencies,
     ) {
         super(STRATEGY_NAME);
+        this.dependencies.logger?.debug("Initializing DGSimpleStrategyHandler", {
+            className: "DGSimpleStrategyHandler",
+            chainId: this.chainId,
+            strategyName: STRATEGY_NAME,
+        });
     }
 
     /** @inheritdoc */
     async handle(event: ProcessorEvent<"Strategy", StrategyEvent>): Promise<Changeset[]> {
-        switch (event.eventName) {
-            case "TimestampsUpdated":
-                return new DGSimpleTimestampsUpdatedHandler(
-                    event as ProcessorEvent<"Strategy", "TimestampsUpdated">,
-                    this.chainId,
-                    this.dependencies,
-                ).handle();
-            case "RegisteredWithSender":
-                return new DGSimpleRegisteredHandler(
-                    event as ProcessorEvent<"Strategy", "RegisteredWithSender">,
-                    this.chainId,
-                    this.dependencies,
-                ).handle();
-            case "DistributedWithRecipientAddress":
-                return new BaseDistributedHandler(
-                    event as ProcessorEvent<"Strategy", "DistributedWithRecipientAddress">,
-                    this.chainId,
-                    this.dependencies,
-                ).handle();
-            default:
-                throw new UnsupportedEventException("Strategy", event.eventName, this.name);
+        const { logger } = this.dependencies;
+
+        logger?.debug("Processing strategy event", {
+            className: "DGSimpleStrategyHandler",
+            methodName: "handle",
+            eventName: event.eventName,
+            strategyAddress: event.srcAddress,
+            blockNumber: event.blockNumber,
+        });
+
+        try {
+            let result: Changeset[];
+            switch (event.eventName) {
+                case "TimestampsUpdated":
+                    logger?.debug("Delegating to DGSimpleTimestampsUpdatedHandler", {
+                        className: "DGSimpleStrategyHandler",
+                        methodName: "handle",
+                        eventName: event.eventName,
+                    });
+                    result = await new DGSimpleTimestampsUpdatedHandler(
+                        event as ProcessorEvent<"Strategy", "TimestampsUpdated">,
+                        this.chainId,
+                        this.dependencies,
+                    ).handle();
+                    break;
+
+                case "RegisteredWithSender":
+                    logger?.debug("Delegating to DGSimpleRegisteredHandler", {
+                        className: "DGSimpleStrategyHandler",
+                        methodName: "handle",
+                        eventName: event.eventName,
+                    });
+                    result = await new DGSimpleRegisteredHandler(
+                        event as ProcessorEvent<"Strategy", "RegisteredWithSender">,
+                        this.chainId,
+                        this.dependencies,
+                    ).handle();
+                    break;
+
+                case "DistributedWithRecipientAddress":
+                    logger?.debug("Delegating to BaseDistributedHandler", {
+                        className: "DGSimpleStrategyHandler",
+                        methodName: "handle",
+                        eventName: event.eventName,
+                    });
+                    result = await new BaseDistributedHandler(
+                        event as ProcessorEvent<"Strategy", "DistributedWithRecipientAddress">,
+                        this.chainId,
+                        this.dependencies,
+                    ).handle();
+                    break;
+
+                default:
+                    logger?.warn("Unsupported event received", {
+                        className: "DGSimpleStrategyHandler",
+                        methodName: "handle",
+                        eventName: event.eventName,
+                        strategyName: this.name,
+                    });
+                    throw new UnsupportedEventException("Strategy", event.eventName, this.name);
+            }
+
+            logger?.debug("Event processing completed", {
+                className: "DGSimpleStrategyHandler",
+                methodName: "handle",
+                eventName: event.eventName,
+                changeCount: result.length,
+            });
+
+            return result;
+        } catch (error) {
+            logger?.error("Error processing event", {
+                className: "DGSimpleStrategyHandler",
+                methodName: "handle",
+                eventName: event.eventName,
+                error: error instanceof Error ? error.message : String(error),
+            });
+            throw error;
         }
     }
 }
