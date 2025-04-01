@@ -112,7 +112,8 @@ const main = async (): Promise<void> => {
         if (flattedEvents.length === 0) {
             hasMoreEvents = false; // No more flattedEvents to process
         } else {
-            cids.push(...getMetadataCidsFromEvents(flattedEvents, { ...console }));
+            const { trace, ...rest } = console;
+            cids.push(...getMetadataCidsFromEvents(flattedEvents, { ...rest, verbose: trace }));
             // Save checkpoint logic here (e.g., save cids or event data)
         }
         console.log("\n");

@@ -51,6 +51,7 @@ describe("DirectAllocatedHandler", () => {
             error: vi.fn(),
             warn: vi.fn(),
             debug: vi.fn(),
+            verbose: vi.fn(),
         } as unknown as ILogger;
     });
 

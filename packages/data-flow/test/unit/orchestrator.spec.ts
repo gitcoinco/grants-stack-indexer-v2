@@ -73,6 +73,7 @@ describe("Orchestrator", { sequential: true }, () => {
     const mockFetchDelay = 100;
     const logger: ILogger = {
         debug: vi.fn(),
+        verbose: vi.fn(),
         error: vi.fn(),
         info: vi.fn(),
         warn: vi.fn(),

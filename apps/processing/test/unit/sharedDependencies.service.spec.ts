@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => {
             info: vi.fn(),
             error: vi.fn(),
             debug: vi.fn(),
+            verbose: vi.fn(),
             warn: vi.fn(),
         },
     };

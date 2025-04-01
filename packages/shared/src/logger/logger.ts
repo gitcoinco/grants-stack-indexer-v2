@@ -3,9 +3,9 @@ import { createLogger, format, transports, Logger as WinstonLogger } from "winst
 import { stringify } from "../internal.js";
 import { ILogger } from "./logger.interface.js";
 
-type LogLevel = "error" | "warn" | "info" | "debug";
+type LogLevel = "error" | "warn" | "info" | "debug" | "verbose";
 
-const validLogLevels: LogLevel[] = ["error", "warn", "info", "debug"];
+const validLogLevels: LogLevel[] = ["error", "warn", "info", "debug", "verbose"];
 
 export class Logger implements ILogger {
     private logger: WinstonLogger;
@@ -79,5 +79,8 @@ export class Logger implements ILogger {
     }
     debug(message: string, context?: Record<string, unknown>): void {
         this.logger.debug(message, context);
+    }
+    verbose(message: string, context?: Record<string, unknown>): void {
+        this.logger.verbose(message, context);
     }
 }

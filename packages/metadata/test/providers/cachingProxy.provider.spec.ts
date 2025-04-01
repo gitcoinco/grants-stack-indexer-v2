@@ -19,6 +19,7 @@ describe("CachingMetadataProvider", () => {
 
     const mockLogger = {
         debug: vi.fn(),
+        verbose: vi.fn(),
     } as unknown as ILogger;
 
     let provider: CachingMetadataProvider;

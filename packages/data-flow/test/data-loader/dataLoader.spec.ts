@@ -57,6 +57,7 @@ describe("DataLoader", () => {
 
     const logger: ILogger = {
         debug: vi.fn(),
+        verbose: vi.fn(),
         error: vi.fn(),
         info: vi.fn(),
         warn: vi.fn(),

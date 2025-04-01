@@ -30,6 +30,7 @@ describe("ProfileNameUpdatedHandler", () => {
         const handler = new ProfileNameUpdatedHandler(mockEvent, 1 as ChainId, {
             logger: {
                 debug: vi.fn(),
+                verbose: vi.fn(),
                 error: vi.fn(),
                 info: vi.fn(),
                 warn: vi.fn(),

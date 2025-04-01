@@ -28,6 +28,7 @@ describe("ProfileCreatedHandler", () => {
     const mockedAddress = "0x48f33AE41E1762e1688125C4f1C536B1491dF803";
     const logger: ILogger = {
         debug: vi.fn(),
+        verbose: vi.fn(),
         error: vi.fn(),
         info: vi.fn(),
         warn: vi.fn(),
