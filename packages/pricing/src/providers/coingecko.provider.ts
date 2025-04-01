@@ -116,6 +116,13 @@ export class CoingeckoProvider implements IPricingProvider {
             return undefined;
         }
 
+        // Handle when the endTimestampMs is in the future
+        const currentTimestamp = Date.now() - 60 * 1000;
+        if (currentTimestamp < endTimestampMs) {
+            startTimestampMs = (currentTimestamp - TIME_DELTA) as TimestampMs;
+            endTimestampMs = currentTimestamp as TimestampMs;
+        }
+
         const path = `/coins/${tokenId}/market_chart/range?vs_currency=usd&from=${startTimestampMs / 1000}&to=${endTimestampMs / 1000}&precision=full`;
         try {
             const { data } = await this.axios.get<CoingeckoPriceChartData>(path);
