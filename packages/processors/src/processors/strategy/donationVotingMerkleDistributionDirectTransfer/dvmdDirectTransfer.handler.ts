@@ -13,7 +13,11 @@ import {
 import type { ProcessorDependencies, StrategyTimings } from "../../../internal.js";
 import DonationVotingMerkleDistributionDirectTransferStrategy from "../../../abis/allo-v2/v1/DonationVotingMerkleDistributionDirectTransferStrategy.js";
 import { calculateAmountInUsd, getDateFromTimestamp } from "../../../helpers/index.js";
-import { TokenPriceNotFoundError, UnsupportedEventException } from "../../../internal.js";
+import {
+    getHandler,
+    TokenPriceNotFoundError,
+    UnsupportedEventException,
+} from "../../../internal.js";
 import {
     BaseDistributedHandler,
     BaseDistributionUpdatedHandler,
@@ -61,64 +65,118 @@ export class DVMDDirectTransferStrategyHandler extends BaseStrategyHandler {
         private readonly dependencies: Dependencies,
     ) {
         super(STRATEGY_NAME);
+        this.dependencies.logger?.debug("Initializing DVMDDirectTransferStrategyHandler", {
+            className: "DVMDDirectTransferStrategyHandler",
+            chainId: this.chainId,
+            strategyName: STRATEGY_NAME,
+        });
     }
 
     /** @inheritdoc */
     async handle(event: ProcessorEvent<"Strategy", StrategyEvent>): Promise<Changeset[]> {
-        switch (event.eventName) {
-            case "RegisteredWithSender":
-                return new DVMDRegisteredHandler(
-                    event as ProcessorEvent<"Strategy", "RegisteredWithSender">,
-                    this.chainId,
-                    this.dependencies,
-                ).handle();
-            case "DistributedWithRecipientAddress":
-                return new BaseDistributedHandler(
-                    event as ProcessorEvent<"Strategy", "DistributedWithRecipientAddress">,
-                    this.chainId,
-                    this.dependencies,
-                ).handle();
-            case "AllocatedWithOrigin":
-                return new DVMDAllocatedHandler(
-                    event as ProcessorEvent<"Strategy", "AllocatedWithOrigin">,
-                    this.chainId,
-                    this.dependencies,
-                ).handle();
-            case "TimestampsUpdatedWithRegistrationAndAllocation":
-                return new DVMDTimestampsUpdatedHandler(
-                    event as ProcessorEvent<
-                        "Strategy",
-                        "TimestampsUpdatedWithRegistrationAndAllocation"
-                    >,
-                    this.chainId,
-                    this.dependencies,
-                ).handle();
-            case "DistributionUpdatedWithMerkleRoot":
-                return new BaseDistributionUpdatedHandler(
-                    event as ProcessorEvent<"Strategy", "DistributionUpdatedWithMerkleRoot">,
-                    this.chainId,
-                    this.dependencies,
-                ).handle();
-            case "FundsDistributed":
-                return new BaseFundsDistributedHandler(
-                    event as ProcessorEvent<"Strategy", "FundsDistributed">,
-                    this.chainId,
-                    this.dependencies,
-                ).handle();
-            case "UpdatedRegistrationWithStatus":
-                return new DVMDUpdatedRegistrationHandler(
-                    event as ProcessorEvent<"Strategy", "UpdatedRegistrationWithStatus">,
-                    this.chainId,
-                    this.dependencies,
-                ).handle();
-            case "RecipientStatusUpdatedWithFullRow":
-                return new BaseRecipientStatusUpdatedHandler(
-                    event as ProcessorEvent<"Strategy", "RecipientStatusUpdatedWithFullRow">,
-                    this.chainId,
-                    this.dependencies,
-                ).handle();
-            default:
-                throw new UnsupportedEventException("Strategy", event.eventName, this.name);
+        const { logger } = this.dependencies;
+
+        logger?.debug("Processing strategy event", {
+            className: "DVMDDirectTransferStrategyHandler",
+            methodName: "handle",
+            eventName: event.eventName,
+            strategyAddress: event.srcAddress,
+            blockNumber: event.blockNumber,
+        });
+
+        try {
+            let result: Changeset[];
+            switch (event.eventName) {
+                case "RegisteredWithSender":
+                    logger?.debug("Delegating to DVMDRegisteredHandler", {
+                        className: "DVMDDirectTransferStrategyHandler",
+                        methodName: "handle",
+                        eventName: event.eventName,
+                    });
+                    result = await new DVMDRegisteredHandler(
+                        event as ProcessorEvent<"Strategy", "RegisteredWithSender">,
+                        this.chainId,
+                        this.dependencies,
+                    ).handle();
+                    break;
+                case "DistributedWithRecipientAddress":
+                    result = await new BaseDistributedHandler(
+                        event as ProcessorEvent<"Strategy", "DistributedWithRecipientAddress">,
+                        this.chainId,
+                        this.dependencies,
+                    ).handle();
+                    break;
+                case "AllocatedWithOrigin":
+                    result = await new DVMDAllocatedHandler(
+                        event as ProcessorEvent<"Strategy", "AllocatedWithOrigin">,
+                        this.chainId,
+                        this.dependencies,
+                    ).handle();
+                    break;
+                case "TimestampsUpdatedWithRegistrationAndAllocation":
+                    result = await new DVMDTimestampsUpdatedHandler(
+                        event as ProcessorEvent<
+                            "Strategy",
+                            "TimestampsUpdatedWithRegistrationAndAllocation"
+                        >,
+                        this.chainId,
+                        this.dependencies,
+                    ).handle();
+                    break;
+                case "DistributionUpdatedWithMerkleRoot":
+                    result = await new BaseDistributionUpdatedHandler(
+                        event as ProcessorEvent<"Strategy", "DistributionUpdatedWithMerkleRoot">,
+                        this.chainId,
+                        this.dependencies,
+                    ).handle();
+                    break;
+                case "FundsDistributed":
+                    result = await new BaseFundsDistributedHandler(
+                        event as ProcessorEvent<"Strategy", "FundsDistributed">,
+                        this.chainId,
+                        this.dependencies,
+                    ).handle();
+                    break;
+                case "UpdatedRegistrationWithStatus":
+                    result = await new DVMDUpdatedRegistrationHandler(
+                        event as ProcessorEvent<"Strategy", "UpdatedRegistrationWithStatus">,
+                        this.chainId,
+                        this.dependencies,
+                    ).handle();
+                    break;
+                case "RecipientStatusUpdatedWithFullRow":
+                    result = await new BaseRecipientStatusUpdatedHandler(
+                        event as ProcessorEvent<"Strategy", "RecipientStatusUpdatedWithFullRow">,
+                        this.chainId,
+                        this.dependencies,
+                    ).handle();
+                    break;
+                default:
+                    logger?.warn("Unsupported event received", {
+                        className: "DVMDDirectTransferStrategyHandler",
+                        methodName: "handle",
+                        eventName: event.eventName,
+                        strategyName: this.name,
+                    });
+                    throw new UnsupportedEventException("Strategy", event.eventName, this.name);
+            }
+
+            logger?.debug("Event processing completed", {
+                className: "DVMDDirectTransferStrategyHandler",
+                methodName: "handle",
+                eventName: event.eventName,
+                changeCount: result.length,
+            });
+
+            return result;
+        } catch (error) {
+            logger?.error("Error processing event", {
+                className: "DVMDDirectTransferStrategyHandler",
+                methodName: "handle",
+                eventName: event.eventName,
+                error: error instanceof Error ? error.message : String(error),
+            });
+            throw error;
         }
     }
 
@@ -128,21 +186,49 @@ export class DVMDDirectTransferStrategyHandler extends BaseStrategyHandler {
         token: Token,
         blockTimestamp: TimestampMs,
     ): Promise<{ matchAmount: bigint; matchAmountInUsd: string }> {
+        const { logger } = this.dependencies;
+
+        logger?.debug("Fetching match amount", {
+            className: "DVMDDirectTransferStrategyHandler",
+            methodName: "fetchMatchAmount",
+            matchingFundsAvailable,
+            tokenSymbol: token.priceSourceCode,
+            blockTimestamp,
+        });
+
         const matchAmount = parseUnits(matchingFundsAvailable.toString(), token.decimals);
+
+        logger?.debug("Calculating match amount in USD", {
+            className: "DVMDDirectTransferStrategyHandler",
+            methodName: "fetchMatchAmount",
+            matchAmount: matchAmount.toString(),
+            tokenDecimals: token.decimals,
+        });
 
         const matchAmountInUsd = await this.getTokenAmountInUsd(token, matchAmount, blockTimestamp);
 
-        return {
-            matchAmount,
+        logger?.debug("Match amount calculation completed", {
+            className: "DVMDDirectTransferStrategyHandler",
+            methodName: "fetchMatchAmount",
+            matchAmount: matchAmount.toString(),
             matchAmountInUsd,
-        };
+        });
+
+        return { matchAmount, matchAmountInUsd };
     }
 
     /** @inheritdoc */
     override async fetchStrategyTimings(strategyId: Address): Promise<StrategyTimings> {
-        const { evmProvider } = this.dependencies;
-        let results: [bigint, bigint, bigint, bigint] = [0n, 0n, 0n, 0n];
+        const { evmProvider, logger } = this.dependencies;
 
+        logger?.debug("Fetching strategy timings", {
+            className: "DVMDDirectTransferStrategyHandler",
+            methodName: "fetchStrategyTimings",
+            strategyId: getHandler(strategyId),
+            chainId: this.chainId,
+        });
+
+        let results: [bigint, bigint, bigint, bigint] = [0n, 0n, 0n, 0n];
         const contractCalls = [
             {
                 abi: DonationVotingMerkleDistributionDirectTransferStrategy,
@@ -166,26 +252,60 @@ export class DVMDDirectTransferStrategyHandler extends BaseStrategyHandler {
             },
         ] as const;
 
-        // TODO: refactor when evmProvider implements this natively
-        if (evmProvider.getMulticall3Address()) {
-            results = await evmProvider.multicall({
-                contracts: contractCalls,
-                allowFailure: false,
-            });
-        } else {
-            results = (await Promise.all(
-                contractCalls.map((call) =>
-                    evmProvider.readContract(call.address, call.abi, call.functionName),
-                ),
-            )) as [bigint, bigint, bigint, bigint];
-        }
+        try {
+            if (evmProvider.getMulticall3Address()) {
+                logger?.debug("Using multicall for fetching timings", {
+                    className: "DVMDDirectTransferStrategyHandler",
+                    methodName: "fetchStrategyTimings",
+                    multicallAddress: evmProvider.getMulticall3Address(),
+                });
 
-        return {
-            applicationsStartTime: getDateFromTimestamp(results[0]),
-            applicationsEndTime: getDateFromTimestamp(results[1]),
-            donationsStartTime: getDateFromTimestamp(results[2]),
-            donationsEndTime: getDateFromTimestamp(results[3]),
-        };
+                results = await evmProvider.multicall({
+                    contracts: contractCalls,
+                    allowFailure: false,
+                });
+            } else {
+                logger?.debug("Using individual calls for fetching timings", {
+                    className: "DVMDDirectTransferStrategyHandler",
+                    methodName: "fetchStrategyTimings",
+                });
+
+                results = (await Promise.all(
+                    contractCalls.map((call) =>
+                        evmProvider.readContract(call.address, call.abi, call.functionName),
+                    ),
+                )) as [bigint, bigint, bigint, bigint];
+            }
+
+            const timings = {
+                applicationsStartTime: getDateFromTimestamp(results[0]),
+                applicationsEndTime: getDateFromTimestamp(results[1]),
+                donationsStartTime: getDateFromTimestamp(results[2]),
+                donationsEndTime: getDateFromTimestamp(results[3]),
+            };
+
+            logger?.debug("Strategy timings fetched", {
+                className: "DVMDDirectTransferStrategyHandler",
+                methodName: "fetchStrategyTimings",
+                strategyId: getHandler(strategyId),
+                timings: {
+                    applicationsStartTime: timings.applicationsStartTime?.toISOString(),
+                    applicationsEndTime: timings.applicationsEndTime?.toISOString(),
+                    donationsStartTime: timings.donationsStartTime?.toISOString(),
+                    donationsEndTime: timings.donationsEndTime?.toISOString(),
+                },
+            });
+
+            return timings;
+        } catch (error) {
+            logger?.error("Error fetching strategy timings", {
+                className: "DVMDDirectTransferStrategyHandler",
+                methodName: "fetchStrategyTimings",
+                strategyId: getHandler(strategyId),
+                error: error instanceof Error ? error.message : String(error),
+            });
+            throw error;
+        }
     }
 
     /**
@@ -201,13 +321,39 @@ export class DVMDDirectTransferStrategyHandler extends BaseStrategyHandler {
         amount: bigint,
         timestamp: TimestampMs,
     ): Promise<string> {
-        const { pricingProvider } = this.dependencies;
+        const { pricingProvider, logger } = this.dependencies;
+
+        logger?.debug("Getting token amount in USD", {
+            className: "DVMDDirectTransferStrategyHandler",
+            methodName: "getTokenAmountInUsd",
+            tokenAddress: token.address,
+            amount: amount.toString(),
+            timestamp,
+        });
+
         const tokenPrice = await pricingProvider.getTokenPrice(token.priceSourceCode, timestamp);
 
         if (!tokenPrice) {
+            logger?.error("Token price not found", {
+                className: "DVMDDirectTransferStrategyHandler",
+                methodName: "getTokenAmountInUsd",
+                tokenAddress: token.address,
+                timestamp,
+            });
             throw new TokenPriceNotFoundError(token.address, timestamp);
         }
 
-        return calculateAmountInUsd(amount, tokenPrice.priceUsd, token.decimals);
+        const amountInUsd = calculateAmountInUsd(amount, tokenPrice.priceUsd, token.decimals);
+
+        logger?.debug("Token amount in USD calculated", {
+            className: "DVMDDirectTransferStrategyHandler",
+            methodName: "getTokenAmountInUsd",
+            tokenAddress: token.address,
+            amount: amount.toString(),
+            priceUsd: tokenPrice.priceUsd,
+            amountInUsd,
+        });
+
+        return amountInUsd;
     }
 }

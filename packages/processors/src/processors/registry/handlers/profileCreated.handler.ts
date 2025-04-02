@@ -25,12 +25,43 @@ export class ProfileCreatedHandler implements IEventHandler<"Registry", "Profile
         readonly event: ProcessorEvent<"Registry", "ProfileCreated">,
         readonly chainId: ChainId,
         private dependencies: Dependencies,
-    ) {}
+    ) {
+        this.dependencies.logger?.debug("Initializing ProfileCreatedHandler", {
+            className: "ProfileCreatedHandler",
+            chainId: this.chainId,
+            profileId: this.event.params.profileId,
+            blockNumber: this.event.blockNumber,
+        });
+    }
+
     async handle(): Promise<Changeset[]> {
-        const { metadataProvider, evmProvider, projectRepository } = this.dependencies;
+        const { metadataProvider, evmProvider, projectRepository, logger } = this.dependencies;
         const profileId = this.event.params.profileId;
         const metadataCid = this.event.params.metadata[1];
+
+        logger?.debug("Starting profile creation handling", {
+            className: "ProfileCreatedHandler",
+            methodName: "handle",
+            profileId,
+            metadataCid,
+            name: this.event.params.name,
+        });
+
+        logger?.debug("Fetching profile metadata", {
+            className: "ProfileCreatedHandler",
+            methodName: "handle",
+            profileId,
+            metadataCid,
+        });
+
         const metadata = await metadataProvider.getMetadata(metadataCid);
+
+        logger?.debug("Parsing metadata", {
+            className: "ProfileCreatedHandler",
+            methodName: "handle",
+            profileId,
+            hasMetadata: !!metadata,
+        });
 
         const parsedMetadata = ProjectMetadataSchema.safeParse(metadata);
 
@@ -39,15 +70,45 @@ export class ProfileCreatedHandler implements IEventHandler<"Registry", "Profile
         let metadataValue = null;
 
         if (parsedMetadata.success) {
+            logger?.debug("Metadata validation successful", {
+                className: "ProfileCreatedHandler",
+                methodName: "handle",
+                profileId,
+                metadataType: parsedMetadata.data.type,
+            });
+
             projectType = this.getProjectTypeFromMetadata(parsedMetadata.data);
             isProgram = parsedMetadata.data.type === "program";
             metadataValue = parsedMetadata.data;
+        } else {
+            logger?.warn("Invalid metadata format", {
+                className: "ProfileCreatedHandler",
+                methodName: "handle",
+                profileId,
+                errors: parsedMetadata.error.errors,
+            });
         }
+
+        logger?.debug("Fetching transaction creator", {
+            className: "ProfileCreatedHandler",
+            methodName: "handle",
+            profileId,
+            txHash: this.event.transactionFields.hash,
+        });
 
         const createdBy =
             this.event.transactionFields.from ??
             (await evmProvider.getTransaction(this.event.transactionFields.hash)).from;
         const programTags = isProgram ? ["program"] : [];
+
+        logger?.debug("Creating project record", {
+            className: "ProfileCreatedHandler",
+            methodName: "handle",
+            profileId,
+            projectType,
+            isProgram,
+            createdBy,
+        });
 
         const changes: Changeset[] = [
             {
@@ -77,7 +138,7 @@ export class ProfileCreatedHandler implements IEventHandler<"Registry", "Profile
                 args: {
                     projectRole: {
                         chainId: this.chainId,
-                        projectId: this.event.params.profileId,
+                        projectId: profileId,
                         address: getAddress(this.event.params.owner),
                         role: "owner",
                         createdAtBlock: BigInt(this.event.blockNumber),
@@ -86,13 +147,33 @@ export class ProfileCreatedHandler implements IEventHandler<"Registry", "Profile
             },
         ];
 
+        logger?.debug("Fetching pending project roles", {
+            className: "ProfileCreatedHandler",
+            methodName: "handle",
+            profileId,
+        });
+
         const pendingProjectRoles = await projectRepository.getPendingProjectRolesByRole(
             this.chainId,
             profileId,
         );
 
         if (pendingProjectRoles.length !== 0) {
+            logger?.debug("Processing pending project roles", {
+                className: "ProfileCreatedHandler",
+                methodName: "handle",
+                profileId,
+                pendingRolesCount: pendingProjectRoles.length,
+            });
+
             for (const role of pendingProjectRoles) {
+                logger?.debug("Adding member role", {
+                    className: "ProfileCreatedHandler",
+                    methodName: "handle",
+                    profileId,
+                    memberAddress: role.address,
+                });
+
                 changes.push({
                     type: "InsertProjectRole",
                     args: {
@@ -113,15 +194,26 @@ export class ProfileCreatedHandler implements IEventHandler<"Registry", "Profile
             });
         }
 
+        logger?.info("Profile creation completed", {
+            className: "ProfileCreatedHandler",
+            methodName: "handle",
+            profileId,
+            projectType,
+            changeCount: changes.length,
+            pendingRolesProcessed: pendingProjectRoles.length,
+        });
+
         return changes;
     }
 
     private getProjectTypeFromMetadata(metadata: ProjectMetadata): ProjectType {
-        // if the metadata contains a canonical reference, it's a linked project
-        if ("canonical" in metadata) {
-            return "linked";
-        }
-
-        return "canonical";
+        const projectType = "canonical" in metadata ? "linked" : "canonical";
+        this.dependencies.logger?.debug("Determined project type", {
+            className: "ProfileCreatedHandler",
+            methodName: "getProjectTypeFromMetadata",
+            projectType,
+            hasCanonicalField: "canonical" in metadata,
+        });
+        return projectType;
     }
 }

@@ -137,24 +137,88 @@ export class Orchestrator {
     async run(signal: AbortSignal): Promise<void> {
         let totalEvents = 0;
         let processedEvents = 0;
+        this.logger.debug("Starting run loop", {
+            className: Orchestrator.name,
+            chainId: this.chainId,
+        });
 
         while (!signal.aborted) {
             let event: ProcessorEvent<ContractName, AnyEvent> | undefined;
             try {
                 if (this.eventsQueue.isEmpty()) {
+                    this.logger.debug("Queue empty, fetching next batch", {
+                        className: Orchestrator.name,
+                        chainId: this.chainId,
+                    });
                     const events = await this.getNextEventsBatch();
+                    this.logger.debug("Fetched events batch", {
+                        className: Orchestrator.name,
+                        chainId: this.chainId,
+                        eventCount: events.length,
+                    });
+
                     await this.bulkFetchMetadataAndPricesForBatch(events);
+                    this.logger.debug("Fetched metadata and prices", {
+                        className: Orchestrator.name,
+                        chainId: this.chainId,
+                    });
+
                     await this.enqueueEvents(events);
+                    this.logger.debug("Enqueued events", {
+                        className: Orchestrator.name,
+                        chainId: this.chainId,
+                    });
+
                     totalEvents += events.length;
+                    this.logger.debug("Updated total events count", {
+                        className: Orchestrator.name,
+                        chainId: this.chainId,
+                        totalEvents,
+                    });
                 }
 
                 event = this.eventsQueue.pop();
+                this.logger.debug("Popped event from queue", {
+                    className: Orchestrator.name,
+                    chainId: this.chainId,
+                    hasEvent: !!event,
+                    eventDetails: event ? `${event.blockNumber}:${event.logIndex}` : "none",
+                    event: event
+                        ? {
+                              eventName: event.eventName,
+                              contractName: event.contractName,
+                              params: event.params,
+                              srcAddress: event.srcAddress,
+                              blockNumber: event.blockNumber,
+                              logIndex: event.logIndex,
+                              blockTimestamp: event.blockTimestamp,
+                          }
+                        : null,
+                    queueState: {
+                        remainingEvents: this.eventsQueue.length,
+                        currentBatchProgress: `${processedEvents}/${totalEvents}`,
+                        lastBlockNumber: event?.blockNumber,
+                        lastLogIndex: event?.logIndex,
+                    },
+                    blockContext: event
+                        ? {
+                              totalEventsInBlock:
+                                  this.eventsByBlockContext.get(event.blockNumber)?.length ?? 0,
+                              eventsInBlockIndexes: this.eventsByBlockContext
+                                  .get(event.blockNumber)
+                                  ?.map((e) => e.logIndex),
+                              isLastEventInBlock: this.isLastEventInBlock(event),
+                              nextEventInBlock: this.getNextEventInBlock(event),
+                              isLastEventInBatch: processedEvents + 1 >= totalEvents,
+                          }
+                        : null,
+                });
+
                 if (!event) {
                     this.logger.debug(
                         `No event to process, sleeping for ${this.fetchDelayInMs}ms`,
                         {
                             className: Orchestrator.name,
-                            chainId: this.chainId,
                         },
                     );
                     await delay(this.fetchDelayInMs);
@@ -163,8 +227,27 @@ export class Orchestrator {
 
                 await this.retryHandler.execute(
                     async () => {
+                        this.logger.debug("Starting event processing", {
+                            className: Orchestrator.name,
+                            chainId: this.chainId,
+                            eventIdentifier: `${event!.blockNumber}:${event!.logIndex}`,
+                        });
+
                         const changesets = await this.handleEvent(event!);
+                        this.logger.debug("Event handled", {
+                            className: Orchestrator.name,
+                            chainId: this.chainId,
+                            hasChangesets: !!changesets,
+                            changesetCount: changesets?.length ?? 0,
+                        });
+
                         if (changesets) {
+                            this.logger.debug("Preparing to apply changesets", {
+                                className: Orchestrator.name,
+                                chainId: this.chainId,
+                                changesetCount: changesets.length,
+                            });
+
                             await this.dataLoader.applyChanges([
                                 ...changesets,
                                 {
@@ -178,7 +261,17 @@ export class Orchestrator {
                                     },
                                 },
                             ]);
+                            this.logger.debug("Applied changesets successfully", {
+                                className: Orchestrator.name,
+                                chainId: this.chainId,
+                                totalApplied: changesets.length + 1,
+                            });
                         } else {
+                            this.logger.debug("No changesets, applying only processed event", {
+                                className: Orchestrator.name,
+                                chainId: this.chainId,
+                            });
+
                             await this.dataLoader.applyChanges([
                                 {
                                     type: "InsertProcessedEvent",
@@ -191,22 +284,52 @@ export class Orchestrator {
                                     },
                                 },
                             ]);
+                            this.logger.debug("Applied processed event record", {
+                                className: Orchestrator.name,
+                                chainId: this.chainId,
+                            });
                         }
                     },
                     { abortSignal: signal },
                 );
+
                 processedEvents++;
+                this.logger.debug("Updated processed events count", {
+                    className: Orchestrator.name,
+                    chainId: this.chainId,
+                    processedEvents,
+                    totalEvents,
+                });
+
                 this.logger.info(`Processed events: ${processedEvents}/${totalEvents}`, {
                     className: Orchestrator.name,
                     chainId: this.chainId,
+                    progress: `${((processedEvents / totalEvents) * 100).toFixed(2)}%`,
+                    currentEventIdentifier: `${event!.blockNumber}:${event!.logIndex}`,
+                    currentBlock: event!.blockNumber,
                 });
             } catch (error: unknown) {
+                this.logger.debug("Entered error handling block", {
+                    className: Orchestrator.name,
+                    chainId: this.chainId,
+                    errorType: error instanceof Error ? error.constructor.name : typeof error,
+                    errorMessage: error instanceof Error ? error.message : String(error),
+                });
+
                 if (event) {
+                    this.logger.debug("Saving last processed event before error handling", {
+                        className: Orchestrator.name,
+                        chainId: this.chainId,
+                        eventIdentifier: `${event.blockNumber}:${event.logIndex}`,
+                        blockNumber: event.blockNumber,
+                    });
+
                     await this.eventsRegistry.saveLastProcessedEvent(this.chainId, {
                         ...event,
                         rawEvent: event,
                     });
                 }
+
                 if (
                     error instanceof UnsupportedStrategy ||
                     error instanceof InvalidEvent ||
@@ -218,32 +341,88 @@ export class Orchestrator {
                             className: Orchestrator.name,
                             chainId: this.chainId,
                             event,
+                            errorType: error.constructor.name,
+                            errorDetails: error.message,
                         },
                     );
                 } else {
                     if (error instanceof RetriableError) {
+                        this.logger.debug("Processing RetriableError", {
+                            className: Orchestrator.name,
+                            chainId: this.chainId,
+                            errorType: "RetriableError",
+                            eventIdentifier: event
+                                ? `${event.blockNumber}:${event.logIndex}`
+                                : undefined,
+                        });
+
                         error.message = `Error processing event after retries. ${error.message}`;
                         this.logger.error(error, {
                             event,
                             className: Orchestrator.name,
                             chainId: this.chainId,
+                            lastRetryDelay: error.metadata?.retryAfterInMs,
+                            reason: error.metadata?.failureReason,
                         });
+
+                        this.logger.debug("Sending notification for RetriableError", {
+                            className: Orchestrator.name,
+                            chainId: this.chainId,
+                            eventIdentifier: event
+                                ? `${event.blockNumber}:${event.logIndex}`
+                                : undefined,
+                        });
+
                         void this.notifier.send(error.message, {
                             chainId: this.chainId,
                             event: event!,
                             stack: error.getFullStack(),
                         });
                     } else if (error instanceof Error || isNativeError(error)) {
+                        this.logger.debug("Processing standard Error", {
+                            className: Orchestrator.name,
+                            chainId: this.chainId,
+                            errorType: error.constructor.name,
+                            eventIdentifier: event
+                                ? `${event.blockNumber}:${event.logIndex}`
+                                : undefined,
+                        });
+
                         const shouldIgnoreError = this.shouldIgnoreTimestampsUpdatedError(
                             error,
                             event!,
                         );
+
+                        this.logger.debug("Checking if error should be ignored", {
+                            className: Orchestrator.name,
+                            chainId: this.chainId,
+                            shouldIgnoreError,
+                            errorType: error.constructor.name,
+                            eventIdentifier: `${event!.blockNumber}:${event!.logIndex}`,
+                            errorMessage: error.message,
+                        });
+
                         if (!shouldIgnoreError) {
+                            this.logger.debug("Error not ignored, preparing to send notification", {
+                                className: Orchestrator.name,
+                                chainId: this.chainId,
+                                eventIdentifier: `${event!.blockNumber}:${event!.logIndex}`,
+                                errorType: error.constructor.name,
+                            });
+
                             this.logger.error(error, {
                                 event,
                                 className: Orchestrator.name,
                                 chainId: this.chainId,
+                                errorStack: error.stack,
                             });
+
+                            this.logger.debug("Sending notification for standard error", {
+                                className: Orchestrator.name,
+                                chainId: this.chainId,
+                                eventIdentifier: `${event!.blockNumber}:${event!.logIndex}`,
+                            });
+
                             void this.notifier.send(error.message, {
                                 chainId: this.chainId,
                                 event: event!,
@@ -251,20 +430,44 @@ export class Orchestrator {
                             });
                         }
                     } else {
-                        this.logger.error(
-                            new Error(`Error processing event: ${stringify(event)} ${error}`),
-                            {
-                                className: Orchestrator.name,
-                                chainId: this.chainId,
-                            },
-                        );
-                        void this.notifier.send(
-                            `Error processing event: ${stringify(event)} ${error}`,
-                            {
-                                chainId: this.chainId,
-                                event: event!,
-                            },
-                        );
+                        this.logger.debug("Processing unknown error type", {
+                            className: Orchestrator.name,
+                            chainId: this.chainId,
+                            errorType: typeof error,
+                            eventIdentifier: event
+                                ? `${event.blockNumber}:${event.logIndex}`
+                                : undefined,
+                        });
+
+                        const errorMessage = `Error processing event: ${stringify(event)} ${error}`;
+
+                        this.logger.debug("Created error message for unknown error", {
+                            className: Orchestrator.name,
+                            chainId: this.chainId,
+                            errorMessage,
+                            eventIdentifier: event
+                                ? `${event.blockNumber}:${event.logIndex}`
+                                : undefined,
+                        });
+
+                        this.logger.error(new Error(errorMessage), {
+                            className: Orchestrator.name,
+                            chainId: this.chainId,
+                            unknownErrorType: typeof error,
+                        });
+
+                        this.logger.debug("Sending notification for unknown error", {
+                            className: Orchestrator.name,
+                            chainId: this.chainId,
+                            eventIdentifier: event
+                                ? `${event.blockNumber}:${event.logIndex}`
+                                : undefined,
+                        });
+
+                        void this.notifier.send(errorMessage, {
+                            chainId: this.chainId,
+                            event: event!,
+                        });
                     }
                 }
             }
@@ -312,6 +515,13 @@ export class Orchestrator {
      */
     private async getNextEventsBatch(): Promise<AnyIndexerFetchedEvent[]> {
         const lastProcessedEvent = await this.eventsRegistry.getLastProcessedEvent(this.chainId);
+        this.logger.debug("Fetching next batch of events", {
+            className: Orchestrator.name,
+            chainId: this.chainId,
+            lastProcessedBlockNumber: lastProcessedEvent?.blockNumber ?? 0,
+            lastProcessedLogIndex: lastProcessedEvent?.logIndex ?? 0,
+            fetchLimit: this.fetchLimit,
+        });
 
         const blockNumber = lastProcessedEvent?.blockNumber ?? 0;
         const logIndex = lastProcessedEvent?.logIndex ?? 0;
@@ -321,6 +531,25 @@ export class Orchestrator {
             blockNumber,
             logIndex,
             limit: this.fetchLimit,
+        });
+
+        this.logger.debug("Fetched events details", {
+            className: Orchestrator.name,
+            chainId: this.chainId,
+            eventCount: events.length,
+            firstEvent: events[0]
+                ? {
+                      blockNumber: events[0].blockNumber,
+                      logIndex: events[0].logIndex,
+                  }
+                : null,
+            lastEvent: events[events.length - 1]
+                ? {
+                      blockNumber: events[events.length - 1]!.blockNumber,
+                      logIndex: events[events.length - 1]!.logIndex,
+                  }
+                : null,
+            uniqueBlocks: [...new Set(events.map((e) => e.blockNumber))].length,
         });
 
         return events;
@@ -357,7 +586,18 @@ export class Orchestrator {
      * @param events - The events batch
      */
     private async enqueueEvents(events: AnyIndexerFetchedEvent[]): Promise<void> {
-        // Clear previous context
+        this.logger.debug("Starting to enqueue events", {
+            className: Orchestrator.name,
+            chainId: this.chainId,
+            totalEvents: events.length,
+            eventsByBlock: Object.fromEntries(
+                Array.from(new Set(events.map((e) => e.blockNumber))).map((block) => [
+                    block,
+                    events.filter((e) => e.blockNumber === block).length,
+                ]),
+            ),
+        });
+
         this.eventsByBlockContext.clear();
         for (const event of events) {
             if (!this.eventsByBlockContext.has(event.blockNumber)) {
@@ -367,6 +607,16 @@ export class Orchestrator {
         }
 
         this.eventsQueue.push(...events);
+
+        this.logger.debug("Events enqueued with block context", {
+            className: Orchestrator.name,
+            chainId: this.chainId,
+            blockContextSize: this.eventsByBlockContext.size,
+            blocksWithEvents: Array.from(this.eventsByBlockContext.keys()),
+            eventsPerBlock: Array.from(this.eventsByBlockContext.entries()).map(
+                ([block, events]) => ({ block, count: events.length }),
+            ),
+        });
     }
 
     /**
@@ -405,32 +655,109 @@ export class Orchestrator {
      * @returns The token prices
      */
     private async bulkFetchTokens(tokens: TokenWithTimestamps[]): Promise<TokenPrice[]> {
+        this.logger.info(`Starting bulk fetch for ${tokens.length} token prices`, {
+            className: Orchestrator.name,
+            chainId: this.chainId,
+            tokens: tokens.map((t) => t.token.priceSourceCode),
+            timestampCount: tokens[0]?.timestamps.length ?? 0,
+        });
+
         const results = await Promise.allSettled(
             tokens.map(({ token, timestamps }) =>
                 this.retryHandler.execute(async () => {
-                    const prices = await this.dependencies.pricingProvider.getTokenPrices(
-                        token.priceSourceCode,
-                        timestamps,
-                    );
-                    return prices;
+                    this.logger.debug(`Fetching prices for token ${token.priceSourceCode}`, {
+                        className: Orchestrator.name,
+                        chainId: this.chainId,
+                        timestampCount: timestamps.length,
+                    });
+
+                    try {
+                        const prices = await this.dependencies.pricingProvider.getTokenPrices(
+                            token.priceSourceCode,
+                            timestamps,
+                        );
+                        this.logger.debug(
+                            `Successfully fetched prices for ${token.priceSourceCode}`,
+                            {
+                                className: Orchestrator.name,
+                                chainId: this.chainId,
+                                priceCount: prices.length,
+                            },
+                        );
+                        return prices;
+                    } catch (error) {
+                        this.logger.error(`Failed to fetch prices for ${token.priceSourceCode}`, {
+                            className: Orchestrator.name,
+                            chainId: this.chainId,
+                            error: error instanceof Error ? error.message : String(error),
+                            timestamps: timestamps.map((t) => new Date(t).toISOString()),
+                        });
+                        throw error;
+                    }
                 }),
             ),
         );
+
         const tokenPrices: TokenPrice[] = [];
+        let fulfilledCount = 0;
+        let rejectedCount = 0;
+
         for (const result of results) {
             if (result.status === "fulfilled" && result.value) {
                 tokenPrices.push(...result.value);
+                fulfilledCount++;
+            } else if (result.status === "rejected") {
+                rejectedCount++;
+                this.logger.warn(`Token price fetch rejected`, {
+                    className: Orchestrator.name,
+                    chainId: this.chainId,
+                    error:
+                        result.reason instanceof Error
+                            ? result.reason.message
+                            : String(result.reason),
+                });
             }
         }
+
+        this.logger.info(`Completed bulk token price fetch`, {
+            className: Orchestrator.name,
+            chainId: this.chainId,
+            totalRequests: results.length,
+            successful: fulfilledCount,
+            failed: rejectedCount,
+            totalPricesFetched: tokenPrices.length,
+        });
+
         return tokenPrices;
     }
 
     private async handleEvent(
         event: ProcessorEvent<ContractName, AnyEvent>,
     ): Promise<Changeset[] | undefined> {
+        this.logger.debug("Starting event handling", {
+            className: Orchestrator.name,
+            chainId: this.chainId,
+            eventDetails: {
+                blockNumber: event.blockNumber,
+                logIndex: event.logIndex,
+                eventName: event.eventName,
+                contractName: event.contractName,
+                hasStrategyId: "strategyId" in event,
+            },
+        });
+
         event = await this.enhanceStrategyId(event);
+
         if (this.isPoolCreated(event)) {
             const handleable = existsHandler(event.strategyId);
+            this.logger.debug("Processing PoolCreated event", {
+                className: Orchestrator.name,
+                chainId: this.chainId,
+                strategyId: event.strategyId,
+                strategyAddress: event.params.strategy,
+                isHandleable: handleable,
+            });
+
             await this.strategyRegistry.saveStrategyId(
                 this.chainId,
                 event.params.strategy,
@@ -439,17 +766,28 @@ export class Orchestrator {
             );
         } else if (event.contractName === "Strategy" && "strategyId" in event) {
             if (!existsHandler(event.strategyId)) {
-                this.logger.debug("Skipping event", {
-                    event,
+                this.logger.debug("Skipping unhandled strategy event", {
                     className: Orchestrator.name,
                     chainId: this.chainId,
+                    eventName: event.eventName,
+                    strategyId: event.strategyId,
+                    blockNumber: event.blockNumber,
+                    logIndex: event.logIndex,
                 });
-                // we skip the event if the strategy id is not handled yet
                 return undefined;
             }
         }
 
-        return this.eventsProcessor.processEvent(event);
+        const result = await this.eventsProcessor.processEvent(event);
+        this.logger.debug("Event handling completed", {
+            className: Orchestrator.name,
+            chainId: this.chainId,
+            eventIdentifier: `${event.blockNumber}:${event.logIndex}`,
+            hasResult: !!result,
+            changesetCount: result?.length ?? 0,
+        });
+
+        return result;
     }
 
     /**
@@ -531,5 +869,22 @@ export class Orchestrator {
         event: ProcessorEvent<ContractName, AnyEvent>,
     ): event is ProcessorEvent<"Allo", "PoolCreated"> | ProcessorEvent<"Strategy", StrategyEvent> {
         return this.isPoolCreated(event) || isStrategyEvent(event);
+    }
+
+    private isLastEventInBlock(event: AnyIndexerFetchedEvent): boolean {
+        const eventsInBlock = this.eventsByBlockContext.get(event.blockNumber);
+        if (!eventsInBlock || eventsInBlock.length === 0) return false;
+        const lastEvent = eventsInBlock[eventsInBlock.length - 1]!;
+        return lastEvent.logIndex === event.logIndex;
+    }
+
+    private getNextEventInBlock(event: AnyIndexerFetchedEvent): AnyIndexerFetchedEvent | undefined {
+        const eventsInBlock = this.eventsByBlockContext.get(event.blockNumber);
+        if (!eventsInBlock) return undefined;
+
+        const currentIndex = eventsInBlock.findIndex((e) => e.logIndex === event.logIndex);
+        if (currentIndex === -1 || currentIndex === eventsInBlock.length - 1) return undefined;
+
+        return eventsInBlock[currentIndex + 1];
     }
 }

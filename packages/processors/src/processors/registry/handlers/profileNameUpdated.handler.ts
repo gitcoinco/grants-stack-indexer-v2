@@ -17,21 +17,53 @@ export class ProfileNameUpdatedHandler implements IEventHandler<"Registry", "Pro
         readonly event: ProcessorEvent<"Registry", "ProfileNameUpdated">,
         readonly chainId: ChainId,
         private dependencies: Dependencies,
-    ) {}
+    ) {
+        this.dependencies.logger?.debug("Initializing ProfileNameUpdatedHandler", {
+            className: "ProfileNameUpdatedHandler",
+            chainId: this.chainId,
+            profileId: this.event.params.profileId,
+            blockNumber: this.event.blockNumber,
+        });
+    }
     /* @inheritdoc */
     async handle(): Promise<Changeset[]> {
-        return [
+        const { logger } = this.dependencies;
+        const profileId = this.event.params.profileId;
+        const newName = this.event.params.name;
+        const newAnchor = getAddress(this.event.params.anchor);
+
+        logger?.debug("Starting profile name update", {
+            className: "ProfileNameUpdatedHandler",
+            methodName: "handle",
+            profileId,
+            newName,
+            newAnchor,
+            blockNumber: this.event.blockNumber,
+        });
+
+        const changes: Changeset[] = [
             {
                 type: "UpdateProject",
                 args: {
                     chainId: this.chainId,
-                    projectId: this.event.params.profileId,
+                    projectId: profileId,
                     project: {
-                        name: this.event.params.name,
-                        anchorAddress: getAddress(this.event.params.anchor),
+                        name: newName,
+                        anchorAddress: newAnchor,
                     },
                 },
             },
         ];
+
+        logger?.info("Profile name update completed", {
+            className: "ProfileNameUpdatedHandler",
+            methodName: "handle",
+            profileId,
+            newName,
+            newAnchor,
+            changeCount: changes.length,
+        });
+
+        return changes;
     }
 }

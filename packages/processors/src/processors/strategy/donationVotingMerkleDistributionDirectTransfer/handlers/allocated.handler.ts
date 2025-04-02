@@ -14,7 +14,7 @@ import { getDonationId } from "../../helpers/index.js";
 
 type Dependencies = Pick<
     ProcessorDependencies,
-    "roundRepository" | "applicationRepository" | "pricingProvider"
+    "roundRepository" | "applicationRepository" | "pricingProvider" | "logger"
 >;
 
 /**
@@ -31,7 +31,15 @@ export class DVMDAllocatedHandler implements IEventHandler<"Strategy", "Allocate
         readonly event: ProcessorEvent<"Strategy", "AllocatedWithOrigin">,
         private readonly chainId: ChainId,
         private readonly dependencies: Dependencies,
-    ) {}
+    ) {
+        this.dependencies.logger?.debug("Initializing DVMDAllocatedHandler", {
+            className: "DVMDAllocatedHandler",
+            chainId: this.chainId,
+            strategyAddress: this.event.srcAddress,
+            blockNumber: this.event.blockNumber,
+            transactionHash: this.event.transactionFields.hash,
+        });
+    }
 
     /**
      * Handles the AllocatedWithOrigin event for the Donation Voting Merkle Distribution Direct Transfer strategy.
@@ -44,16 +52,40 @@ export class DVMDAllocatedHandler implements IEventHandler<"Strategy", "Allocate
      * @throws {MetadataParsingFailed} if the metadata is invalid
      */
     async handle(): Promise<Changeset[]> {
-        const { roundRepository, applicationRepository } = this.dependencies;
+        const { roundRepository, applicationRepository, pricingProvider, logger } =
+            this.dependencies;
         const { srcAddress } = this.event;
         const { recipientId: _recipientId, amount: strAmount, token: _token } = this.event.params;
 
+        logger?.debug("Starting allocation handling", {
+            className: "DVMDAllocatedHandler",
+            methodName: "handle",
+            recipientId: _recipientId,
+            amount: strAmount,
+            token: _token,
+        });
+
         const amount = BigInt(strAmount);
+
+        logger?.debug("Fetching round by strategy address", {
+            className: "DVMDAllocatedHandler",
+            methodName: "handle",
+            strategyAddress: srcAddress,
+            chainId: this.chainId,
+        });
 
         const round = await roundRepository.getRoundByStrategyAddressOrThrow(
             this.chainId,
             getAddress(srcAddress),
         );
+
+        logger?.debug("Fetching application details", {
+            className: "DVMDAllocatedHandler",
+            methodName: "handle",
+            roundId: round.id,
+            recipientId: _recipientId,
+        });
+
         const application = await applicationRepository.getApplicationByAnchorAddressOrThrow(
             this.chainId,
             round.id,
@@ -61,30 +93,64 @@ export class DVMDAllocatedHandler implements IEventHandler<"Strategy", "Allocate
         );
 
         const donationId = getDonationId(this.event.blockNumber, this.event.logIndex);
-
         const token = getTokenOrThrow(this.chainId, _token);
         const matchToken = getTokenOrThrow(this.chainId, round.matchTokenAddress);
 
+        logger?.debug("Calculating USD amount for donation", {
+            className: "DVMDAllocatedHandler",
+            methodName: "handle",
+            donationId,
+            amount: amount.toString(),
+            token: token,
+            matchToken: matchToken,
+        });
+
         const { amountInUsd } = await getTokenAmountInUsd(
-            this.dependencies.pricingProvider,
+            pricingProvider,
             token,
             amount,
             this.event.blockTimestamp,
         );
+
+        logger?.debug("Calculating match token amount", {
+            className: "DVMDAllocatedHandler",
+            methodName: "handle",
+            amountInUsd,
+            matchToken: matchToken,
+            usingDirectConversion: matchToken.address === token.address,
+        });
+
         let amountInRoundMatchToken: bigint | null = null;
         amountInRoundMatchToken =
             matchToken.address === token.address
                 ? amount
                 : (
                       await getUsdInTokenAmount(
-                          this.dependencies.pricingProvider,
+                          pricingProvider,
                           matchToken,
                           amountInUsd,
                           this.event.blockTimestamp,
                       )
                   ).amount;
 
+        logger?.debug("Parsing application metadata", {
+            className: "DVMDAllocatedHandler",
+            methodName: "handle",
+            applicationId: application.id,
+            metadataPresent: application.metadata !== null,
+        });
+
         const parsedMetadata = this.parseMetadataOrThrow(application.metadata);
+
+        logger?.debug("Creating donation record", {
+            className: "DVMDAllocatedHandler",
+            methodName: "handle",
+            donationId,
+            applicationId: application.id,
+            roundId: round.id,
+            amount: amount.toString(),
+            amountInUsd,
+        });
 
         const donation: Donation = {
             id: donationId,
@@ -103,13 +169,13 @@ export class DVMDAllocatedHandler implements IEventHandler<"Strategy", "Allocate
             timestamp: new Date(this.event.blockTimestamp),
         };
 
-        return [
+        const changes = [
             {
-                type: "InsertDonation",
+                type: "InsertDonation" as const,
                 args: { donation },
             },
             {
-                type: "IncrementRoundDonationStats",
+                type: "IncrementRoundDonationStats" as const,
                 args: {
                     chainId: this.chainId,
                     roundId: round.id,
@@ -117,7 +183,7 @@ export class DVMDAllocatedHandler implements IEventHandler<"Strategy", "Allocate
                 },
             },
             {
-                type: "IncrementApplicationDonationStats",
+                type: "IncrementApplicationDonationStats" as const,
                 args: {
                     chainId: this.chainId,
                     roundId: round.id,
@@ -126,6 +192,20 @@ export class DVMDAllocatedHandler implements IEventHandler<"Strategy", "Allocate
                 },
             },
         ];
+
+        logger?.info("Allocation processing completed", {
+            className: "DVMDAllocatedHandler",
+            methodName: "handle",
+            donationId,
+            roundId: round.id,
+            applicationId: application.id,
+            amount: amount.toString(),
+            amountInUsd,
+            amountInRoundMatchToken: amountInRoundMatchToken?.toString(),
+            changeCount: changes.length,
+        });
+
+        return changes;
     }
 
     /**
@@ -135,8 +215,23 @@ export class DVMDAllocatedHandler implements IEventHandler<"Strategy", "Allocate
      * @throws {MetadataParsingFailed} if the metadata is invalid.
      */
     private parseMetadataOrThrow(metadata: unknown): ApplicationMetadata {
+        const { logger } = this.dependencies;
+
+        logger?.debug("Parsing metadata", {
+            className: "DVMDAllocatedHandler",
+            methodName: "parseMetadataOrThrow",
+            metadataPresent: metadata !== null,
+        });
+
         const parsedMetadata = ApplicationMetadataSchema.safeParse(metadata);
-        if (!parsedMetadata.success) throw new MetadataParsingFailed(parsedMetadata.error.message);
+        if (!parsedMetadata.success) {
+            logger?.error("Failed to parse metadata", {
+                className: "DVMDAllocatedHandler",
+                methodName: "parseMetadataOrThrow",
+                error: parsedMetadata.error.message,
+            });
+            throw new MetadataParsingFailed(parsedMetadata.error.message);
+        }
 
         return parsedMetadata.data;
     }

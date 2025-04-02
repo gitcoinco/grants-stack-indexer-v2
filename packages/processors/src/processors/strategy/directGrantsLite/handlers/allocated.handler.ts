@@ -8,7 +8,7 @@ import { IEventHandler, ProcessorDependencies } from "../../../../internal.js";
 
 type Dependencies = Pick<
     ProcessorDependencies,
-    "roundRepository" | "applicationRepository" | "pricingProvider"
+    "roundRepository" | "applicationRepository" | "pricingProvider" | "logger"
 >;
 
 /**
@@ -26,7 +26,15 @@ export class DGLiteAllocatedHandler implements IEventHandler<"Strategy", "Alloca
         readonly event: ProcessorEvent<"Strategy", "AllocatedWithToken">,
         private readonly chainId: ChainId,
         private readonly dependencies: Dependencies,
-    ) {}
+    ) {
+        this.dependencies.logger?.debug("Initializing DGLiteAllocatedHandler", {
+            className: "DGLiteAllocatedHandler",
+            chainId: this.chainId,
+            strategyAddress: this.event.srcAddress,
+            blockNumber: this.event.blockNumber,
+            transactionHash: this.event.transactionFields.hash,
+        });
+    }
 
     /**
      * Handles the AllocatedWithToken event for the Direct Grants Lite strategy.
@@ -37,11 +45,28 @@ export class DGLiteAllocatedHandler implements IEventHandler<"Strategy", "Alloca
      * @throws TokenPriceNotFound if the token price is not found.
      */
     async handle(): Promise<Changeset[]> {
-        const { roundRepository, applicationRepository } = this.dependencies;
+        const { roundRepository, applicationRepository, pricingProvider, logger } =
+            this.dependencies;
         const { srcAddress } = this.event;
         const { recipientId: _recipientId, amount: strAmount, token: _token } = this.event.params;
 
+        logger?.debug("Starting allocation handling", {
+            className: "DGLiteAllocatedHandler",
+            methodName: "handle",
+            strategyAddress: srcAddress,
+            recipientId: _recipientId,
+            amount: strAmount,
+            token: _token,
+        });
+
         const amount = BigInt(strAmount);
+
+        logger?.debug("Fetching round by strategy address", {
+            className: "DGLiteAllocatedHandler",
+            methodName: "handle",
+            strategyAddress: srcAddress,
+            chainId: this.chainId,
+        });
 
         const round = await roundRepository.getRoundByStrategyAddressOrThrow(
             this.chainId,
@@ -50,6 +75,15 @@ export class DGLiteAllocatedHandler implements IEventHandler<"Strategy", "Alloca
 
         const recipientId = getAddress(_recipientId);
         const tokenAddress = getAddress(_token);
+
+        logger?.debug("Fetching application details", {
+            className: "DGLiteAllocatedHandler",
+            methodName: "handle",
+            roundId: round.id,
+            recipientId,
+            chainId: this.chainId,
+        });
+
         const application = await applicationRepository.getApplicationByAnchorAddressOrThrow(
             this.chainId,
             round.id,
@@ -59,24 +93,47 @@ export class DGLiteAllocatedHandler implements IEventHandler<"Strategy", "Alloca
         const token = getTokenOrThrow(this.chainId, tokenAddress);
         const matchToken = getTokenOrThrow(this.chainId, round.matchTokenAddress);
 
+        logger?.debug("Processing token amounts", {
+            className: "DGLiteAllocatedHandler",
+            methodName: "handle",
+            token: token,
+            amount: amount.toString(),
+        });
+
         let amountInUsd = "0";
         let amountInRoundMatchToken = 0n;
 
         if (amount > 0) {
+            logger?.debug("Converting amount to USD", {
+                className: "DGLiteAllocatedHandler",
+                methodName: "handle",
+                amount: amount.toString(),
+                token: token,
+                timestamp: this.event.blockTimestamp,
+            });
+
             const { amountInUsd: amountInUsdString } = await getTokenAmountInUsd(
-                this.dependencies.pricingProvider,
+                pricingProvider,
                 token,
                 amount,
                 this.event.blockTimestamp,
             );
             amountInUsd = amountInUsdString;
 
+            logger?.debug("Calculating match token amount", {
+                className: "DGLiteAllocatedHandler",
+                methodName: "handle",
+                amountInUsd,
+                matchToken: matchToken,
+                usingDirectConversion: matchToken.address === token.address,
+            });
+
             amountInRoundMatchToken =
                 matchToken.address === token.address
                     ? amount
                     : (
                           await getUsdInTokenAmount(
-                              this.dependencies.pricingProvider,
+                              pricingProvider,
                               matchToken,
                               amountInUsd,
                               this.event.blockTimestamp,
@@ -84,11 +141,9 @@ export class DGLiteAllocatedHandler implements IEventHandler<"Strategy", "Alloca
                       ).amount;
         }
 
-        const timestamp = this.event.blockTimestamp;
-
-        return [
+        const changes = [
             {
-                type: "InsertApplicationPayout",
+                type: "InsertApplicationPayout" as const,
                 args: {
                     applicationPayout: {
                         amount,
@@ -100,12 +155,12 @@ export class DGLiteAllocatedHandler implements IEventHandler<"Strategy", "Alloca
                         amountInUsd,
                         transactionHash: this.event.transactionFields.hash,
                         sender: getAddress(this.event.params.sender),
-                        timestamp: new Date(timestamp),
+                        timestamp: new Date(this.event.blockTimestamp),
                     },
                 },
             },
             {
-                type: "IncrementRoundTotalDistributed",
+                type: "IncrementRoundTotalDistributed" as const,
                 args: {
                     chainId: this.chainId,
                     roundId: round.id,
@@ -113,5 +168,18 @@ export class DGLiteAllocatedHandler implements IEventHandler<"Strategy", "Alloca
                 },
             },
         ];
+
+        logger?.info("Allocation processing completed", {
+            className: "DGLiteAllocatedHandler",
+            methodName: "handle",
+            applicationId: application.id,
+            roundId: round.id,
+            amount: amount.toString(),
+            amountInUsd,
+            amountInRoundMatchToken: amountInRoundMatchToken.toString(),
+            changeCount: changes.length,
+        });
+
+        return changes;
     }
 }

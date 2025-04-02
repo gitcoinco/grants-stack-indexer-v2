@@ -14,7 +14,12 @@ export class RetryHandler {
     constructor(
         private readonly strategy: RetryStrategy = new ExponentialBackoff(),
         private readonly logger: ILogger,
-    ) {}
+    ) {
+        this.logger.debug("Initializing RetryHandler", {
+            className: "RetryHandler",
+            strategyType: strategy.constructor.name,
+        });
+    }
 
     /**
      * Executes an operation with retry logic
@@ -29,37 +34,102 @@ export class RetryHandler {
         operation: () => Promise<T>,
         params: { abortSignal?: AbortSignal } = {},
     ): Promise<T | undefined> {
+        this.logger.debug("Starting operation execution", {
+            className: "RetryHandler",
+            methodName: "execute",
+            hasAbortSignal: !!params.abortSignal,
+        });
+
         let result: T | undefined;
         let attemptCount = 0;
+        const startTime = Date.now();
+
         while (true && !params.abortSignal?.aborted) {
+            attemptCount++;
+
+            this.logger.debug("Attempting operation", {
+                className: "RetryHandler",
+                methodName: "execute",
+                attemptCount,
+                elapsedMs: Date.now() - startTime,
+            });
+
             try {
                 result = await operation();
+                const duration = Date.now() - startTime;
+
+                this.logger.info("Operation completed successfully", {
+                    className: "RetryHandler",
+                    methodName: "execute",
+                    attemptCount,
+                    durationMs: duration,
+                    hasResult: result !== undefined,
+                });
+
                 break;
             } catch (error) {
-                if (!(error instanceof RetriableError)) {
+                const isRetriable = error instanceof RetriableError;
+
+                this.logger.warn("Operation attempt failed", {
+                    className: "RetryHandler",
+                    methodName: "execute",
+                    attemptCount,
+                    isRetriable,
+                    error: error instanceof Error ? error.message : String(error),
+                    errorType: error instanceof Error ? error.constructor.name : typeof error,
+                    metadata: error instanceof RetriableError ? error.metadata : undefined,
+                });
+
+                if (!isRetriable) {
+                    this.logger.error("Non-retriable error encountered", {
+                        className: "RetryHandler",
+                        methodName: "execute",
+                        attemptCount,
+                        error: error instanceof Error ? error.message : String(error),
+                        elapsedMs: Date.now() - startTime,
+                    });
                     throw error;
                 }
-                attemptCount++;
 
                 if (!this.strategy.shouldRetry(attemptCount)) {
-                    throw error;
-                } else {
-                    const delay = this.strategy.getDelay(
+                    this.logger.error("Max retries exceeded", {
+                        className: "RetryHandler",
+                        methodName: "execute",
                         attemptCount,
-                        error.metadata?.retryAfterInMs,
-                    );
-
-                    this.logger.debug(`Retrying in ${delay}ms`, {
-                        className: RetryHandler.name,
-                        delay,
+                        elapsedMs: Date.now() - startTime,
+                        error: error instanceof Error ? error.message : String(error),
                     });
-
-                    await new Promise((resolve) => setTimeout(resolve, delay, params.abortSignal));
+                    throw error;
                 }
+
+                const delay = this.strategy.getDelay(
+                    attemptCount,
+                    error instanceof RetriableError ? error.metadata?.retryAfterInMs : undefined,
+                );
+
+                this.logger.debug("Scheduling retry", {
+                    className: "RetryHandler",
+                    methodName: "execute",
+                    attemptCount,
+                    nextDelayMs: delay,
+                    elapsedMs: Date.now() - startTime,
+                    retryAfterMs:
+                        error instanceof RetriableError
+                            ? error.metadata?.retryAfterInMs
+                            : undefined,
+                });
+
+                await new Promise((resolve) => setTimeout(resolve, delay, params.abortSignal));
             }
         }
 
         if (params.abortSignal?.aborted) {
+            this.logger.warn("Operation aborted", {
+                className: "RetryHandler",
+                methodName: "execute",
+                attemptCount,
+                elapsedMs: Date.now() - startTime,
+            });
             throw new Error("Operation aborted");
         }
 

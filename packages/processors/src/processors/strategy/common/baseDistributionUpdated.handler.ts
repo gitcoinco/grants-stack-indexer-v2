@@ -36,35 +36,87 @@ export class BaseDistributionUpdatedHandler
         >,
         private readonly chainId: ChainId,
         private readonly dependencies: Dependencies,
-    ) {}
+    ) {
+        this.dependencies.logger?.debug("Initializing BaseDistributionUpdatedHandler", {
+            className: "BaseDistributionUpdatedHandler",
+            chainId: this.chainId,
+            eventName: this.event.eventName,
+            blockNumber: this.event.blockNumber,
+            strategyAddress: this.event.srcAddress,
+        });
+    }
 
     /* @inheritdoc */
     async handle(): Promise<Changeset[]> {
         const { logger, metadataProvider } = this.dependencies;
         const [_, pointer] = this.event.params.metadata;
-
         const strategyAddress = getAddress(this.event.srcAddress);
+
+        logger?.debug("Starting distribution update handling", {
+            className: "BaseDistributionUpdatedHandler",
+            methodName: "handle",
+            strategyAddress,
+            metadataPointer: pointer,
+            chainId: this.chainId,
+        });
+
+        logger?.debug("Fetching distribution metadata", {
+            className: "BaseDistributionUpdatedHandler",
+            methodName: "handle",
+            strategyAddress,
+            metadataPointer: pointer,
+        });
+
         const rawDistribution = await metadataProvider.getMetadata<
             MatchingDistribution | undefined
         >(pointer);
 
         if (!rawDistribution) {
-            logger.warn(`No matching distribution found for pointer: ${pointer}`);
+            logger?.warn("Distribution metadata not found", {
+                className: "BaseDistributionUpdatedHandler",
+                methodName: "handle",
+                strategyAddress,
+                metadataPointer: pointer,
+                chainId: this.chainId,
+            });
 
             throw new MetadataNotFound(`No matching distribution found for pointer: ${pointer}`);
         }
 
+        logger?.debug("Parsing distribution metadata", {
+            className: "BaseDistributionUpdatedHandler",
+            methodName: "handle",
+            strategyAddress,
+            metadataPointer: pointer,
+            hasRawDistribution: true,
+        });
+
         const distribution = MatchingDistributionSchema.safeParse(rawDistribution);
 
         if (!distribution.success) {
-            logger.warn(`Failed to parse matching distribution: ${distribution.error.message}`);
+            logger?.warn("Distribution metadata parsing failed", {
+                className: "BaseDistributionUpdatedHandler",
+                methodName: "handle",
+                strategyAddress,
+                metadataPointer: pointer,
+                errorMessage: distribution.error.message,
+                errors: distribution.error.errors,
+            });
 
             throw new MetadataParsingFailed(
                 `Failed to parse matching distribution: ${distribution.error.message}`,
             );
         }
 
-        return [
+        logger?.debug("Creating update changeset", {
+            className: "BaseDistributionUpdatedHandler",
+            methodName: "handle",
+            strategyAddress,
+            transactionHash: this.event.transactionFields.hash,
+            distributionSize: distribution.data.matchingDistribution.length,
+        });
+
+        const changes: Changeset[] = [
             {
                 type: "UpdateRoundByStrategyAddress",
                 args: {
@@ -77,5 +129,16 @@ export class BaseDistributionUpdatedHandler
                 },
             },
         ];
+
+        logger?.info("Distribution update completed", {
+            className: "BaseDistributionUpdatedHandler",
+            methodName: "handle",
+            strategyAddress,
+            chainId: this.chainId,
+            changeCount: changes.length,
+            distributionSize: distribution.data.matchingDistribution.length,
+        });
+
+        return changes;
     }
 }

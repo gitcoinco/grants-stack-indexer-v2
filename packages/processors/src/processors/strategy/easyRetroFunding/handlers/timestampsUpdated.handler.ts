@@ -6,7 +6,7 @@ import { ChainId, ProcessorEvent } from "@grants-stack-indexer/shared";
 import { getDateFromTimestamp } from "../../../../helpers/index.js";
 import { IEventHandler, ProcessorDependencies } from "../../../../internal.js";
 
-type Dependencies = Pick<ProcessorDependencies, "roundRepository">;
+type Dependencies = Pick<ProcessorDependencies, "roundRepository" | "logger">;
 
 /**
  * Handles the TimestampsUpdated event for the Easy Retro Funding strategy.
@@ -34,11 +34,38 @@ export class ERFTimestampsUpdatedHandler
      * @throws RoundNotFound if the round is not found.
      */
     async handle(): Promise<Changeset[]> {
+        const { roundRepository } = this.dependencies;
+
+        this.dependencies.logger.debug("Starting timestamps update handling", {
+            className: ERFTimestampsUpdatedHandler.name,
+            methodName: "handle",
+            chainId: this.chainId,
+            eventDetails: {
+                blockNumber: this.event.blockNumber,
+                logIndex: this.event.logIndex,
+                strategyAddress: this.event.srcAddress,
+            },
+        });
+
         const strategyAddress = getAddress(this.event.srcAddress);
-        const round = await this.dependencies.roundRepository.getRoundByStrategyAddressOrThrow(
+        this.dependencies.logger.debug("Fetching round by strategy address", {
+            className: ERFTimestampsUpdatedHandler.name,
+            methodName: "handle",
+            chainId: this.chainId,
+            strategyAddress,
+        });
+
+        const round = await roundRepository.getRoundByStrategyAddressOrThrow(
             this.chainId,
             strategyAddress,
         );
+
+        this.dependencies.logger.debug("Round found", {
+            className: ERFTimestampsUpdatedHandler.name,
+            methodName: "handle",
+            roundId: round.id,
+            roundAddress: round.strategyAddress,
+        });
 
         const {
             registrationStartTime: strRegistrationStartTime,
@@ -47,10 +74,50 @@ export class ERFTimestampsUpdatedHandler
             allocationEndTime: strAllocationEndTime,
         } = this.event.params;
 
+        this.dependencies.logger.debug("Processing timestamp parameters", {
+            className: ERFTimestampsUpdatedHandler.name,
+            methodName: "handle",
+            rawTimestamps: {
+                registrationStart: strRegistrationStartTime,
+                registrationEnd: strRegistrationEndTime,
+                allocationStart: strAllocationStartTime,
+                allocationEnd: strAllocationEndTime,
+            },
+        });
+
         const applicationsStartTime = getDateFromTimestamp(BigInt(strRegistrationStartTime));
         const applicationsEndTime = getDateFromTimestamp(BigInt(strRegistrationEndTime));
         const donationsStartTime = getDateFromTimestamp(BigInt(strAllocationStartTime));
         const donationsEndTime = getDateFromTimestamp(BigInt(strAllocationEndTime));
+
+        this.dependencies.logger.debug("Converted timestamps to dates", {
+            className: ERFTimestampsUpdatedHandler.name,
+            methodName: "handle",
+            convertedDates: {
+                applicationsStartTime: applicationsStartTime?.toISOString(),
+                applicationsEndTime: applicationsEndTime?.toISOString(),
+                donationsStartTime: donationsStartTime?.toISOString(),
+                donationsEndTime: donationsEndTime?.toISOString(),
+            },
+        });
+
+        this.dependencies.logger.info("Timestamps update handling completed", {
+            className: ERFTimestampsUpdatedHandler.name,
+            methodName: "handle",
+            roundId: round.id,
+            updates: {
+                applicationsStartTime: applicationsStartTime?.toISOString(),
+                applicationsEndTime: applicationsEndTime?.toISOString(),
+                donationsStartTime: donationsStartTime?.toISOString(),
+                donationsEndTime: donationsEndTime?.toISOString(),
+            },
+            previousValues: {
+                applicationsStartTime: round.applicationsStartTime?.toISOString(),
+                applicationsEndTime: round.applicationsEndTime?.toISOString(),
+                donationsStartTime: round.donationsStartTime?.toISOString(),
+                donationsEndTime: round.donationsEndTime?.toISOString(),
+            },
+        });
 
         return [
             {

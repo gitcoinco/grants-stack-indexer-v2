@@ -10,7 +10,7 @@ import { RoundMetadataSchema } from "../../../schemas/index.js";
 
 type Dependencies = Pick<
     ProcessorDependencies,
-    "metadataProvider" | "roundRepository" | "pricingProvider"
+    "metadataProvider" | "roundRepository" | "pricingProvider" | "logger"
 >;
 
 /**
@@ -25,33 +25,93 @@ export class PoolMetadataUpdatedHandler implements IEventHandler<"Allo", "PoolMe
         readonly event: ProcessorEvent<"Allo", "PoolMetadataUpdated">,
         private readonly chainId: ChainId,
         private readonly dependencies: Dependencies,
-    ) {}
-    /* @inheritdoc */
+    ) {
+        this.dependencies.logger?.debug("Initializing PoolMetadataUpdatedHandler", {
+            className: "PoolMetadataUpdatedHandler",
+            chainId: this.chainId,
+            poolId: this.event.params.poolId.toString(),
+            blockNumber: this.event.blockNumber,
+        });
+    }
+
     async handle(): Promise<Changeset[]> {
+        const { metadataProvider, pricingProvider, roundRepository, logger } = this.dependencies;
         const [_protocol, metadataPointer] = this.event.params.metadata;
-        const { metadataProvider, pricingProvider, roundRepository } = this.dependencies;
+        const poolId = this.event.params.poolId.toString();
+
+        logger?.debug("Starting pool metadata update handling", {
+            className: "PoolMetadataUpdatedHandler",
+            methodName: "handle",
+            poolId,
+            metadataPointer,
+        });
+
+        logger?.debug("Fetching metadata", {
+            className: "PoolMetadataUpdatedHandler",
+            methodName: "handle",
+            poolId,
+            metadataPointer,
+        });
 
         const metadata = await metadataProvider.getMetadata<{
             round?: unknown;
             application?: unknown;
         }>(metadataPointer);
 
-        const round = await roundRepository.getRoundByIdOrThrow(
-            this.chainId,
-            this.event.params.poolId.toString(),
-        );
+        logger?.debug("Fetching round data", {
+            className: "PoolMetadataUpdatedHandler",
+            methodName: "handle",
+            poolId,
+            hasRoundMetadata: !!metadata?.round,
+            hasApplicationMetadata: !!metadata?.application,
+        });
+
+        const round = await roundRepository.getRoundByIdOrThrow(this.chainId, poolId);
 
         let matchAmount = round.matchAmount;
         let matchAmountInUsd = round.matchAmountInUsd;
 
+        logger?.debug("Parsing round metadata", {
+            className: "PoolMetadataUpdatedHandler",
+            methodName: "handle",
+            poolId,
+            currentMatchAmount: matchAmount.toString(),
+        });
+
         const parsedRoundMetadata = RoundMetadataSchema.safeParse(metadata?.round);
         const token = getToken(this.chainId, round.matchTokenAddress);
 
+        logger?.debug("Token and metadata validation", {
+            className: "PoolMetadataUpdatedHandler",
+            methodName: "handle",
+            poolId,
+            hasToken: !!token,
+            metadataParseSuccess: parsedRoundMetadata.success,
+            tokenAddress: round.matchTokenAddress,
+        });
+
         if (parsedRoundMetadata.success && token) {
+            logger?.debug("Updating match amounts", {
+                className: "PoolMetadataUpdatedHandler",
+                methodName: "handle",
+                poolId,
+                matchingFundsAvailable:
+                    parsedRoundMetadata.data.quadraticFundingConfig.matchingFundsAvailable,
+                tokenDecimals: token.decimals,
+            });
+
             matchAmount = parseUnits(
                 parsedRoundMetadata.data.quadraticFundingConfig.matchingFundsAvailable.toString(),
                 token.decimals,
             );
+
+            logger?.debug("Calculating USD amount", {
+                className: "PoolMetadataUpdatedHandler",
+                methodName: "handle",
+                poolId,
+                newMatchAmount: matchAmount.toString(),
+            });
+
             matchAmountInUsd = (
                 await getTokenAmountInUsd(
                     pricingProvider,
@@ -60,14 +120,31 @@ export class PoolMetadataUpdatedHandler implements IEventHandler<"Allo", "PoolMe
                     this.event.blockTimestamp,
                 )
             ).amountInUsd;
+
+            logger?.debug("Match amounts updated", {
+                className: "PoolMetadataUpdatedHandler",
+                methodName: "handle",
+                poolId,
+                matchAmount: matchAmount.toString(),
+                matchAmountInUsd,
+            });
         }
+
+        logger?.info("Pool metadata update completed", {
+            className: "PoolMetadataUpdatedHandler",
+            methodName: "handle",
+            poolId,
+            metadataPointer,
+            matchAmount: matchAmount.toString(),
+            matchAmountInUsd,
+        });
 
         return [
             {
                 type: "UpdateRound",
                 args: {
                     chainId: this.chainId,
-                    roundId: this.event.params.poolId.toString(),
+                    roundId: poolId,
                     round: {
                         matchAmount,
                         matchAmountInUsd,
