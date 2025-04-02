@@ -8,7 +8,7 @@ import { decodeDVMDExtendedApplicationData } from "../../helpers/index.js";
 
 type Dependencies = Pick<
     ProcessorDependencies,
-    "roundRepository" | "projectRepository" | "metadataProvider"
+    "roundRepository" | "projectRepository" | "metadataProvider" | "logger"
 >;
 
 /**
@@ -35,27 +35,89 @@ export class ERFRegisteredHandler implements IEventHandler<"Strategy", "Register
      * @throws RoundNotFound if the round is not found.
      */
     async handle(): Promise<Changeset[]> {
-        const { projectRepository, roundRepository, metadataProvider } = this.dependencies;
+        const { projectRepository, roundRepository, metadataProvider, logger } = this.dependencies;
         const { data: encodedData, recipientId, sender } = this.event.params;
         const { blockNumber, blockTimestamp } = this.event;
 
+        logger.debug("Starting registration handling", {
+            className: ERFRegisteredHandler.name,
+            methodName: "handle",
+            chainId: this.chainId,
+            eventDetails: {
+                blockNumber,
+                logIndex: this.event.logIndex,
+                recipientId,
+                sender,
+                encodedDataLength: encodedData.length,
+            },
+        });
+
         const anchorAddress = getAddress(recipientId);
+        logger.debug("Fetching project by anchor", {
+            className: ERFRegisteredHandler.name,
+            methodName: "handle",
+            chainId: this.chainId,
+            anchorAddress,
+        });
+
         const project = await projectRepository.getProjectByAnchorOrThrow(
             this.chainId,
             anchorAddress,
         );
 
+        logger.debug("Project found", {
+            className: ERFRegisteredHandler.name,
+            methodName: "handle",
+            projectId: project.id,
+        });
+
         const strategyAddress = getAddress(this.event.srcAddress);
+        logger.debug("Fetching round by strategy", {
+            className: ERFRegisteredHandler.name,
+            methodName: "handle",
+            strategyAddress,
+        });
+
         const round = await roundRepository.getRoundByStrategyAddressOrThrow(
             this.chainId,
             strategyAddress,
         );
 
+        logger.debug("Round found", {
+            className: ERFRegisteredHandler.name,
+            methodName: "handle",
+            roundId: round.id,
+        });
+
+        logger.debug("Decoding application data", {
+            className: ERFRegisteredHandler.name,
+            methodName: "handle",
+            encodedDataLength: encodedData.length,
+        });
+
         const values = decodeDVMDExtendedApplicationData(encodedData);
-        // ID is defined as recipientsCounter - 1, which is a value emitted by the strategy
         const id = (Number(values.recipientsCounter) - 1).toString();
 
+        logger.debug("Application data decoded", {
+            className: ERFRegisteredHandler.name,
+            methodName: "handle",
+            applicationId: id,
+            metadataPointer: values.metadata.pointer,
+        });
+
+        logger.debug("Fetching metadata", {
+            className: ERFRegisteredHandler.name,
+            methodName: "handle",
+            metadataPointer: values.metadata.pointer,
+        });
+
         const metadata = await metadataProvider.getMetadata(values.metadata.pointer);
+
+        logger.debug("Metadata retrieved", {
+            className: ERFRegisteredHandler.name,
+            methodName: "handle",
+            metadataFound: metadata !== null,
+        });
 
         const application: NewApplication = {
             chainId: this.chainId,
@@ -83,6 +145,21 @@ export class ERFRegisteredHandler implements IEventHandler<"Strategy", "Register
             timestamp: new Date(blockTimestamp),
             tags: ["allo-v2"],
         };
+
+        logger.info("Registration handling completed", {
+            className: ERFRegisteredHandler.name,
+            methodName: "handle",
+            applicationDetails: {
+                id,
+                projectId: project.id,
+                roundId: round.id,
+                anchorAddress,
+                createdByAddress: getAddress(sender),
+                metadataCid: values.metadata.pointer,
+                blockNumber: blockNumber.toString(),
+                timestamp: new Date(blockTimestamp).toISOString(),
+            },
+        });
 
         return [
             {
