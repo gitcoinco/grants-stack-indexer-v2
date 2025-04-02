@@ -21,3 +21,14 @@ export const getDateFromTimestamp = (timestamp: bigint): Date | null => {
 export const isMilliseconds = (timestamp: bigint): boolean => {
     return timestamp >= 10_000_000_000n;
 };
+
+/**
+ * Converts a number to a string with no grouping
+ * @param number - The number to convert to a string
+ * @returns The number as a string with no grouping
+ */
+export const toNumericString = (number: number): string => {
+    return Number(number).toLocaleString("fullwide", {
+        useGrouping: false,
+    });
+};
