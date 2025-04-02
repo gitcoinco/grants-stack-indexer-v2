@@ -5,7 +5,7 @@ import type { ChainId, ProcessorEvent } from "@grants-stack-indexer/shared";
 import { getToken } from "@grants-stack-indexer/shared";
 
 import type { IEventHandler, ProcessorDependencies } from "../../../internal.js";
-import { getTokenAmountInUsd } from "../../../helpers/index.js";
+import { getTokenAmountInUsd, toNumericString } from "../../../helpers/index.js";
 import { RoundMetadataSchema } from "../../../schemas/index.js";
 
 type Dependencies = Pick<
@@ -49,7 +49,9 @@ export class PoolMetadataUpdatedHandler implements IEventHandler<"Allo", "PoolMe
 
         if (parsedRoundMetadata.success && token) {
             matchAmount = parseUnits(
-                parsedRoundMetadata.data.quadraticFundingConfig.matchingFundsAvailable.toString(),
+                toNumericString(
+                    parsedRoundMetadata.data.quadraticFundingConfig.matchingFundsAvailable,
+                ),
                 token.decimals,
             );
             matchAmountInUsd = (

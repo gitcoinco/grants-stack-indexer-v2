@@ -12,7 +12,11 @@ import {
 
 import type { ProcessorDependencies, StrategyTimings } from "../../../internal.js";
 import DonationVotingMerkleDistributionDirectTransferStrategy from "../../../abis/allo-v2/v1/DonationVotingMerkleDistributionDirectTransferStrategy.js";
-import { calculateAmountInUsd, getDateFromTimestamp } from "../../../helpers/index.js";
+import {
+    calculateAmountInUsd,
+    getDateFromTimestamp,
+    toNumericString,
+} from "../../../helpers/index.js";
 import { TokenPriceNotFoundError, UnsupportedEventException } from "../../../internal.js";
 import {
     BaseDistributedHandler,
@@ -128,7 +132,7 @@ export class DVMDDirectTransferStrategyHandler extends BaseStrategyHandler {
         token: Token,
         blockTimestamp: TimestampMs,
     ): Promise<{ matchAmount: bigint; matchAmountInUsd: string }> {
-        const matchAmount = parseUnits(matchingFundsAvailable.toString(), token.decimals);
+        const matchAmount = parseUnits(toNumericString(matchingFundsAvailable), token.decimals);
 
         const matchAmountInUsd = await this.getTokenAmountInUsd(token, matchAmount, blockTimestamp);
 

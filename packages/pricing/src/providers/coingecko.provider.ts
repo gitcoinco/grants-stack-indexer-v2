@@ -123,7 +123,7 @@ export class CoingeckoProvider implements IPricingProvider {
             endTimestampMs = currentTimestamp as TimestampMs;
         }
 
-        const path = `/coins/${tokenId}/market_chart/range?vs_currency=usd&from=${startTimestampMs / 1000}&to=${endTimestampMs / 1000}&precision=full`;
+        const path = `/coins/${tokenId}/market_chart/range?vs_currency=usd&from=${Math.floor(startTimestampMs / 1000)}&to=${Math.floor(endTimestampMs / 1000)}&precision=full`;
         try {
             const { data } = await this.axios.get<CoingeckoPriceChartData>(path);
             const closestEntry = data.prices.at(0);
