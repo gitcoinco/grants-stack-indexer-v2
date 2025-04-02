@@ -23,12 +23,12 @@ import {
     UnsupportedEventException,
 } from "../../../internal.js";
 import {
-    BaseDistributionUpdatedHandler,
     BaseFundsDistributedHandler,
     BaseRecipientStatusUpdatedHandler,
     BaseStrategyHandler,
 } from "../common/index.js";
 import {
+    ERFDistributionUpdatedHandler,
     ERFRegisteredHandler,
     ERFTimestampsUpdatedHandler,
     ERFUpdatedRegistrationHandler,
@@ -86,7 +86,7 @@ export class EasyRetroFundingStrategyHandler extends BaseStrategyHandler {
                     this.dependencies,
                 ).handle();
             case "DistributionUpdated":
-                return new BaseDistributionUpdatedHandler(
+                return new ERFDistributionUpdatedHandler(
                     event as ProcessorEvent<"Strategy", "DistributionUpdated">,
                     this.chainId,
                     this.dependencies,

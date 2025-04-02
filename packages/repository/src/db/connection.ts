@@ -15,10 +15,10 @@ import {
     ApplicationPayout,
     Attestation as AttestationTable,
     AttestationTxn as AttestationTxnTable,
+    Distribution,
     Donation as DonationTable,
     ProcessedEvent as EventRegistryTable,
     LegacyProject as LegacyProjectTable,
-    MatchingDistribution,
     Metadata as MetadataCacheTable,
     PendingProjectRole as PendingProjectRoleTable,
     PendingRoundRole as PendingRoundRoleTable,
@@ -55,9 +55,9 @@ type ApplicationTable = Omit<Application, "statusSnapshots"> & {
 
 type RoundTable = Omit<Round, "matchingDistribution"> & {
     matchingDistribution: ColumnType<
-        MatchingDistribution[] | null,
-        MatchingDistribution[] | string | null,
-        MatchingDistribution[] | string | null
+        Distribution[] | null,
+        Distribution[] | string | null,
+        Distribution[] | string | null
     >;
 };
 
