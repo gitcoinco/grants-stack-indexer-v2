@@ -209,30 +209,14 @@ describe("Orchestrator Integration - Strategy Events Processing", () => {
             "fetchEventsByBlockNumberAndLogIndex",
         );
 
-        const mockDistribution = {
-            matchingDistribution: [
-                {
-                    contributionsCount: 44,
-                    projectPayoutAddress: "0x7340F1a1e4e38F43d2FCC85cdb2b764de36B40c0",
-                    applicationId: "3",
-                    matchPoolPercentage: 0.099999,
-                    projectId: "0x15c5e4db5530e05216abc9484025e2f1c4fb55b8525d29ef38fde237e767e324",
-                    projectName: "ReFi DAO - A Network Society to Regenerate Earth. ✨ 🌱",
-                    matchAmountInToken: "999999999999999475712",
-                    originalMatchAmountInToken: "999999999999999475712",
-                },
-                {
-                    contributionsCount: 69,
-                    projectPayoutAddress: "0x01d1909cA27E364904934849eab8399532dd5c8b",
-                    applicationId: "11",
-                    matchPoolPercentage: 0.099999,
-                    projectId: "0xca460772f5ba0840a589d2c19fb7e17ac259e4be884313e3712c06c9c885dc93",
-                    projectName: "Giveth",
-                    matchAmountInToken: "999999999999999475712",
-                    originalMatchAmountInToken: "999999999999999475712",
-                },
-            ],
-        };
+        const mockDistribution = [
+            {
+                anchorAddress: "0x7340F1a1e4e38F43d2FCC85cdb2b764de36B40c0",
+                payoutAddress: "0x7340F1a1e4e38F43d2FCC85cdb2b764de36B40c0",
+                amount: "1000000000000000000",
+                index: 0,
+            },
+        ];
 
         vi.spyOn(metadataProvider, "getMetadata").mockResolvedValue(mockDistribution);
 
@@ -254,7 +238,7 @@ describe("Orchestrator Integration - Strategy Events Processing", () => {
             { chainId, strategyAddress: distributionUpdatedEvent.srcAddress },
             {
                 readyForPayoutTransaction: distributionUpdatedEvent.transactionFields.hash,
-                matchingDistribution: mockDistribution.matchingDistribution,
+                matchingDistribution: mockDistribution,
             },
             {},
         );

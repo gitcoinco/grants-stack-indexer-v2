@@ -1,5 +1,7 @@
 import { Address, ChainId } from "@grants-stack-indexer/shared";
 
+export type Distribution = SimpleMatchingDistribution | MatchingDistribution;
+
 export type MatchingDistribution = {
     applicationId: string;
     projectPayoutAddress: string;
@@ -9,6 +11,13 @@ export type MatchingDistribution = {
     contributionsCount: number;
     originalMatchAmountInToken: string;
     matchAmountInToken: string;
+};
+
+export type SimpleMatchingDistribution = {
+    anchorAddress: string;
+    payoutAddress: string;
+    amount: string;
+    index: number;
 };
 
 export type Round = {
@@ -40,7 +49,7 @@ export type Round = {
     strategyId: string;
     strategyName: string;
     readyForPayoutTransaction: string | null;
-    matchingDistribution: MatchingDistribution[] | null;
+    matchingDistribution: Distribution[] | null;
     projectId: string;
     tags: string[];
     timestamp: Date;
