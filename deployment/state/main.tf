@@ -1,5 +1,11 @@
 provider "aws" {
   region = var.AWS_REGION
+  default_tags {
+    tags = {
+      ManagedBy   = "Terraform"
+      AppName     = "Indexer"
+    }
+  }
 }
 data "aws_caller_identity" "current" {}
 
