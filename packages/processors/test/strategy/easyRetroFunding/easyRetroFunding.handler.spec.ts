@@ -12,12 +12,12 @@ import { ChainId, ILogger, ProcessorEvent, StrategyEvent } from "@grants-stack-i
 
 import { UnsupportedEventException } from "../../../src/internal.js";
 import {
-    BaseDistributionUpdatedHandler,
     BaseFundsDistributedHandler,
     BaseRecipientStatusUpdatedHandler,
 } from "../../../src/processors/strategy/common/index.js";
 import { EasyRetroFundingStrategyHandler } from "../../../src/processors/strategy/easyRetroFunding/easyRetroFunding.handler.js";
 import {
+    ERFDistributionUpdatedHandler,
     ERFRegisteredHandler,
     ERFTimestampsUpdatedHandler,
     ERFUpdatedRegistrationHandler,
@@ -27,7 +27,7 @@ vi.mock("../../../src/processors/strategy/easyRetroFunding/handlers/index.js", a
     const ERFRegisteredHandler = vi.fn();
     const ERFTimestampsUpdatedHandler = vi.fn();
     const ERFUpdatedRegistrationHandler = vi.fn();
-
+    const ERFDistributionUpdatedHandler = vi.fn();
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     ERFRegisteredHandler.prototype.handle = vi.fn();
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -35,10 +35,13 @@ vi.mock("../../../src/processors/strategy/easyRetroFunding/handlers/index.js", a
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     ERFUpdatedRegistrationHandler.prototype.handle = vi.fn();
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    ERFDistributionUpdatedHandler.prototype.handle = vi.fn();
+
     return {
         ERFRegisteredHandler,
         ERFTimestampsUpdatedHandler,
         ERFUpdatedRegistrationHandler,
+        ERFDistributionUpdatedHandler,
     };
 });
 
@@ -46,19 +49,15 @@ vi.mock("../../../src/processors/strategy/common/index.js", async (importOrigina
     const original =
         await importOriginal<typeof import("../../../src/processors/strategy/common/index.js")>();
     const BaseFundsDistributedHandler = vi.fn();
-    const BaseDistributionUpdatedHandler = vi.fn();
     const BaseRecipientStatusUpdatedHandler = vi.fn();
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     BaseFundsDistributedHandler.prototype.handle = vi.fn();
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    BaseDistributionUpdatedHandler.prototype.handle = vi.fn();
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     BaseRecipientStatusUpdatedHandler.prototype.handle = vi.fn();
     return {
         ...original,
         BaseFundsDistributedHandler,
-        BaseDistributionUpdatedHandler,
         BaseRecipientStatusUpdatedHandler,
     };
 });
@@ -197,16 +196,16 @@ describe("EasyRetroFundingStrategyHandler", () => {
         expect(ERFTimestampsUpdatedHandler.prototype.handle).toHaveBeenCalled();
     });
 
-    it("calls BaseDistributionUpdatedHandler for DistributionUpdated event", async () => {
+    it("calls ERFDistributionUpdatedHandler for DistributionUpdated event", async () => {
         const mockEvent = {
             eventName: "DistributionUpdated",
         } as ProcessorEvent<"Strategy", "DistributionUpdated">;
 
-        vi.spyOn(BaseDistributionUpdatedHandler.prototype, "handle").mockResolvedValue([]);
+        vi.spyOn(ERFDistributionUpdatedHandler.prototype, "handle").mockResolvedValue([]);
 
         await handler.handle(mockEvent);
 
-        expect(BaseDistributionUpdatedHandler).toHaveBeenCalledWith(mockEvent, chainId, {
+        expect(ERFDistributionUpdatedHandler).toHaveBeenCalledWith(mockEvent, chainId, {
             metadataProvider: mockMetadataProvider,
             roundRepository: mockRoundRepository,
             projectRepository: mockProjectRepository,
@@ -215,7 +214,7 @@ describe("EasyRetroFundingStrategyHandler", () => {
             applicationRepository: mockApplicationRepository,
             logger,
         });
-        expect(BaseDistributionUpdatedHandler.prototype.handle).toHaveBeenCalled();
+        expect(ERFDistributionUpdatedHandler.prototype.handle).toHaveBeenCalled();
     });
 
     it("calls FundsDistributedHandler for FundsDistributed event", async () => {

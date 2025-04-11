@@ -11,7 +11,11 @@ import {
 } from "@grants-stack-indexer/shared";
 
 import EasyRetroFundingStrategy from "../../../abis/allo-v2/v1/EasyRetroFundingStrategy.js";
-import { calculateAmountInUsd, getDateFromTimestamp } from "../../../helpers/index.js";
+import {
+    calculateAmountInUsd,
+    getDateFromTimestamp,
+    toNumericString,
+} from "../../../helpers/index.js";
 import {
     ProcessorDependencies,
     StrategyTimings,
@@ -19,12 +23,12 @@ import {
     UnsupportedEventException,
 } from "../../../internal.js";
 import {
-    BaseDistributionUpdatedHandler,
     BaseFundsDistributedHandler,
     BaseRecipientStatusUpdatedHandler,
     BaseStrategyHandler,
 } from "../common/index.js";
 import {
+    ERFDistributionUpdatedHandler,
     ERFRegisteredHandler,
     ERFTimestampsUpdatedHandler,
     ERFUpdatedRegistrationHandler,
@@ -82,7 +86,7 @@ export class EasyRetroFundingStrategyHandler extends BaseStrategyHandler {
                     this.dependencies,
                 ).handle();
             case "DistributionUpdated":
-                return new BaseDistributionUpdatedHandler(
+                return new ERFDistributionUpdatedHandler(
                     event as ProcessorEvent<"Strategy", "DistributionUpdated">,
                     this.chainId,
                     this.dependencies,
@@ -105,7 +109,7 @@ export class EasyRetroFundingStrategyHandler extends BaseStrategyHandler {
         token: Token,
         blockTimestamp: TimestampMs,
     ): Promise<{ matchAmount: bigint; matchAmountInUsd: string }> {
-        const matchAmount = parseUnits(matchingFundsAvailable.toString(), token.decimals);
+        const matchAmount = parseUnits(toNumericString(matchingFundsAvailable), token.decimals);
 
         const matchAmountInUsd = await this.getTokenAmountInUsd(token, matchAmount, blockTimestamp);
 

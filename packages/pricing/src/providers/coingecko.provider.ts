@@ -60,6 +60,7 @@ const TokenMapping: { [key: string]: CoingeckoTokenId | undefined } = {
     // MTK: undefined,
     WSEI: "wrapped-sei" as CoingeckoTokenId,
     HBAR: "hedera-hashgraph" as CoingeckoTokenId,
+    G$: "gooddollar" as CoingeckoTokenId,
 };
 
 // sometimes coingecko returns no prices for 1 hour range, 2 hours works better
@@ -115,7 +116,14 @@ export class CoingeckoProvider implements IPricingProvider {
             return undefined;
         }
 
-        const path = `/coins/${tokenId}/market_chart/range?vs_currency=usd&from=${startTimestampMs / 1000}&to=${endTimestampMs / 1000}&precision=full`;
+        // Handle when the endTimestampMs is in the future
+        const currentTimestamp = Date.now() - 60 * 1000;
+        if (currentTimestamp < endTimestampMs) {
+            startTimestampMs = (currentTimestamp - TIME_DELTA) as TimestampMs;
+            endTimestampMs = currentTimestamp as TimestampMs;
+        }
+
+        const path = `/coins/${tokenId}/market_chart/range?vs_currency=usd&from=${Math.floor(startTimestampMs / 1000)}&to=${Math.floor(endTimestampMs / 1000)}&precision=full`;
         try {
             const { data } = await this.axios.get<CoingeckoPriceChartData>(path);
             const closestEntry = data.prices.at(0);
