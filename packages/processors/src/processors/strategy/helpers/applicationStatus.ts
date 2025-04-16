@@ -1,11 +1,11 @@
 import { Application } from "@grants-stack-indexer/repository";
 
 /**
- * Checks if an application status index is valid (between 1 and 3)
+ * Checks if an application status index is valid (between 1 and 5)
  * @see ApplicationStatus
  */
 export function isValidApplicationStatus(status: number): boolean {
-    return status >= 1 && status <= 3;
+    return status >= 1 && status <= 5;
 }
 
 type StatusUpdateParams = {

@@ -121,7 +121,7 @@ describe("DVMDUpdatedRegistrationHandler", () => {
     });
 
     it("returns empty array if status is invalid", async () => {
-        const invalidStatuses = ["0", "4", "10"];
+        const invalidStatuses = ["0", "6", "10"];
         for (const status of invalidStatuses) {
             mockEvent = createMockEvent(eventName, defaultParams, defaultStrategyId, {
                 params: { status },

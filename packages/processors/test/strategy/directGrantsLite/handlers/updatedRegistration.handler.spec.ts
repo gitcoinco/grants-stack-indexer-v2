@@ -118,7 +118,7 @@ describe("DGLiteUpdatedRegistrationHandler", () => {
 
     it("returns empty array for invalid status", async () => {
         mockEvent = createMockEvent(eventName, defaultParams, defaultStrategyId, {
-            params: { status: "4" },
+            params: { status: "10" },
         }); // Invalid status
 
         handler = new DGLiteUpdatedRegistrationHandler(mockEvent, chainId, {

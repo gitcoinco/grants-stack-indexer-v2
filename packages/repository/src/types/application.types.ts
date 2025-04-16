@@ -1,6 +1,6 @@
 import { Address, ChainId } from "@grants-stack-indexer/shared";
 
-export type ApplicationStatus = "PENDING" | "REJECTED" | "APPROVED";
+export type ApplicationStatus = "PENDING" | "REJECTED" | "APPROVED" | "CANCELLED" | "IN_REVIEW";
 
 export type StatusSnapshot = {
     status: ApplicationStatus;
