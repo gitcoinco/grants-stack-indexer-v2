@@ -73,7 +73,7 @@ describe("OnAttestedHandler", () => {
         const mockEvent = createMockEvent();
         const expectedDecodedData = {
             projectsContributed: 1n,
-            roundsCountributed: 1n,
+            roundsContributed: 1n,
             chainIdsContributed: 1n,
             totalUSDAmount: 10n,
             timestamp: 1727704881770n,
@@ -129,7 +129,7 @@ describe("OnAttestedHandler", () => {
                     fee: BigInt(mockEvent.params.fee),
                     refUID: mockEvent.params.refUID,
                     projectsContributed: expectedDecodedData.projectsContributed,
-                    roundsContributed: expectedDecodedData.roundsCountributed,
+                    roundsContributed: expectedDecodedData.roundsContributed,
                     chainIdsContributed: expectedDecodedData.chainIdsContributed,
                     totalUSDAmount: expectedDecodedData.totalUSDAmount,
                     timestamp: new Date(1727704881770),
@@ -151,7 +151,7 @@ describe("OnAttestedHandler", () => {
         const encodedData = encodeAbiParameters(
             [
                 { name: "projectsContributed", type: "uint64" },
-                { name: "roundsCountributed", type: "uint64" },
+                { name: "roundsContributed", type: "uint64" },
                 { name: "chainIdsContributed", type: "uint64" },
                 { name: "totalUSDAmount", type: "uint128" },
                 { name: "timestamp", type: "uint64" },

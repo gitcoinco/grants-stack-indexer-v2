@@ -205,11 +205,14 @@ export class EnvioIndexerClient implements IIndexerClient {
                 vars["toLogIndex"] = to.logIndex;
             }
 
-            const whereClause =
+            let whereClause =
                 andConditions.length > 1
                     ? `_and: [{ ${andConditions.join(" }, { ")} }]`
                     : andConditions[0];
 
+            if (params.eventName) {
+                whereClause += `, event_name: { _eq: "${params.eventName}" }`;
+            }
             const response = (await this.client.request(
                 gql`
                     query getEvents(

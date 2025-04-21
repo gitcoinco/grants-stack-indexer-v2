@@ -13,8 +13,10 @@
         "package.json"
     ],
     "scripts": {
+        "bootstrap:all": "tsx src/metadata.script.ts && tsx src/pricing.script.ts && tsx src/strategyTimings.script.ts",
         "bootstrap:metadata": "tsx src/metadata.script.ts",
         "bootstrap:pricing": "tsx src/pricing.script.ts",
+        "bootstrap:strategyTimings": "tsx src/strategyTimings.script.ts",
         "build": "tsc -p tsconfig.build.json",
         "check-types": "tsc --noEmit -p ./tsconfig.json",
         "clean": "rm -rf dist/",
@@ -26,16 +28,19 @@
         "test:cov": "vitest run --config vitest.config.ts --coverage --passWithNoTests"
     },
     "dependencies": {
+        "@grants-stack-indexer/chain-providers": "workspace:*",
         "@grants-stack-indexer/data-flow": "workspace:*",
         "@grants-stack-indexer/indexer-client": "workspace:*",
         "@grants-stack-indexer/metadata": "workspace:*",
         "@grants-stack-indexer/pricing": "workspace:*",
+        "@grants-stack-indexer/processors": "workspace:*",
         "@grants-stack-indexer/repository": "workspace:*",
         "@grants-stack-indexer/shared": "workspace:*",
         "dotenv": "16.4.5",
         "kysely": "0.27.4",
         "p-map": "7.0.3",
         "ts-retry": "5.0.1",
+        "viem": "2.19.6",
         "yargs": "17.7.2",
         "zod": "3.23.8"
     },

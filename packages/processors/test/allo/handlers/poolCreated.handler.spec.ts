@@ -4,8 +4,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { EvmProvider } from "@grants-stack-indexer/chain-providers";
 import type { IMetadataProvider } from "@grants-stack-indexer/metadata";
 import type { IPricingProvider } from "@grants-stack-indexer/pricing";
-import type { IRoundReadRepository, Round } from "@grants-stack-indexer/repository";
 import type {
+    ICache,
+    IRoundReadRepository,
+    Round,
+    StrategyTimings,
+} from "@grants-stack-indexer/repository";
+import type {
+    Address,
     ChainId,
     DeepPartial,
     ProcessorEvent,
@@ -52,7 +58,7 @@ describe("PoolCreatedHandler", () => {
     let mockPricingProvider: IPricingProvider;
     let mockMetadataProvider: IMetadataProvider;
     let mockRoundRepository: IRoundReadRepository;
-
+    let mockStrategyTimingsRepository: ICache<Address, StrategyTimings>;
     beforeEach(() => {
         mockEvmProvider = {
             readContract: vi.fn(),
@@ -67,6 +73,10 @@ describe("PoolCreatedHandler", () => {
         mockMetadataProvider = {
             getMetadata: vi.fn(),
         };
+        mockStrategyTimingsRepository = {
+            get: vi.fn(),
+            set: vi.fn(),
+        } as unknown as ICache<Address, StrategyTimings>;
         mockRoundRepository = {
             getPendingRoundRoles: vi.fn(),
         } as unknown as IRoundReadRepository;
@@ -94,6 +104,7 @@ describe("PoolCreatedHandler", () => {
             pricingProvider: mockPricingProvider,
             metadataProvider: mockMetadataProvider,
             roundRepository: mockRoundRepository,
+            strategyTimingsRepository: mockStrategyTimingsRepository,
         });
 
         const result = await handler.handle();
@@ -121,6 +132,7 @@ describe("PoolCreatedHandler", () => {
             pricingProvider: mockPricingProvider,
             metadataProvider: mockMetadataProvider,
             roundRepository: mockRoundRepository,
+            strategyTimingsRepository: mockStrategyTimingsRepository,
         });
 
         const result = await handler.handle();
@@ -183,6 +195,7 @@ describe("PoolCreatedHandler", () => {
             pricingProvider: mockPricingProvider,
             metadataProvider: mockMetadataProvider,
             roundRepository: mockRoundRepository,
+            strategyTimingsRepository: mockStrategyTimingsRepository,
         });
 
         const result = await handler.handle();
@@ -232,6 +245,7 @@ describe("PoolCreatedHandler", () => {
         });
         expect(mockPricingProvider.getTokenPrice).toHaveBeenCalled();
         expect(mockMetadataProvider.getMetadata).toHaveBeenCalled();
+        expect(mockStrategyTimingsRepository.get).toHaveBeenCalled();
         expect(mockEvmProvider.multicall).toHaveBeenCalled();
     });
 
@@ -258,6 +272,7 @@ describe("PoolCreatedHandler", () => {
             pricingProvider: mockPricingProvider,
             metadataProvider: mockMetadataProvider,
             roundRepository: mockRoundRepository,
+            strategyTimingsRepository: {} as ICache<Address, StrategyTimings>,
         });
 
         const result = await handler.handle();
@@ -288,6 +303,7 @@ describe("PoolCreatedHandler", () => {
             pricingProvider: mockPricingProvider,
             metadataProvider: mockMetadataProvider,
             roundRepository: mockRoundRepository,
+            strategyTimingsRepository: mockStrategyTimingsRepository,
         });
 
         const result = await handler.handle();
@@ -326,6 +342,7 @@ describe("PoolCreatedHandler", () => {
             pricingProvider: mockPricingProvider,
             metadataProvider: mockMetadataProvider,
             roundRepository: mockRoundRepository,
+            strategyTimingsRepository: {} as ICache<Address, StrategyTimings>,
         });
 
         await expect(() => handler.handle()).rejects.toThrow("Token price not found");
@@ -378,6 +395,7 @@ describe("PoolCreatedHandler", () => {
             pricingProvider: mockPricingProvider,
             metadataProvider: mockMetadataProvider,
             roundRepository: mockRoundRepository,
+            strategyTimingsRepository: mockStrategyTimingsRepository,
         });
 
         const result = await handler.handle();
@@ -462,6 +480,7 @@ describe("PoolCreatedHandler", () => {
             pricingProvider: mockPricingProvider,
             metadataProvider: mockMetadataProvider,
             roundRepository: mockRoundRepository,
+            strategyTimingsRepository: mockStrategyTimingsRepository,
         });
 
         await handler.handle();
@@ -489,6 +508,7 @@ describe("PoolCreatedHandler", () => {
             pricingProvider: mockPricingProvider,
             metadataProvider: mockMetadataProvider,
             roundRepository: mockRoundRepository,
+            strategyTimingsRepository: mockStrategyTimingsRepository,
         });
 
         const result = await handler.handle();

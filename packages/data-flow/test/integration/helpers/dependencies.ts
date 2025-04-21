@@ -23,6 +23,7 @@ export const createMockRepositories = (): Pick<
     | "transactionManager"
     | "attestationRepository"
     | "legacyProjectRepository"
+    | "strategyTimingsRepository"
 > => ({
     projectRepository: {
         getProjects: vi.fn(),
@@ -88,6 +89,10 @@ export const createMockRepositories = (): Pick<
     },
     attestationRepository: {
         insertAttestation: vi.fn(),
+    },
+    strategyTimingsRepository: {
+        get: vi.fn(),
+        set: vi.fn(),
     },
 });
 

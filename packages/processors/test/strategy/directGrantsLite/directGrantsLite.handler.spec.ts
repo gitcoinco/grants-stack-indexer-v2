@@ -3,12 +3,20 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { IMetadataProvider } from "@grants-stack-indexer/metadata";
 import type {
     IApplicationReadRepository,
+    ICache,
     IProjectReadRepository,
     IRoundReadRepository,
+    StrategyTimings,
 } from "@grants-stack-indexer/repository";
 import { EvmProvider } from "@grants-stack-indexer/chain-providers";
 import { IPricingProvider } from "@grants-stack-indexer/pricing";
-import { ChainId, ILogger, ProcessorEvent, StrategyEvent } from "@grants-stack-indexer/shared";
+import {
+    Address,
+    ChainId,
+    ILogger,
+    ProcessorEvent,
+    StrategyEvent,
+} from "@grants-stack-indexer/shared";
 
 import { ProcessorDependencies, UnsupportedEventException } from "../../../src/internal.js";
 import { BaseRecipientStatusUpdatedHandler } from "../../../src/processors/strategy/common/index.js";
@@ -94,6 +102,7 @@ describe("DirectGrantsLiteStrategyHandler", () => {
             evmProvider: mockEVMProvider,
             pricingProvider: mockPricingProvider,
             applicationRepository: mockApplicationRepository,
+            strategyTimingsRepository: {} as ICache<Address, StrategyTimings>,
             logger,
         };
         handler = new DirectGrantsLiteStrategyHandler(mockChainId, dependencies);

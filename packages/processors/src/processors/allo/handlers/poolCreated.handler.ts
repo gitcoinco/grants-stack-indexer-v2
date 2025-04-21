@@ -11,7 +11,11 @@ import { RoundMetadataSchema } from "../../../schemas/index.js";
 
 type Dependencies = Pick<
     ProcessorDependencies,
-    "evmProvider" | "pricingProvider" | "metadataProvider" | "roundRepository"
+    | "evmProvider"
+    | "pricingProvider"
+    | "metadataProvider"
+    | "roundRepository"
+    | "strategyTimingsRepository"
 >;
 
 /**
@@ -33,7 +37,7 @@ export class PoolCreatedHandler implements IEventHandler<"Allo", "PoolCreated"> 
     ) {}
 
     async handle(): Promise<Changeset[]> {
-        const { metadataProvider, evmProvider } = this.dependencies;
+        const { metadataProvider, evmProvider, strategyTimingsRepository } = this.dependencies;
         const metadataPointer = this.event.params.metadata[1];
         const {
             poolId,
@@ -76,7 +80,18 @@ export class PoolCreatedHandler implements IEventHandler<"Allo", "PoolCreated"> 
         };
 
         if (strategyHandler) {
-            strategyTimings = await strategyHandler.fetchStrategyTimings(strategyAddress);
+            const strategyTimingsOnRegistry = await strategyTimingsRepository.get(strategyAddress);
+            if (strategyTimingsOnRegistry) {
+                strategyTimings = strategyTimingsOnRegistry.timings as unknown as StrategyTimings;
+            } else {
+                strategyTimings = await strategyHandler.fetchStrategyTimings(strategyAddress);
+                await strategyTimingsRepository.set(strategyAddress, {
+                    address: strategyAddress,
+                    timings: JSON.stringify(strategyTimings),
+                    strategyId,
+                    createdAt: new Date(),
+                });
+            }
             if (parsedRoundMetadata.success && token) {
                 matchAmountObj = await strategyHandler.fetchMatchAmount(
                     Number(parsedRoundMetadata.data.quadraticFundingConfig.matchingFundsAvailable),

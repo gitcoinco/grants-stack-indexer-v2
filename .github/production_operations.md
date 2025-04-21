@@ -83,6 +83,7 @@ This guide is for production operations on the Gitcoin Data Layer.
 
     2. `pnpm bootstrap:metadata`
     3. `pnpm bootstrap:pricing`
+    4. `pnpm bootstrap:strategyTimings`
 
     ### Migrate processing tables: Run 2 times, first green, blue after.
 

@@ -13,7 +13,7 @@ const zodSchema = z.object({
         .describe("Database schema name where migrations are applied"),
     migrationsFolder: z
         .string()
-        .refine((value) => ["processing", "external_services_cache"].includes(value), {
+        .refine((value) => ["processing", "processing_cache"].includes(value), {
             message: "Invalid migrations folder",
         })
         .default("processing"),
@@ -31,7 +31,7 @@ export const parseArguments = (): z.infer<typeof zodSchema> => {
         .options("migrationsFolder", {
             alias: "m",
             type: "string",
-            choices: ["processing", "external_services_cache"],
+            choices: ["processing", "processing_cache"],
             demandOption: true,
             description: "Migrations folder",
             default: "processing",

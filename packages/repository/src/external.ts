@@ -92,12 +92,14 @@ export { KyselyTransactionManager } from "./internal.js";
 
 export type { ICache } from "./internal.js";
 export type { Metadata, NewMetadata, PartialMetadata } from "./internal.js";
+export type { StrategyTimings, NewStrategyTimings, PartialStrategyTimings } from "./internal.js";
 export type { Price, NewPrice, PartialPrice, PriceCacheKey, IPricingCache } from "./internal.js";
 export {
     KyselyMetadataCache,
     KyselyPricingCache,
     InMemoryMetadataCache,
     InMemoryPricingCache,
+    KyselyStrategyTimingsCache,
 } from "./internal.js";
 
 export { createKyselyPostgresDb as createKyselyDatabase } from "./internal.js";

@@ -21,6 +21,7 @@ import {
     KyselyRoundRepository,
     KyselyStrategyProcessingCheckpointRepository,
     KyselyStrategyRegistryRepository,
+    KyselyStrategyTimingsCache,
     KyselyTransactionManager,
 } from "@grants-stack-indexer/repository";
 import {
@@ -136,6 +137,10 @@ export class SharedDependenciesService {
             kyselyDatabase,
             env.DATABASE_SCHEMA,
         );
+        const strategyTimingsRepository = new KyselyStrategyTimingsCache(
+            kyselyDatabase,
+            env.DATABASE_SCHEMA,
+        );
 
         const strategyProcessingCheckpointRepository =
             new KyselyStrategyProcessingCheckpointRepository(kyselyDatabase, env.DATABASE_SCHEMA);
@@ -165,6 +170,7 @@ export class SharedDependenciesService {
                 attestationRepository,
                 transactionManager,
                 legacyProjectRepository,
+                strategyTimingsRepository,
             },
             registriesRepositories: {
                 eventRegistryRepository,

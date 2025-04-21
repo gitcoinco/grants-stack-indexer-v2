@@ -1,4 +1,4 @@
-import { getAddress } from "viem";
+import { Address, getAddress } from "viem";
 import { afterEach, beforeEach, describe, expect, it, Mock, vi } from "vitest";
 
 import { EvmProvider } from "@grants-stack-indexer/chain-providers";
@@ -6,8 +6,10 @@ import { IMetadataProvider } from "@grants-stack-indexer/metadata";
 import { IPricingProvider } from "@grants-stack-indexer/pricing";
 import {
     IApplicationReadRepository,
+    ICache,
     IProjectReadRepository,
     IRoundReadRepository,
+    StrategyTimings,
 } from "@grants-stack-indexer/repository";
 import {
     Bytes32String,
@@ -72,6 +74,7 @@ describe("ProfileCreatedHandler", () => {
             } as unknown as IMetadataProvider,
             roundRepository: {} as unknown as IRoundReadRepository,
             applicationRepository: {} as unknown as IApplicationReadRepository,
+            strategyTimingsRepository: {} as ICache<Address, StrategyTimings>,
             logger,
         };
     });

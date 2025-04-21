@@ -5,10 +5,18 @@ import { IMetadataProvider } from "@grants-stack-indexer/metadata";
 import { IPricingProvider } from "@grants-stack-indexer/pricing";
 import {
     IApplicationReadRepository,
+    ICache,
     IProjectReadRepository,
     IRoundReadRepository,
+    StrategyTimings,
 } from "@grants-stack-indexer/repository";
-import { ChainId, ILogger, ProcessorEvent, StrategyEvent } from "@grants-stack-indexer/shared";
+import {
+    Address,
+    ChainId,
+    ILogger,
+    ProcessorEvent,
+    StrategyEvent,
+} from "@grants-stack-indexer/shared";
 
 import { UnsupportedEventException } from "../../../src/exceptions/index.js";
 import { BaseDistributedHandler } from "../../../src/processors/strategy/common/index.js";
@@ -76,6 +84,7 @@ describe("DirectGrantsSimpleStrategyHandler", () => {
             evmProvider: mockEVMProvider,
             pricingProvider: mockPricingProvider,
             applicationRepository: mockApplicationRepository,
+            strategyTimingsRepository: {} as ICache<Address, StrategyTimings>,
             logger,
         });
     });
@@ -104,6 +113,7 @@ describe("DirectGrantsSimpleStrategyHandler", () => {
             evmProvider: mockEVMProvider,
             pricingProvider: mockPricingProvider,
             applicationRepository: mockApplicationRepository,
+            strategyTimingsRepository: expect.any(Object),
             logger,
         });
         expect(DGSimpleTimestampsUpdatedHandler.prototype.handle).toHaveBeenCalled();
@@ -125,6 +135,7 @@ describe("DirectGrantsSimpleStrategyHandler", () => {
             evmProvider: mockEVMProvider,
             pricingProvider: mockPricingProvider,
             applicationRepository: mockApplicationRepository,
+            strategyTimingsRepository: expect.any(Object),
             logger,
         });
         expect(DGSimpleRegisteredHandler.prototype.handle).toHaveBeenCalled();
@@ -146,6 +157,7 @@ describe("DirectGrantsSimpleStrategyHandler", () => {
             evmProvider: mockEVMProvider,
             pricingProvider: mockPricingProvider,
             applicationRepository: mockApplicationRepository,
+            strategyTimingsRepository: expect.any(Object),
             logger,
         });
         expect(BaseDistributedHandler.prototype.handle).toHaveBeenCalled();

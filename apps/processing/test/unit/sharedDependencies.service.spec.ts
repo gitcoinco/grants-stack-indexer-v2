@@ -51,6 +51,7 @@ vi.mock("@grants-stack-indexer/repository", () => ({
     KyselyLegacyProjectRepository: vi.fn(),
     InMemoryPricingCache: vi.fn(),
     InMemoryMetadataCache: vi.fn(),
+    KyselyStrategyTimingsCache: vi.fn(),
 }));
 
 vi.mock("@grants-stack-indexer/pricing", () => ({
