@@ -61,6 +61,7 @@ type EventPerformanceData = {
     maxDuration: number;
     minDuration: number;
     lastTimestamp: string;
+    eventCount: number;
 };
 
 /**
@@ -99,7 +100,7 @@ export class Orchestrator {
     private readonly retryHandler: RetryHandler;
     private readonly performanceData: Map<string, EventPerformanceData> = new Map();
     private readonly performanceCsvPath: string;
-    private readonly slowEventThresholdMs: number = 500; // 0.5 seconds
+    private readonly slowEventThresholdMs: number = 0.5; // 0.5 milliseconds (changed from 500ms)
 
     /**
      * @param chainId - The chain id
@@ -160,9 +161,67 @@ export class Orchestrator {
      */
     private initializePerformanceCsv(): void {
         if (!fs.existsSync(this.performanceCsvPath)) {
-            const headers = "timestamp,eventName,duration,chainId\n";
+            const headers =
+                "timestamp,eventName,slowCount,avgDuration,maxDuration,minDuration,chainId\n";
             fs.writeFileSync(this.performanceCsvPath, headers);
         }
+    }
+
+    /**
+     * Read the performance CSV file and return a map of event names to their data
+     * @returns A map of event names to their CSV data
+     */
+    private readPerformanceCsv(): Map<string, string> {
+        const eventMap = new Map<string, string>();
+
+        if (!fs.existsSync(this.performanceCsvPath)) {
+            return eventMap;
+        }
+
+        try {
+            const fileContent = fs.readFileSync(this.performanceCsvPath, "utf-8");
+            const lines = fileContent.split("\n");
+
+            // Skip header
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i]?.trim();
+                if (!line) continue;
+
+                const parts = line.split(",");
+                if (parts.length < 2) continue;
+
+                const eventName = parts[1];
+                if (eventName && typeof eventName === "string") {
+                    eventMap.set(eventName, line);
+                }
+            }
+        } catch (error) {
+            this.logger.error(`Error reading performance CSV: ${error}`, {
+                className: Orchestrator.name,
+                chainId: this.chainId,
+            });
+        }
+
+        return eventMap;
+    }
+
+    /**
+     * Write the combined performance data to the CSV file
+     * @param eventMap - Map of event names to their CSV data
+     */
+    private writePerformanceCsv(eventMap: Map<string, string>): void {
+        const headers =
+            "timestamp,eventName,slowCount,avgDuration,maxDuration,minDuration,chainId\n";
+        const lines = [headers];
+
+        // Add all event data
+        for (const line of eventMap.values()) {
+            if (line) {
+                lines.push(line);
+            }
+        }
+
+        fs.writeFileSync(this.performanceCsvPath, lines.join("\n"));
     }
 
     /**
@@ -182,6 +241,11 @@ export class Orchestrator {
                 maxDuration: 0,
                 minDuration: Number.MAX_SAFE_INTEGER,
                 lastTimestamp: now,
+                eventCount: 0,
+            });
+            this.logger.debug(`Created new performance data for ${eventName}`, {
+                className: Orchestrator.name,
+                chainId: this.chainId,
             });
         }
 
@@ -190,24 +254,52 @@ export class Orchestrator {
         data.maxDuration = Math.max(data.maxDuration, duration);
         data.minDuration = Math.min(data.minDuration, duration);
         data.lastTimestamp = now;
+        data.eventCount++;
 
         if (duration > this.slowEventThresholdMs) {
             data.slowCount++;
         }
 
-        // Write to CSV file
-        const csvLine = `${now},${eventName},${duration.toFixed(2)},${this.chainId}\n`;
-        fs.appendFileSync(this.performanceCsvPath, csvLine);
+        // Log summary every 10 events (changed from 100 for testing)
+        if (data.eventCount % 10 === 0 && data.eventCount > 0) {
+            this.logger.info(
+                `Writing performance summary for ${eventName} after ${data.eventCount} events`,
+                {
+                    className: Orchestrator.name,
+                    chainId: this.chainId,
+                },
+            );
 
-        // Log summary every 100 slow events
-        if (data.slowCount % 100 === 0 && data.slowCount > 0) {
+            const avgDuration = (data.totalDuration / data.eventCount).toFixed(2);
+            const maxDuration = data.maxDuration.toFixed(2);
+            const minDuration = data.minDuration.toFixed(2);
+
+            // Create CSV line for this event
+            const csvLine = `${now},${eventName},${data.slowCount},${avgDuration},${maxDuration},${minDuration},${this.chainId}`;
+
+            // Read existing CSV data
+            const eventMap = this.readPerformanceCsv();
+
+            // Update or add this event's data
+            eventMap.set(eventName, csvLine);
+
+            // Write back to CSV
+            this.writePerformanceCsv(eventMap);
+
             this.logger.info(`Performance summary for ${eventName}:`, {
                 className: Orchestrator.name,
                 chainId: this.chainId,
+                eventCount: data.eventCount,
                 slowCount: data.slowCount,
-                avgDuration: (data.totalDuration / data.slowCount).toFixed(2),
-                maxDuration: data.maxDuration.toFixed(2),
-                minDuration: data.minDuration.toFixed(2),
+                avgDuration,
+                maxDuration,
+                minDuration,
+            });
+        } else if (data.eventCount % 5 === 0) {
+            // Log progress every 5 events (changed from 10 for testing)
+            this.logger.debug(`Processed ${data.eventCount} events for ${eventName}`, {
+                className: Orchestrator.name,
+                chainId: this.chainId,
             });
         }
     }
