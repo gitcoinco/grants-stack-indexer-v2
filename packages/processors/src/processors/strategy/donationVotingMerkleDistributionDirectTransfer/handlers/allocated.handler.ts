@@ -44,27 +44,45 @@ export class DVMDAllocatedHandler implements IEventHandler<"Strategy", "Allocate
      * @throws {MetadataParsingFailed} if the metadata is invalid
      */
     async handle(): Promise<Changeset[]> {
+        const startTime = performance.now();
         const { roundRepository, applicationRepository } = this.dependencies;
         const { srcAddress } = this.event;
         const { recipientId: _recipientId, amount: strAmount, token: _token } = this.event.params;
 
         const amount = BigInt(strAmount);
 
+        // Time round lookup
+        const roundLookupStart = performance.now();
         const round = await roundRepository.getRoundByStrategyAddressOrThrow(
             this.chainId,
             getAddress(srcAddress),
         );
+        const roundLookupTime = performance.now() - roundLookupStart;
+        console.log(`[AllocatedWithOrigin] Round lookup took ${roundLookupTime.toFixed(2)}ms`);
+
+        // Time application lookup
+        const appLookupStart = performance.now();
         const application = await applicationRepository.getApplicationByAnchorAddressOrThrow(
             this.chainId,
             round.id,
             getAddress(_recipientId),
         );
+        const appLookupTime = performance.now() - appLookupStart;
+        console.log(`[AllocatedWithOrigin] Application lookup took ${appLookupTime.toFixed(2)}ms`);
 
         const donationId = getDonationId(this.event.blockNumber, this.event.logIndex);
 
+        // Time token validation
+        const tokenValidationStart = performance.now();
         const token = getTokenOrThrow(this.chainId, _token);
         const matchToken = getTokenOrThrow(this.chainId, round.matchTokenAddress);
+        const tokenValidationTime = performance.now() - tokenValidationStart;
+        console.log(
+            `[AllocatedWithOrigin] Token validation took ${tokenValidationTime.toFixed(2)}ms`,
+        );
 
+        // Time price calculations
+        const priceCalcStart = performance.now();
         const { amountInUsd } = await getTokenAmountInUsd(
             this.dependencies.pricingProvider,
             token,
@@ -83,8 +101,14 @@ export class DVMDAllocatedHandler implements IEventHandler<"Strategy", "Allocate
                           this.event.blockTimestamp,
                       )
                   ).amount;
+        const priceCalcTime = performance.now() - priceCalcStart;
+        console.log(`[AllocatedWithOrigin] Price calculations took ${priceCalcTime.toFixed(2)}ms`);
 
+        // Time metadata parsing
+        const metadataStart = performance.now();
         const parsedMetadata = this.parseMetadataOrThrow(application.metadata);
+        const metadataTime = performance.now() - metadataStart;
+        console.log(`[AllocatedWithOrigin] Metadata parsing took ${metadataTime.toFixed(2)}ms`);
 
         const donation: Donation = {
             id: donationId,
@@ -102,6 +126,9 @@ export class DVMDAllocatedHandler implements IEventHandler<"Strategy", "Allocate
             amountInRoundMatchToken,
             timestamp: new Date(this.event.blockTimestamp),
         };
+
+        const totalTime = performance.now() - startTime;
+        console.log(`[AllocatedWithOrigin] Total processing time: ${totalTime.toFixed(2)}ms`);
 
         return [
             {

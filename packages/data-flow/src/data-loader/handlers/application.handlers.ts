@@ -1,4 +1,5 @@
 import { ApplicationChangeset, IApplicationRepository } from "@grants-stack-indexer/repository";
+import { performanceLogger } from "@grants-stack-indexer/shared";
 
 import { ChangesetHandler } from "../types/index.js";
 
@@ -33,11 +34,35 @@ export const createApplicationHandlers = (
     }) satisfies ChangesetHandler<"UpdateApplication">,
 
     IncrementApplicationDonationStats: (async (changeset, txConnection): Promise<void> => {
+        const startTime = performance.now();
         const { chainId, roundId, applicationId, amountInUsd } = changeset.args;
         await repository.incrementApplicationDonationStats(
             { chainId, roundId, id: applicationId },
             amountInUsd,
             txConnection,
         );
+        const endTime = performance.now();
+        const duration = endTime - startTime;
+
+        // Get current application stats for logging
+        const application = await repository.getApplicationById(applicationId, chainId, roundId);
+
+        performanceLogger.logMetric({
+            timestamp: new Date().toISOString(),
+            eventType: "Application",
+            operation: "IncrementApplicationDonationStats",
+            duration,
+            totalTime: duration,
+            chainId,
+            roundId,
+            applicationId,
+            amountInUsd,
+            uniqueDonorsCount: application?.uniqueDonorsCount,
+            totalDonationsCount: application?.totalDonationsCount,
+            details: {
+                totalAmountDonatedInUsd: application?.totalAmountDonatedInUsd,
+                status: application?.status,
+            },
+        });
     }) satisfies ChangesetHandler<"IncrementApplicationDonationStats">,
 });
