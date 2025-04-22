@@ -29,6 +29,7 @@ const tables = [
     "attestations",
     "attestation_txns",
     "events_registry",
+    "price_cache",
 ] as const;
 
 type Tables = typeof tables;

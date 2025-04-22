@@ -158,7 +158,7 @@ describe("Base Setup", () => {
             // Verify unexpected types don't exist
             const unexpectedTypes = [
                 "metadatacache",
-                "pricecache",
+                "strategy_timings",
                 "processevents",
                 "kyselymigration",
                 "strategiesregistry",

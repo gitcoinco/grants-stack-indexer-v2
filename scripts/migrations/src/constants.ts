@@ -6,8 +6,8 @@
 export const BLUE_DB = "GitcoinDatalayerBlue";
 export const GREEN_DB = "GitcoinDatalayerGreen";
 
-// These are the only two cache tables we need to handle
-export const CACHE_TABLES = ["price_cache", "metadata_cache"];
+// These are the only three cache tables we need to handle
+export const CACHE_TABLES = ["price_cache", "metadata_cache", "strategy_timings"];
 
 /**
  * Interface for database connection details

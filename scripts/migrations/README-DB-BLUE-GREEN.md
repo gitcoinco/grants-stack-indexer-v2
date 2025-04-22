@@ -43,7 +43,7 @@ pnpm db:copy-cache -f blue
 ### How Cache Data Copy Works
 
 1. The script reads the PostgreSQL connection details from the `DATABASE_URL` environment variable
-2. It handles the two specific cache tables: `price_cache` and `metadata_cache`
+2. It handles the three specific cache tables: `price_cache`, `metadata_cache` and `strategy_timings`
 3. For each table:
     - It truncates the target table
     - Copies all data from the source to the target table
@@ -55,5 +55,6 @@ The script only copies the following tables, which contain cached data from exte
 
 -   `price_cache`: Stores token price information
 -   `metadata_cache`: Stores token metadata
+-   `strategy_timings`: Stores strategy timings (fetched from contract calls)
 
 All other tables are managed through the regular migration process and are not part of the blue-green deployment cache copying strategy.
