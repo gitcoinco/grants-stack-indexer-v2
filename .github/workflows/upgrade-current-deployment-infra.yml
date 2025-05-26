@@ -76,5 +76,11 @@ jobs:
                   echo "Deployment state: $deployment_state"
                   echo "Active deployment: $active_deployment"
                   terraform apply -var-file=tfvars.json -auto-approve -var="DEPLOYMENT_STATE=$deployment_state" -var="ACTIVE_DEPLOYMENT=$active_deployment"
+
+                  # Display RDS connection information
+                  echo "=== RDS Connection Information ==="
+                  echo "RDS Endpoint: $(terraform output -raw rds_endpoint)"
+                  echo "Connection String: postgresql://${{ secrets.DATALAYER_PG_USER }}:${{ secrets.DATALAYER_PG_PASSWORD }}@$(terraform output -raw rds_endpoint)/GitcoinDatalayer{{Green|Blue}}"
+
               env:
                   TERRAFORM_VARS: ${{ vars.TERRAFORM_VARS }}

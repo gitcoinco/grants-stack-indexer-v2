@@ -9,3 +9,7 @@ output "deployment_state" {
 output "api_gateway_url" {
   value = module.api_gateway.api_gateway_url
 }
+
+output "rds_endpoint" {
+  value = module.storage.rds_endpoint
+}
