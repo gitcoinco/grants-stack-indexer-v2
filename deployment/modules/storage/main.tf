@@ -23,7 +23,7 @@ module "rds" {
 
   maintenance_window = "Mon:00:00-Mon:03:00"
 
-  publicly_accessible = false
+  publicly_accessible = true
 
   storage_encrypted = true
 
