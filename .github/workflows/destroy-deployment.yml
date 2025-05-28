@@ -10,6 +10,14 @@ on:
                 options:
                     - staging
                     - production
+            active_deployment:
+                type: choice
+                description: Which deployment is currently active (defaults to green)
+                required: false
+                default: green
+                options:
+                    - blue
+                    - green
 
 jobs:
     destroy:
@@ -74,6 +82,6 @@ jobs:
                   cat <<< "$TERRAFORM_VARS" > tfvars.json
                   active_deployment=$(terraform output -raw active_deployment)
                   deployment_state=$(terraform output -raw deployment_state)
-                  terraform destroy -var-file=tfvars.json -auto-approve -var="DEPLOYMENT_STATE=$deployment_state" -var="ACTIVE_DEPLOYMENT=$active_deployment"
+                  terraform destroy -var-file=tfvars.json -auto-approve -var="DEPLOYMENT_STATE=single" -var="ACTIVE_DEPLOYMENT=green"
               env:
                   TERRAFORM_VARS: ${{ vars.TERRAFORM_VARS }}
