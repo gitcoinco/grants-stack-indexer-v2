@@ -1,3 +1,5 @@
+import * as fs from "fs";
+import * as path from "path";
 import { isNativeError } from "util/types";
 import pMap from "p-map";
 
@@ -50,6 +52,19 @@ type TokenWithTimestamps = {
 };
 
 /**
+ * Performance tracking data for events
+ */
+type EventPerformanceData = {
+    eventName: string;
+    slowCount: number;
+    totalDuration: number;
+    maxDuration: number;
+    minDuration: number;
+    lastTimestamp: string;
+    eventCount: number;
+};
+
+/**
  * The Orchestrator is the central coordinator of the data flow system, managing the interaction between
  * three main components:
  *
@@ -83,6 +98,9 @@ export class Orchestrator {
     private readonly strategyRegistry: IStrategyRegistry;
     private readonly dataLoader: DataLoader;
     private readonly retryHandler: RetryHandler;
+    private readonly performanceData: Map<string, EventPerformanceData> = new Map();
+    private readonly performanceCsvPath: string;
+    private readonly slowEventThresholdMs: number = 0.5; // 0.5 milliseconds (changed from 500ms)
 
     /**
      * @param chainId - The chain id
@@ -132,6 +150,158 @@ export class Orchestrator {
         this.eventsQueue = new Queue<ProcessorEvent<ContractName, AnyEvent>>(fetchLimit);
         this.eventsByBlockContext = new Map<number, AnyIndexerFetchedEvent[]>();
         this.retryHandler = new RetryHandler(retryStrategy, this.logger);
+
+        // Set up performance tracking
+        this.performanceCsvPath = path.join(process.cwd(), "performance.csv");
+        this.initializePerformanceCsv();
+    }
+
+    /**
+     * Initialize the performance CSV file with headers if it doesn't exist
+     */
+    private initializePerformanceCsv(): void {
+        if (!fs.existsSync(this.performanceCsvPath)) {
+            const headers =
+                "timestamp,eventName,slowCount,avgDuration,maxDuration,minDuration,chainId\n";
+            fs.writeFileSync(this.performanceCsvPath, headers);
+        }
+    }
+
+    /**
+     * Read the performance CSV file and return a map of event names to their data
+     * @returns A map of event names to their CSV data
+     */
+    private readPerformanceCsv(): Map<string, string> {
+        const eventMap = new Map<string, string>();
+
+        if (!fs.existsSync(this.performanceCsvPath)) {
+            return eventMap;
+        }
+
+        try {
+            const fileContent = fs.readFileSync(this.performanceCsvPath, "utf-8");
+            const lines = fileContent.split("\n");
+
+            // Skip header
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i]?.trim();
+                if (!line) continue;
+
+                const parts = line.split(",");
+                if (parts.length < 2) continue;
+
+                const eventName = parts[1];
+                if (eventName && typeof eventName === "string") {
+                    eventMap.set(eventName, line);
+                }
+            }
+        } catch (error) {
+            this.logger.error(`Error reading performance CSV: ${error}`, {
+                className: Orchestrator.name,
+                chainId: this.chainId,
+            });
+        }
+
+        return eventMap;
+    }
+
+    /**
+     * Write the combined performance data to the CSV file
+     * @param eventMap - Map of event names to their CSV data
+     */
+    private writePerformanceCsv(eventMap: Map<string, string>): void {
+        const headers =
+            "timestamp,eventName,slowCount,avgDuration,maxDuration,minDuration,chainId\n";
+        const lines = [headers];
+
+        // Add all event data
+        for (const line of eventMap.values()) {
+            if (line) {
+                lines.push(line);
+            }
+        }
+
+        fs.writeFileSync(this.performanceCsvPath, lines.join("\n"));
+    }
+
+    /**
+     * Update performance data for an event and write to CSV
+     * @param eventName - The name of the event
+     * @param duration - The duration in milliseconds
+     */
+    private updatePerformanceData(eventName: string, duration: number): void {
+        const now = new Date().toISOString();
+
+        // Update in-memory tracking
+        if (!this.performanceData.has(eventName)) {
+            this.performanceData.set(eventName, {
+                eventName,
+                slowCount: 0,
+                totalDuration: 0,
+                maxDuration: 0,
+                minDuration: Number.MAX_SAFE_INTEGER,
+                lastTimestamp: now,
+                eventCount: 0,
+            });
+            this.logger.debug(`Created new performance data for ${eventName}`, {
+                className: Orchestrator.name,
+                chainId: this.chainId,
+            });
+        }
+
+        const data = this.performanceData.get(eventName)!;
+        data.totalDuration += duration;
+        data.maxDuration = Math.max(data.maxDuration, duration);
+        data.minDuration = Math.min(data.minDuration, duration);
+        data.lastTimestamp = now;
+        data.eventCount++;
+
+        if (duration > this.slowEventThresholdMs) {
+            data.slowCount++;
+        }
+
+        // Log summary every 10 events (changed from 100 for testing)
+        if (data.eventCount % 10 === 0 && data.eventCount > 0) {
+            this.logger.info(
+                `Writing performance summary for ${eventName} after ${data.eventCount} events`,
+                {
+                    className: Orchestrator.name,
+                    chainId: this.chainId,
+                },
+            );
+
+            const avgDuration = (data.totalDuration / data.eventCount).toFixed(2);
+            const maxDuration = data.maxDuration.toFixed(2);
+            const minDuration = data.minDuration.toFixed(2);
+
+            // Create CSV line for this event
+            const csvLine = `${now},${eventName},${data.slowCount},${avgDuration},${maxDuration},${minDuration},${this.chainId}`;
+
+            // Read existing CSV data
+            const eventMap = this.readPerformanceCsv();
+
+            // Update or add this event's data
+            eventMap.set(eventName, csvLine);
+
+            // Write back to CSV
+            this.writePerformanceCsv(eventMap);
+
+            this.logger.info(`Performance summary for ${eventName}:`, {
+                className: Orchestrator.name,
+                chainId: this.chainId,
+                eventCount: data.eventCount,
+                slowCount: data.slowCount,
+                avgDuration,
+                maxDuration,
+                minDuration,
+            });
+        } else if (data.eventCount % 5 === 0) {
+            // Log progress every 5 events (changed from 10 for testing)
+            this.logger.debug(`Processed ${data.eventCount} events for ${eventName}`, {
+                className: Orchestrator.name,
+                chainId: this.chainId,
+            });
+        }
     }
 
     async run(signal: AbortSignal): Promise<void> {
@@ -430,28 +600,58 @@ export class Orchestrator {
     private async handleEvent(
         event: ProcessorEvent<ContractName, AnyEvent>,
     ): Promise<Changeset[] | undefined> {
-        event = await this.enhanceStrategyId(event);
-        if (this.isPoolCreated(event)) {
-            const handleable = existsHandler(event.strategyId);
-            await this.strategyRegistry.saveStrategyId(
-                this.chainId,
-                event.params.strategy,
-                event.strategyId,
-                handleable,
-            );
-        } else if (event.contractName === "Strategy" && "strategyId" in event) {
-            if (!existsHandler(event.strategyId)) {
-                this.logger.debug("Skipping event", {
-                    event,
-                    className: Orchestrator.name,
-                    chainId: this.chainId,
-                });
-                // we skip the event if the strategy id is not handled yet
-                return undefined;
+        const eventName = `${event.contractName}.${event.eventName}`;
+        const timerLabel = `Event: ${eventName}`;
+
+        console.time(timerLabel);
+        const startTime = performance.now();
+
+        try {
+            event = await this.enhanceStrategyId(event);
+            if (this.isPoolCreated(event)) {
+                const handleable = existsHandler(event.strategyId);
+                await this.strategyRegistry.saveStrategyId(
+                    this.chainId,
+                    event.params.strategy,
+                    event.strategyId,
+                    handleable,
+                );
+            } else if (event.contractName === "Strategy" && "strategyId" in event) {
+                if (!existsHandler(event.strategyId)) {
+                    this.logger.debug("Skipping event", {
+                        event,
+                        className: Orchestrator.name,
+                        chainId: this.chainId,
+                    });
+                    // we skip the event if the strategy id is not handled yet
+                    return undefined;
+                }
+            }
+
+            return this.eventsProcessor.processEvent(event);
+        } finally {
+            console.timeEnd(timerLabel);
+
+            // Calculate duration
+            const endTime = performance.now();
+            const duration = endTime - startTime;
+
+            // Update performance tracking
+            this.updatePerformanceData(eventName, duration);
+
+            // Log slow events
+            if (duration > this.slowEventThresholdMs) {
+                this.logger.warn(
+                    `Slow event detected: ${eventName} took ${duration.toFixed(2)}ms`,
+                    {
+                        className: Orchestrator.name,
+                        chainId: this.chainId,
+                        eventName,
+                        duration,
+                    },
+                );
             }
         }
-
-        return this.eventsProcessor.processEvent(event);
     }
 
     /**

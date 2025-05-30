@@ -1,4 +1,5 @@
 import { IRoundRepository, RoundChangeset } from "@grants-stack-indexer/repository";
+import { performanceLogger } from "@grants-stack-indexer/shared";
 
 import { ChangesetHandler } from "../types/index.js";
 
@@ -52,6 +53,7 @@ export const createRoundHandlers = (repository: IRoundRepository): RoundHandlers
     }) satisfies ChangesetHandler<"IncrementRoundFundedAmount">,
 
     IncrementRoundDonationStats: (async (changeset, txConnection): Promise<void> => {
+        const startTime = performance.now();
         const { chainId, roundId, amountInUsd } = changeset.args;
         await repository.incrementRoundDonationStats(
             {
@@ -61,6 +63,27 @@ export const createRoundHandlers = (repository: IRoundRepository): RoundHandlers
             amountInUsd,
             txConnection,
         );
+        const endTime = performance.now();
+        const duration = endTime - startTime;
+
+        // Get current round stats for logging
+        const round = await repository.getRoundById(chainId, roundId);
+
+        performanceLogger.logMetric({
+            timestamp: new Date().toISOString(),
+            eventType: "Round",
+            operation: "IncrementRoundDonationStats",
+            duration,
+            totalTime: duration,
+            chainId,
+            roundId,
+            amountInUsd,
+            uniqueDonorsCount: round?.uniqueDonorsCount,
+            totalDonationsCount: round?.totalDonationsCount,
+            details: {
+                totalAmountDonatedInUsd: round?.totalAmountDonatedInUsd,
+            },
+        });
     }) satisfies ChangesetHandler<"IncrementRoundDonationStats">,
 
     IncrementRoundTotalDistributed: (async (changeset, txConnection): Promise<void> => {
