@@ -1,23 +1,43 @@
 ################################################################
-####################### DEPLOYMENT STATE #######################
+####################### SIMPLIFIED DEPLOYMENT ##################
 ################################################################
 
-variable "DEPLOYMENT_STATE" {
-  description = "Current deployment state (single, deploying)"
+# Simplified variables replacing blue/green deployment
+variable "IMAGE_TAG" {
+  description = "Docker image tag to deploy"
   type        = string
-  validation {
-    condition     = contains(["single", "deploying"], var.DEPLOYMENT_STATE)
-    error_message = "DEPLOYMENT_STATE must be either 'single' or 'deploying'"
-  }
+  default     = "latest"
 }
 
-variable "ACTIVE_DEPLOYMENT" {
-  description = "Which environment is currently active (blue or green)"
+variable "SSL_CERTIFICATE_ARN" {
+  description = "ARN of SSL certificate for HTTPS (optional)"
   type        = string
-  validation {
-    condition     = contains(["blue", "green"], var.ACTIVE_DEPLOYMENT)
-    error_message = "ACTIVE_DEPLOYMENT must be either 'blue' or 'green'"
-  }
+  default     = ""
+}
+
+variable "REDIS_URL" {
+  description = "Redis connection URL (optional)"
+  type        = string
+  default     = ""
+}
+
+variable "DATALAYER_PG_DB_NAME" {
+  description = "Database name for the application"
+  type        = string
+  default     = "grants_stack_indexer"
+}
+
+variable "CHAINS" {
+  description = "List of blockchain chains to process"
+  type = list(object({
+    id       = number
+    name     = string
+    env_vars = list(object({
+      name  = string
+      value = string
+    }))
+  }))
+  default = []
 }
 
 
