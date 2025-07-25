@@ -4,21 +4,21 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        type: choice
-        description: Environment to restore database backup to
+        description: 'Environment to restore database backup to'
         required: true
+        type: choice
         options:
           - staging
           - production
       backup_file:
-        type: string
-        description: S3 path to backup file (e.g., backups/2024-01-15/database-backup.sql)
+        description: 'S3 path to backup file (e.g., backups/2024-01-15/database-backup.sql)'
         required: true
+        type: string
       confirm_restore:
-        type: boolean
-        description: Confirm that you want to restore the database (THIS WILL OVERWRITE EXISTING DATA)
+        description: 'Confirm that you want to restore the database (THIS WILL OVERWRITE EXISTING DATA)'
         required: true
         default: false
+        type: boolean
 
 jobs:
   restore-database:
@@ -36,11 +36,6 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
-
-      - name: Check if user is an admin
-        uses: ./.github/actions/check-admin
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4

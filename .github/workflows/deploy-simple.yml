@@ -4,17 +4,18 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        type: choice
-        description: Environment to deploy to
+        description: 'Environment to deploy to'
         required: true
+        default: 'staging'
+        type: choice
         options:
           - staging
           - production
       image_tag:
-        type: string
-        description: Docker image tag to deploy
+        description: 'Docker image tag to deploy'
         required: false
-        default: latest
+        default: 'latest'
+        type: string
 
 jobs:
   deploy:
@@ -41,11 +42,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
-
-      - name: Check if user is an admin
-        uses: ./.github/actions/check-admin
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
