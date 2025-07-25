@@ -1,7 +1,7 @@
 name: Deploy to AWS (Simplified)
 
 on:
-    workflow_dispatch:
+  workflow_dispatch:
         inputs:
             environment:
                 type: choice
@@ -17,7 +17,7 @@ on:
                 default: latest
 
 jobs:
-    deploy:
+  deploy:
         name: Deploy to ${{ github.event.inputs.environment }}
         runs-on: ubuntu-latest
         environment: ${{ github.event.inputs.environment }}

@@ -1,7 +1,7 @@
 name: Restore Database Backup
 
 on:
-    workflow_dispatch:
+  workflow_dispatch:
         inputs:
             environment:
                 type: choice
@@ -21,7 +21,7 @@ on:
                 default: false
 
 jobs:
-    restore-database:
+  restore-database:
         name: Restore Database Backup to ${{ github.event.inputs.environment }}
         runs-on: ubuntu-latest
         environment: ${{ github.event.inputs.environment }}
