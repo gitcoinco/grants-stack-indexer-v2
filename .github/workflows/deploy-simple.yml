@@ -1,106 +1,105 @@
 name: Deploy to AWS (Simplified)
 
 on:
-  workflow_dispatch:
-    inputs:
-      environment:
-        description: 'Environment to deploy to'
-        required: true
-        default: 'staging'
-        type: choice
-        options:
-          - staging
-          - production
-      image_tag:
-        description: 'Docker image tag to deploy'
-        required: false
-        default: 'latest'
-        type: string
+    workflow_dispatch:
+        inputs:
+            environment:
+                type: choice
+                description: Environment to deploy to
+                required: true
+                options:
+                    - staging
+                    - production
+            image_tag:
+                type: string
+                description: Docker image tag to deploy
+                required: false
+                default: latest
 
 jobs:
-  deploy:
-    name: Deploy to ${{ github.event.inputs.environment }}
-    runs-on: ubuntu-latest
-    environment: ${{ github.event.inputs.environment }}
-    env:
-      TF_VAR_AWS_REGION: ${{ vars.AWS_REGION }}
-      TF_VAR_APP_NAME: ${{ vars.APP_NAME }}
-      TF_VAR_APP_ENVIRONMENT: ${{ github.event.inputs.environment }}
-      TF_VAR_IMAGE_TAG: ${{ github.event.inputs.image_tag || 'latest' }}
-      # Database
-      TF_VAR_DATALAYER_PG_USER: ${{ secrets.DATALAYER_PG_USER }}
-      TF_VAR_DATALAYER_PG_PASSWORD: ${{ secrets.DATALAYER_PG_PASSWORD }}
-      TF_VAR_DATALAYER_PG_DB_NAME: ${{ vars.DATALAYER_PG_DB_NAME || 'grants_stack_indexer' }}
-      # Optional configurations
-      TF_VAR_SSL_CERTIFICATE_ARN: ${{ vars.SSL_CERTIFICATE_ARN || '' }}
-      TF_VAR_REDIS_URL: ${{ vars.REDIS_URL || '' }}
-      # Chains configuration
-      TF_VAR_CHAINS: ${{ vars.CHAINS || '[]' }}
+    deploy:
+        name: Deploy to ${{ github.event.inputs.environment }}
+        runs-on: ubuntu-latest
+        environment: ${{ github.event.inputs.environment }}
+        env:
+            TF_VAR_AWS_REGION: ${{ vars.AWS_REGION }}
+            TF_VAR_APP_NAME: ${{ vars.APP_NAME }}
+            TF_VAR_APP_ENVIRONMENT: ${{ github.event.inputs.environment }}
+            TF_VAR_IMAGE_TAG: ${{ github.event.inputs.image_tag || 'latest' }}
+            # Database
+            TF_VAR_DATALAYER_PG_USER: ${{ secrets.DATALAYER_PG_USER }}
+            TF_VAR_DATALAYER_PG_PASSWORD: ${{ secrets.DATALAYER_PG_PASSWORD }}
+            TF_VAR_DATALAYER_PG_DB_NAME: ${{ vars.DATALAYER_PG_DB_NAME || 'grants_stack_indexer' }}
+            # Optional configurations
+            TF_VAR_SSL_CERTIFICATE_ARN: ${{ vars.SSL_CERTIFICATE_ARN || '' }}
+            TF_VAR_REDIS_URL: ${{ vars.REDIS_URL || '' }}
+            # Chains configuration
+            TF_VAR_CHAINS: ${{ vars.CHAINS || '[]' }}
 
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
+        steps:
+            - name: Check out repository
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 1
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: ${{ vars.TERRAFORM_VERSION || '1.6.0' }}
-          terraform_wrapper: false
+            - name: Setup Terraform
+              uses: hashicorp/setup-terraform@v3
+              with:
+                  terraform_version: ${{ vars.TERRAFORM_VERSION || '1.6.0' }}
+                  terraform_wrapper: false
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ vars.AWS_REGION }}
+            - name: Configure AWS credentials
+              uses: aws-actions/configure-aws-credentials@v4
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                  aws-region: ${{ vars.AWS_REGION }}
 
-      - name: Initialize Terraform
-        working-directory: ./deployment/environments/${{ github.event.inputs.environment }}
-        run: |
-          terraform init \
-            -backend-config="bucket=${{ vars.TERRAFORM_STATE_BUCKET }}" \
-            -backend-config="key=${{ vars.APP_NAME }}/${{ github.event.inputs.environment }}/terraform.tfstate" \
-            -backend-config="region=${{ vars.AWS_REGION }}"
+            - name: Initialize Terraform
+              working-directory: ./deployment/environments/${{ github.event.inputs.environment }}
+              run: |
+                  terraform init \
+                    -backend-config="bucket=${{ vars.TERRAFORM_STATE_BUCKET }}" \
+                    -backend-config="key=${{ vars.APP_NAME }}/${{ github.event.inputs.environment }}/terraform.tfstate" \
+                    -backend-config="region=${{ vars.AWS_REGION }}"
 
-      - name: Validate Terraform
-        working-directory: ./deployment/environments/${{ github.event.inputs.environment }}
-        run: terraform validate
+            - name: Validate Terraform
+              working-directory: ./deployment/environments/${{ github.event.inputs.environment }}
+              run: terraform validate
 
-      - name: Plan Terraform
-        working-directory: ./deployment/environments/${{ github.event.inputs.environment }}
-        run: terraform plan -out=tfplan
+            - name: Plan Terraform
+              working-directory: ./deployment/environments/${{ github.event.inputs.environment }}
+              run: terraform plan -out=tfplan
 
-      - name: Apply Terraform
-        working-directory: ./deployment/environments/${{ github.event.inputs.environment }}
-        run: terraform apply -auto-approve tfplan
+            - name: Apply Terraform
+              working-directory: ./deployment/environments/${{ github.event.inputs.environment }}
+              run: terraform apply -auto-approve tfplan
 
-      - name: Get deployment outputs
-        working-directory: ./deployment/environments/${{ github.event.inputs.environment }}
-        run: |
-          echo "LOAD_BALANCER_DNS=$(terraform output -raw load_balancer_dns_name)" >> $GITHUB_ENV
-          echo "CLUSTER_NAME=$(terraform output -raw cluster_name)" >> $GITHUB_ENV
+            - name: Get deployment outputs
+              working-directory: ./deployment/environments/${{ github.event.inputs.environment }}
+              run: |
+                  echo "LOAD_BALANCER_DNS=$(terraform output -raw load_balancer_dns_name)" >> $GITHUB_ENV
+                  echo "CLUSTER_NAME=$(terraform output -raw cluster_name)" >> $GITHUB_ENV
 
-      - name: Update ECS service (force new deployment)
-        run: |
-          aws ecs update-service \
-            --cluster ${{ env.CLUSTER_NAME }} \
-            --service ${{ vars.APP_NAME }}-api-service \
-            --force-new-deployment \
-            --region ${{ vars.AWS_REGION }}
+            - name: Update ECS service (force new deployment)
+              run: |
+                  aws ecs update-service \
+                    --cluster ${{ env.CLUSTER_NAME }} \
+                    --service ${{ vars.APP_NAME }}-api-service \
+                    --force-new-deployment \
+                    --region ${{ vars.AWS_REGION }}
 
-      - name: Wait for deployment to complete
-        run: |
-          aws ecs wait services-stable \
-            --cluster ${{ env.CLUSTER_NAME }} \
-            --services ${{ vars.APP_NAME }}-api-service \
-            --region ${{ vars.AWS_REGION }}
+            - name: Wait for deployment to complete
+              run: |
+                  aws ecs wait services-stable \
+                    --cluster ${{ env.CLUSTER_NAME }} \
+                    --services ${{ vars.APP_NAME }}-api-service \
+                    --region ${{ vars.AWS_REGION }}
 
-      - name: Deployment summary
-        run: |
-          echo "🚀 Deployment completed successfully!"
-          echo "Environment: ${{ github.event.inputs.environment }}"
-          echo "Image Tag: ${{ github.event.inputs.image_tag || 'latest' }}"
-          echo "Load Balancer DNS: ${{ env.LOAD_BALANCER_DNS }}"
-          echo "ECS Cluster: ${{ env.CLUSTER_NAME }}"
+            - name: Deployment summary
+              run: |
+                  echo "🚀 Deployment completed successfully!"
+                  echo "Environment: ${{ github.event.inputs.environment }}"
+                  echo "Image Tag: ${{ github.event.inputs.image_tag || 'latest' }}"
+                  echo "Load Balancer DNS: ${{ env.LOAD_BALANCER_DNS }}"
+                  echo "ECS Cluster: ${{ env.CLUSTER_NAME }}"

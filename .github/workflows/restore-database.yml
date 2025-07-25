@@ -1,225 +1,192 @@
 name: Restore Database Backup
 
 on:
-  workflow_dispatch:
-    inputs:
-      environment:
-        description: 'Environment to restore database backup to'
-        required: true
-        type: choice
-        options:
-          - staging
-          - production
-      backup_file:
-        description: 'S3 path to backup file (e.g., backups/2024-01-15/database-backup.sql)'
-        required: true
-        type: string
-      confirm_restore:
-        description: 'Confirm that you want to restore the database (THIS WILL OVERWRITE EXISTING DATA)'
-        required: true
-        default: false
-        type: boolean
+    workflow_dispatch:
+        inputs:
+            environment:
+                type: choice
+                description: Environment to restore database backup to
+                required: true
+                options:
+                    - staging
+                    - production
+            backup_file:
+                type: string
+                description: S3 path to backup file (e.g., backups/2024-01-15/database-backup.sql)
+                required: true
+            confirm_restore:
+                type: boolean
+                description: Confirm that you want to restore the database (THIS WILL OVERWRITE EXISTING DATA)
+                required: true
+                default: false
 
 jobs:
-  restore-database:
-    name: Restore Database Backup to ${{ github.event.inputs.environment }}
-    runs-on: ubuntu-latest
-    environment: ${{ github.event.inputs.environment }}
-    if: github.event.inputs.confirm_restore == 'true'
-    
-    env:
-      AWS_REGION: ${{ vars.AWS_REGION }}
-      APP_NAME: ${{ vars.APP_NAME }}
-      APP_ENVIRONMENT: ${{ github.event.inputs.environment }}
-      BACKUP_BUCKET: ${{ vars.BACKUP_BUCKET || format('{0}-{1}-backups', vars.APP_NAME, github.event.inputs.environment) }}
+    restore-database:
+        name: Restore Database Backup to ${{ github.event.inputs.environment }}
+        runs-on: ubuntu-latest
+        environment: ${{ github.event.inputs.environment }}
+        if: github.event.inputs.confirm_restore == 'true'
+        
+        env:
+            AWS_REGION: ${{ vars.AWS_REGION }}
+            APP_NAME: ${{ vars.APP_NAME }}
+            APP_ENVIRONMENT: ${{ github.event.inputs.environment }}
+            BACKUP_BUCKET: ${{ vars.BACKUP_BUCKET || format('{0}-{1}-backups', vars.APP_NAME, github.event.inputs.environment) }}
 
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
+        steps:
+            - name: Check out repository
+              uses: actions/checkout@v4
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
+            - name: Configure AWS credentials
+              uses: aws-actions/configure-aws-credentials@v4
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                  aws-region: ${{ env.AWS_REGION }}
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: ${{ vars.TERRAFORM_VERSION || '1.6.0' }}
-          terraform_wrapper: false
+            - name: Setup Terraform
+              uses: hashicorp/setup-terraform@v3
+              with:
+                  terraform_version: ${{ vars.TERRAFORM_VERSION || '1.6.0' }}
+                  terraform_wrapper: false
 
-      - name: Initialize Terraform
-        working-directory: ./deployment/environments/${{ github.event.inputs.environment }}
-        run: |
-          terraform init \
-            -backend-config="bucket=${{ vars.TERRAFORM_STATE_BUCKET }}" \
-            -backend-config="key=${{ vars.APP_NAME }}/${{ github.event.inputs.environment }}/terraform.tfstate" \
-            -backend-config="region=${{ vars.AWS_REGION }}"
+            - name: Initialize Terraform
+              working-directory: ./deployment/environments/${{ github.event.inputs.environment }}
+              run: |
+                  terraform init \
+                    -backend-config="bucket=${{ vars.TERRAFORM_STATE_BUCKET }}" \
+                    -backend-config="key=${{ vars.APP_NAME }}/${{ github.event.inputs.environment }}/terraform.tfstate" \
+                    -backend-config="region=${{ vars.AWS_REGION }}"
 
-      - name: Get database connection details
-        working-directory: ./deployment/environments/${{ github.event.inputs.environment }}
-        run: |
-          # Get RDS endpoint from Terraform output
-          RDS_ENDPOINT=$(terraform output -raw rds_endpoint 2>/dev/null || echo "")
-          if [ -z "$RDS_ENDPOINT" ]; then
-            echo "Error: Could not retrieve RDS endpoint from Terraform"
-            exit 1
-          fi
-          echo "RDS_ENDPOINT=${RDS_ENDPOINT}" >> $GITHUB_ENV
-          echo "DATABASE_URL=postgresql://${{ secrets.DATALAYER_PG_USER }}:${{ secrets.DATALAYER_PG_PASSWORD }}@${RDS_ENDPOINT}/${{ vars.DATALAYER_PG_DB_NAME || 'grants_stack_indexer' }}" >> $GITHUB_ENV
+            - name: Get database connection details
+              working-directory: ./deployment/environments/${{ github.event.inputs.environment }}
+              run: |
+                  RDS_ENDPOINT=$(terraform output -raw rds_endpoint 2>/dev/null || echo "")
+                  if [ -z "$RDS_ENDPOINT" ]; then
+                    echo "Error: Could not retrieve RDS endpoint from Terraform"
+                    exit 1
+                  fi
+                  echo "RDS_ENDPOINT=${RDS_ENDPOINT}" >> $GITHUB_ENV
+                  echo "DATABASE_URL=postgresql://${{ secrets.DATALAYER_PG_USER }}:${{ secrets.DATALAYER_PG_PASSWORD }}@${RDS_ENDPOINT}/${{ vars.DATALAYER_PG_DB_NAME || 'grants_stack_indexer' }}" >> $GITHUB_ENV
 
-      - name: Install PostgreSQL client
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y postgresql-client-15
+            - name: Install PostgreSQL client
+              run: |
+                  sudo apt-get update
+                  sudo apt-get install -y postgresql-client-15
 
-      - name: Verify backup file exists
-        run: |
-          if ! aws s3 ls "s3://${{ env.BACKUP_BUCKET }}/${{ github.event.inputs.backup_file }}"; then
-            echo "Error: Backup file not found at s3://${{ env.BACKUP_BUCKET }}/${{ github.event.inputs.backup_file }}"
-            exit 1
-          fi
-          echo "✅ Backup file found"
+            - name: Verify backup file exists
+              run: |
+                  if ! aws s3 ls "s3://${{ env.BACKUP_BUCKET }}/${{ github.event.inputs.backup_file }}"; then
+                    echo "Error: Backup file not found at s3://${{ env.BACKUP_BUCKET }}/${{ github.event.inputs.backup_file }}"
+                    exit 1
+                  fi
+                  echo "✅ Backup file found"
 
-      - name: Download backup file
-        run: |
-          mkdir -p ./temp-backup
-          aws s3 cp "s3://${{ env.BACKUP_BUCKET }}/${{ github.event.inputs.backup_file }}" ./temp-backup/backup.sql
-          echo "✅ Backup file downloaded"
+            - name: Download backup file
+              run: |
+                  mkdir -p ./temp-backup
+                  aws s3 cp "s3://${{ env.BACKUP_BUCKET }}/${{ github.event.inputs.backup_file }}" ./temp-backup/backup.sql
+                  echo "✅ Backup file downloaded"
 
-      - name: Verify database connection
-        run: |
-          if ! pg_isready -h "${{ env.RDS_ENDPOINT }}" -U "${{ secrets.DATALAYER_PG_USER }}"; then
-            echo "Error: Cannot connect to database"
-            exit 1
-          fi
-          echo "✅ Database connection verified"
+            - name: Verify database connection
+              run: |
+                  if ! pg_isready -h "${{ env.RDS_ENDPOINT }}" -U "${{ secrets.DATALAYER_PG_USER }}"; then
+                    echo "Error: Cannot connect to database"
+                    exit 1
+                  fi
+                  echo "✅ Database connection verified"
 
-      - name: Create database backup before restore
-        run: |
-          TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-          BACKUP_NAME="pre_restore_backup_${TIMESTAMP}.sql"
-          
-          echo "Creating backup before restore: ${BACKUP_NAME}"
-          pg_dump "${{ env.DATABASE_URL }}" > "./temp-backup/${BACKUP_NAME}"
-          
-          # Upload pre-restore backup to S3
-          aws s3 cp "./temp-backup/${BACKUP_NAME}" "s3://${{ env.BACKUP_BUCKET }}/pre-restore-backups/${BACKUP_NAME}"
-          echo "✅ Pre-restore backup created and uploaded to S3"
+            - name: Create database backup before restore
+              run: |
+                  TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+                  BACKUP_NAME="pre_restore_backup_${TIMESTAMP}.sql"
+                  
+                  echo "Creating backup before restore: ${BACKUP_NAME}"
+                  pg_dump "${{ env.DATABASE_URL }}" > "./temp-backup/${BACKUP_NAME}"
+                  
+                  aws s3 cp "./temp-backup/${BACKUP_NAME}" "s3://${{ env.BACKUP_BUCKET }}/pre-restore-backups/${BACKUP_NAME}"
+                  echo "✅ Pre-restore backup created and uploaded to S3"
 
-      - name: Stop ECS services (to prevent data conflicts)
-        run: |
-          # Get cluster name from Terraform
-          CLUSTER_NAME=$(cd ./deployment/environments/${{ github.event.inputs.environment }} && terraform output -raw cluster_name)
-          
-          echo "Stopping ECS services in cluster: ${CLUSTER_NAME}"
-          
-          # Stop API service
-          aws ecs update-service \
-            --cluster "${CLUSTER_NAME}" \
-            --service "${{ env.APP_NAME }}-api-service" \
-            --desired-count 0 \
-            --region "${{ env.AWS_REGION }}"
-          
-          # Stop processing services (if any)
-          PROCESSING_SERVICES=$(aws ecs list-services --cluster "${CLUSTER_NAME}" --query 'serviceArns[?contains(@, `processing`)]' --output text)
-          for service in $PROCESSING_SERVICES; do
-            SERVICE_NAME=$(basename "$service")
-            aws ecs update-service \
-              --cluster "${CLUSTER_NAME}" \
-              --service "${SERVICE_NAME}" \
-              --desired-count 0 \
-              --region "${{ env.AWS_REGION }}"
-          done
-          
-          echo "✅ ECS services stopped"
+            - name: Stop ECS services
+              run: |
+                  CLUSTER_NAME=$(cd ./deployment/environments/${{ github.event.inputs.environment }} && terraform output -raw cluster_name)
+                  
+                  echo "Stopping ECS services in cluster: ${CLUSTER_NAME}"
+                  
+                  aws ecs update-service \
+                    --cluster "${CLUSTER_NAME}" \
+                    --service "${{ env.APP_NAME }}-api-service" \
+                    --desired-count 0 \
+                    --region "${{ env.AWS_REGION }}"
+                  
+                  echo "✅ ECS services stopped"
 
-      - name: Wait for services to stop
-        run: |
-          CLUSTER_NAME=$(cd ./deployment/environments/${{ github.event.inputs.environment }} && terraform output -raw cluster_name)
-          
-          echo "Waiting for services to stop..."
-          aws ecs wait services-stable \
-            --cluster "${CLUSTER_NAME}" \
-            --services "${{ env.APP_NAME }}-api-service" \
-            --region "${{ env.AWS_REGION }}"
-          
-          echo "✅ Services have stopped"
+            - name: Wait for services to stop
+              run: |
+                  CLUSTER_NAME=$(cd ./deployment/environments/${{ github.event.inputs.environment }} && terraform output -raw cluster_name)
+                  
+                  echo "Waiting for services to stop..."
+                  aws ecs wait services-stable \
+                    --cluster "${CLUSTER_NAME}" \
+                    --services "${{ env.APP_NAME }}-api-service" \
+                    --region "${{ env.AWS_REGION }}"
+                  
+                  echo "✅ Services have stopped"
 
-      - name: Restore database
-        run: |
-          echo "🔄 Starting database restore..."
-          
-          # Drop and recreate database (if needed)
-          DB_NAME="${{ vars.DATALAYER_PG_DB_NAME || 'grants_stack_indexer' }}"
-          
-          # Connect to postgres database to drop/create target database
-          POSTGRES_URL="postgresql://${{ secrets.DATALAYER_PG_USER }}:${{ secrets.DATALAYER_PG_PASSWORD }}@${{ env.RDS_ENDPOINT }}/postgres"
-          
-          # Terminate existing connections
-          psql "$POSTGRES_URL" -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '${DB_NAME}' AND pid <> pg_backend_pid();"
-          
-          # Drop and recreate database
-          psql "$POSTGRES_URL" -c "DROP DATABASE IF EXISTS ${DB_NAME};"
-          psql "$POSTGRES_URL" -c "CREATE DATABASE ${DB_NAME};"
-          
-          # Restore from backup
-          psql "${{ env.DATABASE_URL }}" < ./temp-backup/backup.sql
-          
-          echo "✅ Database restore completed"
+            - name: Restore database
+              run: |
+                  echo "🔄 Starting database restore..."
+                  
+                  DB_NAME="${{ vars.DATALAYER_PG_DB_NAME || 'grants_stack_indexer' }}"
+                  
+                  POSTGRES_URL="postgresql://${{ secrets.DATALAYER_PG_USER }}:${{ secrets.DATALAYER_PG_PASSWORD }}@${{ env.RDS_ENDPOINT }}/postgres"
+                  
+                  psql "$POSTGRES_URL" -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '${DB_NAME}' AND pid <> pg_backend_pid();"
+                  
+                  psql "$POSTGRES_URL" -c "DROP DATABASE IF EXISTS ${DB_NAME};"
+                  psql "$POSTGRES_URL" -c "CREATE DATABASE ${DB_NAME};"
+                  
+                  psql "${{ env.DATABASE_URL }}" < ./temp-backup/backup.sql
+                  
+                  echo "✅ Database restore completed"
 
-      - name: Restart ECS services
-        run: |
-          CLUSTER_NAME=$(cd ./deployment/environments/${{ github.event.inputs.environment }} && terraform output -raw cluster_name)
-          
-          echo "Restarting ECS services..."
-          
-          # Restart API service
-          aws ecs update-service \
-            --cluster "${CLUSTER_NAME}" \
-            --service "${{ env.APP_NAME }}-api-service" \
-            --desired-count 1 \
-            --region "${{ env.AWS_REGION }}"
-          
-          # Restart processing services with their original desired count
-          # Note: This assumes 1 instance per processing service, adjust as needed
-          PROCESSING_SERVICES=$(aws ecs list-services --cluster "${CLUSTER_NAME}" --query 'serviceArns[?contains(@, `processing`)]' --output text)
-          for service in $PROCESSING_SERVICES; do
-            SERVICE_NAME=$(basename "$service")
-            aws ecs update-service \
-              --cluster "${CLUSTER_NAME}" \
-              --service "${SERVICE_NAME}" \
-              --desired-count 1 \
-              --region "${{ env.AWS_REGION }}"
-          done
-          
-          echo "✅ ECS services restarted"
+            - name: Restart ECS services
+              run: |
+                  CLUSTER_NAME=$(cd ./deployment/environments/${{ github.event.inputs.environment }} && terraform output -raw cluster_name)
+                  
+                  echo "Restarting ECS services..."
+                  
+                  aws ecs update-service \
+                    --cluster "${CLUSTER_NAME}" \
+                    --service "${{ env.APP_NAME }}-api-service" \
+                    --desired-count 1 \
+                    --region "${{ env.AWS_REGION }}"
+                  
+                  echo "✅ ECS services restarted"
 
-      - name: Wait for services to be healthy
-        run: |
-          CLUSTER_NAME=$(cd ./deployment/environments/${{ github.event.inputs.environment }} && terraform output -raw cluster_name)
-          
-          echo "Waiting for services to become healthy..."
-          aws ecs wait services-stable \
-            --cluster "${CLUSTER_NAME}" \
-            --services "${{ env.APP_NAME }}-api-service" \
-            --region "${{ env.AWS_REGION }}"
-          
-          echo "✅ Services are healthy"
+            - name: Wait for services to be healthy
+              run: |
+                  CLUSTER_NAME=$(cd ./deployment/environments/${{ github.event.inputs.environment }} && terraform output -raw cluster_name)
+                  
+                  echo "Waiting for services to become healthy..."
+                  aws ecs wait services-stable \
+                    --cluster "${CLUSTER_NAME}" \
+                    --services "${{ env.APP_NAME }}-api-service" \
+                    --region "${{ env.AWS_REGION }}"
+                  
+                  echo "✅ Services are healthy"
 
-      - name: Cleanup temporary files
-        run: |
-          rm -rf ./temp-backup
-          echo "✅ Temporary files cleaned up"
+            - name: Cleanup temporary files
+              run: |
+                  rm -rf ./temp-backup
+                  echo "✅ Temporary files cleaned up"
 
-      - name: Restore summary
-        run: |
-          echo "🎉 Database restore completed successfully!"
-          echo "Environment: ${{ github.event.inputs.environment }}"
-          echo "Backup file: ${{ github.event.inputs.backup_file }}"
-          echo "Database: ${{ env.RDS_ENDPOINT }}/${{ vars.DATALAYER_PG_DB_NAME || 'grants_stack_indexer' }}"
-          echo ""
-          echo "⚠️  A pre-restore backup was created and uploaded to S3 for safety."
-          echo "Services have been restarted and should be operational."
+            - name: Restore summary
+              run: |
+                  echo "🎉 Database restore completed successfully!"
+                  echo "Environment: ${{ github.event.inputs.environment }}"
+                  echo "Backup file: ${{ github.event.inputs.backup_file }}"
+                  echo "Database: ${{ env.RDS_ENDPOINT }}/${{ vars.DATALAYER_PG_DB_NAME || 'grants_stack_indexer' }}"
+                  echo ""
+                  echo "⚠️  A pre-restore backup was created and uploaded to S3 for safety."
+                  echo "Services have been restarted and should be operational."
