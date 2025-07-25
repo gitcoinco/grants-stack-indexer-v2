@@ -106,10 +106,11 @@ The repository includes automated CI/CD workflows:
 #### Manual Deployments
 Use the GitHub Actions UI to trigger manual deployments:
 
-1. Go to **Actions** → **Deploy to AWS (Simplified)**
-2. Click **Run workflow**
-3. Select environment and image tag
-4. Click **Run workflow**
+1. Go to **Actions** tab in your GitHub repository
+2. Find and click on **"Deploy to AWS (Simplified)"** workflow
+3. Click **"Run workflow"** button
+4. Select environment and image tag from the dropdown/input fields
+5. Click **"Run workflow"** to start the deployment
 
 ### Method 3: Direct Terraform
 
@@ -174,11 +175,12 @@ Compared to the blue/green deployment:
 
 Use the GitHub Action for safe database restoration:
 
-1. Go to **Actions** → **Restore Database Backup**
-2. Click **Run workflow**
-3. Select environment and backup file path
-4. **Check the confirmation checkbox** (this will overwrite data!)
-5. Click **Run workflow**
+1. Go to **Actions** tab in your GitHub repository
+2. Find and click on **"Restore Database Backup"** workflow
+3. Click **"Run workflow"** button
+4. Select environment and enter the backup file path (e.g., `database-backups/2024/01/15/backup_name.sql`)
+5. **Check the confirmation checkbox** (this will overwrite existing data!)
+6. Click **"Run workflow"** to start the restoration
 
 The restore process will:
 - Stop ECS services to prevent conflicts
