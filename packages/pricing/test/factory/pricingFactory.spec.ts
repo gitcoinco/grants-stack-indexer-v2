@@ -4,7 +4,11 @@ import { ILogger } from "@grants-stack-indexer/shared";
 
 import { CoingeckoProvider, PricingConfig } from "../../src/external.js";
 import { PricingProviderFactory } from "../../src/factory/index.js";
-import { InvalidPricingSource, MissingDependencies } from "../../src/internal.js";
+import {
+    CoinPaprikaProvider,
+    InvalidPricingSource,
+    MissingDependencies,
+} from "../../src/internal.js";
 import { DummyPricingProvider } from "../../src/providers/dummy.provider.js";
 
 describe("PricingProviderFactory", () => {
@@ -32,6 +36,20 @@ describe("PricingProviderFactory", () => {
         });
 
         expect(pricingProvider).toBeInstanceOf(CoingeckoProvider);
+    });
+
+    it("create a CoinPaprikaProvider", () => {
+        const options: PricingConfig<"coinpaprika"> = {
+            pricingSource: "coinpaprika",
+            apiKey: "some-api-key",
+            apiType: "pro",
+        };
+
+        const pricingProvider = PricingProviderFactory.create(options, {
+            logger: {} as unknown as ILogger,
+        });
+
+        expect(pricingProvider).toBeInstanceOf(CoinPaprikaProvider);
     });
 
     it("throws if logger instance is not provided for CoingeckoProvider", () => {

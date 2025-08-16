@@ -3,7 +3,7 @@ import { TimestampMs, TokenCode } from "@grants-stack-indexer/shared";
 import { TokenPrice } from "../internal.js";
 
 // available pricing providers
-export type PricingProvider = "coingecko" | "dummy";
+export type PricingProvider = "coingecko" | "dummy" | "coinpaprika";
 
 /**
  * Represents a pricing service that retrieves token prices.
