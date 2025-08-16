@@ -42,7 +42,7 @@ export const createTestOrchestrator = (
         error: vi.fn(),
         warn: vi.fn(),
         debug: vi.fn(),
-        trace: vi.fn(),
+        verbose: vi.fn(),
     };
     const mockIndexerClient = createMockIndexerClient();
     const { eventsRegistry, strategyRegistry } = createMockRegistries(config.strategiesMap);

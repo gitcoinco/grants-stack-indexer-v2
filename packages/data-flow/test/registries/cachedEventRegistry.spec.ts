@@ -9,6 +9,7 @@ import { InMemoryCachedEventRegistry } from "../../src/registries/event/cachedEv
 describe("InMemoryCachedEventRegistry", () => {
     const logger: ILogger = {
         debug: vi.fn(),
+        verbose: vi.fn(),
         error: vi.fn(),
         info: vi.fn(),
         warn: vi.fn(),

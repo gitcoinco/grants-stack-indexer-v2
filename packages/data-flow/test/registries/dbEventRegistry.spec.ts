@@ -12,6 +12,7 @@ import { DatabaseEventRegistry } from "../../src/registries/event/dbEventRegistr
 describe("DatabaseEventRegistry", () => {
     const logger: ILogger = {
         debug: vi.fn(),
+        verbose: vi.fn(),
         error: vi.fn(),
         info: vi.fn(),
         warn: vi.fn(),

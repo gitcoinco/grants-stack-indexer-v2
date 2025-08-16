@@ -35,6 +35,7 @@ describe("CachingPricingProvider", () => {
 
         mockLogger = {
             debug: vi.fn(),
+            verbose: vi.fn(),
         } as unknown as ILogger;
 
         provider = new CachingPricingProvider(mockProvider, mockCache, mockLogger);

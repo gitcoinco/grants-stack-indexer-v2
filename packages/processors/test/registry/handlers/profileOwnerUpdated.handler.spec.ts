@@ -31,6 +31,7 @@ describe("ProfileOwnerUpdatedHandler", () => {
                 warn: vi.fn(),
                 error: vi.fn(),
                 debug: vi.fn(),
+                verbose: vi.fn(),
             },
         };
 

@@ -26,6 +26,7 @@ vi.mock("../../src/services/sharedDependencies.service.js", () => ({
                 info: vi.fn(),
                 error: vi.fn(),
                 debug: vi.fn(),
+                verbose: vi.fn(),
                 warn: vi.fn(),
             },
         })),
